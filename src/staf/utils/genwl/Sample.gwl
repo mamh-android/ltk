@@ -1,0 +1,71 @@
+# This is a Sample of a generic workload definition file
+
+Workload <Name>
+
+#
+# Define a workload variable
+#
+
+Var <Name=Value>
+
+#
+# Define a process
+#
+
+Process
+
+    #
+    # General process startup information
+    #
+
+    Name <Name>
+    Command <Command>
+    [Parms <Parms>]
+    [WorkDir <WorkDir>]
+    [Title <Title>]
+
+    #
+    # One or more environment variables
+    #
+
+    [Env <Name=Value>]
+
+    #
+    # One or more process-local STAF variables
+    #
+
+    [Var <Name=Value>]
+
+End  # End of the process block
+
+#
+# Define a machine
+#
+
+Machine <Machine>
+
+    #
+    # Define a process
+    #
+
+    Process
+
+        #
+        # Same information as previous process block, minus the NAME <Name>
+        #
+
+    End  # End of the process block
+
+    #
+    # Include a previously defined process
+    #
+
+    ProcRef <Name>
+
+    #
+    # Define a machine variable
+    #
+
+    Var <Name=Value>
+
+End  # End of the machine block

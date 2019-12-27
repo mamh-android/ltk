@@ -1,0 +1,142 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/****************************************************************************/
+/* STAF_SERVICE_INTERFACE_LEVEL:2                                           */
+/****************************************************************************/
+/* WhoAmI Service  - Minimal example of a REXX service.  This service       */
+/*                   simply echoes back the originating processes info.     */
+/*                   However, it contains all the framework information     */
+/*                   needed by other REXX services.                         */
+/****************************************************************************/
+OPTIONS "EXMODE ETMODE"
+
+parse source osType invokeType functionName
+
+/*****************************/
+/* Initialize error messages */
+/*****************************/
+
+call STAFErrorText
+
+/*******************************************/
+/* Make sure we are being called correctly */
+/*******************************************/
+
+if invokeType \= "FUNCTION" then
+    RETURN MakeSTAFResult(STAFError.!ServiceConfigurationError)
+
+/********************************************/
+/* Now simply call the appropriate function */
+/********************************************/
+
+SIGNAL VALUE TRANSLATE(functionName)
+
+/****************************************************************************/
+/* STAFServiceInit - Initializes the service                                */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The service parameters                                          */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceInit:
+
+    parse arg serviceName, serviceParms, serviceCommandPath
+
+    /***********************/
+    /* Load STAF functions */
+    /***********************/
+
+    call RxFuncAdd "STAFLoadFuncs", "RXSTAF", "STAFLoadFuncs"
+    call STAFLoadFuncs
+
+    RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of STAFServiceInit */
+
+
+/****************************************************************************/
+/* STAFServiceAcceptRequest - Handles a service request from STAF           */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The name of the originating machine                             */
+/*          The registered name of the originating process                  */
+/*          The handle of the originating process                           */
+/*          The actual request string                                       */
+/*                                                                          */
+/* Returns: 0 , on success                                                  */
+/*          >0, otherwise                                                   */
+/****************************************************************************/
+STAFServiceAcceptRequest:
+
+    parse arg serviceName, orgMachine, machine, effectiveMachine, trustLevel,,
+              process, handle, request
+
+    /*****************************************/
+    /* Initialize the service request result */
+    /*****************************************/
+
+    serviceResult = ""
+
+    /**********************/
+    /* Register with STAF */
+    /**********************/
+
+    call STAFRegister "STAF/Service/"serviceName
+    if RESULT \= 0 then RETURN MakeSTAFResult(RESULT)
+
+    /*************************/
+    /* Validate client trust */
+    /*************************/
+
+    if trustLevel < 2 then
+        RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+    /*************************************/
+    /* Get line termination character(s) */
+    /*************************************/
+
+    call STAFSubmit "LOCAL", "VAR", "GLOBAL RESOLVE {STAF/Config/Sep/Line}"
+    if RESULT \= 0 then
+        RETURN MakeSTAFResult(RESULT, STAFResult)
+
+    lineSep = STAFResult
+
+    /************************************/
+    /* Echo back the client information */
+    /************************************/
+
+    serviceResult = "Machine     :" machine || lineSep
+    serviceResult = serviceResult || "Eff. Machine:" effectiveMachine ||,
+                    lineSep
+    serviceResult = serviceResult || "Name        :" process || lineSep
+    serviceResult = serviceResult || "Handle      :" handle || lineSep
+    serviceResult = serviceResult || "Request     :" request || lineSep
+
+    RETURN MakeSTAFResult(STAFError.!Ok, serviceResult)
+
+/* End of STAFServiceAcceptRequest */
+
+
+/****************************************************************************/
+/* STAFServiceTerm - Terminates the service                                 */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceTerm:
+
+    parse arg serviceName
+
+    RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of STAFServiceTerm */
+
+
+/********************************/
+/* Now import needed functions. */
+/********************************/
+
+#From STAFUtil Import All

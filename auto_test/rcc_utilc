@@ -1,0 +1,148 @@
+#!/bin/bash
+
+option=$1
+board_id=$2
+option2=$3
+option2_detail=$4
+
+
+#staf_ip="10.38.36.178"
+staf_ip="10.38.34.91"
+board_list_file="board_list.txt"
+
+if [ $option == "query" ];then
+
+
+#let query_time=$RANDOM%5+1
+query_time=1
+sleep $query_time
+	board_exist=`grep -q $board_id $board_list_file ; echo $?`
+	if [ $board_exist -eq 0 ];then
+		board_info_ori=`grep $board_id $board_list_file`
+		rcc_status=`echo $board_info_ori | awk -F ":" '{print $2}'`
+		usb_status=`echo $board_info_ori | awk -F ":" '{print $3}'`
+		serial_status=`echo $board_info_ori | awk -F ":" '{print $4}'`
+	else
+		echo "board_no_find"
+	fi
+	if [ $usb_status == "no" -a  $serial_status == "no" ];then
+	echo "Offline"
+	else
+	echo "Online"
+	fi
+fi
+
+
+
+
+if [ $option == "faketest" ];then
+	if [ $option2 == "add_devices" ];then
+	board_exist=`grep -q $board_id $board_list_file ; echo $?`
+	if [ $board_exist -ne 0 ];then
+		echo "$board_id:yes:yes:yes" >> $board_list_file
+		staf $staf_ip ltktest register board_id $board_id board_type PXA1088_DKB_V1.23 chip_name PXA1928 chip_stepping A0 board_register_date 14-02-2014-02-20 board_status Good user_team APSE-PV current_user "He Huang" board_eco "ECO 141" lcd_resolution 720P lcd_screensize 4.3 ddr_type SSG@PL2 ddr_size 1GB emmc_type Samsung emmc_size 4GB rf_name Sparrow rf_type "NON-LTE DSDS1" serial yes usb yes mcu yes username "Wenjiu_Sun" userteam "QAD"
+	else
+		sed -i s/"$board_id.*"/"$board_id:yes:yes:yes"/ $board_list_file
+staf $staf_ip ltktest register board_id $board_id board_type PXA1088_DKB_V1.23 chip_name PXA1928 chip_stepping A0 board_register_date 14-02-2014-02-20 board_status Good user_team APSE-PV current_user "He Huang" board_eco "ECO 141" lcd_resolution 720P lcd_screensize 4.3 ddr_type SSG@PL2 ddr_size 1GB emmc_type Samsung emmc_size 4GB rf_name Sparrow rf_type "NON-LTE DSDS1" serial yes usb yes mcu yes username "Wenjiu_Sun" userteam "QAD"
+	fi
+	fi
+
+	if [ $option2 == "rcc_online" ];then
+	board_exist=`grep -q $board_id $board_list_file ; echo $?`
+	if [ $board_exist -eq 0 ];then
+		board_info_ori=`grep $board_id $board_list_file`
+		rcc_status=`echo $board_info_ori | awk -F ":" '{print $2}'`
+		usb_status=`echo $board_info_ori | awk -F ":" '{print $3}'`
+		serial_status=`echo $board_info_ori | awk -F ":" '{print $4}'`
+		board_info_updated="$board_id:$option2_detail:$usb_status:$serial_status"
+		sed -i s/"$board_info_ori"/"$board_info_updated"/ $board_list_file
+	fi
+	if [ $option2_detail == "no" ];then
+	echo "unregister board"
+	staf $staf_ip ltktest unregister board_id $board_id
+	sed -i "/$board_id/d" board_list.txt
+	fi
+	fi
+
+	if [ $option2 == "usb_online" ];then
+	board_exist=`grep -q $board_id $board_list_file ; echo $?`
+	if [ $board_exist -eq 0 ];then
+		board_info_ori=`grep $board_id $board_list_file`
+		rcc_status=`echo $board_info_ori | awk -F ":" '{print $2}'`
+		usb_status=`echo $board_info_ori | awk -F ":" '{print $3}'`
+		serial_status=`echo $board_info_ori | awk -F ":" '{print $4}'`
+		board_info_updated="$board_id:$rcc_status:$option2_detail:$serial_status"
+		sed -i s/"$board_info_ori"/"$board_info_updated"/ $board_list_file
+		usb_status=`echo $board_info_ori | awk -F ":" '{print $3}'`
+	fi
+		staf $staf_ip ltktest register board_id $board_id board_type PXA1088_DKB_V1.23 chip_name PXA1928 chip_stepping A0 board_register_date 14-02-2014-02-20 board_status Good user_team APSE-PV current_user "He Huang" board_eco "ECO 141" lcd_resolution 720P lcd_screensize 4.3 ddr_type SSG@PL2 ddr_size 1GB emmc_type Samsung emmc_size 4GB rf_name Sparrow rf_type "NON-LTE DSDS1" serial $serial_status usb $option2_detail mcu $rcc_status username "Wenjiu_Sun" userteam "QAD"
+	fi
+
+	if [ $option2 == "serial_online" ];then
+	board_exist=`grep -q $board_id $board_list_file ; echo $?`
+	if [ $board_exist -eq 0 ];then
+		board_info_ori=`grep $board_id $board_list_file`
+		rcc_status=`echo $board_info_ori | awk -F ":" '{print $2}'`
+		usb_status=`echo $board_info_ori | awk -F ":" '{print $3}'`
+		serial_status=`echo $board_info_ori | awk -F ":" '{print $4}'`
+		board_info_updated="$board_id:$rcc_status:$usb_status:$option2_detail"
+		sed -i s/"$board_info_ori"/"$board_info_updated"/ $board_list_file
+	fi
+		staf $staf_ip ltktest register board_id $board_id board_type PXA1088_DKB_V1.23 chip_name PXA1928 chip_stepping A0 board_register_date 14-02-2014-02-20 board_status Good user_team APSE-PV current_user "He Huang" board_eco "ECO 141" lcd_resolution 720P lcd_screensize 4.3 ddr_type SSG@PL2 ddr_size 1GB emmc_type Samsung emmc_size 4GB rf_name Sparrow rf_type "NON-LTE DSDS1" serial $option2_detail usb $usb_status mcu $rcc_status username "Wenjiu_Sun" userteam "QAD"
+	fi
+
+fi
+
+
+
+if [ $option == "ltkex" ];then
+#xml_file=` echo $option2_detail | sed s/"\.xml"/""/`
+#jobname=$board_id-$xml_file
+jobname=` echo $option2_detail | awk -F "/" '{print $NF}' | awk -F "." '{print $1}'`
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Loading job xml"
+sleep 1
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Loading case xml"
+sleep 1
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Preparing burn"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Downloading images"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Initializing burn(1 times)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Autoburning images(1 times)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Uploading logs"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Initializing burn(1 times)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Rebooting board(1 times)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Downloading LTK"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Decompressing LTK"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Pushing LTK to board"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Setuping LTK on board"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Uploading logs"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Case pre-setting"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Running case(TC_LCD_01)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Collecting spec logs(TC_LCD_01)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Uploading logs"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Finish 1case(TC_LCD_01: Pass)"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Uploading logs"
+sleep $(($RANDOM%5))
+staf $staf_ip LTKTEST JOBUPDATE JOBNAME $jobname JOBSTATUS "Finished"
+sleep $(($RANDOM%5))
+echo "Result: Success"
+
+fi
+
+

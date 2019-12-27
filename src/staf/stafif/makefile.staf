@@ -1,0 +1,266 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stafif_targets += $(REL)/include/STAFMutexSem.h\
+    $(REL)/include/STAFMutexSemInlImpl.cpp\
+    $(REL)/include/STAFEventSem.h\
+    $(REL)/include/STAFEventSemInlImpl.cpp\
+    $(REL)/include/STAFRWSem.h\
+    $(REL)/include/STAFThread.h\
+    $(REL)/include/STAFError.h\
+    $(REL)/include/STAFTimestamp.h\
+    $(REL)/include/STAFTimestampInlImpl.cpp\
+    $(REL)/include/STAFRefPtr.h\
+    $(REL)/include/STAFException.h\
+    $(REL)/include/STAFOSTypes.h\
+    $(REL)/include/STAFDataTypes.h\
+    $(REL)/include/STAFDataTypesInlImpl.cpp\
+    $(REL)/include/STAFCommandParser.h\
+    $(REL)/include/STAFCommandParserInlImpl.cpp\
+    $(REL)/include/STAFString.h\
+    $(REL)/include/STAFStringInlImpl.cpp\
+    $(REL)/include/STAFDynamicLibrary.h\
+    $(REL)/include/STAFDynamicLibraryInlImpl.cpp\
+    $(REL)/include/STAFFileSystem.h\
+    $(REL)/include/STAFFileSystemInlImpl.cpp\
+    $(REL)/include/STAFProcess.h\
+    $(REL)/include/STAFProcessInlImpl.cpp\
+    $(REL)/include/STAFServiceInterface.h\
+    $(REL)/include/STAFConnectionProvider.h\
+    $(REL)/include/STAFConnectionProviderInlImpl.cpp\
+    $(REL)/include/STAFUtil.h\
+    $(REL)/include/STAFSocket.h\
+    $(REL)/include/STAFProcessCommon.cpp\
+    $(REL)/include/STAFTrace.h\
+    $(REL)/include/STAFTraceInlImpl.cpp\
+    $(REL)/include/STAF_iostream.h\
+    $(REL)/include/STAF_fstream.h\
+    $(REL)/include/STAF.h\
+    $(REL)/include/STAFInlImpl.cpp\
+    $(REL)/lib/$(LIB_STAF)
+Targets += $(stafif_targets)
+CleanupTargets += cleanup_stafif
+
+$(stafif_targets): SUBSYS_REL := stafif
+SUBSYS_REL := stafif
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+ifdef STAF_USE_IPV6
+    CC_CFLAGS += -DSTAF_USE_IPV6
+endif
+
+$(stafif_targets): OBJS = $(stafif_objs)
+$(stafif_targets): LIBS = $(OS_DL_LIB) $(OS_SOCKET_LIB)
+$(stafif_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafif_objs :=\
+  STAFMutexSem\
+  STAFMutexSemInlImpl\
+  STAFEventSem\
+  STAFEventSemInlImpl\
+  STAFRWSem\
+  STAFRWSemCommon\
+  STAFThread\
+  STAFUtilCommon\
+  STAFUtil\
+  STAFDataTypes\
+  STAFDataTypesInlImpl\
+  STAFSocket\
+  STAFTrace\
+  STAFProcessCommon\
+  STAFTraceInlImpl\
+  STAFTimestampCommon\
+  STAFTimestamp\
+  STAFTimestampInlImpl\
+  STAFThreadManager\
+  STAFCommandParser\
+  STAFCommandParserInlImpl\
+  STAFString\
+  STAFStringInlImpl\
+  STAFConverter\
+  STAFFileSystem\
+  STAFFileSystemInlImpl\
+  STAFFileSystemCommon\
+  STAFProcess\
+  STAFProcessInlImpl\
+  STAFDynamicLibrary\
+  STAFDynamicLibraryInlImpl\
+  STAFConnectionProviderInlImpl\
+  STAFConnectionProviderCommon\
+  STAF\
+  STAFInlImpl\
+  STAFException
+
+stafif_objs        := $(foreach obj,$(stafif_objs),$(O)/stafif/$(obj)$(OS_OE))
+stafif_dependents  := $(stafif_objs:$(OS_OE)=.d)
+$(stafif_dependents): SUBSYS_REL := stafif
+
+ifeq ($(OS_NAME),win32)
+  ifeq ($(BUILD_ARCH),IA64)
+    stafif_objs += $(SRC)/stafif/win32/STAF.ia64.def
+  else
+  ifeq ($(BUILD_ARCH),X64)
+    stafif_objs += $(SRC)/stafif/win32/STAF.x64.def
+  else
+    stafif_objs += $(SRC)/stafif/win32/STAF.def
+  endif
+  endif
+  ifdef STAF_USE_IPV6
+    $(O)/stafif/STAFSocket$(OS_OE): CC_INCLUDEDIRS := $(MSSDKDIR)\INCLUDE + $(CC_INCLUDEDIRS)
+    $(O)/stafif/STAFSocket$(OS_OE): CC_LIBDIRS     := $(MSSDKDIR)\LIB + $(CC_LIBDIRS)
+  endif
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafif_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFIF targets
+
+$(REL)/lib/$(LIB_STAF): $(stafif_objs) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+
+$(REL)/include/STAFEventSem.h: $(SRC)/stafif/STAFEventSem.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFEventSemInlImpl.cpp: $(SRC)/stafif/STAFEventSemInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFMutexSem.h: $(SRC)/stafif/STAFMutexSem.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFMutexSemInlImpl.cpp: $(SRC)/stafif/STAFMutexSemInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFRWSem.h: $(SRC)/stafif/STAFRWSem.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFThread.h: $(SRC)/stafif/STAFThread.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFError.h: $(SRC)/stafif/STAFError.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFException.h: $(SRC)/stafif/STAFException.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFTimestamp.h: $(SRC)/stafif/STAFTimestamp.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFTimestampInlImpl.cpp: $(SRC)/stafif/STAFTimestampInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFRefPtr.h: $(SRC)/stafif/STAFRefPtr.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFOSTypes.h: $(SRC)/stafif/$(OS_TYPE)/STAFOSTypes.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFUtil.h: $(SRC)/stafif/STAFUtil.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+        
+$(REL)/include/STAFSocket.h: $(SRC)/stafif/STAFSocket.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+        
+$(REL)/include/STAFProcessCommon.cpp: $(SRC)/stafif/STAFProcessCommon.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+        
+$(REL)/include/STAFTrace.h: $(SRC)/stafif/STAFTrace.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFTraceInlImpl.cpp: $(SRC)/stafif/STAFTraceInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFDataTypes.h: $(SRC)/stafif/STAFDataTypes.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFDataTypesInlImpl.cpp: $(SRC)/stafif/STAFDataTypesInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFCommandParser.h: $(SRC)/stafif/STAFCommandParser.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFCommandParserInlImpl.cpp: $(SRC)/stafif/STAFCommandParserInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFString.h: $(SRC)/stafif/STAFString.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFStringInlImpl.cpp: $(SRC)/stafif/STAFStringInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFDynamicLibrary.h: $(SRC)/stafif/STAFDynamicLibrary.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFDynamicLibraryInlImpl.cpp: $(SRC)/stafif/STAFDynamicLibraryInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFFileSystem.h: $(SRC)/stafif/STAFFileSystem.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFFileSystemInlImpl.cpp: $(SRC)/stafif/STAFFileSystemInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFProcess.h: $(SRC)/stafif/STAFProcess.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFProcessInlImpl.cpp: $(SRC)/stafif/STAFProcessInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+        
+$(REL)/include/STAFServiceInterface.h: $(SRC)/stafif/STAFServiceInterface.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFConnectionProvider.h: $(SRC)/stafif/STAFConnectionProvider.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFConnectionProviderInlImpl.cpp: $(SRC)/stafif/STAFConnectionProviderInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAF_iostream.h: $(SRC)/stafif/STAF_iostream.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAF_fstream.h: $(SRC)/stafif/STAF_fstream.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAF.h: $(SRC)/stafif/STAF.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/include/STAFInlImpl.cpp: $(SRC)/stafif/STAFInlImpl.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafif:
+	-@$(DEL) $(O)/stafif/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAF) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFMutexSem.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFEventSem.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFRWSem.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFThread.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFError.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFTimestamp.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFRefPtr.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFException.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFUtil.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFSocket.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFTrace.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFTraceInlImpl.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFCommandParser.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFDataTypes.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFString.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFDynamicLibrary.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFFileSystem.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFServiceInterface.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAF_iostream.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAF_fstream.h $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAF.h $(OUT_ERR_TO_DEV_NULL)
+

@@ -1,0 +1,850 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.79 [en] (Windows NT 5.0; U) [Netscape]">
+   <meta name="Author" content="David Bender">
+   <title>Email Service User's Guide</title>
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1>
+Email Service User's Guide</h1>
+<b>Version 3.3.8</b>
+<p><b>Last updated: June 27, 2013</b>
+
+<p>
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Overview" href="#Header_Overview"><b>Overview</b></a>
+<p>
+<a name="ToC_Installation" href="#Header_Installation"><b>Installation and Configuration</b></a>
+<p>
+<a name="ToC_RequestSyntax" href="#Header_RequestSyntax"><b>Request Syntax</b></a>
+<menu>
+<li><a name="ToC_Send" href="#Header_Send">SEND</a></li>
+<li><a name="ToC_List" href="#Header_List">LIST SETTINGS</a></li>
+<li><a name="ToC_Set" href="#Header_Set">SET</a></li>
+<li><a name="ToC_Version" href="#Header_Version">VERSION</a></li>
+<li><a name="ToC_Help" href="#Header_Help">HELP</a></li>
+</menu>
+<p>
+<a name="ToC_Logging" href="#Header_Logging"><b>Service Logging</b></a>
+<p>
+<a name="ToC_Telnet" href="#Header_Telnet"><b>Using Telnet to Debug Mail Server Problems</b></a>
+<p>
+<A name=ToC_Errors href="#Errors" ><b>Email Error Code Reference</b></A>
+<p>
+<a name="ToC_Acknowledgements" href="#Header_Acknowledgements"><b>Licenses and Acknowledgements</b></a>
+
+<p>
+<hr>
+<p>
+
+<h1><a NAME="Header_Overview" href="#ToC_Overview">Overview</a></h1>
+The Email service will send an email message to a list of recipients.  Multiple
+attachments (both text and binary) are supported, and you may specify whether
+the message body content type is text/plain or text/html.
+<p>
+Note: The Email service supports the basic Internet email transmission protocol,
+SMTP (Simple Mail Transfer Protocol) which supports only 7-bit ASCII characters.
+So, non-ASCII text (e.g. non-English characters) cannot be correctly represented
+in the message body or in the subject of an email sent via the Email service.
+<p>
+<hr>
+<p>
+
+<h1><a NAME="Header_Installation" href="#ToC_Installation">Installation and Configuration</a></h1>
+
+<ol>
+<li>Install Java 1.2 or later.
+<p>
+<li>Install STAF 3.0.0 or later by following the installation instructions
+in the STAF documentation.
+<p>
+<li>Install the Email V3.3.8 service:
+<p> 
+<ul>
+Download the EmailV338.zip/tar
+file from <a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+into a local directory (e.g. C:/STAF/services or /usr/local/staf/services) and extract it.
+</ul>
+<p>
+<li>Configure the Email service:
+<p>
+<ul>Add the following lines to your staf.cfg file:
+<pre>
+SERVICE &lt;EmailName> LIBRARY JSTAF EXECUTE &lt;Service Jar File Name> \
+                    PARMS "MAILSERVER &lt;mailserver> [PORT &lt;mailport>] \
+                           [SOCKETTIMEOUT &lt;Number>[s|m|h|d|w]] \
+                           [BACKUPMAILSERVERS \"&lt;Space-separated list of mail servers>\"] \
+                           [CONTENTTYPE &lt;contenttype>] \
+                           [RESOLVEMESSAGE | NORESOLVEMESSAGE]"
+</pre>
+where:
+<ul>
+<li><tt>SERVICE</tt> specifies the name by which the Email service
+will be known on this machine.</li>
+<li><tt>EXECUTE</tt> specifies the fully-qualified name of the
+STAFEmail.jar file.</li>
+<li><tt>MAILSERVER</tt> specifies the mail server through which the email
+will be sent.  This parameter is required.  Some IBM-internal examples of valid
+mail servers are <tt>na.relay.ibm.com</tt>, <tt>emea.relay.ibm.com</tt>,
+<tt>ap.relay.ibm.com</tt> and <tt>la.us.ibm.com</tt>.</li>
+<li><tt>PORT</tt> specifies the port through which the mail server
+will be accessed.  This parameter is optional (the default port is 25).</li>
+<li><tt>SOCKETTIMEOUT</tt> specifies a timeout for the socket used to communicate
+with a mail server on a SEND request.  The timeout value is used to prevent the
+SEND request from hanging if the mail server does not respond.  If the timeout
+expires, a Warning message will be logged in the Email service log specifying a
+"Socket IO Error" and a java.net.SocketTimeoutException.  The default timeout
+is 60000 milliseconds (1 minute).  A timeout of zero is interpreted as an
+infinite timeout. The timeout can be expressed in milliseconds, seconds,
+minutes, hours, days, or weeks.  Its format is &lt;Number>[s|m|h|d|w] where
+&lt;Number> is an integer >= 0 and indicates milliseconds unless one of the
+following case-insensitive suffixes is specified:
+<ul compact>
+<li>s (for seconds) 
+<li>m (for minutes) 
+<li>h (for hours) 
+<li>d (for days) 
+<li>w (for weeks).
+</ul>
+Note that the calculated timeout cannot exceed 2147483647 milliseconds. So,
+the maximum values in each time category that can be specified are: 
+<ul compact>
+<li>2147483647 (2147483647 milliseconds) 
+<li>2147483s (2147483 seconds) 
+<li>35791m (35791 minutes) 
+<li>596h (596 hours) 
+<li>24d (24 days) 
+<li>3w (3 weeks) 
+</ul>
+<li><tt>BACKUPMAILSERVERS</tt> specifies a space-separated list of mail
+servers.  If a SEND request fails with a "Socket IO Error" when attempting
+to send mail using the primary mail server and one or more backup mail
+servers are configured, the Email service will attempt to send the email using
+the backup mail servers.  Its a good idea to specify the primary mail server as
+the first backup mail server so that it can retry sending the mail using the
+primary mail server.  This parameter is optional.
+<li><tt>CONTENTTYPE</tt> specifies the default content type to be used
+for the message body.
+The valid values are "text/plain" and "text/html".  This parameter is optional
+(the default is "text/plain").  This parameter can be overridden on a per request
+basis by specifying CONTENTTYPE as an option for the SEND request.
+</li>
+<li><tt>RESOLVEMESSAGE | NORESOLVEMESSAGE</tt> specifies whether to resolve
+the MESSAGE option for STAF variables.  The default setting is to resolve the
+MESSAGE option for STAF variables.  This parameter can be overridden on a per
+request basis by specifying RESOLVEMESSAGE/NORESOLVEMESSAGE as an option for
+the SEND request.
+</ul>
+
+<h4>Examples:</h4>
+
+<ul>
+<pre>
+SERVICE email LIBRARY JSTAF EXECUTE c:/staf/services/email/STAFEmail.jar \
+              PARMS "MAILSERVER na.relay.ibm.com BACKUPMAILSERVERS na.relay.ibm.com"
+
+SERVICE email LIBRARY JSTAF EXECUTE c:/staf/services/email/STAFEmail.jar \
+              PARMS "MAILSERVER na.relay.ibm.com BACKUPMAILSERVERS \"na.relay.ibm.com la.relay.ibm.com emea.relay.ibm.com\""
+
+SERVICE email LIBRARY JSTAF EXECUTE /usr/local/staf/services/email/STAFEmail.jar \
+              PARMS "MAILSERVER na.relay.ibm.com BACKUPMAILSERVERS na.relay.ibm.com \
+                     PORT 25 SOCKETTIMEOUT 30s CONTENTTYPE text/html"
+
+SERVICE email LIBRARY JSTAF EXECUTE c:/staf/services/email/STAFEmail.jar \
+              PARMS "MAILSERVER na.relay.ibm.com BACKUPMAILSERVERS na.relay.ibm.com \
+                     SOCKETTIMEOUT 2m NORESOLVEMESSAGE"
+</pre>
+</ul>
+
+</ol>
+
+<p>
+<hr>
+<p>
+
+<h1><a NAME="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></h1>
+The Email service provides the following requests:
+<ul>
+<li>SEND - Send an email message to a list of recipients.</li>
+<li>LIST SETTINGS - Lists the operational settings for the Email service.</li>
+<li>SET - Sets one or more operational settings for the Email service.</li>
+<li>VERSION - Displays the version of the Email service.</li>
+<li>HELP - Displays a list of requests for the Email service and how to use
+them.</li>
+</ul>
+
+<h2><a NAME="Header_Send" href="#ToC_Send">SEND</a></h2>
+
+SEND send an email message to a list of recipients
+
+<h4>Syntax</h4>
+
+<pre>
+SEND &lt; TO &lt;Address> | CC &lt;Address> | BCC &lt;Address> >...
+     [FROM &lt;user@company.com>] [CONTENTTYPE &lt;contenttype>]
+     &lt; MESSAGE &lt;Message> | FILE &lt;File> [MACHINE Machine] >
+     [SUBJECT &lt;subject>] [NOHEADER] [TEXTATTACHMENT &lt;file>]...
+     [BINARYATTACHMENT &lt;file>]... [ATTACHMENTMACHINE &lt;machine>]
+     [RESOLVEMESSAGE | NORESOLVEMESSAGE]
+     [AUTHUSER &lt;User> AUTHPASSWORD &lt;Password>]</pre>
+<p>
+<tt>TO</tt> specifies an email address to which the email will be sent.
+You may specify multiple <tt>TO</tt> options.  This option will resolve variables.
+You can specify any number or combination of the <tt>TO</tt>, <tt>CC</tt>, and
+<tt>BCC</tt> options, but you must specify at least one of these options.
+<p>
+<tt>CC</tt> specifies an email address to which the email will be carbon copied.
+You may specify multiple <tt>CC</tt> options.  This option will resolve variables.
+You can specify any number or combination of the <tt>TO</tt>, <tt>CC</tt>, and
+<tt>BCC</tt> options, but you must specify at least one of these options.
+<p>
+<tt>BCC</tt> specifies an email address to which the email will be blind carbon copied.
+You may specify multiple <tt>BCC</tt> options.  This option will resolve variables.
+You can specify any number or combination of the <tt>TO</tt>, <tt>CC</tt>, and
+<tt>BCC</tt> options, but you must specify at least one of these options.
+<p>
+<tt>FROM</tt> specifies an email address that the email will be sent from.
+If this option is not specified, the default from address will be
+<tt>STAFEmailService@&lt;host name></tt> where &lt;host name> is replaced with
+the host name of the machine where the Email service that is sending the message 
+is registered.  This option will resolve variables.
+<p>
+<tt>CONTENTTYPE</tt> specifies the content type to be used for the message body.
+The valid values are "text/plain" and "text/html".  This parameter is optional.
+The default will be to use the current operational setting (either the value set during
+the Email service registration, or via the SET request).
+<p>
+<tt>MESSAGE</tt> specifies the body of the email.  This option will resolve variables.
+<p>
+<tt>FILE</tt> specifies the file which contains the body of the email.
+This option will resolve variables.
+<p>
+<tt>MACHINE</tt> is the machine where the <tt>FILE</tt> is located.
+If not specified, it assumes the file is on the machine submitting the
+EMAIL SEND request.  This option will resolve variables.
+<p>
+<tt>SUBJECT</tt> specifies subject of the email and is optional.
+This option will resolve variables.
+<p>
+<tt>NOHEADER</tt> indicates that the 
+"DO NOT RESPOND TO THE SERVICE MACHINE THAT GENERATED THIS NOTE" header should
+not be included at the beginning of the email body.  If this option is not
+specified, the header will be included at the beginning of the email body
+<p>
+<tt>TEXTATTACHMENT</tt> specifies a text file to attach to the email and is
+optional.  You may specify multiple <tt>TEXTATTACHMENT</tt> options.
+This option will resolve variables.
+<p>
+<tt>BINARYATTACHMENT</tt> specifies a binary file to attach to the email and is
+optional.  You may specify multiple <tt>BINARYATTACHMENT</tt> options.
+This option will resolve variables.
+<p>
+<tt>ATTACHMENTMACHINE</tt> is the machine where the attachments (if any) are located.
+If not specified, it assumes the files are on the machine submitting the
+EMAIL SEND request.  This option will resolve variables.
+<p>
+<tt>RESOLVEMESSAGE | NORESOLVEMESSAGE</tt> specifies whether to resolve
+the MESSAGE option for STAF variables.  If neither option is specified, the
+setting specified in the service parameters will be used.
+<p>
+<tt>AUTHUSER</tt> specifies the user name which will be used to authenticate
+with the SMTP server via the Auth Login SMTP command.
+You should only specify this option if your SMTP server requires authentication.
+If you specify this option when using
+an SMTP server that does not allow authentication, you will see an error
+message such as <tt>AUTH mechanism LOGIN not available</tt>.
+If you specify the <tt>AUTHUSER</tt> option, you must also specify the
+<tt>AUTHPASSWORD</tt> option.  This option
+will resolve variables.
+<p>
+<tt>AUTHPASSWORD</tt> specifies the password which will be used to
+authenticate with the SMTP server via the Auth Login SMTP command.
+You should only specify this option if your SMTP server requires authentication.
+If you specify this option when using
+an SMTP server that does not allow authentication, you will see an error
+message such as <tt>AUTH mechanism LOGIN not available</tt>.
+If you specify the <tt>AUTHPASSWORD</tt> option, you must also specify the
+<tt>AUTHUSER</tt> option.
+This option will handle private data.
+This option will resolve variables.
+<h4>Security</h4>
+
+This request requires at least trust level 3.
+
+<h4>Notes</h4>
+
+Note that mailservers have a 990-character limit on each line contained within
+an email message.  If an email message is sent that contains lines longer than
+990-characters, those lines will be subdivided by additional line ending
+characters, which can cause corruption in the email message, particularly for
+HTML content.  To prevent this from occurring, add your own line-ending characters
+at appropriate locations within the email message to ensure that no lines are
+longer than 990 characters.
+
+<h4>Results</h4>
+
+Upon successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+
+<ul>
+<li>Goal: Send an email message to email address <tt>user1@us.ibm.com</tt> via the
+EMAIL service on the local machine:
+<p><tt>STAF local EMAIL SEND TO user1@us.ibm.com message "Test XYZ completed successfully."
+ SUBJECT "Test XYX: Success"</tt>
+<p>
+<li>Goal: Send an email message to email address <tt>user99@company.com</tt> via the
+EMAIL service on the local machine, using a mail server that requires
+authentication (note that privacy delimiters are specified for AUTHPASSWORD):
+<p><tt>STAF local EMAIL SEND TO user99@company.com message "Testcase aborted with error code 5312."
+ SUBJECT "Testcase aborted" AUTHUSER johnsmith@mail.com AUTHPASSWORD !!@secretPassword@!!</tt>
+<p>
+<li>Goal: Send an email message to email address <tt>user4@us.ibm.com</tt>
+and carbon copying <tt>user22@us.ibm.com</tt> and <tt>user104@us.ibm.com</tt> via the
+EMAIL service on the local machine and do not resolve the MESSAGE option for
+STAF variables:
+<p><tt>STAF local EMAIL SEND TO user1@us.ibm.com CC user22@us.ibm.com CC user104@us.ibm.com message "Test ABC completed successfully.
+{ rc : 0, testResult : fail=0, pass=329 }"
+ SUBJECT "Test ABC Results" NORESOLVEMESSAGE</tt>
+<p>
+<li>Goal: Send an email message to two email addresses via the EMAIL service on the local machine:
+<p><tt>STAF local EMAIL SEND TO user1@us.ibm.com TO user2@us.ibm.com message "Hello, this is the new
+STAFEmail Service\n\nThanks" SUBJECT "Introducing the new STAFEmail Service"</tt>
+<p>
+<li>Goal: Send an email message, using the blind carbon copy option, where the body of the email message is
+in c:/results/testoutput.txt via the EMAIL service on machine server1.company.com:
+<p><tt>STAF server1.company.com EMAIL SEND BCC user3@us.ibm.com BCC user54@us.ibm.com FILE c:/results/testoutput.txt</tt>
+<li>Goal: Send an email message to email address <tt>user5@us.ibm.com</tt> via the
+EMAIL service on the local machine and attach text file c:/output/SVTTests.txt:
+<p><tt>STAF local EMAIL SEND TO user5@us.ibm.com message "SVT completed successfully.  Details are attached."
+ SUBJECT "SVT: Success" TEXTATTACHMENT c:/output/SVTTests.txt</tt>
+ <li>Goal: Send an email message to email address <tt>user6@us.ibm.com</tt> via the
+EMAIL service on the local machine and attach text file G:/projects/test/Results.html and binary
+file G:/projects/test/DetailedResults.zip both of which are located on machine
+server1.company.com:
+<p><tt>STAF local EMAIL SEND TO user6@us.ibm.com message "Here are the test results"
+ SUBJECT "Test Results" TEXTATTACHMENT G:/projects/test/Results.html
+ BINARYATTACHMENT G:/projects/test/DetailedResults.zip ATTACHMENTMACHINE
+ server1.company.com</tt>
+<p>
+<li>Goal: Send an email message where the body of the email message is in text/html
+content in c:/results/testoutput.html via the EMAIL service on machine server1.company.com:
+<p><tt>STAF server1.company.com EMAIL SEND TO user3@us.ibm.com FILE c:/results/testoutput.html CONTENTTYPE text/html</tt>
+<p>
+<li>Goal: Send an email message where the body of the email message is in text/html
+content:
+<p><tt>
+STAF local EMAIL SEND TO user90@us.ibm.com MESSAGE "&lt;h4>Test results:&lt;/h4>&lt;table border="1">&lt;tr>&lt;th>Name&lt;/th>&lt;th>Passes&lt;/th>&lt;th>Fails&lt;/th>&lt;/tr>&lt;tr>&lt;td>Function test&lt;/td>&lt;td>509&lt;/td>&lt;td>90&lt;/td>&lt;/tr>&lt;tr>&lt;td>SVT regression&lt;/td>&lt;td>154&lt;/td>&lt;td>21&lt;/td>&lt;/tr>&lt;tr>&lt;td>Globalization tests&lt;/td>&lt;td>67&lt;/td>&lt;td>4&lt;/td>&lt;/tr>&lt;/table>" CONTENTTYPE text/html SUBJECT "Overnight testing results"
+</tt>
+<li>Goal: Send an email message where the body of the email message is in text/html
+content and is a single line longer than 990 characters.  Note that when the
+email is received, there is corruption in the "Passed" column for row
+"TVT Regression" (this is the 990 character point in the email message, where
+the mailserver divides the line and adds an extra line ending character, which
+causes the corruption).  To correct this problem, see the next example.
+<p><tt>
+STAF local EMAIL SEND TO user90@us.ibm.com CONTENTTYPE text/html NOHEADER SUBJECT "Test Results" message "&lt;table border="0">&lt;tr bgcolor=4477BB>&lt;td>&lt;font face="Arial,Helvetica">Name&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">Passes&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">Fails&lt;/td>&lt;/tr>&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Function abcd&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">509&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">90&lt;/td>&lt;/tr>&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">SVT regression&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">154&lt;/td>&lt;td>21&lt;/td>&lt;/tr>&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Globalization test5&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">67&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">4&lt;/td>&lt;/tr>&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">Media testA&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">90&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">0&lt;/td>&lt;/tr>&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Function fghi&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">177&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">34&lt;/td>&lt;/tr>&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">TVT regression&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">109&lt;/td>&lt;td>17&lt;/td>&lt;/tr>&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Globalization test7&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">11&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">6&lt;/td>&lt;/tr>&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">Media testB&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">89&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">1&lt;/td>&lt;/tr>&lt;/table>"
+</tt>
+<li>Goal: Send an email message where the body of the email message is in text/html
+content and is longer than 990 characters, but is divided by newline characters
+to make all lines less than 990 characters.  In this example we have placed newline
+characters ("\n") prior to each table row in the html.  Note that when the
+email is received, the message is not corrupted.
+<p><tt>
+STAF local EMAIL SEND TO user90@us.ibm.com CONTENTTYPE text/html NOHEADER SUBJECT "Test Results" message "&lt;table border="0">\n&lt;tr bgcolor=4477BB>&lt;td>&lt;font face="Arial,Helvetica">Name&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">Passes&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">Fails&lt;/td>&lt;/tr>\n&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Function abcd&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">509&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">90&lt;/td>&lt;/tr>\n&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">SVT regression&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">154&lt;/td>&lt;td>21&lt;/td>&lt;/tr>\n&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Globalization test5&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">67&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">4&lt;/td>&lt;/tr>\n&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">Media testA&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">90&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">0&lt;/td>&lt;/tr>\n&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Function fghi&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">177&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">34&lt;/td>&lt;/tr>\n&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">TVT regression&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">109&lt;/td>&lt;td>17&lt;/td>&lt;/tr>\n&lt;tr bgcolor=DDEEFF>&lt;td>&lt;font face="Arial,Helvetica">Globalization test7&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">11&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">6&lt;/td>&lt;/tr>\n&lt;tr bgcolor=99CCFF>&lt;td>&lt;font face="Arial,Helvetica">Media testB&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">89&lt;/td>&lt;td>&lt;font face="Arial,Helvetica">1&lt;/td>&lt;/tr>&lt;/table>"
+</tt>
+</ul>
+<p>
+
+<h2><a NAME="Header_List" href="#ToC_List">LIST SETTINGS</a></h2>
+
+LIST SETTINGS allows you to list the current operational settings for the Email service
+(such as mail server, port, socket timeout, backup mail servers, content type, and
+whether to resolve the MESSAGE option for STAF variables).
+
+<h4>Syntax</h4>
+
+<pre>
+LIST SETTINGS
+</pre>
+
+<h4>Security</h4>
+
+This request requires at least trust level 2.
+
+<h4>Results</h4>
+
+The result buffer for a <tt>LIST SETTINGS</tt>
+request will contain a marshalled <tt>&lt;Map:STAF/Service/Email/Settings></tt>
+representing the settings for the Email service.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Email/Settings</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents the settings for the Email service.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mailServer
+<td>Mail Server
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>port
+<td>Port
+<td><tt>&lt;String></tt>
+<tr>
+<td>socketTimeout
+<td>Socket Timeout
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>backupMailServers
+<td>Backup Mail Servers
+<td><tt>&lt;List> of &lt;String></tt>
+<td>
+<tr>
+<td>contentType
+<td>Content Type
+<td><tt>&lt;String></tt>
+<tr>
+<td>resolveMessage
+<td>Resolve Message
+<td><tt>&lt;String></tt>
+<td>Enabled | Disabled
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The "Mail Server" value is the mail server through which the email will be sent.
+    Its value is specified via the <tt>MAILSERVER</tt> parameter when registering the
+    Email service or via the SET request.
+<li>The "Port" value is is the port through which the mail server will be accessed.
+    Its value is specified via the <tt>PORT</tt> parameter when registering the
+    Email service or via the SET request.
+    The default is 25 if not specified.
+<li>The "Socket Timeout" value is the timeout specified for the socket used to
+    communicate with a mail server on a SEND request.  Its value is specified via
+    the <tt>SOCKETTIMEOUT</tt> parameter when registering the Email service or via
+    the SET request.  The default is 60000 milliseconds if not specified.  Its value
+    is displayed in milliseconds.
+<li>The "Backup Mail Servers" value is a list of the backup mail servers which may
+    be used when a problem occurs with the primary mail server.
+    Its value is specified via the <tt>BACKUPMAILSERVERS</tt> parameter when registering
+    the Email service or via the SET request.
+<li>The "Content Type" value is the current message body content type.
+    Its value is specified via the <tt>CONTENTTYPE</tt> parameter when registering the
+    Email service or via the SET request.
+    The valid values are "text/plain" and "text/html".
+    This parameter can be overridden on a per request basis by specifying CONTENTTYPE
+    as an option for the SEND request.
+<li>The "Resolve Message" value indicates the setting for whether to resolve
+    the MESSAGE option for STAF variables that was set during service configuration
+    or via the SET request.
+    Note that this value can be overridden on a per request basis by specifying
+    RESOLVEMESSAGE/NORESOLVEMESSAGE as an option for the SEND request.
+</ol>
+</tr>
+</tfoot>
+</table>
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> List the settings for the email service on machine server1.company.com:
+<p><tt>STAF server1.company.com EMAIL LIST SETTINGS</tt>
+<p><b>Output:</b>
+If the request is submitted from the command line, the result could look like: 
+<pre>
+{
+  Mail Server        : NA.relay.ibm.com
+  Port               : 25
+  Socket Timeout     : 60000
+  Backup Mail Servers: [
+    LA.relay.ibm.com
+    EMEA.relay.ibm.com
+    AP.relay.ibm.com
+  ]
+  Content Type       : text/plain
+  Resolve Message    : Enabled
+}
+</pre>
+</ul>
+
+<h2><a NAME="Header_Set" href="#ToC_Set">SET</a></h2>
+
+SET sets the current Email Service operational settings (overriding any
+previous settings, including service configuration settings).
+
+<h4>Syntax</h4>
+
+<pre>
+SET  [MAILSERVER &lt;mailserver>]
+     [PORT &lt;mailport>]
+     [SOCKETTIMEOUT &lt;Number>[s|m|h|d|w]]
+     [BACKUPMAILSERVERS &lt;Space-separated list of backup mailservers>]
+     [CONTENTTYPE &lt;contenttype>]
+     [RESOLVEMESSAGE | NORESOLVEMESSAGE]
+</pre>
+See "Installation and Configuration" for descriptions of these operational
+settings.
+
+<h4>Security</h4>
+
+This request requires at least trust level 5.
+
+<h4>Results</h4>
+
+Upon successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Set the MAILSERVER setting to mymailserver.company.com:
+<p><tt>STAF server1.company.com EMAIL SET MAILSERVER mymailserver.company.com</tt>
+<p>
+<li><b>Goal:</b> Set the CONTENTTYPE setting to text/html:
+<p><tt>STAF server1.company.com EMAIL SET CONTENTTYPE text/html</tt>
+<p>
+<li><b>Goal:</b> Set the BACKUPSERVERS to include mail server mailserver1.company.com
+and mailserver2.company.com
+<p><tt>STAF server1.company.com EMAIL SET BACKUPSERVERS "mailserver1.company.com mailserver2.company.com"</tt>
+<p>
+<li><b>Goal:</b> Set the SOCKETTIMEOUT to 30 seconds:
+<p><tt>STAF server1.company.com EMAIL SET SOCKETTIMEOUT 30s</tt>
+<p>
+</ul>
+
+<h2><a NAME="Header_Version" href="#ToC_Version">VERSION</a></h2>
+
+VERSION displays the Email Service version.
+
+<h4>Syntax</h4>
+
+<tt>VERSION</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result is the version number of the Email service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the version of the EMAIL service on machine server1.company.com:
+<p><tt>STAF server1.company.com EMAIL VERSION</tt>
+<p><b>Output:</b>
+<pre>
+3.3.8
+</pre>
+</ul>
+
+<h2><a NAME="Header_Help" href="#ToC_Help">HELP</a></h2>
+
+HELP displays the request options and how to use them.
+
+<h4>Syntax</h4>
+
+<tt>HELP</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the Help messages for the request options for
+the Email service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the syntax for the EMAIL service requests:
+<p><tt>STAF local EMAIL HELP</tt>
+<p><b>Output:</b>
+<pre>
+EMAIL Service Help
+
+SEND &lt; TO &lt;Address> | CC &lt;Address> | BCC &lt;Address> >...
+     [FROM &lt;user@company.com>] [CONTENTTYPE &lt;contenttype>]
+     &lt; MESSAGE &lt;Message> | FILE &lt;File> [MACHINE Machine] >
+     [SUBJECT &lt;subject>] [NOHEADER] [TEXTATTACHMENT &lt;file>]...
+     [BINARYATTACHMENT &lt;file>]... [ATTACHMENTMACHINE &lt;machine>]
+     [RESOLVEMESSAGE | NORESOLVEMESSAGE]
+
+LIST SETTINGS
+
+SET  [MAILSERVER &lt;mailserver>]
+     [PORT &lt;mailport>]
+     [SOCKETTIMEOUT &lt;Number>[s|m|h|d|w]]
+     [BACKUPMAILSERVERS &lt;Space-separated list of backup mailservers>]
+     [CONTENTTYPE &lt;contenttype>]
+     [RESOLVEMESSAGE | NORESOLVEMESSAGE]
+
+VERSION
+
+HELP
+</pre>
+</ul>
+
+<HR>
+<h1><b><a name="Header_Logging" href="#ToC_Logging">Service Logging</a></b></h1>
+<p>
+The Email service maintains a machine log where it writes an entry when the
+following occurs:
+<ul>
+<li>The service is registered.  The mail server and port number will be
+included.
+<li>When a SET request is received.  The log entry for the SET request
+will begin with <tt>[&lt;machine-endpoint>]</tt>
+where <tt>&lt;machine-endpoint></tt> is the endpoint of the machine that submitted
+the SET request.
+<li>When a SEND request is received.  Summary information about the SEND
+request will be logged.  After the SEND request, entries will be logged for
+each reply from the mail server.  The log entries for the SEND request and the
+server replies will begin with 
+<tt>[&lt;machine-endpoint>:&lt;request-number>]</tt>
+where <tt>&lt;machine-endpoint></tt> is the endpoint of the machine that submitted
+the SEND request, and <tt>&lt;request-number></tt> is the STAF request number for
+the SEND request.
+</ul>
+<p>
+The logname for the Email service is the name under which the service is
+registered.
+<p>
+Here is an example of what a Email service log on the local machine (where the
+registered name of the Email service is "Email") could look like (shown via a
+request from the command line in the table format):
+<pre>
+C:\>STAF local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME Email
+Response
+--------
+Date-Time         Level Message
+----------------- ----- --------------------------------------------------------
+20071108-16:26:06 Info  email service initialized, using mailserver na.relay.ib
+                        m.com port 25 backupmailservers []
+20071108-16:26:32 Info  [tcp://staf2f.austin.ibm.com@6500:122] SEND TO [user1@
+                        us.ibm.com] FROM user2 SUBJECT This is a test CONTENTTYP
+                        E text/plain TEXTATTACHMENTS [c:/temp/rc0.txt, c:/temp/
+                        perf.txt] BINARYATTACHMENTS [c:/temp/stats1.gif] ATTACH
+                        MENTMACHINE staf3a.austin.ibm.com
+20071108-16:26:32 Info  [tcp://staf2f.austin.ibm.com@6500:122] 220 d03xxxx.boul
+                        der.ibm.com ESMTP Sendmail 8.12.11.20060308/8.12.11; Th
+                        u, 8 Nov 2007 15:26:24 -0700
+20071108-16:26:33 Info  [tcp://staf2f.austin.ibm.com@6500:122] 250 d03av04.boul
+                        der.ibm.com Hello user1.austin.ibm.com [9.99.99.153], p
+                        leased to meet you
+20071108-16:26:33 Error [tcp://staf2f.austin.ibm.com@6500:122] 553 5.5.4 user2.
+                        .. Domain name required for sender address user
+20071108-16:26:58 Info  [tcp://staf2f.austin.ibm.com@6500:135] SEND TO [bdavid@
+                        us.ibm.com] FROM user2@ibm.com SUBJECT This is a test CO
+                        NTENTTYPE text/plain TEXTATTACHMENTS [c:/temp/rc0.txt,
+                        c:/temp/perf.txt] BINARYATTACHMENTS [c:/temp/stats1.gif
+                        ] ATTACHMENTMACHINE staf3a.austin.ibm.com
+20071108-16:26:58 Info  [tcp://staf2f.austin.ibm.com@6500:135] 220 d03xxxx.boul
+                        der.ibm.com ESMTP Sendmail 8.12.11.20060308/8.12.11; Th
+                        u, 8 Nov 2007 15:26:50 -0700
+20071108-16:26:59 Info  [tcp://staf2f.austin.ibm.com@6500:135] 250 d03xxxx.boul
+                        der.ibm.com Hello user1.austin.ibm.com [9.99.99.153], p
+                        leased to meet you
+20071108-16:26:59 Info  [tcp://staf2f.austin.ibm.com@6500:135] 250 2.1.0 user2@
+                        ibm.com... Sender ok
+20071108-16:26:59 Info  [tcp://staf2f.austin.ibm.com@6500:135] 250 2.1.5 user1@
+                        us.ibm.com... Recipient ok
+20071108-16:27:02 Info  [tcp://staf2f.austin.ibm.com@6500:135] 250 Mail queued
+                        for delivery.
+</pre>
+<p>
+
+<HR>
+<h1><b><a name="Header_Telnet" href="#ToC_Telnet">Using Telnet to Debug Mail Server Problems</a></b></h1>
+<p>
+If you are having problems getting your mail server to send emails via the STAF
+Email service, you can try submitting the same email request via telnet. It
+should fail in the same way the STAF Email service fails. If so then you will
+need to investigate why your mail server is unable to send the email. Here are
+the steps to send the email via telnet (these commands are essentially what the
+STAF Email service is sending):
+<ul>
+<li>On the system where the STAF Email service is configured, open a command
+prompt/shell and enter:
+<pre>
+telnet &lt;mailserver.company.com> 25
+</pre>
+That should initiate a telnet session to your email server (use the same
+email server and port that you are using with the STAF Email service).
+<br><br>
+<li>Then enter the following 10 commands each followed by "ENTER":
+<pre>
+HELO hostname.company.com
+MAIL FROM: STAFEmailService@hostname.company.com
+RCPT TO: userid@company.com
+DATA
+To: userid@company.com
+Subject: My subject
+From: STAFEmailService@hostname.company.com
+This is my email message
+.
+QUIT
+</pre>
+("hostname.company.com" should be the hostname of the machine where you are
+running the telnet session, and "userid@company.com" should be the email
+address to send the email to)
+<br><br>
+<li>Here is an example of the normal output of the telnet session:
+<pre>
+220 mailserver.company.com ESMTP Sendmail 8.12.11.20060308/8.12.11; Wed, 24
+Sep
+2008 19:36:00 -0600
+HELO hostname.company.com
+250 mailserver.company.com Hello hostname.company.com [9.xx.xx.xxx], plea
+sed to meet you
+MAIL FROM: STAFEmailService@hostname.company.com
+250 2.1.0 STAFEmailService@hostname.company.com... Sender ok
+RCPT TO: userid@company.com
+250 2.1.5 userid@company.com... Recipient ok
+DATA
+354 Please start mail input.
+To: userid@company.com
+Subject: My subject
+From: STAFEmailService@hostname.company.com
+This is my email message
+.
+250 Mail queued for delivery.
+QUIT
+221 Closing connection. Good bye.
+</pre>
+</ul>
+<p>
+
+<HR>
+<H1><A name="Errors" href="#ToC_Errors">Email Error Code Reference</A></H1>
+
+<P>In addition to the common STAF return codes, the following Email
+return codes are defined:
+<BR>
+</P>
+<P><B>Table 1. Email Service Return Codes</B><BR>
+</P>
+<TABLE border="1" height="200">
+  
+    <TR>
+      <TH ALIGN=middle VALIGN=top WIDTH="14%" height="19">Error Code</TH>
+      <TH ALIGN=left VALIGN=top WIDTH="29%" height="19">Meaning</TH>
+      <TH ALIGN=left VALIGN=top WIDTH="57%" height="19">Comment</TH>
+    </TR>
+    <tr>
+      <TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>4001</B></TD>
+      <TD ALIGN=left VALIGN=top WIDTH="29%" height="19">IO Exception</TD>
+      <TD ALIGN=left VALIGN=top WIDTH="57%" height="19">An IO Exception occurred while sending the email.</TD>
+    </TR>
+    <tr>
+      <TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>44XX<br>45XX</B></TD>
+      <TD ALIGN=left VALIGN=top WIDTH="29%" height="19">SMTP Errors</TD>
+      <TD ALIGN=left VALIGN=top WIDTH="57%" height="19">The Email request generated an SMTP error.
+         The SMTP error code is the last 3 digits of the error code.
+         See section 4.2 in <A href="http://www.ietf.org/rfc/rfc821.txt">RFC 821</A> for
+         an explanation of SMTP return codes (e.g. 450, 503, 553, etc).</TD>
+    </TR>
+  
+</TABLE>
+<p>
+
+<HR>
+<p>
+<h1><a NAME="Header_Acknowledgements" href="#ToC_Acknowledgements">Licenses and Acknowledgements</a></h1>
+<B>Commons Codec</B> provides implementations of common encoders and decoders such as 
+Base64, Hex, various phonetic encodings, and URLs.</P>
+<H3>Acknowledgement</H3>
+<P>This product includes software developed by the Apache 
+Software Foundation (http://www.apache.org/).</P>
+<H3>License</H3>
+<PRE>/*
+ * The Apache Software License, Version 1.1
+ *
+ *
+ * Copyright (c) 1999-2004 The Apache Software Foundation.  All rights 
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:  
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Xerces" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written 
+ *    permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation and was
+ * originally based on software copyright (c) 1999, International
+ * Business Machines, Inc., http://www.ibm.com.  For more
+ * information on the Apache Software Foundation, please see
+ * &lt;http://www.apache.org/&gt;.
+ */
+</PRE>
+<P><BR>
+</body>
+</html>

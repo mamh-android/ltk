@@ -1,0 +1,1124 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/******************************************************************************/
+/* STAF_SERVICE_INTERFACE_LEVEL:2                                             */
+/******************************************************************************/
+/* REXX Logging Service for Software Testing Automation Framework (STAF)      */
+/* -------------------------------------------------------------------------- */
+/* Desc: Request to log, query, list, delete, or purge log files.             */
+/* -------------------------------------------------------------------------- */
+/* Options:                                                                   */
+/*  Log    - Log a message                                                    */
+/*           Log Path:                                                        */
+/*            GLOBAL  - <logdir>\GLOBAL<name.LOG>                             */
+/*            MACHINE - <logdir>\MACHINE\<machine>\GLOBAL\<name.LOG>          */
+/*            HANDLE  - <logdir>\MACHINE\<machine>\HANDLE\<handle>\<name.LOG> */
+/*                                                                            */
+/*           Log Levels: FATAL ERROR WARNING INFO TRACE TRACE2 TRACE3         */
+/*                       DEBUG DEBUG2 DEBUG3 START STOP PASS FAIL STATUS      */
+/*                       RESERVED1-9 USER1-8                                  */
+/*                                                                            */
+/*  Query  - query a log file                                                 */
+/*                                                                            */
+/*  List   - List the directories or files                                    */
+/*                                                                            */
+/*  Delete - Delete a log file                                                */
+/*                                                                            */
+/*  Purge - Purge records from a log file                                     */
+/*                                                                            */
+/*  Internal data format: (Note that all CAPS fields are unreadable)          */
+/*  0 = <LEVEL><TOTLEN><DATE><TIME>                                           */
+/*      <machine>|<handle>|<name>|<LOGLEVEL><message>                         */
+/*  1 = <LEVEL><DATE><TIME><LOGLEVEL><DATALEN>                                */
+/*      <machine>|<handle>|<name>|<message>                                   */
+/*                                                                            */
+/* Note: This program requires RxPP (REXX pre-processor) to be used to        */
+/*       generate the executable cmd file.                                    */
+/* -------------------------------------------------------------------------- */
+/* History:                                                                   */
+/*  0.10  DHR  02/01/1998  Initial implementation                             */
+/*  0.20  DHR  02/21/1998  Added variable resolution, PURGE, STATS, unique    */
+/*                         variable id                                        */
+/*  0.30  DHR  03/16/1998  Parser changes                                     */
+/*  0.50  DHR  03/26/1998  Added new API data structure and log level format  */
+/*  1.10  DHR  05/05/1998  Fixed DBCS error on date/time/level fields         */
+/*  1.75  DHR  09/15/1998  Add the new INTERFACE_LEVEL, call format,          */
+/*                         variable naming convention, fixed a bug            */
+/*                         in the BEFORE code (Query/Purge)                   */
+/*  1.80  CVR  04/30/1999  Remove old variable name support, warn at INIT.    */
+/*  1.81  CVR  11/01/1999  Updated to use CreatePath instead of ManagerDir    */
+/******************************************************************************/
+options "EXMODE ETMODE"
+
+parse source osType invokeType functionName
+
+call STAFErrorText              /* Set the STAF common error codes and text */
+
+/* Make sure we are being called correctly */
+if invokeType \= "FUNCTION" then
+  RETURN MakeSTAFResult(STAFError.!ServiceConfigurationError)
+
+/* Call the appropriate function */
+SIGNAL VALUE TRANSLATE(functionName)
+
+/****************************************************************************/
+/* Functions                                                                */
+/****************************************************************************/
+
+/****************************************************************************/
+/* STAFServiceInit - Initializes the service                                */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The service parameters                                          */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceInit:
+
+  parse arg serviceName, serviceParms
+
+  /* Load system functions */
+  call RxFuncAdd "SysLoadFuncs", "REXXUTIL", "SysLoadFuncs"
+  call SysLoadFuncs
+
+  /* Load STAF functions */
+  call RxFuncAdd "STAFLoadFuncs", "RXSTAF", "STAFLoadFuncs"
+  call STAFLoadFuncs
+
+  /* Register Log to STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then RETURN MakeSTAFResult(STAFError.!STAFRegistrationError,,
+    STAFError.!STAFRegistrationError.!text": "RESULT)
+
+  me     = "STAF/Service/"serviceName"/"  /* New variable style >= 1.75  */
+  oldme  = "STAFLog/"                     /* Old variable style < 1.75   */
+
+  lineSep        = '0D0A'x
+  fileSep        = '\'
+  maxRetry       = 30
+  maxSize        = 4096
+  resolveMessage = 0
+  maskval        = substr('1', 1, 32, '1')
+
+  call STAFSubmit "LOCAL", "VAR", "RESOLVE {STAF/Config/BootDrive}",
+                  "RESOLVE {STAF/Config/Sep/Line}",
+                  "RESOLVE {STAF/Config/Sep/File}",
+                  "RESOLVE {"me"Directory}",
+                  "RESOLVE {"me"Retry}",
+                  "RESOLVE {"me"MaxRecordSize}",
+                  "RESOLVE {"me"Mask}",
+                  "RESOLVE {"me"ResolveMessage}",
+                  "RESOLVE {"oldme"Directory}",
+                  "RESOLVE {"oldme"Retry}",
+                  "RESOLVE {"oldme"MaxRecordSize}",
+                  "RESOLVE {"oldme"Mask}",
+                  "RESOLVE {"oldme"ResolveMessage}"
+
+  if RESULT = 0 then
+  do
+    parse var STAFResult bootDriveRC ':' bootDrive '00'x,
+      lineSepRC ':' newlineSep '00'x fileSepRC ':' newfileSep '00'x,
+      meDirRC ':' meDir '00'x meRetryRC ':' meRetry '00'x,
+      meRecSizeRC ':' meRecSize '00'x meMaskRC ':' meMask '00'x ,
+      meResMessRC ':' meResMess '00'x,
+      oldmeDirRC ':' oldmeDir '00'x oldmeRetryRC ':' oldmeRetry '00'x,
+      oldmeRecSizeRC ':' oldmeRecSize '00'x oldmeMaskRC ':' oldmeMask '00'x ,
+      oldmeResMessRC ':' oldmeResMess '00'x
+
+    if lineSepRC = 0 then lineSep = newLineSep
+    if fileSepRC = 0 then fileSep = newFileSep
+
+    if (meDirRC \= 0) & (oldmeDirRC = 0) then
+    do
+      call DisplayOldVarErrorMessage "Directory",,
+           bootDrive || filesep || "STAF" || filesep || serviceName
+    end
+
+    if (meRetryRC \= 0) & (oldmeRetryRC = 0) then
+      call DisplayOldVarErrorMessage "Retry", maxRetry
+
+    if (meRecSizeRC \= 0) & (oldmeRecSizeRC = 0) then
+      call DisplayOldVarErrorMessage "MaxRecordSize", maxSize
+
+    if (meMaskRC \= 0) & (oldmeMaskRC = 0) then
+      call DisplayOldVarErrorMessage "Mask", maskval
+
+    if (meResMessRC \= 0) & (oldmeResMessRC = 0) then
+      call DisplayOldVarErrorMessage "ResolveMessage", resolveMessage
+  end
+
+RETURN MakeSTAFResult(RESULT)
+
+/****************************************************************************/
+/* STAFServiceAcceptRequest - Handles a service request from STAF           */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The name of the this machine                                    */
+/*          The name of the client machine                                  */
+/*          The effective name of the client machine                        */
+/*          The trust level of the client machine                           */
+/*          The registered name of the originating process                  */
+/*          The handle of the originating process                           */
+/*          The actual request string                                       */
+/*                                                                          */
+/* Returns: 0 , on success                                                  */
+/*          >0, otherwise                                                   */
+/****************************************************************************/
+STAFServiceAcceptRequest:
+
+  parse arg serviceName, thisMachine, clientMachine, clientEffective, ,
+            clientTrust, origName, origHandle, origRequest
+
+  /* Initialization */
+  version       = "1.81"
+  loglevel      = ""
+  latestlevel   = 1
+  infile        = ''
+  fsep          = '|'                           /* Log file field seperator */
+  ext           = ".log"                              /* Log file extension */
+  rc            = STAFError.!OK
+  errorBuffer   = ''
+  tmplogdata    = ''
+  tmplogdatacnt = 0
+  tmplogdatamax = 100
+  copysize      = 500000
+
+  call LogMonErrorText
+  numeric digits 10                    /* Initialize digits to precision 10 */
+
+  /* Register Log to STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then RETURN MakeSTAFResult(STAFError.!STAFRegistrationError, ,
+    STAFError.!STAFRegistrationError.!text": "RESULT)
+
+  if clientTrust = 0 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+    STAFError.!AccessDenied.!text)
+
+  call ProcessVars
+
+  /* Query STAF for logging mask */
+  if datatype(maskval,b) & length(maskval) = 32 then logmask = maskval
+  else
+  do
+    maskval_input = maskval
+    maskval_rest  = maskval
+    logmask = substr('0', 1, 32, '0')        /* Init levelmask to 32 zeros */
+    do while maskval_rest > ''               /* Loop through maskval list  */
+      parse var maskval_input maskval_level maskval_rest
+      maskval_level = expandLevel(maskval_level)
+      if datatype(maskval_level,b) = 0 | length(maskval_level) \= 32 then
+      do
+        logmask = substr('0', 1, 32, '1')
+        leave
+      end
+      /* Overlay levelmask with a 1 in position where 1 in returned level */
+      logmask = overlay('1', logmask, pos('1',maskval_level))
+      maskval_input = maskval_rest
+    end
+  end
+
+  parse var origRequest type .
+  type = translate(type)
+  if type = "VERSION" then RETURN MakeSTAFResult(STAFError.!Ok, version)
+  else
+  do
+    if type \= "LOG" & type \= "QUERY" & type \= "LIST" & ,
+      type \= "DELETE" & type \= "PURGE" & type \= "HELP" then
+        RETURN MakeSTAFResult(STAFError.!InvalidRequestString, ,
+        STAFError.!InvalidRequestString.!text || linesep || ,
+        "Requires QUERY, LOG, LIST, DELETE, PURGE, or HELP")
+  end
+
+  /* Initalize the parser for LOG or QUERY and validate input parameters */
+  call InitializeLogParser
+
+  origMachine = clientEffective
+
+  /* Query STAF for the TRUST level of the remote machine if used */
+  rmtmachine = OptionValue("RMTMACHINE")
+  if rmtmachine > '' then
+  do
+    STAFRC = STAFSubmit("LOCAL", "TRUST", "GET MACHINE "rmtmachine)
+    if STAFRC = 0 then trustlevel = min(trustlevel, STAFResult)
+    else trustlevel = 0
+  end
+
+  select
+    when type = "QUERY" | type = "PURGE" then
+    do
+      totalcount = 0
+      purgecount = 0
+      call ValidateQueryPurgeInput
+      originfile = infile
+      if type = QUERY then
+      do
+        if trustlevel < 2 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+          STAFError.!AccessDenied.!text)
+        /* If the size of the file is >= copysize then use a copy to query */
+        logcopied = 0
+        rc = FileStatus(infile, maxretry, "read")
+        if rc = STAFError.!Ok then
+        do
+          call SysFileTree infile, stem, "FT"
+          if stem.0 = 1 then
+          do
+            parse var stem.1 . outsize . .
+            if outsize >= copysize then
+            do
+              logcopied = 1
+              copyfile = SysTempFileName(logdir || filesep || ,
+                         ResolveVariable(optionValue("LOGNAME")) || ".???")
+              '@copy' infile copyfile '>nul 2>nul'
+              if rc > 0 then call STAFExit STAFError.!FileWriteError,,
+                  STAFError.!FileWriteError.!text": "copyfile
+              call stream infile, "c", "close"
+              infile = copyfile
+            end
+          end
+        end
+      end
+      else
+      do                                                        /* Purge Option */
+        if trustlevel < 4 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+          STAFError.!AccessDenied.!text)
+        rc = FileStatus(infile, maxretry, "read/write")
+        newfile = SysTempFileName(logdir || filesep"LM?????.TMP")
+      end
+      if rc = STAFError.!Ok then                        /* Make sure file READY */
+      do
+        selcount = 0
+        logdata = ''
+        do while(chars(infile) > 0)                           /* Read until EOF */
+          select = 1
+          loglevel = c2d(charin(infile,,1),1)             /* Read the log level */
+          select
+            when loglevel = 1 then
+            do
+              ldate = charin(infile,,4)
+              ltime = charin(infile,,3)
+              level = charin(infile,,4)
+              totlen = c2d(charin(infile,,4),4)             /* Read record length */
+              if datatype(c2d(ldate),'X') = 0 | datatype(c2d(level),'X') = 0 then
+                call STAFExit errorBadLog, errorBadLog.!text": "originfile
+              data = charin(infile,,totlen)                 /* Read <totlen> data */
+              parse var data  machine (fsep) handle (fsep) name (fsep) message
+            end
+            when loglevel = 0 then
+            do
+              totlen = c2d(charin(infile,,4),4)           /* Read record length */
+              data = charin(infile,,totlen)               /* Read <totlen> data */
+              parse var data ldate +4 ltime +3 machine (fsep) handle (fsep) ,
+                name (fsep) +1 level +4 message
+              if datatype(c2d(ldate),'X') = 0 | datatype(c2d(level),'X') = 0 then
+                call STAFExit MakeSTAFResult(errorBadLog, errorBadLog.!text": "originfile)
+            end
+            otherwise call STAFExit MakeSTAFResult(errorBadLog, errorBadLog.!text": "originfile)
+          end
+          longlevel = level
+          select = ValidateLogRecord()         /* See if matched query criteria */
+          if type = "QUERY" then
+          do
+            if select = 1 then
+            do
+              call ProcessSelectedRecord                     /* Record selected */
+              if first > '' & selcount = first then leave    /* Got all we need */
+            end
+            else if select = 2 then leave   /* Date range passed, time to leave */
+          end
+          else
+          do
+            if loglevel = 0 then     /* Save old non-purged records in new format */
+            do
+              data = machine || fsep || handle || fsep || name || fsep || message
+              totlen = dbwidth(machine) + dbwidth(handle) + dbwidth(name) + dbwidth(message) + 3
+            end
+            totalcount = totalcount + 1
+            if first > '' then selcount = selcount + 1
+            if select = 0 | (first > '' & selcount > first) then
+            do
+              rc = charout(newfile, d2c(latestlevel,1) || d2c(ldate,4) || ,
+                   d2c(ltime,3) || longlevel || d2c(totlen,4) || data)
+              if rc \= 0 then call STAFExit MakeSTAFResult(STAFError.!FileWriteError, ,
+                STAFError.!FileWriteError.!text": "newfile)
+            end
+            else purgecount = purgecount + 1
+          end
+        end
+        if type = "PURGE" then
+        do
+          if purgecount = totalcount then
+            rc = MakeSTAFResult(errorPurge, errorPurge.!text)
+          else
+          do
+            call stream newfile, "c", "close"
+            call stream infile, "c", "close"
+            '@copy' newfile infile '>nul 2>nul'   /* FIX to charin/charout */
+            call SysFileDelete newfile
+            if rc \= 0 then call STAFExit MakeSTAFResult(STAFError.!FileWriteError, ,
+              STAFError.!FileWriteError.!text": "infile)
+            rc = MakeSTAFResult(STAFError.!Ok, purgecount"/"totalcount)
+          end
+        end
+        else                                              /* Build Query Output */
+        do
+          call stream infile, "c", "close"
+          if stats then
+            do i = 32 to 1 by -1
+              if statsarray.i > 0 then
+              do
+                statsmask = substr('0', 1, 32, '0')
+                statsmask = overlay('1', statsmask, i)
+                logdata = logdata || ResolveLevel(statsmask)"="statsarray.i || linesep
+              end
+            end
+          else
+            if totalonly then logdata = selcount       /* Only want total count */
+            else if last > '' then call ProcessLastRequest  /* Only want last x */
+              else logdata = logdata || tmplogdata
+          rc = MakeSTAFResult(STAFError.!Ok, logdata)   /* Format output buffer */
+        end
+      end
+      else rc = MakeSTAFResult(STAFError.!FileOpenError, errorBuffer)
+      if logcopied = 1 then call SysFileDelete copyfile
+    end
+    when type = "LOG" then
+    do
+      if trustlevel < 3 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      if rmtmachine > '' then
+      do
+        /* Determine the actual remote machine name (short or long) */
+        STAFRC = STAFSubmit("LOCAL", "MISC", "MACHINE "rmtmachine)
+        if STAFRC = 0 then rmtmachine = STAFResult
+        origMachine = rmtmachine
+        origHandle = OptionValue("RMTHANDLE")
+        origName = OptionValue("RMTNAME")
+      end
+      call ValidateLogInput                    /* Validate required level input */
+      call SetDirStruct origMachine origHandle
+      name = OptionValue("NAME")
+
+      rc = CreatePath(logdir, filesep)            /* Check|create directory(s) */
+      if rc = STAFError.!Ok then
+      do
+        status = FileStatus(infile, maxretry, "write") /* Make sure file READY */
+        if status \= 2 then
+        do
+          options "NOEXMODE NOETMODE"
+          rc = charout(infile, d2c(latestlevel,1) || d2c(date('S'),4) || ,
+            d2c(time('S'),3) || d2c(x2d(b2x(level)),4) || d2c(totlen,4) || ,
+            origMachine || fsep || origHandle || fsep || origName || fsep || message)
+          options "EXMODE ETMODE"
+          if rc = STAFError.!Ok then call STAFExit MakeSTAFResult(STAFError.!Ok)
+          else rc = MakeSTAFResult(STAFError.!FileWriteError, ,
+            STAFError.!FileWriteError.!text": "infile)
+          call stream infile, "c", "close"
+        end
+        else rc = MakeSTAFResult(STAFError.!FileOpenError, errorBuffer)
+      end
+      else
+      do
+        errorBuffer = errorMakeDir.!text || logdir
+        rc = MakeSTAFResult(STAFError.!FileOpenError, errorBuffer)
+      end
+    end
+    when type = "LIST" then
+    do
+      if trustlevel < 2 then call STAFExit MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      call SetDirStruct ResolveVariable(optionValue("MACHINE")) ,
+        ResolveVariable(optionValue("HANDLE"))
+      if optionTimes("MACHINES") > 0 | optionTimes("HANDLES") > 0 then
+      do
+        listfileopts = "DT"
+        listdir = logdir || filesep || "*"
+      end
+      else
+      do
+        listfileopts = "FST"
+        listdir = logdir||filesep||"*"||ext
+      end
+      call SysFileTree listdir, stem, listfileopts
+      if stem.0 = 0 then
+      do
+        if optionTimes("MACHINES") > 0 then text = "No machine logs found"
+          else if optionTimes("HANDLES") > 0 then text = "No handle logs found"
+            else if optionTimes("MACHINE") > 0 then text = "No global machine logs found"
+              else text = "No global logs found"
+        rc = MakeSTAFResult(STAFError.!FileOpenError, text": "listdir)
+      end
+      else
+      do
+        rc = MakeSTAFResult(STAFError.!Ok)
+        do i = 1 to stem.0
+          parse var stem.i listdatetime listsize . listfile
+          listfirst = lastpos(filesep,listfile) + 1
+          if optionTimes("MACHINES") > 0 | optionTimes("HANDLES") > 0 then
+          do
+            listlength = length(listfile) - listfirst + 1
+            listrest = linesep
+            listfile = substr(listfile, listfirst, listlength)
+          end
+          else
+          do
+            listlength = lastpos('.',listfile) - listfirst
+            listrest = MakeStandardDate(substr(listdatetime,4,2)|| ,
+              substr(listdatetime,7,2)substr(listdatetime,1,2))||"-"|| ,
+              substr(listdatetime,10,2)||":"||substr(listdatetime,13,2)|| ,
+              ":00  Size="||listsize||linesep
+            listfile = substr(substr(listfile, listfirst, listlength),1,40,'.')
+          end
+          rc = rc||listfile||"  "||listrest
+        end
+      end
+    end
+    when type = "DELETE" then
+    do
+      if trustlevel < 4 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      call SetDirStruct ResolveVariable(optionValue("MACHINE")) ,
+        ResolveVariable(optionValue("HANDLE"))
+      rc = SysFileDelete(infile)
+      if rc = STAFError.!Ok then rc = MakeSTAFResult(STAFError.!Ok)
+      else rc = MakeSTAFResult(STAFError.!FileDeleteError, ,
+        STAFError.!FileDeleteError.!text": "infile" (rc="rc")")
+    end
+  end
+
+  call STAFUnRegister
+  RETURN rc
+
+/******************************************************************************/
+/*  Function Definitions                                                      */
+/******************************************************************************/
+
+/******************************************************************************/
+/* CheckRange - Determine if a log record meets the date/time criteria.       */
+/* Arguments: nothing                                                         */
+/* Returns  : 0 if no data found                                              */
+/*            1 if record meets date/time criteria                            */
+/*            2 if record is past BEFORE and TO criteria                      */
+/******************************************************************************/
+CheckRange:
+
+  /* FROM date/time check */
+  if checkdate.1 > '' then
+    if ldate < checkdate.1 then return 0
+    else if ldate = checkdate.1 then
+      if checktime.1 > '' then
+        if ltime < checktime.1 then return 0
+        else nop
+      else nop
+    else nop
+  else if checktime.1 > '' then
+    if ltime < checktime.1 then return 0
+
+  /* AFTER date/time check */
+  if checkdate.2 > '' then
+    if ldate < checkdate.2 then return 0
+    else if ldate <= checkdate.2 then
+      if checktime.2 > '' then
+        if ltime <= checktime.2 then return 0
+        else nop
+      else return 0
+    else nop
+  else if checktime.2 > '' then
+   if ltime <= checktime.2 then return 0
+
+  /* TO date/time check */
+  if checkdate.3 > '' then
+    if ldate > checkdate.3 then return 2
+    else if ldate = checkdate.3 then
+      if checktime.3 > '' then
+        if ltime > checktime.3 then return 0
+        else nop
+      else nop
+    else nop
+  else if checktime.3 > '' then
+    if ltime > checktime.3 then return 2
+
+  /* BEFORE date/time check */
+  if checkdate.4 > '' then
+    if ldate > checkdate.4 then return 2
+    else if ldate = checkdate.4 then
+      if checktime.4 > '' then
+        if ltime >= checktime.4 then return 0
+        else nop
+      else return 0
+    else nop
+  else if checktime.4 > '' then
+    if ltime >= checktime.4 then return 2
+
+return 1
+
+/******************************************************************************/
+/* InitializeLogParser - Initial the parser options for each request type.    */
+/* Arguments: none                                                            */
+/* Returns  : none if ok                                                      */
+/*            exits if invalid options specified                              */
+/******************************************************************************/
+InitializeLogParser:
+
+  /* Initial the parser options for each request type */
+  call InitParser
+  call AddOptionGroup "HELP LOG QUERY LIST DELETE PURGE", 1, 1
+  call AddOption "RMTMACHINE", 1, "YES"
+  select
+    when type = "QUERY" | type = "PURGE" then
+    do
+      call AddOption "QUERY", 1, "NO"
+      call AddOption "PURGE", 1, "NO"
+      call AddOption "CONFIRM", 1, "NO"
+      call AddOptionNeed "PURGE", "CONFIRM"
+      call AddOption "GLOBAL", 1, "NO"
+      call AddOption "MACHINE", 1, "YES"
+      call AddOption "HANDLE", 1, "YES"
+      call AddOptionGroup "GLOBAL MACHINE", 1, 1
+      call AddOptionNeed "HANDLE", "MACHINE"
+      call AddOption "LOGNAME", 1, "YES"
+      call AddOptionNeed "QUERY", "LOGNAME"
+      call AddOptionNeed "PURGE", "LOGNAME"
+      call AddOption "QMACHINE", 0, "YES"
+      call AddOption "QHANDLE", 0, "YES"
+      call AddOption "NAME", 0, "YES"
+      call AddOption "FIRST", 1, "YES"
+      call AddOption "LAST", 1, "YES"
+      call AddOption "TOTAL", 1, "NO"
+      call AddOption "STATS", 1, "NO"
+      call AddOptionGroup "FIRST LAST TOTAL STATS", 0, 1
+      call AddOption "CONTAINS", 0, "YES"
+      call AddOption "LEVELBITSTRING", 1, "NO"
+      call AddOption "LEVELMASK", 1, "YES"
+      call AddOption "FROM", 1, "YES"
+      call AddOption "AFTER", 1, "YES"
+      call AddOption "TO", 1, "YES"
+      call AddOption "BEFORE", 1, "YES"
+      call AddOptionGroup "FROM AFTER", 0, 1
+      call AddOptionGroup "TO BEFORE", 0, 1
+      call AddOption "FIELDSEP", 1, "YES"
+      call AddOptionGroup "FIELDSEP PURGE", 0, 1
+      call AddOptionGroup "LAST PURGE", 0, 1
+      call AddOptionGroup "TOTAL PURGE", 0, 1
+      call AddOptionGroup "STATS PURGE", 0, 1
+      call AddOptionGroup "LEVELBITSTRING PURGE", 0, 1
+    end
+    when type = "LOG" then
+    do
+      call InitializeLogOption
+      call AddOption "RMTHANDLE", 1, "YES"
+      call AddOption "RMTNAME", 1, "YES"
+      call AddOptionNeed "RMTMACHINE", "RMTHANDLE"
+      call AddOptionNeed "RMTMACHINE", "RMTNAME"
+    end
+    when type = "LIST" then
+    do
+      call AddOption "LIST", 1, "NO"
+      call AddOption "GLOBAL", 1, "NO"
+      call AddOption "MACHINE", 1, "YES"
+      call AddOption "HANDLE", 1, "YES"
+      call AddOption "MACHINES", 1, "NO"
+      call AddOption "HANDLES", 1, "NO"
+      call AddOptionGroup "GLOBAL MACHINES MACHINE", 1, 1
+      call AddOptionGroup "MACHINES HANDLES", 0, 1
+      call AddOptionGroup "MACHINE MACHINES", 0, 1
+      call AddOptionGroup "HANDLE HANDLES", 0, 1
+      call AddOptionNeed "HANDLE", "MACHINE"
+    end
+    when type = "DELETE" then
+    do
+      call AddOption "DELETE", 1, "NO"
+      call AddOption "GLOBAL", 1, "NO"
+      call AddOption "CONFIRM", 1, "NO"
+      call AddOption "MACHINE", 1, "YES"
+      call AddOption "HANDLE", 1, "YES"
+      call AddOption "LOGNAME", 1, "YES"
+      call AddOptionGroup "GLOBAL MACHINE HANDLE", 1, 2
+      call AddOptionNeed "DELETE", "LOGNAME"
+      call AddOptionNeed "DELETE", "CONFIRM"
+      call AddOptionNeed "HANDLE", "MACHINE"
+    end
+    when type = "HELP" then call ProcessHelp
+  end
+
+  rc = ParseString(origRequest, "errorBuffer")
+  if rc \= 0 then call STAFExit MakeSTAFResult(STAFError.!InvalidRequestString, ,
+    STAFError.!InvalidRequestString.!text || linesep || errorBuffer)
+
+return
+
+/******************************************************************************/
+/* ProcessHelp - Format help output buffer and exit.                          */
+/* Arguments: none                                                            */
+/* Returns  : exits                                                           */
+/******************************************************************************/
+ProcessHelp:
+
+  call STAFExit MakeSTAFResult(STAFError.!Ok, "STAF Log Help"||linesep||linesep|| ,
+  "LOG    <GLOBAL | MACHINE | HANDLE> LOGNAME <Logname> LEVEL <Level>"||linesep|| ,
+  "       MESSAGE <Message> [RESOLVEMESSAGE | NORESOLVEMESSAGE]"||linesep|| ,
+  "QUERY  <GLOBAL | [[MACHINE <Machine>] [HANDLE <Handle>]] LOGNAME <Logname>"||linesep|| ,
+  "       [LEVELMASK <Mask>] [QMACHINE <Machine> [QHANDLE <Handle>]]"||linesep|| ,
+  "       [NAME <Name>] [FIRST <Num> | LAST <Num>] | TOTAL | STATS]"||linesep|| ,
+  "       [CONTAINS <String>] [LEVELBITSTRING] [FIELDSEP <Char>]"||linesep|| ,
+  "       [FROM <Timestamp> | AFTER <Timestamp>]"||linesep|| ,
+  "       [BEFORE <Timestamp> | TO <Timestamp>]"||linesep|| ,
+  "       Note: <Timestamp> format is date, @time, or date@time"||linesep|| ,
+  "             (i.e. 19980214, @16:30:45, 19980214@16:30:45)"||linesep|| ,
+  "LIST   <GLOBAL | MACHINES | [[MACHINE <Machine>] [HANDLE <Handle>] "|| ,
+  "[HANDLES]]>"||linesep|| ,
+  "DELETE <GLOBAL | [[MACHINE <Machine>] [HANDLE <Handle>]]>"||linesep ,
+  "       LOGNAME <Logname> CONFIRM"||linesep|| ,
+  "PURGE  <GLOBAL | [[MACHINE <Machine>] [HANDLE <Handle>]]> LOGNAME <Logname>"||linesep|| ,
+  "       CONFIRM [plus same optional selection criteria as QUERY except"||linesep|| ,
+  "       LAST, TOTAL, STATS, LEVELBITSTRING and FIELDSEP not allowed]"||linesep|| ,
+  "HELP")
+
+return
+
+/******************************************************************************/
+/* ProcessLastRequest - If LAST specifiled the process the circular stem      */
+/*   holding the selected records and add them the the output buffer.         */
+/* Arguments: none                                                            */
+/* Returns  : none                                                            */
+/******************************************************************************/
+ProcessLastRequest:
+
+  /* Position the saved pointer to the last record saved */
+  if lastpntr = 1 then PL_savepntr = lastdata.0
+  else PL_savepntr = lastpntr - 1
+
+  /* Make sure the total of LAST does not exceed the number selected */
+  if lastdata.0 > selcount then lastdata.0 = selcount
+
+  /* Build output buffer with first record selected to end of stem */
+  do i = lastpntr to lastdata.0
+    logdata = logdata||lastdata.i
+  end
+
+  /* If did not start at top of stem, then build output buffer from the */
+  /* top of the stem to last record selected                            */
+  if lastpntr \= 1 then
+    do i = 1 to PL_savepntr
+      logdata = logdata||lastdata.i
+    end
+
+return
+
+/******************************************************************************/
+/* ProcessSelectedRecord -  The record has matched the QUERY selection input, */
+/*   if NOT TOTAL then concatenate the selected record to the output buffer.  */
+/* Arguments: none                                                            */
+/* Returns  : none                                                            */
+/******************************************************************************/
+ProcessSelectedRecord:
+
+   selcount = selcount + 1
+
+   if stats then
+   do
+     PS_statsindex = pos('1',statslevel)
+     statsarray.PS_statsindex = statsarray.PS_statsindex + 1
+   end
+   else if totalonly = 0 then
+   do
+     tmpdata = ldate||"-"||convertSeconds(ltime)||fieldsep|| ,
+       machine||fieldsep||handle||fieldsep||name||fieldsep|| ,
+       level||fieldsep||message||linesep
+     if last = '' then
+     do
+       tmplogdatacnt = tmplogdatacnt + 1
+       tmplogdata = tmplogdata||tmpdata
+       if tmplogdatacnt >= tmplogdatamax then
+       do
+         logdata = logdata||tmplogdata
+         tmplogdata = ''
+         tmplogdatacnt = 0
+       end
+     end
+     else
+     do
+       lastdata.lastpntr = tmpdata
+       if lastpntr = lastdata.0 then lastpntr = 1
+       else lastpntr = lastpntr + 1
+     end
+   end
+
+return
+
+/******************************************************************************/
+/* SetDirStruct - Determine directory structure for GLOBAL, MACHINE, HANDLE   */
+/*   Sets logdir and infile.                                                  */
+/* Arguments: machine handle                                                  */
+/* Returns  : none                                                            */
+/******************************************************************************/
+SetDirStruct:
+  parse arg SD_machine SD_handle
+
+  select
+    when optionTimes("MACHINES")  > 0 then logdir = logdir||filesep||"MACHINE"
+    when optionTimes("HANDLES")  > 0 then logdir = logdir||filesep|| ,
+      "MACHINE"||filesep||SD_machine||filesep||"HANDLE"
+    when optionTimes("HANDLE")  > 0 then
+      if SD_machine = '' then logdir = logdir||filesep||"MACHINE"
+      else
+        if SD_handle = '' then logdir = logdir||filesep||"MACHINE"|| ,
+          filesep||SD_machine||filesep||"HANDLE"
+        else logdir = logdir||filesep||"MACHINE"|| ,
+          filesep||SD_machine||filesep||"HANDLE"||filesep||SD_handle
+    when optionTimes("MACHINE") > 0 then
+      if SD_machine = '' then logdir = logdir||filesep||"MACHINE"
+      else logdir = logdir||filesep||"MACHINE"|| ,
+        filesep||SD_machine||filesep||"GLOBAL"
+    when optionTimes("GLOBAL")  > 0 then logdir = logdir||filesep||"GLOBAL"
+  end
+
+  infile = logdir||filesep||ResolveVariable(optionValue("LOGNAME"))||ext
+
+return
+
+/******************************************************************************/
+/* ValidateLogInput - Expand the level from a keyword to a 32 binary bit      */
+/*   string if needed, validate the level specified is valid, check against   */
+/*   the logmask to see if the message should be logged.   Resolve the        */
+/*   message if appropriate.                                                  */
+/* Arguments: none                                                            */
+/* Returns  : none                                                            */
+/******************************************************************************/
+ValidateLogInput:
+
+  level = ResolveVariable(OptionValue("LEVEL"))
+  if length(level) \= 32 then level = ExpandLevel(level)
+  if datatype(level,b) = 0 | length(level) \= 32 | CharCount("1",level) = 0 | ,
+    CharCount("1",level) > 1 then call STAFExit MakeSTAFResult(errorLevel, ,
+      errorLevel.!text)
+
+  /* Check logging level for reserved values before continuing */
+  if pos('1',level) >= 9 & pos('1',level) <= 17 then
+    call STAFExit MakeSTAFResult(errorLevel, errorLevel.!text" - Level is reserved")
+
+  /* Check if data should be logged based on the level specified and logmask set */
+  if b2x(bitand(level,logmask)) = 0 then call STAFExit MakeSTAFResult(STAFError.!Ok)
+
+  /* Determine if message resolution is enabled or disabled */
+  if optionTimes("RESOLVEMESSAGE") > 0 then resolveMessage = 1
+  else if optionTimes("NORESOLVEMESSAGE") > 0 then resolveMessage = 0
+
+  message = OptionValue("MESSAGE")
+  if resolveMessage then message = ResolveVariable(message)
+
+  totlen = (dbwidth(origMachine) + dbwidth(origHandle) + ,
+    dbwidth(origName) + dbwidth(message) + 3)
+  if totlen > maxrsize then             /* Max length exceeded, trunc message */
+  do
+    message = left(message,maxrsize)
+    totlen = (dbwidth(origMachine) + dbwidth(origHandle) + ,
+      dbwidth(origName) + dbwidth(message) + 3)
+  end
+
+return
+
+/******************************************************************************/
+/* ValidateLogRecord - Validate the log record meets the selection criteria.  */
+/* Arguments: none                                                            */
+/* Returns  : 0 if no match                                                   */
+/*          : 1 if record matched selection critera                           */
+/******************************************************************************/
+ValidateLogRecord:
+
+  ldate = c2d(ldate)
+  ltime = c2d(ltime)
+  VL_select = 1
+
+  level = x2b(d2x(c2d(level),8))
+  if levelmask > '' then
+  do
+    if b2x(bitand(level,levelmask)) > 0 then VL_select = 1
+    else return 0
+  end
+
+  if stats then statslevel = level
+  if level32 = 0 then level = ResolveLevel(level)
+
+  do i = 1 to contains.0
+    if pos(contains.i,translate(message)) > 0 then
+    do
+      VL_select = 1
+      leave
+    end
+    else VL_select = 0
+  end
+
+  if VL_select = 0 then return 0
+
+  do i = 1 to qmachine.0
+    if qmachine.i = translate(machine) then
+    do
+      VL_select = 1
+      leave
+    end
+    else VL_select = 0
+  end
+
+  if VL_select = 0 then return 0
+
+  do i = 1 to qhandle.0
+    if qhandle.i = handle then
+    do
+      VL_select = 1
+      leave
+    end
+    else VL_select = 0
+  end
+
+  if VL_select = 0 then return 0
+
+  do i = 1 to qname.0
+    if qname.i = translate(name) then
+    do
+      VL_select = 1
+      leave
+    end
+    else VL_select = 0
+  end
+
+  if VL_select = 0 then return 0
+
+  if dodate = 1 then VL_select = CheckRange()
+
+return VL_select
+
+/******************************************************************************/
+/* ValidateQueryPurgeInput - Validate the input query and purge selection.    */
+/* Arguments: none                                                            */
+/* Returns  : none if valid                                                   */
+/*            exits if invalid                                                */
+/******************************************************************************/
+ValidateQueryPurgeInput:
+
+  levelmask = ResolveVariable(optionValue("LEVELMASK"))
+  if levelmask > '' then
+  do
+    if datatype(levelmask,b) = 0 | length(levelmask) \= 32 then
+    do
+      VQ_input = optionValue("LEVELMASK")
+      VQ_rest = VQ_input
+      levelmask = substr('0', 1, 32, '0')      /* Init levelmask to 32 zeros */
+      do while VQ_rest > ''                       /* Loop through level list */
+        parse var VQ_input VQ_level VQ_rest
+        VQ_level = expandLevel(VQ_level)
+        if datatype(VQ_level,b) = 0 | length(VQ_level) \= 32 then
+          call STAFExit MakeSTAFResult(errorLevel, errorLevel.!text)
+        /* Overlay levelmask with a 1 in position where 1 in returned level */
+        levelmask = overlay('1', levelmask, pos('1',VQ_level))
+        VQ_input = VQ_rest
+      end
+    end
+  end
+
+  VQ_machine = ResolveVariable(optionValue("MACHINE"))
+  VQ_handle = ResolveVariable(optionValue("HANDLE"))
+  call SetDirStruct VQ_machine VQ_handle
+
+  contains.0 = optionTimes("CONTAINS")
+  do i = 1 to contains.0
+    contains.i = translate(ResolveVariable(optionValue("CONTAINS",i)))
+  end
+
+  qmachine.0 = optionTimes("QMACHINE")
+  do i = 1 to qmachine.0
+    qmachine.i = translate(ResolveVariable(optionValue("QMACHINE",i)))
+  end
+
+  qhandle.0 = optionTimes("QHANDLE")
+  do i = 1 to qhandle.0
+    qhandle.i = ResolveVariable(optionValue("QHANDLE",i))
+  end
+
+  qname.0 = optionTimes("NAME")
+  do i = 1 to qname.0
+    qname.i = translate(ResolveVariable(optionValue("NAME",i)))
+  end
+
+  if optionTimes("LEVELBITSTRING") > 0 then level32 = 1
+  else level32 = 0
+
+  totalonly = optionTimes("TOTAL")
+
+  /* Validate FIRST is a whole number > 0 */
+  first = ResolveVariable(optionValue("FIRST"))
+  if first > '' & (first < 1 | datatype(first,'W') = 0) then
+    call STAFExit MakeSTAFResult(errorBadNum, errorBadNum.!text"FIRST = "first)
+
+  /* Validate LAST is a whole number > 0 */
+  last = ResolveVariable(optionValue("LAST"))
+  if last > '' then
+    if (last < 1 | datatype(last,'W') = 0) then
+      call STAFExit MakeSTAFResult(errorBadNum, errorBadNum.!text"LAST = "last)
+    else
+    do
+      lastpntr = 1
+      lastdata.0 = last
+    end
+
+  /* Validate the date range parameters FROM, AFTER, TO, BEFORE */
+  istamp.0 = 4
+  istamp.1 = ResolveVariable(optionValue("FROM"))
+  dstamp.1 = "FROM"
+  istamp.2 = ResolveVariable(optionValue("AFTER"))
+  dstamp.2 = "AFTER"
+  istamp.3 = ResolveVariable(optionValue("TO"))
+  dstamp.3 = "TO"
+  istamp.4 = ResolveVariable(optionValue("BEFORE"))
+  dstamp.4 = "BEFORE"
+  dodate = 0
+  do i = 1 to istamp.0
+    if istamp.i > '' then
+    do
+      call ValidateTimeStamp i
+      dodate = 1
+    end
+    else
+    do
+      checkdate.i = ''
+      checktime.i = ''
+    end
+  end
+
+  /* Initial the FIELDSEP parameter */
+  if optionTimes("FIELDSEP") > 0 then
+  do
+    fieldsep = ResolveVariable(optionValue("FIELDSEP"))
+    if fieldsep = '' then fieldsep = ' '
+  end
+  else fieldsep = "|"
+
+  if optionTimes("STATS") > 0 then
+  do
+    stats = 1
+    do i = 1 to 32
+      statsarray.i = 0
+    end
+  end
+  else stats = 0
+
+return
+
+/******************************************************************************/
+/* ValidateTimeStamp - Validates that input date and/or time is valid .       */
+/* Arguments: timestamp                                                       */
+/* Returns  : none if valid                                                   */
+/*            exits if invalid                                                */
+/******************************************************************************/
+ValidateTimeStamp:
+  parse arg CT_i
+
+  CT_rc = 0
+  parse var istamp.CT_i CT_date '@' CT_time
+
+  if CT_date > '' then
+  do
+    if translate(CT_date) = "TODAY" then checkdate.CT_i = date('S')
+    else
+    do
+      call EvalDate CT_date
+      parse var result CT_rc CT_date
+      if CT_rc = 0 then checkdate.CT_i = CT_date
+      else call STAFExit MakeSTAFResult(errorDate, errorDate.!text || dstamp.CT_i || ,
+        " MM/DD/YY or YYYYMMDD")
+    end
+  end
+  else checkdate.CT_i = ''
+
+  if CT_time > '' then
+  do
+    call EvalTime CT_time
+    parse var result CT_rc CT_hour ":" CT_minute ":" CT_second
+    if CT_rc = 0 then checktime.CT_i = (CT_hour*3600)+(CT_minute*60)+CT_second
+    else call STAFExit MakeSTAFResult(errorTime, errorTime.!text || ,
+      dstamp.CT_i||" HH:MM:SS")
+  end
+  else checktime.CT_i = ''
+
+  if CT_date = '' & CT_time = '' then
+    call STAFExit MakeSTAFResult(STAFError.!InvalidRequestString, ,
+      STAFError.!InvalidRequestString.!text||", no date or time specified")
+
+RETURN
+
+
+/****************************************************************************/
+/* ProcessVars - Multi-Variable call, determines the STAF                   */
+/*               variables need for Log.                                    */
+/*                                                                          */
+/* Accepts: action, serviceName                                             */
+/* Returns: 0                                                               */
+/****************************************************************************/
+ProcessVars:
+
+  me     = "STAF/Service/"serviceName"/"  /* New variable style >= 1.75  */
+
+  lineSep        = '0D0A'x
+  fileSep        = '\'
+  maxRetry       = 30
+  maxSize        = 4096
+  resolveMessage = 0
+  maskval        = substr('1', 1, 32, '1')
+
+  if thisMachine = clientMachine then type = "HANDLE" origHandle
+  else type = "GLOBAL"
+
+  call STAFSubmit "LOCAL", "VAR", type "RESOLVE {STAF/Config/BootDrive}",
+                  "RESOLVE {STAF/Config/Sep/Line}",
+                  "RESOLVE {STAF/Config/Sep/File}",
+                  "RESOLVE {"me"Directory}",
+                  "RESOLVE {"me"Retry}",
+                  "RESOLVE {"me"MaxRecordSize}",
+                  "RESOLVE {"me"Mask}",
+                  "RESOLVE {"me"ResolveMessage}"
+
+  if RESULT = 0 then
+  do
+    parse var STAFResult bootDriveRC ':' bootDrive '00'x,
+      lineSepRC ':' newlineSep '00'x fileSepRC ':' newfileSep '00'x,
+      meDirRC ':' meDir '00'x meRetryRC ':' meRetry '00'x,
+      meRecSizeRC ':' meRecSize '00'x meMaskRC ':' meMask '00'x,
+      meResMessRC ':' meResMess '00'x
+
+    if lineseprc = 0 then linesep = newlinesep
+    if fileseprc = 0 then filesep = newfilesep
+    if meretryrc = 0 then maxretry = meretry
+    if merecsizerc = 0 then maxsize = merecsize
+    if memaskrc = 0 then maskval = memask
+    if meresmessrc = 0 then resolvemessage = meresmess
+
+    if medirrc = 0 then logdir = medir
+      else logdir = bootdrive || filesep || "staf" || filesep || servicename
+  end
+
+RETURN STAFError.!Ok
+
+/****************************************************************************/
+/* STAFServiceTerm - Terminates the service                                 */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceTerm:
+
+  parse arg serviceName
+
+RETURN MakeSTAFResult(STAFError.!Ok)
+
+/******************************************************************************/
+/* From here on are imported functions, DO NOT CHANGE ANYTHING BELOW HERE     */
+/******************************************************************************/
+#From STAFUtil Import All
+#From LogMon   Import FileStatus STAFAbort STAFExit
+#From LogMon   Import LogMonErrorText ConvertSeconds ExpandLevel ResolveLevel
+#From LogMon   Import ResolveVariable InitializeLogOption
+#From LogMon   Import DisplayOldVarErrorMessage
+#From STAFCPar Import All
+#From Date     Import All
+#From Misc     Import CreatePath CharCount

@@ -1,0 +1,47 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+fsext_class_targets =\
+  $(O)/services/fsext/STAF-INF/classes/com/ibm/staf/service/fsext/FSExt.class \
+  $(O)/services/fsext/STAF-INF/classes/com/ibm/staf/service/fsext/ExtFile.class \
+  $(O)/services/fsext/STAF-INF/classes/com/ibm/staf/service/fsext/ServiceUtilities.class \
+  $(O)/services/fsext/MANIFEST.MF
+fsext_targets += $(fsext_class_targets)\
+                 $(REL)/lib/STAFFSExt.jar
+Targets += $(fsext_targets)
+CleanupTargets += cleanup_fsext
+
+$(fsext_targets): SUBSYS_REL := services/fsext
+SUBSYS_REL := services/fsext
+
+# Include inference rules
+include $(InferenceRules)
+
+$(fsext_targets): $(REL)/lib/JSTAF.zip
+
+FSEXT_CLASSPATH = $(OS_O)/services/fsext$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define FSEXT_JAVA_COMPILE_IT
+   @echo "*** Compiling FSExt Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/fsext/STAF-INF/classes -classpath '$(FSEXT_CLASSPATH)' $(OS_SRC)/services/fsext/*.java
+endef
+
+$(O)/services/fsext/STAF-INF/classes/com/ibm/staf/service/fsext/%.class: $(SRC)/services/fsext/%.java
+	$(FSEXT_JAVA_COMPILE_IT)
+
+# FSEXT Java targets
+
+$(O)/services/fsext/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(REL)/lib/STAFFSExt.jar: $(fsext_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/fsext; $(JAR) cfm '$(OS_@)' MANIFEST.MF `find . -name "*.class" -print`
+
+cleanup_fsext:
+	-@$(DEL) $(O)/services/fsext/* $(OUT_ERR_TO_DEV_NULL)

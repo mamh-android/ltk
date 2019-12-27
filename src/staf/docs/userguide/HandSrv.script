@@ -1,0 +1,559 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.***************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : HandSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Handle Service
+.*  Detail:
+.*
+.*     This file describes the STAF Handle Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.handle service
+:ih1.services
+:i2.handle service
+:h2 id=hdlsrv.Handle Service
+:h3.Description
+:p.The HANDLE service is one of the internal STAF services.  It provides the
+following commands.
+:ul compact.
+:li.CREATE - Creates a static handle
+:li.DELETE - Deletes a static handle
+:li.LIST - Displays brief information on all handles, or those with a
+given name and state, or summary information for handles
+:li.QUERY - Displays detailed information on a specific handle
+:li.AUTHENTICATE - Authenticates a handle
+:li.UNAUTHENTICATE - Un-authenticates a handle
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.CREATE
+:i3.handle service
+:h3 id=handcrt.CREATE
+:p.CREATE creates a static handle.  A static handle is a handle which can be
+shared by several processes on the same system.  This is most directly useful
+for shell-scripts which rely on the STAF command, and need to ensure that the
+same handle is used for every request.  See :hdref refid=stafshs. for more
+information on how to use static handles with the STAF command.
+:note.Be sure to DELETE any static handles you create via the CREATE command.
+:h4.Syntax
+:xmp.
+CREATE HANDLE NAME <Handle Name>
+:exmp.
+:p.:xph.NAME:exph. specifies the registered name of the handle.
+:h4.Security
+:p.This command is only valid if submitted to the local machine,
+not to remote machines.
+
+:h4.Return Codes
+:p.All return codes from CREATE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain the new handle number.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Create a static handle which will be registered with the name
+"Script Test"
+.br
+:hp2.Syntax::ehp2.&nbsp;  :xph.CREATE HANDLE NAME "Script Test":exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.handle service
+:h3.DELETE
+:p.DELETE deletes a static handle.
+:h4.Syntax
+:xmp.
+DELETE HANDLE <Number>
+:exmp.
+:p.:xph.HANDLE:exph. specifies the handle number to delete.
+
+:h4.Security
+:p.&seclvl. 5.
+:note.This command is only valid if submitted to the local machine,
+not to remote machines.
+
+:h4.Return Codes
+:p.All return codes from DELETE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will be empty.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete static handle number 42
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.DELETE HANDLE 42:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.handle service
+:h3.LIST
+:p.LIST allows you to display brief information about all handles, or about
+groups of handles by name or state.  Note that if you do not specify a set of
+states to display, it will show only those that are in REGISTERED, INPROCESS,
+and STATIC states.  To see all processes, specify PENDING,
+REGISTERED, INPROCESS, and STATIC.  You can also display summary information
+about handles using the SUMMARY option.
+:h4.Syntax
+:xmp.
+LIST &lbrk. HANDLES <&lbrk.NAME <Handle Name>&rbrk. &lbrk.LONG&rbrk. &lbrk.PENDING&rbrk. &lbrk.REGISTERED&rbrk.
+                &lbrk.INPROCESS&rbrk. &lbrk.STATIC&rbrk.> | &lbrk.SUMMARY&rbrk. &rbrk.
+:exmp.
+:p.:xph.HANDLES:exph. specifies that you want to list information about handles.
+:p.:xph.NAME:exph. specifies that you only want information on handles with
+the name :xph.<Handle Name>:exph..
+:p.:xph.LONG:exph. specifies to list more detailed information on the handles,
+such as the process id (PID) used by each handle.
+:p.:xph.PENDING:exph. shows handles that are in a pending state.  A handle is
+in pending state when a process has been started via the PROCESS service, but
+that process has not yet registered with STAF.
+:p.:xph.REGISTERED:exph. shows handles that are registered with STAF.
+:p.:xph.INPROCESS:exph. shows handles for external services that are running
+within the same process as STAFProc.
+:p.:xph.STATIC:exph. shows static handles. A static handle is a handle which was created
+using the CREATE command of the HANDLE service or by using the STATICHANDLENAME option
+when starting a process through the PROCESS service.
+:p.:xph.SUMMARY:exph. specifies that you want summary information about handles
+such as the number of active handles, the total number of handles that have
+been created/registered since STAFProc was started, the number of times the
+handle number has been reset, the handle number range, and the maximum number
+of active handles.
+:h4.Security
+:p.&seclvl. 1.
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain a list of the handles
+as follows: 
+:p.
+:ul.
+:li.If neither the :xph.LONG:exph. or :xph.SUMMARY:exph. option is specified,
+the result buffer will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/Handle/HandleInfo>:exph. representing the handles,
+their registered names, their state, and the date and time of their last use.
+The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Handle/HandleInfo
+:tnote text='Description'.This map class represents status of a handle.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.Handle Name
+.br
+(Name)
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.
+:row.
+:c.lastUsedTimestamp
+:c.Last Used Date-Time
+.br
+(Last Used)
+:c.&stringObj.
+:c.&timestampFormat.
+:etable.
+:p.
+:li.If the :xph.LONG:exph. option is specified, the result buffer will contain a
+marshalled :xph.<List> of <Map&colon.STAF/Service/Handle/HandleInfoLong>:exph.
+representing more detailed information about the handles, including the
+operating system process id used by each handle.
+The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Handle/HandleInfoLong
+:tnote text='Description'.This map class represents detailed information about the status
+of a handle.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.Handle Name
+.br
+(Name)
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.
+:row.
+:c.lastUsedTimestamp
+:c.Last Used Date-Time
+.br
+(Last Used)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.pid
+:c.PID
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+The "PID" value will contain the process id assigned by the operating system.
+The process id for a static handle that is not associated with a process will be 0.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.SUMMARY:exph. option is specified, the result buffer will contain a
+marshalled :xph.<Map&colon.STAF/Service/Handle/HandleSummary>:exph.
+representing summary information for handles.
+The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Handle/HandleSummary
+:tnote text='Description'.This map class represents summary information for handles.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.activeHandles
+:c.Active Handles
+:c.&stringObj.
+:c.
+:row.
+:c.totalHandles
+:c.Total Handles
+:c.&stringObj.
+:c.
+:row.
+:c.resetCount
+:c.Reset Count
+:c.&stringObj.
+:c.
+:row.
+:c.handleNumberRange
+:c.Handle Number Range
+:c.&stringObj.
+:c.<Minimum - Maximum>
+:row.
+:c.maxActiveHandles
+:c.Maximum Active Handles
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ul compact.
+:li.The value for "Active Handles" is the number of active (pending,
+registered, inprocess, or static) handles.
+:li.The value for "Total Handles" is the total number of handles that
+have been created/registered since STAFProc was started.
+:li.The value for "Reset Count" is the number of times the handle number
+has been reset back to 2 (handle number 1 is reserved for STAFProc).
+:li.The value for "Handle Number Range" is the range of values for
+the handle number.
+:li.The value for "Maximum Active Handles" is the maximum number of
+active (pending, registered, inprocess, or static) handles.
+:eul.
+:etnote.
+:etable.
+
+:eul.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List all the REGISTERED, INPROCESS, and STATIC handles.
+.br
+:hp2.Syntax::ehp2. :xph.LIST:exph. (or :xph.LIST HANDLES:exph.)
+.br
+:hp2.Result::ehp2.  If the request is submitted from the command line,
+the result, in table format, could look like:
+:xmp.
+Handle Handle Name                     State      Last Used Date-Time
+------ ------------------------------- ---------- -------------------
+1      STAF_Process                    InProcess  20051205-12:41:42
+2      STAF/Authenticator/AuthSample   Registered 20051205-12:41:49
+3      STAF/Service/STAFServiceLoader1 InProcess  20051205-12:41:51
+4      STAF/Service/STAX               Registered 20051205-12:41:51
+5      STAF/Service/LOG                InProcess  20051205-12:41:53
+6      STAF/SERVICE/Event              Registered 20051205-12:41:51
+14     MyTest                          Registered 20051205-13:08:53
+16     STAF/Client                     Registered 20051205-13:08:40
+20     WebTest                         Static     20051205-13:17:35
+:exmp.
+:li.:hp2.Goal::ehp2. List all the REGISTERED and INPROCESS handles in
+the long (more detailed) format.
+.br
+:hp2.Syntax::ehp2. :xph.LIST HANDLES REGISTERED INPROCESS LONG:exph.
+.br
+:hp2.Result::ehp2.  If the request is submitted from the command line,
+the result, in table format, could look like:
+:xmp.
+Handle Handle Name                     State      Last Used Date-Time PID
+------ ------------------------------- ---------- ------------------- ----
+1      STAF_Process                    InProcess  20051205-12:41:42   1636
+2      STAF/Authenticator/AuthSample   Registered 20051205-12:41:49   2360
+3      STAF/Service/STAFServiceLoader1 InProcess  20051205-12:41:51   1636
+4      STAF/Service/STAX               Registered 20051205-12:41:51   2844
+5      STAF/Service/LOG                InProcess  20051205-12:41:53   1636
+6      STAF/SERVICE/Event              Registered 20051205-12:41:51   2844
+14     MyTest                          Registered 20051205-13:08:53   2892
+16     STAF/Client                     Registered 20051205-13:16:40   2900
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List only handles registered with the name MyTest.
+.br
+:hp2.Syntax::ehp2. :xph.LIST HANDLES NAME MyTest:exph.
+.br
+:hp2.Result::ehp2.  If the request is submitted from the command line,
+the result, in table format, could look like:
+:xmp.
+Handle Handle Name State      Last Used Date-Time
+------ ----------- ---------- -------------------
+14     MyTest      Registered 20051205-13:08:53
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all static handles.
+.br
+:hp2.Syntax::ehp2. :xph.LIST HANDLES STATIC:exph.
+.br
+:hp2.Result::ehp2.  If the request is submitted from the command line,
+the result, in table format, could look like:
+:xmp.
+Handle Handle Name State  Last Used Date-Time
+------ ----------- ------ -------------------
+20     WebTest     Static 20051205-13:17:35
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all pending handles.
+.br
+:hp2.Syntax::ehp2. :xph.LIST HANDLES PENDING:exph.
+.br
+:hp2.Result::ehp2.  If the request is submitted from the command line,
+the result, in table format, could look like:
+:xmp.
+Handle Handle Name State   Last Used Date-Time
+------ ----------- ------- -------------------
+17     <None>      Pending 20051205-13:16:55
+23     <None>      Pending 20051205-13:18:59
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List summary information about handles.
+.br
+:hp2.Syntax::ehp2. :xph.LIST HANDLES SUMMARY:exph.
+.br
+:hp2.Results::ehp2.  If the request is submitted from the command line,
+the result, in default form, could look like:
+:xmp.
+Active Handles        : 19
+Total Handles         : 129
+Reset Count           : 0
+Handle Number Range   : 1 - 2147483647
+Maximum Active Handles: 2147483647
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.handle service
+:h3.QUERY
+:p.QUERY will allow you to display detailed information about a given handle number.
+:h4.Syntax
+:xmp.
+QUERY HANDLE <Handle>
+:exmp.
+:p.:xph.HANDLE:exph. specifies the handle number you want information on.
+&varres.
+:h4.Security
+:p.&seclvl. 1.
+:h4.Return Codes
+:p.All return codes from QUERY are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Handle/QueryHandle>:exph. representing
+the handles, handle name, state, last used date and time,
+operating system process id, authenticator, and user identifier.
+The map is defined as follows: 
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Handle/QueryHandle
+:tnote text='Description'.This map class represents status of a handle.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.Handle Name
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.
+:row.
+:c.lastUsedTimestamp
+:c.Last Used Date-Time
+.br
+(Last Used)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.pid
+:c.PID
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.:xph.<Authenticator>://<UserID>:exph.
+:row.
+:c.instanceUUID
+:c.Instance UUID
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "PID" value will contain the process id assigned by the operating system.
+The process id for a static handle that is not associated with a process will be 0.
+:li.The "User" value for handles that are not authenticated will be :xph.'none://anonymous':exph..
+:li.The "Instance UUID" value contains the STAF Universally Unique ID that
+uniquely identifies a STAF instance. 
+:eol.
+:etnote.
+:etable.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Query handle number 1
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.QUERY HANDLE 1:exph.
+.br
+:hp2.Result::ehp2. If the request is submitted from the command line,
+the result, in default format, could look like:
+:xmp.
+Handle             : 1
+Handle Name        : STAF_Process
+State              : InProcess
+Last Used Date-Time: 20100126-15:45:40
+PID                : 1636
+User               : none://anonymous
+Instance UUID      : 7D625F3CB40100000929369C75636194
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.AUTHENTICATE
+:i3.handle service
+:h3 id=handauth.AUTHENTICATE
+:p.AUTHENTICATE authenticates the handle submitting the request.
+An authenticated handle has the specified user identifier
+and authenticator associated with it.
+:h4.Syntax
+:xmp.
+AUTHENTICATE USER <User Identifier> CREDENTIALS <Credentials>
+             &lbrk.AUTHENTICATOR <Name>&rbrk.
+:exmp.
+:p.:xph.USER:exph. specifies the user identifier to authenticate.
+:p.:xph.CREDENTIALS:exph. specifies the credentials for the user identifier,
+such as a password.  This option will handle private data.
+:p.:xph.AUTHENTICATOR:exph. specifies the name of the Authenticator to
+use to authenticate the handle instead of the default Authenticator.
+:h4.Security
+:p.This command is only valid if submitted to the local machine,
+not to remote machines.
+
+:h4.Return Codes
+:p.All return codes from AUTHENTICATE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will be empty.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Authenticate the handle submitting the request using the
+default authenticator to authenticate the handle and specifying user
+identifier "johnDoe@company.com" and credentials "secret" which is
+enclosed in STAF privacy delimiters so that the credentials will be masked.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.AUTHENTICATE USER johnDoe@company.com CREDENTIALS !!@secret@!!:exph.
+:p.
+:li.:hp2.Goal::ehp2. Authenticate the handle submitting the request using
+the IBMIntraAuth authenticator to authenticate the handle and specifying
+user identifier "mary" and credentials "topsecret" which is
+enclosed in STAF privacy delimiters so that the credentials will be masked.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.AUTHENTICATE USER mary CREDENTIALS !!@topsecret@!! AUTHENTICATOR IBMIntraAuth:exph.
+:eul.
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.UNAUTHENTICATE
+:i3.handle service
+:h3 id=handuauth.UNAUTHENTICATE
+:p.UNAUTHENTICATE un-authenticates the handle submitting the request.
+An unauthenticated handle has user 'none&colon.//anonymous' associated with it.
+:h4.Syntax
+:xmp.
+UNAUTHENTICATE
+:exmp.
+:h4.Security
+:p.&seclvl. 5.
+:note.This command is only valid if submitted to the local machine,
+not to remote machines.
+
+:h4.Return Codes
+:p.All return codes from UNAUTHENTICATE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will be empty.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Un-Authenticate the handle submitting the request.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.UNAUTHENTICATE:exph.
+:eul.

@@ -1,0 +1,59 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFLtkTest = $(subst Name,STAFLtkTest,$(DLL))
+
+stafltktest_targets += $(REL)/lib/$(LIB_STAFLtkTest)\
+                          $(REL)/include/LtkTest.h
+Targets += $(stafltktest_targets)
+CleanupTargets += cleanup_stafLtkTest
+
+$(stafltktest_targets): SUBSYS_REL := services/ltk_test
+SUBSYS_REL := services/ltk_test
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafltktest_targets): OBJS = $(stafltktest_objs)
+$(stafltktest_targets): LIBS = STAF
+$(stafltktest_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafltktest_objs :=\
+  LtkTest \
+  ResourceManager \
+  PoolData
+
+stafltktest_objs        := $(foreach obj,$(stafltktest_objs),$(O)/services/ltk_test/$(obj)$(OS_OE))
+stafLtkTest_dependents  := $(stafltktest_objs:$(OS_OE)=.d)
+$(stafLtkTest_dependents): SUBSYS_REL := services/ltk_test
+
+ifeq ($(OS_NAME),win32)
+    stafltktest_objs += $(SR_SRC)/LtkTest.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafLtkTest_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFLtkTest targets
+
+$(REL)/lib/$(LIB_STAFLtkTest): $(stafltktest_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+$(REL)/include/LtkTest.h: $(SRC)/services/ltk_test/LtkTest.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafLtkTest:
+	-@$(DEL) $(O)/services/ltk_test/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/libLtkTest.so $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/LtkTest.h $(OUT_ERR_TO_DEV_NULL)
+
+

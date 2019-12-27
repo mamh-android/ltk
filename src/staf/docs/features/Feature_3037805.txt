@@ -1,0 +1,269 @@
+Feature ID  : 3037805
+Title       : Provide atomic release and request of an entry
+
+Description
+-----------
+
+Provide the ability to perform an atomic release and request
+of an entry in a resource pool.
+
+Problem(s) Solved
+-----------------
+
+I have multiple threads and each is executing a list of
+tests and each thread has a different priority.  When a
+thread finishes a test, it should execute the next test
+if no other thread with a higher priority is requesting
+the execute resource.  I'm using the ResPool service to
+implement this.  A thread requests an entry in the
+resource pool to run a test.  When the test completes,
+it submits another request for the resource and then
+releases the resource so that the request will be in the
+"Pending Requests" list BEFORE the resource is released
+so that if it has the highest priority, it will get the
+resource first.  However, since the RESPOOL REQUEST
+request for the owned resource won't complete until the
+resource is released, I'm submitting the RESPOOL REQUEST
+request via a different thread so that I can submit the
+RESPOOL RELEASE request after submitting the RESPOOL
+REQUEST request.
+
+However, without the ability to perform an atomic release
+and request of the entry, this means I've doubled the
+number of threads I'm using.  I'm running multiple STAX
+jobs on a machine where each job starts about 60 threads
+now.  When starting more than four jobs, I see a decline
+in the response time of the machine.  Cutting the number
+of threads will enable me to start more STAX jobs on the
+machine.
+
+External Changes
+----------------
+
+a) Add a RELEASE option to the ResPool service's REQUEST
+   ENTRY request:
+
+Syntax:
+
+REQUEST POOL <PoolName>
+        [FIRST | RANDOM | ENTRY <Value> [RELEASE]] [PRIORITY <Number>]
+        [TIMEOUT <Number>[s|m|h|d|w]] [GARBAGECOLLECT <Yes | No>]
+
+RELEASE specifies to release the entry after requesting it
+(i.e. performs an atomic release and request).  This option
+can only be specified when requesting an entry that is
+already owned by the handle submitting the request.  This
+can be useful when you want to re-gain ownership of the
+entry before any lesser-priority pending requests.
+
+Examples:
+
+1) Goal: Let's assume that you already own entry "machine1"
+   in resource pool MachinePool.  Perform an atomic request
+   and release of entry "machine1" by specifying the RELEASE
+   option on a REQUEST ENTRY request and specify priority 30
+   such that your request will be added to the "Pending Request"
+   list at priority 30 before releasing entry "machine1". This
+   means that your request for entry "machine1" will be
+   satisfied before other pending requests with a lesser priority.
+
+C:\>STAF local RESPOOL REQUEST POOL MachinePool ENTRY machine1 RELEASE PRIORITY 30
+Response
+--------
+machine1
+
+2) Example where the handle submitting the RESPOOL REQUEST
+   ENTRY request with the RELEASE option is not the current
+   owner of the resource it is requesting: 
+
+C:\>STAF local RESPOOL REQUEST POOL MyPool ENTRY Resource2 RELEASE PRIORITY 30
+Error submitting request, RC: 4005
+Additional info
+---------------
+You cannot use the RELEASE option when requesting an entry when you are not its
+owner
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+stafproc/STAFResPoolService.cpp
+test/STAFTest.xml
+docs/userguide/PoolSrv.script
+docs/userguide/CmdRef.script
+
+1) Changes to stafproc/STAFResPoolService.cpp:
+
+  a) Updated the parser for a REQUEST request:
+
+  pData->fRequestParser->addOption("RELEASE", 1,
+                                   STAFCommandParser::kValueNotAllowed);
+
+  pData->fRequestParser->addOptionNeed("RELEASE", "ENTRY");
+
+  b) Added the help text for the new RELEASE option to the
+     REQUEST request:
+
+  "REQUEST POOL <PoolName>" +
+  sLineSep +
+  "        [FIRST | RANDOM | ENTRY <Value> [RELEASE]] [PRIORITY <Number>]" +
+  sLineSep +
+  "        [TIMEOUT <Number>[s|m|h|d|w]] [GARBAGECOLLECT <Yes | No>]" +
+
+  c) Changed the handleRequest() method so that it checks
+     if the RELEASE option is specified:
+
+  // Determine if the RELEASE option was specified.
+
+  bool release = false;
+
+  if (parsedResult->optionTimes("RELEASE") > 0)
+      release = true;
+
+  d) Changed the handleRequest() method so that if the
+     RELEASE option is specified, it makes sure that the
+     resource is already owned by the handle submitting
+     the request and if not, returns RC 4005 "Not
+    resource pool entry owner":
+
+  bool owner = false;
+  unsigned int resid;
+
+  if (requestType == kEntry)
+  {
+    ...
+        // Resource is not available
+
+        if (release)
+        {
+             // Check if you are the owner of this entry
+
+             if ((poolPtr->resourceList[i].orgUUID ==
+                  pInfo->stafInstanceUUID) &&
+                 (poolPtr->resourceList[i].orgHandle ==
+                  pInfo->handle))
+             {
+                 owner = true; // You are the owner
+                 resid = i;
+             }
+        }
+  ...  
+                
+  if (release && !owner)
+  {
+      return STAFResultPtr(
+          new STAFResult(
+              kSTAFResPoolNotEntryOwner,
+              STAFString("You cannot use the RELEASE option ") +
+              "when requesting an entry that you do not already " +
+              "own the entry"),
+          STAFResultPtr::INIT);
+  }
+
+  e) Changed the handleRequest() method so that after the
+     request has been added to the "Pending Requests" list,
+     it releases the resource:
+
+  if (release && owner)
+  {
+      // Release this resource and determine the highest priority
+      // pending request that can be satisfied and wake it up
+      // to let it know it can have this resource now.
+
+      if (poolPtr->resourceList[resid].garbageCollect)
+      {
+          // Delete the notification from the handle notification list
+
+          submitSTAFNotifyUnregisterRequest(
+              pData, poolPtr->resourceList[resid].orgHandle,
+              poolPtr->resourceList[resid].orgEndpoint,
+              poolPtr->resourceList[resid].orgUUID);
+      }
+
+      // Mark the resource as available
+
+      poolPtr->usedResources--;
+      poolPtr->resourceList[resid].owned = 0;
+
+      // Iterate through the pending requests.  Find the first pending
+      // request that can be satisfied.  A pending request can be
+      // satisfied if either:
+      //   a) requestType != kEntry (e.g. kFirst or kRandom)
+      //   or
+      //   b) requestType == kEntry and the entry just released
+      //      matches the requestedEntry.
+      // If a pending request can be satisfied, tell this requester the
+      // resource he can have.
+
+      if (poolPtr->requestList.size() > 0)
+      {
+          RequestDataPtr reqPtr;
+
+          for (iter = poolPtr->requestList.begin(); 
+               iter != poolPtr->requestList.end(); ++iter)
+          {
+              reqPtr = *iter;
+
+              if ((reqPtr->requestType != kEntry) ||
+                 ((reqPtr->requestType == kEntry) &&
+                  (reqPtr->requestedEntry ==
+                   poolPtr->resourceList[resid].entry)))
+              {
+                  // Assign the resource to the request
+
+                  reqPtr->retCode = kSTAFOk;
+                  reqPtr->resultBuffer = 
+                      poolPtr->resourceList[resid].entry;
+
+                  // Update the resource entry's ownership information
+
+                  poolPtr->resourceList[resid].owned = 1;
+                  poolPtr->usedResources++;
+                  poolPtr->resourceList[resid].orgUUID = reqPtr->orgUUID;
+                  poolPtr->resourceList[resid].orgMachine =
+                      reqPtr->orgMachine;
+                  poolPtr->resourceList[resid].orgName = reqPtr->orgName;
+                  poolPtr->resourceList[resid].orgHandle =
+                      reqPtr->orgHandle;
+                  poolPtr->resourceList[resid].orgUser = reqPtr->orgUser;
+                  poolPtr->resourceList[resid].orgEndpoint =
+                      reqPtr->orgEndpoint;
+                  poolPtr->resourceList[resid].requestedTime =
+                      reqPtr->requestedTime;
+                  poolPtr->resourceList[resid].acquiredTime =
+                      STAFTimestamp::now().asString();
+                  poolPtr->resourceList[resid].garbageCollect =
+                      reqPtr->garbageCollect;
+
+                  // Wakeup the requester
+
+                  reqPtr->wakeup->post();
+
+                  // Remove the satisfied request from the pending
+                  // request list and break out of the loop
+
+                  poolPtr->requestList.erase(iter);
+                  break;
+              }
+          }
+      }  
+
+2) Changed STAFTest.xml to test the new RESPOOL REQUEST ENTRY
+   RELEASE request.
+
+3) Changed the STAF User Guide documentation for this feature:
+
+   - Updated the syntax for the RESPOOL REQUEST ENTRY RELEASE
+     request in the STAF Command Reference in
+     docs/userguide/CmdRef.script.
+   - Added a description of the new RELEASE option for the
+     REQUEST ENTRY request to the RESPOOL service in
+     docs/userguide/PoolSrv.script. 
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

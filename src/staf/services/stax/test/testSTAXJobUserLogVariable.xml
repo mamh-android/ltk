@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<!--
+  File name:    testSTAXJobUserLogVariable.xml
+
+  Description:  Shows how you can call the STAF LOG service to log a message
+                in the STAX Job User log from within Python code in a <script>
+                element.  Uses the STAXJobUserLog variable to do this.
+
+                Also tests use of the STAXJobHandle variable to submit STAF
+                requests.
+-->
+
+<stax>
+
+  <defaultcall function="Main"/>
+
+  <script>
+    # Make sure the importDir is where you put STAXUtil.xml
+    importDir = 'D:/dev/sf/src/staf/services/stax/libraries'
+
+    # Assign a directory name that has at least 1 file in it
+    dirName = 'C:\\temp'
+  </script>
+
+  <function name="Main" scope="local">
+
+    <sequence>
+
+      <import machine="'local'" file="'%s/STAXUtil.xml' % importDir"/>
+
+      <call function="'GetStaxMachineName'"/>
+      <script>staxMachine = STAXResult</script>
+
+      <call function="'TestSTAXJobUserLog'"/>
+      <call function="'TestSTAXJobHandle'"/>
+      <call function="'CheckTestResults'"/>
+
+    </sequence>
+
+  </function>
+
+  <function name="TestSTAXJobUserLog" scope="local">
+
+   <testcase name="'TestSTAXJobUserLog'">
+    <block name="'TestSTAXJobUserLog'">
+
+      <sequence>
+
+        <message>'Begin STAXJobUserLog variable Testing:'</message>
+
+        <script>
+          errorList = []
+          userJobLog = 'STAX_Job_%s_User' % (STAXJobID)
+
+          # Log an informational message to the STAX Job User log
+          msg1 = 'Here is an informational message'
+          res = STAXJobUserLog.log("info", msg1)
+          if res.rc != 0:
+              errorList.append(res.rc, res.result)
+
+          # Log an error message to the STAX Job User log
+          msg2 = 'This is an error message'
+          res = STAXJobUserLog.log("Error", msg2)
+          if res.rc != 0:
+              errorList.append([res.rc, res.result])
+        </script>
+
+        <call function="'STAXUtilCheckSuccess'">
+          { 'result': errorList == [],
+            'failMsg': 'STAXJobUserLog.log failed. ErrorList=%s' % errorList,
+            'passMsg': 'STAXJobUserLog.log was successful',
+            'sendToMonitor': 1, 'recordStatus': 1 }
+        </call>
+
+        <stafcmd>
+          <location>'local'</location>
+          <service>'LOG'</service>
+          <request>'QUERY MACHINE %s LOGNAME %s LAST 3' % (staxMachine, userJobLog)</request>
+        </stafcmd>
+
+        <call function="'STAXUtilCheckSuccess'">
+          { 'result': STAFResult.find(msg1) != -1 and STAFResult.find(msg2) != -1,
+            'failMsg': 'LOG QUERY failed. RC=%s, STAFResult=%s' % (RC, STAFResult),
+            'passMsg': 'Queried log and verified correct messages were logged',
+            'sendToMonitor': 1, 'recordStatus': 1 }
+        </call>
+
+        <!-- Check if an invalid log level is specified that it is handled correctly -->
+        <script>
+          errorList = []
+
+          # Log a message with an invalid log level to the STAX Job User log
+          msg3 = 'Here is a message with an invalid log level'
+          res = STAXJobUserLog.log("invalidLevel", msg3)
+          if res.rc != 0:
+              errorList.append([res.rc, res.result])
+        </script>
+
+        <call function="'STAXUtilCheckSuccess'">
+          { 'result': errorList == [[47, "invalidLevel"]],
+            'failMsg': 'STAXJobUserLog.log("invalidLevel", %s) did not fail when should have. ErrorList=%s' % (msg3, errorList),
+            'passMsg': 'STAXJobUserLog.log("invalidLevel", %s) failed (as expected)' % msg3,
+            'sendToMonitor': 1, 'recordStatus': 1 }
+        </call>
+
+      </sequence>
+     </block>
+    </testcase>
+
+  </function>
+
+  <function name="TestSTAXJobHandle" scope="local">
+   <testcase name="'TestSTAXJobHandle'">
+    <block name="'TestSTAXJobHandle'">
+      <sequence>
+
+        <message>'Begin STAXJobHandle variable Testing:'</message>
+
+        <script>
+          request = "STAXJobHandle.submit2('local', 'ping', 'ping')"
+          res = STAXJobHandle.submit2('local', 'ping', 'ping')
+        </script>
+
+        <call function="'STAXUtilCheckSuccess'">
+          { 'result': res.rc == 0 and res.result == 'PONG',
+            'failMsg': "%s failed. RC=%s STAFResult=%s" % (request, res.rc, res.result),
+            'passMsg': "%s was successful" % (request),
+            'sendToMonitor': 1, 'recordStatus': 1 }
+        </call>
+
+        <script>
+          fileList = []
+          request = "STAXJobHandle.submit2('local', 'FS', 'LIST DIRECTORY %s'" % dirName
+          res = STAXJobHandle.submit2('local', 'FS', 'LIST DIRECTORY %s' % dirName)
+          if res.rc == 0:
+             # Split up res.result so that each line is an entry in a list
+             # Handle line separators for Windows ('\n') and Unix systems ('\r\n')
+             import string
+             fileList = (res.result).replace('\r\n', '\n').split('\n')
+
+             # If the last entry in the list is a blank line, delete it
+             if fileList[len(fileList) - 1] == '':
+               del fileList[len(fileList) - 1]
+          else:
+             fileList = res.result
+        </script>
+
+        <call function="'STAXUtilCheckSuccess'">
+          { 'result': res.rc == 0 and len(fileList) > 0,
+            'failMsg': "%s failed. RC=%s STAFResult=%s" % (request, res.rc, res.result),
+            'passMsg': "%s was successful" % (request),
+            'sendToMonitor': 1, 'recordStatus': 1 }
+        </call>
+
+      </sequence>
+     </block>
+    </testcase>
+  </function>
+
+  <function name="CheckTestResults" scope="local">
+    <testcase name="'CheckTestResults'">
+      <block name="'CheckTestResults'">
+        <sequence>
+
+          <call function="'STAXUtilQueryAllTests'"/>
+
+          <script>[rc, result, totals, testcases] = STAXResult</script>
+
+          <if expr="rc == 0">
+            <sequence>
+              <script>[totalTests, totalPasses, totalFails] = totals</script>
+              <if expr="totalPasses == 5 and totalFails == 0">
+                <call function="'STAXUtilLogAndMsg'">
+                  'Test results are correct'
+                </call>
+                <else>
+                  <tcstatus result="'fail'">
+                    'Total Testcases: %s, Total Passes: %s, Total Fails: %s\nTestcases: %s' % \
+                    (totalTests, totalPasses, totalFails, testcases)
+                  </tcstatus>
+                </else>
+              </if>
+            </sequence>
+            <else>
+              <sequence>
+                <call function="'STAXUtilLogAndMsg'">
+                  'STAXUtilQueryAllTests failed. RC=%s Result=%s' % (rc, result)
+                </call>
+                <tcstatus result="'fail'"/>
+              </sequence>
+            </else>
+          </if>
+        </sequence>
+      </block>
+    </testcase>
+  </function>
+
+
+  <function name="GetStaxMachineName" scope="local">
+
+    <block name="'GetStaxMachineName'">
+
+      <sequence>
+
+        <message>'Get the value of {STAF/Config/EffectiveMachine} on the STAX machine'</message>
+        <script>request = 'RESOLVE string {STAF/Config/EffectiveMachine}'</script>
+
+        <stafcmd>
+          <location>'local'</location>
+          <service>'VAR'</service>
+          <request>request</request>
+        </stafcmd>
+
+        <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0,
+            'failMsg': '%s failed. RC=%s STAFResult=%s' % (request, RC, STAFResult),
+            'passMsg': 'StaxMachine=%s' % STAFResult,
+            'sendToMonitor': 1, 'recordStatus': 0 }
+        </call>
+
+        <return>STAFResult</return>
+
+      </sequence>
+
+    </block>
+
+  </function>
+
+</stax>

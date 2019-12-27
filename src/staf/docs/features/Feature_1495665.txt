@@ -1,0 +1,646 @@
+Feature ID  : 1495665
+Response Due: 06/08/2006
+Title       : Add focus option when starting a process to allow 
+              minimized/foreground/background windows
+
+Description
+-----------
+
+Provide the ability when starting a process to specify how to display
+any new windows opened when starting a process on a Windows system.
+
+Also, allow the ability to specify the default focus for displaying
+new windows when starting a process via the STAF configuration file
+and dynamically via the PROCESS SET request, in addition to being
+able to override the default when starting a process.
+
+
+Problem(s) Solved
+-----------------
+
+Currently, if a process being started on a Windows system in the
+default (no shell) mode opens any new windows, the windows are opened
+in the background without focus.  You don't have the ability to
+specify to have the new windows opened as minimized so as not to
+disturb anyone who may be using that system.  You also don't have the
+ability to specify to have the new windows opened in the foreground
+(e.g. with focus).  Adding the ability to specify the focus mode
+will solve this problem (and allow additional focus modes to be added 
+in the future, if needed). 
+
+Note that this feature is only being provided for Windows systems.
+It is not being provided for Unix systems.  Also, note that if you
+use the shell mode when starting a process on Windows, specifying the
+focus only effects the new command prompt window opened -- it does not
+effect any windows opened by that command.  You must use the default
+command mode (e.g. no SHELL option) to effect the windows opened by
+the command. So, for example, specifying the following will open
+notepad in a minimized window on a Windows system:
+
+  STAF local PROCESS START COMMAND NOTEPAD FOCUS Minimized
+
+However, specifying the following will open notepad in a window in
+the foreground on a Windows system (though the new shell command
+window will be opened in a minimized window):
+
+  STAF local PROCESS START SHELL COMMAND NOTEPAD
+
+
+Related Features/Patches
+------------------------
+
+Patch #1495329 "To add minimize window option to start command"
+submitted by Neelimaa.
+
+
+External Changes
+----------------
+
+a) New Operational Parameter DEFAULTFOCUS
+
+DEFAULTFOCUS specifies the focus that is to be given to new windows
+opened when starting a process on a Windows system.  The window(s)
+it effects depends on whether you are using the default command mode
+or the shell command mode:
+  - Default command mode (no SHELL option):  The focus specified is
+    given to any new windows opened by the command specified.
+  - Shell command mode:  The focus specified is given only to the
+    new shell command window opened, not to any windows opened by
+    the command specified.
+
+This option only has effect on Windows systems.
+
+Recognized values are the following: 
+  - Background: This indicates to display a window in the background
+    (e.g. not give it focus) in its most recent size and position.
+    This is default mode.   
+  - Foreground: This indicates to display a window in the foreground
+    (e.g. give it focus) in its most recent size and position. 
+  - Minimized: This indicates to displays a window as minimized.
+
+You may also change this setting dynamically using the PROCESS
+service's SET command. 
+
+
+b) Changes to the PROCESS service's SET request:
+
+Add a new DEFAULTFOCUS option to the SET request as follows:
+
+SET   [DEFAULTSTOPUSING <Method>] [DEFAULTCONSOLE <New | Same>]
+      [DEFAULTFOCUS <Background | Foreground | Minimized>]
+      [PROCESSAUTHMODE <Auth Mode>]
+      [DEFAULTAUTHUSERNAME <User Name>] [DEFAULTAUTHPASSWORD <Password>]
+      [DEFAULTAUTHDISABLEDACTION <Error | Ignore>] [DEFAULTSHELL <Shell>]
+      [DEFAULTNEWCONSOLESHELL <Shell>] [DEFAULTSAMECONSOLESHELL <Shell>]
+
+c) Changes to the PROCESS service;s LIST SETTINGS request:
+
+Add "Default Focus" as another process service setting to be listed:
+
+STAF local PROCESS LIST SETTINGS
+Response
+--------
+Default Stop Using Method   : SigKill
+Default Console Mode        : New
+Default Focus               : Background
+Process Auth Mode           : Disabled
+Default Auth Username       : <None>
+Default Auth Password       : <None>
+Default Auth Disabled Action: Ignore
+Default Shell               : <None>
+Default New Console Shell   : <None>
+Default Same Console Shell  : <None>
+
+d) Changes to the PROCESS service's START request:
+
+Add a new FOCUS option as follows:
+
+START [SHELL [<Shell>]] COMMAND <Command> [PARMS <Parms>] [WORKDIR <Directory>]
+      [VAR <Variable>=<Value>] [ENV <Env. Var.>=<Value>] [USEPROCESSVARS]
+      [WORKLOAD <Name>] [TITLE <Title>] [WAIT [Timeout] | ASYNC]
+      [STOPUSING <Method>] [STATICHANDLENAME <Name>]
+      [NEWCONSOLE | SAMECONSOLE] [FOCUS <Background | Foreground | Minimized>]
+      [USERNAME <User Name> [PASSWORD <Password>]]
+      [DISABLEDAUTHISERROR | IGNOREDISABLEDAUTH]
+      [STDIN <File>] [STDOUT <File> | STDOUTAPPEND <File>]
+      [STDERR <File> | STDERRAPPEND <File> | STDERRTOSTDOUT]
+      [RETURNSTDOUT] [RETURNSTDERR] [RETURNFILE <File>]...
+      [NOTIFY ONEND [HANDLE <Handle> | NAME <Name>]
+      [MACHINE <Machine>] [PRIORITY <Priority>] [KEY <Key>]]
+
+FOCUS specifies the focus that is to be given to new windows
+opened when starting a process on a Windows system.  The window(s)
+it effects depends on whether you are using the default command mode
+or the shell command mode:
+  - Default command mode (no SHELL option):  The focus specified is
+    given to any new windows opened by the specified command.
+  - Shell command mode:  The focus specified is given only to the
+    new shell command window opened, not to any windows opened by
+    the specified command.
+
+This option has only has effect on Windows systems.
+
+Recognized values are the following: 
+  - Background: This indicates to display a window in the background
+    (e.g. not give it focus) in its most recent size and position.
+    This is default mode.   
+  - Foreground: This indicates to display a window in the foreground
+    (e.g. give it focus) in its most recent size and position. 
+  - Minimized: This indicates to display a window as minimized.
+
+
+e) Changes to the PROCESS service's QUERY HANDLE request:
+
+STAF local PROCESS QUERY HANDLE 15
+Response
+--------
+Handle         : 15
+Handle Name    : <None>
+Title          : <None>
+Workload       : <None>
+Shell          : <None>
+Command        : notepad
+Parms          : <None>
+Workdir        : <None>
+Focus          : Minimized
+User Name      : <None>
+Key            : <None>
+PID            : 3308
+Start Mode     : Async
+Start Date-Time: 20060613-16:32:45
+End Date-Time  : <None>
+Return Code    : <None>
+
+f) Changes to the STAX DTD's <process> Element:
+
+Add a new sub-element <focus> for the <process> element.  Here's the
+proposed DTD for the <focus> element:
+
+<!--
+     The focus element allows you to specify the focus that is to be
+     given to any new windows opened when starting a process on a Windows
+     system.  The window(s) it effects depends on whether you are using the
+     'default' or the 'shell' command mode:
+     - Default command mode (no SHELL option):  The focus specified is
+       given to any new windows opened by the command specified.
+     - Shell command mode:  The focus specified is given only to the
+       new shell command window opened, not to any windows opened by
+       the command specified.
+
+     This option only has effect on Windows systems and requires
+     STAF V3.1.4 or later on the machine where the process is run.
+
+     Attributes:
+
+     mode   Must evaluate via Python to a string containing one of the
+            following values:
+            - 'background' indicates to display a window in the background
+              (e.g. not give it focus) in its most recent size and position.
+              This is default mode. 
+            - 'foreground' indicates to display a window in the foreground
+              (e.g. give it focus) in its most recent size and position.
+            - 'minimized' indicates to display a window as a minimized.
+  -->
+<!ELEMENT console             EMPTY>
+
+
+<!ATTLIST console
+          if         CDATA     "1"
+          mode       CDATA     #REQUIRED
+>
+
+Add the focus element to the process element's procgroup6 entity so that
+the focus element can be specified in the same group as the console element:
+
+
+<!ENTITY % procgroup6 '((stopusing?, console?, focus?, statichandlename?) |
+                        (stopusing?, console?, statichandlename?, focus?) |
+                        (stopusing?, focus?, console?, statichandlename?) |
+                        (stopusing?, focus?, statichandlename?, console?) |
+                        (stopusing?, statichandlename?, console?, focus?) |
+                        (stopusing?, statichandlename?, focus?, console?) |
+                        (console?, focus?, stopusing?, statichandlename?) |
+                        (console?, focus?, statichandlename?, stopusing?) |
+                        (console?, stopusing?, focus?, statichandlename?) |
+                        (console?, stopusing?, statichandlename?, focus?) |
+                        (console?, statichandlename?, focus?, stopusing?) |
+                        (console?, statichandlename?, stopusing?, focus?) |
+                        (focus?, console?, stopusing?, statichandlename?) |
+                        (focus?, console?, statichandlename?, stopusing?) |
+                        (focus?, stopusing?, console?, statichandlename?) |
+                        (focus?, stopusing?, statichandlename?, console?) |
+                        (focus?, statichandlename?, console?, stopusing?) |
+                        (focus?, statichandlename?, stopusing?, console?) |
+                        (statichandlename?, stopusing?, console?, focus?) |
+                        (statichandlename?, stopusing?, focus?, console?) |
+                        (statichandlename?, console?, focus?, stopusing?) |
+                        (statichandlename?, console?, stopusing?, focus?) |
+                        (statichandlename?, focus?, console?, stopusing?) |
+                        (statichandlename?, focus?, stopusing?, console?))'>
+
+Example:
+
+  Start notepad in a minimized window on machine client1.austin.ibm.com:
+
+  <process name="'Notepad'">
+    <location>'client1.austin.ibm.com'</location>
+    <command>'notepad'</command>
+    <focus mode="'minimized'"/>
+  </process>
+
+  Note:  The machine where the process is being run must be running
+  STAF V3.1.4 or later (the version of STAF where the FOCUS option is
+  being run), or else an error may occur.
+
+
+Internal Changes
+----------------
+
+a) stafif/STAFProcess.h:
+
+Note that it already contains a typedef for STAFProcessConsoleFocus with
+the background and foreground options specified.  Add a minimized option:
+
+typedef enum STAFProcessConsoleFocus_e
+{
+    kSTAFProcessBackground = 0,
+    kSTAFProcessForeground = 1,
+    kSTAFProcessMinimized  = 2
+} STAFProcessConsoleFocus_t;
+
+Use the existing STAFProcessConsoleFocus_t consoleFocus field in
+the STAFProcessStartInfoLevel1 structure to pass the focus to the
+start process API.
+
+b) stafif/win32/STAFProcess.cpp:
+
+Note that it was already checking the startData->consoleFocus field
+to see if it was set to the foreground and if not, set it to the
+background (even though there was no way to set the foreground option).
+So only needed to add a checking if it is minimized as follows:
+
+        if (startData->consoleFocus == kSTAFProcessForeground)
+            startInfo.wShowWindow = SW_SHOW;
+        else if (startData->consoleFocus == kSTAFProcessMinimized)
+            startInfo.wShowWindow = SW_SHOWMINNOACTIVE;
+        else
+            startInfo.wShowWindow = SW_SHOWNOACTIVATE;
+
+c) stafproc/STAFProcessService.h:
+
+Define these static methods for manipulating the focus
+
+  STAFProcessConsoleFocus_t consoleFocus;
+
+  // Manipulates process console focus
+  static STAFRC_t getConsoleFocusFromString(
+      STAFProcessConsoleFocus_t &consoleFocus,
+      const STAFString &focusString);
+  static STAFRC_t setDefaultConsoleFocus(
+      STAFProcessConsoleFocus_t consoleFocus);
+  static STAFProcessConsoleFocus_t getDefaultConsoleFocus();
+  static STAFString getDefaultConsoleFocusAsString();
+  static STAFString getConsoleFocusAsString(
+      STAFProcessConsoleFocus_t consoleFocus);
+
+  static STAFProcessConsoleFocus_t fDefaultConsoleFocus;
+
+d) stafproc/STAFProcessService.cpp:
+
+  // Define new variables
+  STAFProcessConsoleFocus_t STAFProcessService::
+      fDefaultConsoleFocus = kSTAFProcessBackground;
+  static STAFMutexSem sDefaultConsoleFocusSem;
+
+  // Update parsers
+  fStartParser.addOption("FOCUS", 1, STAFCommandParser::kValueRequired);
+  fSetParser.addOption("DEFAULTFOCUS", 1, STAFCommandParser::kValueRequired);
+
+  // Update map classes for query process and list settings
+  fProcessInfoMapClass->addKey("focus", "Focus");
+  fSettingsMapClass->addKey("defaultFocus", "Default Focus");
+
+  // Add methods for manipulating the console focus for a process
+
+  STAFRC_t STAFProcessService::getConsoleFocusFromString(
+      STAFProcessConsoleFocus_t &consoleFocus,
+      const STAFString &focusString)
+  {
+      ...
+  }  
+
+  STAFRC_t STAFProcessService::setDefaultConsoleFocus(
+      STAFProcessConsoleFocus_t consoleFocus)
+  {
+      // Get exclusive access to fDefaultConsoleFocus
+      STAFMutexSemLock lock(sDefaultConsoleFocusSem);
+      fDefaultConsoleFocus = consoleFocus;
+
+      return kSTAFOk;
+  }
+
+  STAFProcessConsoleFocus_t STAFProcessService::getDefaultConsoleFocus()
+  {
+      return fDefaultConsoleFocus;
+  }
+
+  STAFString STAFProcessService::getDefaultConsoleFocusAsString()
+  {
+      return getConsoleFocusAsString(fDefaultConsoleFocus);
+  }
+
+  STAFString STAFProcessService::getConsoleFocusAsString(
+      STAFProcessConsoleFocus_t consoleFocus)
+  {
+      ....
+  }
+
+  // Update the handleStart() method to handle for FOCUS option and
+  // to assign it's value to process->consoleFocus (used when querying
+  // a process) and to startData.consoleFocus.
+
+  STAFString focusString = "";
+
+  if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("FOCUS", focusString);
+
+  if (!rc)
+  {
+      if (focusString.length() > 0)
+      {
+          rc = getConsoleFocusFromString(process->consoleFocus, focusString);
+
+          if (rc)
+          {
+              rc = kSTAFInvalidValue;
+              errorBuffer = STAFString("Invalid focus: ") + focusString +
+                  "\nValid values are Minimized, Background, or Foreground.";
+          }
+      }
+      else
+      {
+          process->consoleFocus = STAFProcessService::getDefaultConsoleFocus();
+      }
+  }
+
+  startData.consoleFocus = process->consoleFocus;
+
+  // Add defaultFocus to the output for LIST SETTINGS
+
+  settingsMap->put("defaultFocus",
+                   STAFProcessService::getDefaultConsoleFocusAsString());
+
+  // Update handleSet method to support new DEFAULTFOCUS option
+
+  if (parsedResult->optionTimes("DEFAULTFOCUS") > 0)
+  {
+      // SET DEFAULTCONSOLEFOCUS
+
+      STAFString focusString;
+      STAFProcessConsoleFocus_t focus;
+
+      rc = RESOLVE_STRING_OPTION("DEFAULTFOCUS", focusString);
+      if (rc) return STAFServiceResult(rc, errorBuffer);
+
+      rc = STAFProcessService::getConsoleFocusFromString(focus, focusString);
+
+      if (rc)
+      {
+          return STAFServiceResult(
+              kSTAFInvalidValue,
+              "DEFAULTFOCUS value must be Background, Foreground, or "
+              "Minimize.  Invalid value: " + focusString);
+      }
+
+      rc = STAFProcessService::setDefaultConsoleFocus(focus);
+
+      if (rc)
+      {
+          return STAFServiceResult(
+              rc, "Error setting DEFAULTCONSOLEFOCUS to " +
+              focusString);
+      }
+  }
+
+  // Add focus to the QUERY HANDLE output for a process
+  queryMap->put("focus", getConsoleFocusAsString(process->consoleFocus));
+
+  // Update Help for PROCESS Service
+  help += "      [STOPUSING <Method>] [STATICHANDLENAME <Name>]" +
+          *gLineSeparatorPtr;
+  help += "      [NEWCONSOLE | SAMECONSOLE] "
+          "[FOCUS <Background | Foreground | Minimized>]" +
+  help += "      [DEFAULTFOCUS <Background | Foreground | Minimized>] " +
+          *gLineSeparatorPtr;
+
+
+e) stafproc/STAFConfig.cpp:
+
+  // Update SET parser
+  fSetParser.addOption("DEFAULTFOCUS", 1, STAFCommandParser::kValueRequired);
+
+  // Handle new DEFAULTFOCUS set option
+  if (parsedResult->optionTimes("DEFAULTFOCUS") != 0)
+  {
+      STAFString focusString;
+      STAFProcessConsoleFocus_t focus;
+
+      rc = RESOLVE_STRING_OPTION("DEFAULTFOCUS", focusString);
+
+      if (rc != kSTAFOk)
+      {
+          cout << "Error on DEFAULTFOCUS setting, " << line << endl
+               << "Error resolving "
+               << parsedResult->optionValue("DEFAULTFOCUS") << ", RC: "
+               << rc << endl;
+          return 1;
+      }
+
+      rc = STAFProcessService::getConsoleFocusFromString(focus, focusString)
+
+      if (rc != kSTAFOk)
+      {
+          cout << "Error on DEFAULTFOCUS setting, " << line << endl
+               << "Invalid value, " << focusString << ", RC: "
+               << rc << endl;
+          return 1;
+      }
+
+      rc = STAFProcessService::setDefaultConsoleFocus(focus);
+
+      if (rc != kSTAFOk)
+      {
+          cout << "Error on DEFAULTFOCUS setting, " << line << endl
+               << "Invalid value.  Must be Background, Foreground, or "
+               << "Minimized, RC: " << rc << endl;
+          return 1;
+      }
+  }
+
+
+f) services/stax/service/STAXProcessActionFactory.cpp
+
+  // Added code to update the STAX DTD as described above.
+
+  // Added a focus key to the fQueryProcessMapClass:
+  fQueryProcessMapClass.addKey("focus",        "Focus");
+
+  // Updated the parse() method to handle optional element focus
+  // and its mode attribute:
+
+  else if (thisChild.getNodeName().equals("focus"))
+  {
+      String ifValue = new String();
+      String modeValue = new String();
+
+      NamedNodeMap attrs = thisChild.getAttributes();
+
+      for (int j = 0; j < attrs.getLength(); ++j)
+      {
+          Node thisAttr = attrs.item(j);
+
+          String errorInfo = "\n  Element: " +
+              thisChild.getNodeName() + "  Attribute: " +
+              thisAttr.getNodeName();
+
+          if (thisAttr.getNodeName().equals("if"))
+              ifValue = STAXUtil.parseAndCompileForPython(
+                  thisAttr.getNodeValue(), errorInfo);
+          else if (thisAttr.getNodeName().equals("mode"))
+              modeValue = STAXUtil.parseAndCompileForPython(
+                  thisAttr.getNodeValue(), errorInfo);
+          else
+              throw new STAXInvalidXMLAttributeException(
+                  thisChild.getNodeName() + ": " +
+                  thisAttr.getNodeName());
+      }
+
+      process.setFocus(modeValue, ifValue);
+  }
+
+
+g) services/stax/service/STAXProcessAction.cpp
+
+  // Added get and set focus methods:
+
+  public String getFocus() { return fFocus; }
+
+  public void   setFocus(String focus, String focusIf)
+  {
+      fFocus = focus;
+      fUnevalFocus = focus;
+      fFocusIf = focusIf;
+  }
+
+  // Updated the getDetails() method to include the focus value
+  
+  if (!fFocus.equals(""))
+      result += ";Focus:" + fFocus;
+
+  // Updated the cloneAction() method for the new focus fields
+
+  clone.fUnevalFocus = fUnevalFocus;
+  clone.fFocus = fFocus;
+  clone.fFocusIf = fFocusIf;
+
+  // Update the generateProcessStartRequest() method to evaluate
+  // the focus element and its attribute values and to update the
+  // PROCESS START request in fRequest).  If an error occurs, it
+  // raises the appropriate signal and returns a non-zero value.
+
+  if (!fFocus.equals(""))
+  {
+      evalElem = "focus";
+      evalAttr = "if";
+
+      if (fThread.pyBoolEval(fFocusIf))
+      {
+          evalAttr = "mode";
+          fFocus = fThread.pyStringEval(fUnevalFocus);
+
+          if (fFocus.equalsIgnoreCase("minimized"))
+              request.append(" FOCUS Minimized");
+          else if (fFocus.equalsIgnoreCase("foreground"))
+              request.append(" FOCUS Foreground");
+          else if (fFocus.equalsIgnoreCase("background"))
+              request.append(" FOCUS Background");
+          else
+          {
+              // Raise a StartProcessError signal
+              fState = COMPLETE;
+              fThread.popAction();
+
+              String msg = "<process>\n" +
+                "\n  Name       : " + fName +
+                "\n  Location   : " + fLocation +
+                "\n  Command    : " + fCommand;
+
+              if (!fParms.equals(""))
+                  msg += "\n  Parms      : " + fParms;
+
+              msg += "\n  Focus Mode : " + fFocus +
+                  "\n\n  Invalid value for focus element's mode " +
+                  "attribute: " + fFocus +
+                  "\n  Must be 'minimized', 'foreground' or " +
+                  "'background'.";
+
+              fThread.setSignalMsgVar("STAXProcessStartErrorMsg",
+                                      msg);
+              fThread.raiseSignal("STAXProcessStartError");
+
+              return 1;
+          }
+      }
+      else
+          fFocus = "";
+  }
+
+  // Update the generateProcessStartEvent() to add a "focus" key
+  // the process map used for the process start event.
+
+  if (!fFocus.equals(""))
+  {
+      processMap.put("focus", fFocus);
+  }
+
+  // Define private focus variables
+
+  private String fFocus = new String("");
+  private String fFocusIf = new String("");
+  private String fUnevalFocus = new String("");
+
+
+Design Considerations
+---------------------
+
+- No mechanism is available to provide the focus ability for Unix.
+- It isn't possible on Windows when using the SHELL option to have
+  the focus effect any windows opened by the command itself.
+  When using the SHELL option, the actual command used by STAF
+  begins with "cmd /c " + command.  Changing it to be
+  "cmd /c start /min /wait " + command if a minimized focus would
+  work for a command like notepad, but it wouldn't work correctly
+  for a command like dir because it doesn't close the new command
+  prompt window after executing the dir command.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+The focus option only works for machines running STAF V3.1.4 or later
+as that's the version of STAF that will first provide this capability.
+For example, you could get either of the following errors if machine
+client1 is not a version of STAF < 3.1.4.  Which error you get depends
+on where the FOCUS option is specified and what other options are
+specified:
+
+C:\STAF client1 PROCESS START COMMAND "dir c:/temp" WAIT FOCUS Minimized
+Error submitting request, RC: 7
+Additional info
+---------------
+FOCUS Minimized
+
+C:\STAF client1 PROCESS START COMMAND "dir c:/temp" FOCUS Minimized WAIT
+Error submitting request, RC: 10
+Additional info
+---------------
+2

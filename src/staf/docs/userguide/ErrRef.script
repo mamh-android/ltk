@@ -1,0 +1,515 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : ErrRef SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Error Reference
+.*  Detail:
+.*
+.*     This file contains an Error Code Reference for STAF.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.error codes
+:i2.STAF
+:h1 id=retcode.API Return Codes
+:note.In some shell environments, return codes above 255 may be returned modulo
+256.  This can, in particular, cause service return codes (which range from
+4000 upward) to be mistaken for (possibly) non-existent common STAF return
+codes.  For example, if a service returned the return code 4010, this might
+appear to be the return code 170 (4010 modulo 256) in a shell
+environment.:enote.
+:table id     = errtab
+       headhi = 3
+       frame  = box
+       split  = yes
+       cols   = '* 2* 4*'
+       align  = 'c l l'.
+:tcap.STAF API Return Codes
+.*-----------------------------
+:thd.
+:c.Error Code
+:c.Meaning
+:c.Comment
+:ethd.
+.*-----------------------------
+:row.
+:c.:hp2.0:ehp2.
+:c.No error
+:c.
+.*-----------------------------
+:row.
+:c.:hp2.1:ehp2.
+:c.Invalid API
+:c.This indicates that a process has tried to call an invalid internal STAF API.
+If this error occurs, report it to the authors.
+.*-----------------------------
+:row.
+:c.:hp2.2:ehp2.
+:c.Unknown Service
+:c.You have tried to submit a request to a service that is unknown to STAFProc.
+Verify that you have correctly registered the service.
+.*-----------------------------
+:row.
+:c.:hp2.3:ehp2.
+:c.Invalid Handle
+:c.You are passing an invalid handle to a STAF API.  Ensure that you are using
+the handle you received when you registered with STAF.
+.*-----------------------------
+:row.
+:c.:hp2.4:ehp2.
+:c.Handle already exists
+:c.This indicates that you are trying to register a process with one name when
+that process has already been registered with a different name.  If you
+register the same process multiple times, ensure that you use the same name
+on each registration call.
+:note.If you receive this error code when trying to perform an operation
+other than registering a service, report it to the authors.
+.*-----------------------------
+:row.
+:c.:hp2.5:ehp2.
+:c.Handle does not exist
+:c.You are trying to perform an operation on a handle that does not exist.
+For example, you may be trying to stop a process, but you are specifying the
+wrong handle.
+.*-----------------------------
+:row.
+:c.:hp2.6:ehp2.
+:c.Unknown Error
+:c.An unknown error has occurred.  This error is usually an indication of an
+internal STAF error.  If this error occurs, report it the authors.
+.*-----------------------------
+:row.
+:c.:hp2.7:ehp2.
+:c.Invalid Request String
+:c.You have submitted an improperly formatted request to a service.  See the
+appropriate section in this document for the syntax of the service's requests,
+or contact the provider of the service.
+:note.Additional information regarding the exact syntax error may be provided
+in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.8:ehp2.
+:c.Invalid Service Result
+:c.This indicates an internal error with the service to which a request was
+submitted.  If this error occurs, report it to the authors and the service
+provider.
+.*-----------------------------
+:row.
+:c.:hp2.9:ehp2.
+:c.Rexx Error
+:c.This indicates an internal error in an external Rexx service.  If this error
+occurs, report it to the authors and the service provider.
+:note.The actual Rexx error code will be returned in the result passed back
+from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.10:ehp2.
+:c.Base OS Error
+:c.This indicates that a base operating system error was encountered.
+:note.The actual base operating system error code, and possibly additional
+information about the error, will be returned in the result passed back
+from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.11:ehp2.
+:c.Process Already Complete
+:c.You are trying to perform an invalid operation on a process that has
+already completed.  For example, you may be trying to stop the process or
+register for a process end notification.
+.*-----------------------------
+:row.
+:c.:hp2.12:ehp2.
+:c.Process Not Complete
+:c.You are trying to free process information for a process that is still
+executing.
+.*-----------------------------
+:row.
+:c.:hp2.13:ehp2.
+:c.Variable Does Not Exist
+:c.You are trying to get, remove, or resolve a variable that does not exist.
+Remember that variables are case sensitive.  The name of the variable that
+does not exist will be in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.14:ehp2.
+:c.UnResolvable String
+:c.You have requested to resolve a string that cannot be resolved.  This
+indicates that you have exceeded the resolution depth of the VAR service.  The
+most common cause of this is recursive variables definitions.
+.*-----------------------------
+:row.
+:c.:hp2.15:ehp2.
+:c.Invalid Resolve String
+:c.The string you requested to be resolved has a non-matching left or right
+curly brace.  Ensure that all variable references have both left and right
+curly braces.
+.*-----------------------------
+:row.
+:c.:hp2.16:ehp2.
+:c.No Path To Endpoint
+:c.This indicates that STAFProc was not able to submit the request to
+the requested endpoint (i.e. target machine).  This error usually indicates
+one or more of the following:
+:p.
+:ol compact.
+:li.STAFProc is not running on the target machine.
+:li.The requested endpoint is not valid.
+:li.The network interface or port for the requested endpoint is not supported.
+:li.A firewall is blocking communication via the port for the requested endpoint.
+:li.A secure network interface is being used to communicate to a machine that
+doesn't have a secure network interface configured with the same certificate.
+:eol.
+Alternatively, you may need to increase your CONNECTTIMEOUT value for the
+network interface and/or increase your CONNECTATTEMPTS value in your STAF.cfg
+file.
+.*-----------------------------
+:row.
+:c.:hp2.17:ehp2.
+:c.File Open Error
+:c.This indicates that there was an error opening the requested file.
+Some possible explanations are that the file/path does not exist, contains
+invalid characters, or is locked.
+:note.Additional information regarding which file could not be opened may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.18:ehp2.
+:c.File Read Error
+:c.This indicates that there was an error while trying to read data from a file.
+:note.Additional information regarding which file could not be read from may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.19:ehp2.
+:c.File Write Error
+:c.This indicates that there was an error while trying to write data to a file.
+:note.Additional information regarding which file could not be written to may
+be provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.20:ehp2.
+:c.File Delete Error
+:c.This indicates that there was an error while trying to delete a file or
+directory.
+:note.Additional information regarding which file or directory could not be
+deleted may be provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.21:ehp2.
+:c.STAF Not Running
+:c.This indicates that STAFProc is not running on the local machine with the
+same STAF_INSTANCE_NAME (and/or the same STAF_TEMP_DIR if on a Unix machine).
+:p.
+:hp2.Notes::ehp2.
+:ol compact.
+:li.If the STAF_INSTANCE_NAME environment variable is not set, it defaults to "STAF".
+:li.On Unix, if the STAF_TEMP_DIR environment variable is not set, it defaults to "/tmp".
+This environment variable is not used on Windows.
+:li.This error can also occur when submitting a request using the local IPC
+interface on a Unix machine if the socket file that the local interface uses
+has been inadvertently deleted. 
+:li.To get more information on this error, set special environment variable
+STAF_DEBUG_21=1 and resubmit your local STAF service request.
+:eol.
+.*-----------------------------
+:row.
+:c.:hp2.22:ehp2.
+:c.Communication Error
+:c.This indicates an error transmitting data across the network, or to the
+local STAF process.  For example, you would receive this error if STAFProc.exe
+was terminated in the middle of a service request, or if a bridge went down
+in the middle of a remote service request.  This can also indicate that the
+requested endpoint is not valid (e.g. it has an invalid network interface and
+port combination such as a non-secure tcp interface with the port for a secure
+ssl interface).
+.*-----------------------------
+:row.
+:c.:hp2.23:ehp2.
+:c.Trustee Does Not Exist
+:c.You have requested to delete a trustee, and the trustee does not exist.
+Verify that you have specified the correct trustee.
+.*-----------------------------
+:row.
+:c.:hp2.24:ehp2.
+:c.Invalid Trust Level
+:c.You have attempted to set a machine or default trust level to an invalid
+level.  The valid trust levels are from zero to five.
+.*-----------------------------
+:row.
+:c.:hp2.25:ehp2.
+:c.Insufficient Trust Level
+:c.You have submitted a request for which you do not have the required
+trust level to perform the request.
+:note.Additional information regarding the required trust level may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.26:ehp2.
+:c.STAF Registration Error
+:c.This indicates that an external service encountered a problem when trying
+to register with STAF.  Ensure that STAF has been properly installed and
+configured.
+.*-----------------------------
+:row.
+:c.:hp2.27:ehp2.
+:c.Service Configuration Error
+:c.This indicates an error with the configuration of an external service.  One 
+possible explanation is that the LIBRARY you specified when configuring the
+service does not exist.  Or, if you specified the EXECUTE option, verify that
+the executable exists and has the execute permission.  Or, if you specified the
+PARMS option, verify that all of the service configuration are valid.  Consult
+the appropriate documentation for the service to verify whether you have
+configured the service properly, or contact the service provider.
+:note.Additional information regarding why the service configuration failed
+may be provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.28:ehp2.
+:c.Queue Full
+:c.This indicates that you are trying to queue a message to a handle's queue,
+but the queue is full.  The maximum queue size can be increased by using
+the MAXQUEUESIZE statement in the STAF Configuration File.
+.*-----------------------------
+:row.
+:c.:hp2.29:ehp2.
+:c.No Queue Element
+:c.This indicates that you tried to GET or PEEK a particular element in a
+queue, but no such element exists, or the queue is empty.
+.*-----------------------------
+:row.
+:c.:hp2.30:ehp2.
+:c.Notifiee Does Not Exist
+:c.This indicates that you are trying to remove a message notification for
+a machine/process/priority combination which does not exist in the
+notification list.
+.*-----------------------------
+:row.
+:c.:hp2.31:ehp2.
+:c.Invalid API Level
+:c.This indicates that a process has tried to call an invalid level of an
+internal STAF API.  If this error occurs, report it to the authors.
+.*-----------------------------
+:row.
+:c.:hp2.32:ehp2.
+:c.Service Not Unregisterable
+:c.This indicates that you are trying to unregister a service that is not
+unregisterable.  Note that internal services are not unregisterable.
+.*-----------------------------
+:row.
+:c.:hp2.33:ehp2.
+:c.Service Not Available
+:c.This indicates that the service you requested is not currently able to
+accept requests.  The service may be in the process of initializing or
+terminating.
+.*-----------------------------
+:row.
+:c.:hp2.34:ehp2.
+:c.Semaphore Does Not Exist
+:c.This indicates that you are trying to release, query, or delete a semaphore
+that does not exist.
+.*-----------------------------
+:row.
+:c.:hp2.35:ehp2.
+:c.Not Semaphore Owner
+:c.This indicates that you are trying to release a semaphore for which your
+process is not the current owner.
+.*-----------------------------
+:row.
+:c.:hp2.36:ehp2.
+:c.Semaphore Has Pending Requests
+:c.This indicates that you are trying to delete either a mutex semaphore that
+is currently owned or an event semaphore that has waiting processes.
+.*-----------------------------
+:row.
+:c.:hp2.37:ehp2.
+:c.Timeout
+:c.This indicates that you submitted a request with a timeout value and the
+request did not complete within the requested time.
+.*-----------------------------
+:row.
+:c.:hp2.38:ehp2.
+:c.Java Error
+:c.This indicates an error performing a Java native method call.  A description
+of the error will be returned in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.39:ehp2.
+:c.Converter Error
+:c.This indicates an error performing a codepage conversion.  The most likely
+cause of this error is that STAF was not properly installed.  However, it is
+possible that you are currently using a codepage that was not present or
+specified during STAF installation.
+.*-----------------------------
+:row.
+:c.:hp2.40:ehp2.
+:c.Move Error
+:c.This indicates that there was an error while trying to move a file or
+directory.
+:note.Additional information regarding the error may be provided in the
+result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.41:ehp2.
+:c.Invalid Object
+:c.This indicates that an invalid object was specified to a STAF API.
+If you receive this return code via a standard STAFSubmit call, report it to
+the authors and the service provider.
+.*-----------------------------
+:row.
+:c.:hp2.42:ehp2.
+:c.Invalid Parm
+:c.This indicates that an invalid parameter was specified to a STAF API.
+If you receive this return code via a standard STAFSubmit call, report it to 
+the authors and the service provider.
+.*-----------------------------
+:row.
+:c.:hp2.43:ehp2.
+:c.Request Number Not Found
+:c.This indicates that the specified Request Number was not found.  The 
+specified Request Number may be invalid, or the request's information may no 
+longer be available from the Service Service (for example, if the SERVICE FREE
+command had previously been issued for the request number).
+.*-----------------------------
+:row.
+:c.:hp2.44:ehp2.
+:c.Invalid Asynch Option
+:c.This indicates that an invalid Asynchronous submit option was specified.
+.*-----------------------------
+:row.
+:c.:hp2.45:ehp2.
+:c.Request Not Complete
+:c.This indicates that the specified request is not complete.  This error code 
+would be returned, for example, if you requested the result of a request which 
+has not yet completed.
+.*-----------------------------
+:row.
+:c.:hp2.46:ehp2.
+:c.Process Authentication Denied
+:c.This indicates that the userid/password you specified could not be 
+authenticated.  The userid/password may not be valid or authentication may be 
+disabled.
+.*-----------------------------
+:row.
+:c.:hp2.47:ehp2.
+:c.Invalid Value
+:c.This indicates that an invalid value was specified.  This is closely related
+to the Invalid Request String return code, but indicates that a specific value 
+in the request is invalid.  For example, you may not have specified a number 
+where a number was expected.
+:note.Additional information regarding which value is invalid may be provided
+in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.48:ehp2.
+:c.Does Not Exist
+:c.This indicates that the item you specified does not exist.  
+:note.Additional information regarding which item could not be found may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.49:ehp2.
+:c.Already Exists
+:c.This indicates that the item you specified already exists.  
+:note.Additional information regarding which item already exists may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.50:ehp2.
+:c.Directory Not Empty
+:c.This indicates that you have tried to delete a directory, but that directory
+is not empty.
+:note.Additional information specifying the directory which could not be deleted
+may be provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.51:ehp2.
+:c.Directory Copy Error
+:c.This indicates that you have tried to copy a directory, but errors occurred
+during the copy.
+:note.Additional information specifying the entries which could not be copied
+may be provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.52:ehp2.
+:c.Diagnostics Not Enabled
+:c.This indicates that you tried to record diagnostics data, but diagnostics
+have not been enabled.  You must enable diagnostics before you can record
+diagnostics data.
+.*-----------------------------
+:row.
+:c.:hp2.53:ehp2.
+:c.Handle Authentication Failed
+:c.This indicates that the user, credentials, and/or authenticator you specified
+could not be authenticated. The user/credentials may not be valid or the
+authenticator may not be registered.
+:note.Additional information specifying why authentication was denied may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.54:ehp2.
+:c.Handle Already Authenticated
+:c.This indicates that the handle is already authenticated. The handle must be
+unauthenticated in order to be authenticated.
+.*-----------------------------
+:row.
+:c.:hp2.55:ehp2.
+:c.Invalid STAF Version
+:c.This indicates that the version of STAF (or the version of a STAF service)
+is lower than the minimum required version.
+.*-----------------------------
+:row.
+:c.:hp2.56:ehp2.
+:c.Request cancelled
+:c.This indicates that the request has been cancelled.
+:note.Additional information specifying why the request was cancelled may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.57:ehp2.
+:c.Create Thread Error
+:c.This indicates that a problem occurred creating a new thread. One possible
+explanation is that there's not enough memory available to create a new
+thread.
+:note.Additional information specifying why creating a new thread failed may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.58:ehp2.
+:c.Maximum Size Exceeded
+:c.This indicates that the size of a file exceeded the maximum size allowed
+(e.g. per the MAXRETURNFILESIZE operational parameter or per the
+MAXRETURNFILESIZE setting for the STAX service).
+A maximum file size is usually set to prevent the creation of result strings
+that require more memory than is available which can cause errors or crashes.
+:note.Additional information specifying why this error occurred may be
+provided in the result passed back from the submit call.
+.*-----------------------------
+:row.
+:c.:hp2.59:ehp2.
+:c.Maximum Handles Exceeded
+:c.This indicates that a new handle could not be created/registered
+because the maximum number of active handles allowed by STAF has been
+exceeded.  You need to delete one or more handles that are no longer
+being used.  The Handle service's LIST HANDLES SUMMARY request provides
+information on the maximum number of active STAF handles and this may be
+helpful in better understanding why this error occurred.
+.*-----------------------------
+:row.
+:c.:hp2.60:ehp2.
+:c.Not Pending Requester
+:c.You cannot cancel a pending request your handle did not submit unless
+you specify the FORCE option.
+.*-----------------------------
+:row.
+:c.:hp2.4000+:ehp2.
+:c.Service Defined
+:c.Error codes of 4000 and beyond are service specific error codes.  Either
+see the appropriate section in this document for the syntax of the service's
+requests, or contact the provider of the service.
+.*-----------------------------
+:etable.

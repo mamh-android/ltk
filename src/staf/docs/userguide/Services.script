@@ -1,0 +1,476 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Services SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Services
+.*  Detail:
+.*
+.*     This is the high level file which imbeds the other services
+.*     descriptions
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.services
+:i2.general
+:i3.description
+:h1 id=service.Services overview
+:p.Services are what provide all the capabilities of STAF.
+.*
+.*---------------------------------------------------------------------
+.*
+:i3.syntax
+:h2 id=syntaxsrv.General Service Syntax
+:p.When examining the syntax statements for each service, keep the following
+rules in mind.
+:ul compact.
+:li.Unadorned options are required
+:li.Options or values surrounded by angle brackets, e.g. < and >, are required.
+:li.Options or values surrounded by square brackets, e.g. &lbrk. and &rbrk. , are not
+required.
+:li.Options in a group are separated by a vertical bar.  Only one of the
+options in a group may be specified.
+:eul.
+:p.For example,
+:xmp.
+LOG <GLOBAL | MACHINE | HANDLE> MESSAGE <Message>
+:exmp.
+:p.indicates that option LOG is required and requires no value, option
+MESSAGE is required and requires a value, and exactly one of options GLOBAL,
+MACHINE, and HANDLE must be specified (and none of these options requires a
+value).
+:xmp.
+START COMMAND <Command> &lbrk.WORKLOAD <Name>&rbrk.  &lbrk.WAIT | ASYNC&rbrk.
+:exmp.
+indicates that option START is required and requires no value, option COMMAND
+is required and requires a value, option WORKLOAD is not required, but, if
+specified, requires a value, and one of the options WAIT and ASYNC may be
+specified, and neither requires a value.
+.*
+.*---------------------------------------------------------------------
+.*
+:i3.option value formats
+:h2 id=ovform.Option Value Formats
+:p.Values for options may be specified in one of three ways.
+:ol compact.
+:li.If the value contains no spaces or quotes, you may simply specify the
+value.  For example,
+:xmp.
+MESSAGE Hello
+:exmp.
+:li.You may enclose the value in quotes.  When doing so, the backslash
+character is the escape character.  Any character after the backslash is
+treated as a literal character.  To specify a backslash, use two backslashes.
+For example,
+:xmp.
+MESSAGE "Hello World"
+:exmp.
+:p.specifies the message :xph.Hello World:exph.
+:xmp.
+MESSAGE "He said, \"What is that\""
+:exmp.
+:p.specifies the message :xph.He said, "What is that":exph.
+:xmp.
+MESSAGE "c:\\MyApp\\Some directory with spaces"
+:exmp.
+:p.specifies the message :xph.c:\MyApp\Some directory with spaces:exph.
+:p.
+:li.You may use a length delimited format that is of the form
+:xph.:<Length>:<String>:exph..  Note that the length is specified in
+characters, not bytes.  For example,
+:xmp.
+MESSAGE :11&colon.Hello World
+:exmp.
+:p.specifies the message :xph.Hello World:exph.
+:xmp.
+MESSAGE :23&colon.He said, "What is that"
+:exmp.
+:p.specifies the message :xph.He said, "What is that":exph.
+:xmp.
+MESSAGE :35&colon.c:\MyApp\Some directory with spaces
+:exmp.
+:p.specifies the message :xph.c:\MyApp\Some directory with spaces:exph.
+:eol.
+:p.The first two formats are most appropriate when using the STAF command line.
+The third is most appropriate and easiest from within programs using one
+of the supplied "wrapData" functions.
+:p.
+Note that when the value of an option is the same as the name of the option
+(or another supported option), the value must be distinguished as 
+such either by quoting the value or by using the length delimited format.
+For example, if NAME is the name of an option and you also want to specify
+NAME as the value of the option, you should specify either NAME "NAME" or
+NAME :4&colon.NAME.
+:p.
+Also, note that when you want to specify an empty string for the value of an
+option, you must use the third format (the length delimited format)
+because if you specify no value or "", then the STAF command parser thinks
+that no value was specified for the option and this will cause an
+"Invalid Request String" error (RC 7) if the option requires a value.
+For example,
+:xmp.
+MESSAGE :0:
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:i3.private data
+:h2 id=privatedata.Private Data
+:p.Some command options allow their values to contain private data which
+will be handled by the service.  This will be noted in the command
+options that allow it.
+:p.
+Private data is denoted by surrounding the private data, e.g. a password,
+between an opening privacy delimiter (!!@) and a closing privacy delimiter
+(@!!).  For example, !!@password@!!.  Because of this special significance
+of "!!@" and "@!!", if you do not want them to denote private data, use a
+caret (^), as an escape character for "!!@" and "@!!".
+Nested private data is allowed.
+:p.
+Using privacy delimiters indicates that the data enclosed between opening
+and closing privacy delimiters should be protected so that if the private 
+data is displayed (e.g. in a :xph.LIST:exph. or :xph.QUERY:exph. request),
+any private data will be masked (replaced with asterisks).
+  
+:h4.Examples
+:p.
+The Process service's :xph.START:exph. request handles
+private data in the :xph.COMMAND:exph., :xph.PARMS:exph., and/or
+:xph.PASSWORD:exph. options.  If the command contains
+a password (e.g. secret) that you want to keep private, enclose the
+password between privacy delimiters as follows:
+:xmp.
+START SHELL COMMAND "C:/tests/myTest.exe -password !!@secret@!!"
+:exmp.
+The above command would be displayed as "myTest.exe -password ************"
+in a :xph.LIST:exph. or :xph.QUERY:exph. request.
+:p.If you want to start command "TestA.exe" as another user (e.g.
+userid testuser and password secret), you can indicate that the
+password is private as follows:
+:xmp.
+START COMMAND C:/tests/TestA.exe USER testuser PASSWORD !!@secret@!!
+:exmp.
+:p.If the password in the above example actually contained !!@ or @!!
+(e.g. pass@!!rd), then you need to escape the privacy delimiter.
+For example:
+:xmp.
+START COMMAND C:/tests/TestA.exe USER testuser PASSWORD !!@pass^@!!rd@!!
+:exmp.
+:p.
+You can nest private data.  For example the following string contains
+two levels of nested private data:
+:xmp.
+!!@Top secret info: password=^!!@secret^@!!.@!!
+:exmp.
+Note that a caret (^) is added to escape any !!@ and @!! characters
+that are nested within another set of privacy delimiters.
+:p.
+When specifying private data for a command option in a program, use the
+method provided by STAF to add privacy delimiters.
+STAF also provides methods to escape privacy delimiters, to
+mask privacy delimiters, and to remove privacy delimiters.  See the
+STAF API documentation for more information.
+.*---------------------------------------------------------------------
+.*
+:i3.variable resolution
+:h2 id=varres.Variable Resolution
+:p.Most command options allow their values to contain variable references which
+will be resolved by the service.  This will be noted in the command options
+that allow it.  In addition, the machine and service specified when submitting
+a STAF request may contain variable references.
+:p.The following potential variable pools are available for use in variable 
+resolution in a service request:
+:ul compact.
+:li.OSYSTEM - Originator's system variable pool
+:li.RSYSTEM - Remote system variable pool
+:li.OSHARED - Originator's shared variable pool
+:li.RSHARED - Remote shared variable pool
+:li.HANDLE  - Originating handle's variable pool
+:li.PROCUPV - PROCESS USERPROCESSVARS variable pool. This is only involved when
+the USEPROCESSVARS option is specified on a PROCESS START request
+:eul.
+:p.Unless otherwise specified, variable resolution is handled in
+one of two ways, based on whether the request is performed locally (i.e., on
+the originating system) or on another system.
+:ul compact.
+:li.If the request is performed locally, the order of variable resolution will be 
+(in order of precedence) &lbrk.PROCUPV, HANDLE, OSHARED, OSYSTEM&rbrk., where 
+PROCUPV is only used in a PROCESS START request when the USEPROCESSVARS option is
+used.
+:li.If the request is performed on another system, the order of variable resolution
+will be (in order of precedence) &lbrk.PROCUPV, HANDLE, OSHARED, RSHARED, RSYSTEM&rbrk.,
+where PROCUPV is only used in a PROCESS START request when the USEPROCESSVARS option
+is used.
+:eul.
+:note.Since, by definition, a delegated service request will not be handled
+locally, the variable pool associated with the requesting process will never be
+used for variable resolution in a delegated service request.
+.*
+.*---------------------------------------------------------------------
+.*
+:i3.service result definition
+:h2 id=sresdef.Service Result Definition
+:p.While all services technically return strings in the result buffer, many
+times this string will actually be the marshalled form of a data structure.
+This section describes how a service's result is defined in this documentation.
+See :hdref refid=marshall. for more information on marshalled data structures
+(and how they are mapped to the various languages that STAF supports).
+:p.In the simplest case, a service will return no value or a simple string (i.e.,
+a string which is not the marshalled form of a data structure).  In this case,
+the service result will simple describe what the simple string contains.  For
+example, the HANDLE service documentation (see :hdref refid=handcrt.) indicates that when creating
+a static handle the result buffer will simply contain the handle number that
+was created.
+:p.If the service result contains the marshalled form of a data structure (which
+will now be referred to as "structured data"), the service documentation will
+describe it in terms of various structured content.  The following are the
+types of structured data you will encounter.
+:ul.
+:li.&noneObj. - This is a special "object" that represents no value.
+It is used to expressly indicate the lack of a particular value.  For example,
+if an optional parameter was not specified on an earlier request, the result
+of a later request may use &noneObj. to indicate that the optional parameter was
+not specified on the earlier request.
+:li.&stringObj. - This represents a string object.
+:li.:xph.<List>:exph. - This represents an ordered list of other objects.  This
+will always be expressed as :xph.<List> of <some other type>:exph., where
+:xph.<some other type>:exph. is one of the types defined here.
+:li.:xph.<Map>:exph. - This represents a set of key/value pairs.  Typically, if
+a service is using a :xph.<Map>:exph., then the keys are not static from request
+to request.  If the keys are static from request to request, the following data
+type is used.
+:li.:xph.<Map:<Class>>:exph. - This represents a "map class instance".  A map
+class instance is similar to a :xph.<Map>:exph..  However, a map class instance
+(technically, the map class of which it is an instance) carries along additional
+metadata, which defines the :xph.<Class>:exph. of the map class instance.
+This metadata explicitly defines which keys are present in instances of the
+map class , as well as information on how to display the keys.  See below
+for more information on map classes.
+:li.&anyObj. - This is a placeholder that represents any of the above data
+types, and is not a true type itself.  It is used to document data for which a
+type cannot be determined until runtime.
+:eul.
+
+:p.In some cases, the structured data that is returned will be one of a number
+of possible values.  In that case, you will see the "or" symbol, '|', used to
+list the possible choices.  Two common cases are
+:xmp.
+<String> | <None>
+:exmp.
+and
+:xmp.
+<Map:<Class>> | <None>
+:exmp.
+:p.In the first case, this means that you will either get a string object
+or the special &noneObj. object.  In the second case, it means you will
+either get an instance of the specified map class or the special &noneObj.
+object.
+
+:p.To further document map classes, each map class will have an associated
+table defining the metadata associated with the map class.  The general format
+of this table is as follows.
+
+.***************************************
+:table cols='* * * *'.
+:tcap.Definition of map class <Map Class Name>
+:tnote text='Description'.This contains a description of the map class:etnote.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.key1
+:c.Key 1 display name
+.br
+(Key 1 short display name) if one is provided
+:c.key1 type
+:c.key1 format/value information
+:row.
+:c....
+:c....
+:c....
+:c....
+:row.
+:c.keyX
+:c.Key X display name
+.br
+(Key 1 short display name) if one is provided
+:c.keyX type
+:c.keyX format/value information
+:tnote text='Notes'.
+Any notes about the definition of the map class.
+:etnote.
+:etable.
+.***************************************
+:p.
+The "Display Name" field shows the display name for each key, and,
+optionally, a "short" display name may be specified (in parenthesis) for a key.
+Short display names may be used as column headings by the STAF executable
+when displaying the result in a tabular form if the total width of the
+display names exceeds 80 characters.
+:p.
+The "Format / Value" field is used predominantly to document the data
+present in &stringObj. objects.  When, the string will contain one of a limited
+set of possible values, then the set of possible values will be listed in
+this column.  This might look like the following
+:xmp.
+'Default' | 'Enabled' | 'Disabled'
+:exmp.
+:p.When the string will be in a particular format, the format will be
+documented in this column.  For example, a common string value is a timestamp,
+which is documented in the "Format / Value" column as follows
+:xmp.
+&timestampFormat.
+:exmp.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:i3.service help
+:h2 id=servicehelp.Service Help
+:p.All STAF services provide a HELP command that list basic service syntax
+information.
+:p.It is recommended that external service writers also provide a HELP
+facility.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=servicelist.Service list
+:p.The following table contains a brief description of the services provided
+with STAF.  The chapter that follows provides a detailed explanation of each
+service.
+:table cols='* 3*'.
+:tcap.Service Descriptions
+:thd.
+:c.Service name
+:c.Description String Representation
+:ethd.
+:row.
+:c.CONFIG
+:c.Provides a way to save the current STAF configuration
+:row.
+:c.DELAY
+:c.Provides a means to sleep a specified amount of time
+:row.
+:c.DIAG
+:c.Provides diagnostics services
+:row.
+:c.ECHO
+:c.Echos back a supplied message
+:row.
+:c.FS
+:c.Provides file transfer between systems
+:row.
+:c.HANDLE
+:c.Provides information about existing STAF handles
+:row.
+:c.HELP
+:c.Provides help on STAF error codes
+:row.
+:c.LIFECYCLE
+:c.Runs STAF service requests when STAFProc starts up or shuts down
+:row.
+:c.LOG
+:c.Provides robust logging services
+:row.
+:c.MISC
+:c.Handles miscellaneous commands such as displaying the version of STAF that is currently running
+:row.
+:c.MONITOR
+:c.Provides a means to monitor the status of running programs
+:row.
+:c.PING
+:c.Provides a simple is-alive message
+:row.
+:c.PROCESS
+:c.Handles starting, stopping, and querying processes
+:row.
+:c.QUEUE
+:c.Interacts with STAF queues
+:row.
+:c.RESPOOL
+:c.Manages pools of named elements
+:row.
+:c.SEM
+:c.Provides named event and mutex semaphores
+:row.
+:c.SERVICE
+:c.Provides information on available STAF services
+:row.
+:c.SHUTDOWN
+:c.Provides a means to shutdown STAF and register for shutdown notifications
+:row.
+:c.TRACE
+:c.Provides tracing information for STAF services
+:row.
+:c.TRUST
+:c.Interfaces with STAF's security
+:row.
+:c.VAR
+:c.Allows inspection and manipulation of STAF variable pools
+:row.
+:c.ZIP
+:c.Provides a means to zip/unzip/list/delete PKZip/WinZip compatible archives
+:etable.
+.*
+.*---------------------------------------------------------------------
+.*  Services in alphabetical order
+.*---------------------------------------------------------------------
+:h1 id=serviceref.Service reference
+:p.The foundation services that STAF provides are described in this chapter.
+For each service the following sections are listed.
+:ul compact.
+:li.Description - an overview of what the service provides
+:li.Registration - documentation on how to register the service.  This section
+will only be present for external services.
+:li.Variables - describes what variables affect the operation of the service.
+This section is not present if the service does not use or depend on any
+variables.
+:li.Commands - there will be one section for each of the major commands the
+service supports.  This section will contain the following subsections.
+:ul compact.
+:li.Syntax - a description of the command syntax
+:li.Security - a statement as to the trust level required to perform this
+command
+:li.Return Codes - a listing of the return codes this command may return
+:li.Results - the format of the result string this command may return.  Note,
+information provided in this section pertains to the results from a successful
+service request (i.e., a service request with a zero return code).  The results
+buffer for a service request with a non-zero return code is generally dependent
+on the return code from the request as opposed to the request itself.
+Therefore, if you receive a non-zero return code from a service request, you
+should generally look at the documentation for the return codes to determine the
+contents of the result buffer.
+:li.Examples - examples of how to use this command
+:eul.
+:eul.
+.*---------------------------------------------------------------------
+.im ConfigSrv
+.im DelaySrv
+.im DiagSrv
+.im EchoSrv
+.im FSSrv
+.im HandSrv
+.im HelpSrv
+.im LifeCycleSrv
+.im LogSrv
+.im MiscSrv
+.im MonSrv
+.im PingSrv
+.im ProcSrv
+.im QueueSrv
+.im PoolSrv
+.*.im RLogSrv
+.im SemSrv
+.im SrvSrv
+.im ShutSrv
+.im TraceSrv
+.im TrustSrv
+.im VarSrv
+.im ZipSrv

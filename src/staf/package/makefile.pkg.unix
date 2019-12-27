@@ -1,0 +1,117 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+Pkg_Targets += \
+  $(PKG)/STAFInst \
+  $(PKG)/STAFInst.mfs \
+  $(PKG)/bin/STAFProc$(OS_EE) \
+  $(PKG)/bin/STAF$(OS_EE) \
+  $(PKG)/bin/FmtLog$(OS_EE) \
+  $(PKG)/bin/STAFReg$(OS_EE) \
+  $(PKG)/bin/STAFLoop$(OS_EE) \
+  $(PKG)/bin/STAFExecProxy$(OS_EE) \
+  $(PKG)/lib/JSTAF.zip \
+  $(PKG)/lib/JSTAF.jar \
+  $(PKG)/lib/STAFHTTPSLS.jar \
+  $(PKG)/bin/STAF.cfg \
+  $(PKG)/lib/libSTAF.so \
+  $(PKG)/lib/libSTAFLIPC.so \
+  $(PKG)/lib/libSTAFTCP.so \
+  $(PKG)/lib/libRXSTAF.so \
+  $(PKG)/lib/libRxThread.so \
+  $(PKG)/lib/libJSTAF.so \
+  $(PKG)/lib/libJSTAFSH.so \
+  $(PKG)/lib/libSTAFDefaultSLS.so \
+  $(PKG)/lib/libSTAFMon.so \
+  $(PKG)/lib/libSTAFLog.so \
+  $(PKG)/lib/libSTAFPool.so \
+  $(PKG)/lib/libSTAFZip.so \
+  $(PKG)/lib/libSTAFZlib.so \
+  $(PKG)/lib/libSTAFEXECPROXY.so \
+  $(PKG)/lib/STAFUtil.rxl \
+  $(PKG)/lib/STAFCPar.rxl \
+  $(PKG)/lib/STAFPool.rxl \
+  $(PKG)/lib/STAFMon.rxl \
+  $(PKG)/lib/STAFLog.rxl \
+  $(PKG)/docs/History \
+  $(PKG)/docs/STAFCMDS.htm \
+  $(PKG)/docs/STAFFAQ.htm \
+  $(PKG)/docs/STAFGS.pdf \
+  $(PKG)/docs/STAFInstall.pdf \
+  $(PKG)/docs/STAFRC.htm \
+  $(PKG)/docs/STAFUG.htm \
+  $(PKG)/docs/STAFHome.htm \
+  $(PKG)/docs/STAFDiag.htm \
+  $(PKG)/include/STAF.h \
+  $(PKG)/include/STAFInlImpl.cpp \
+  $(PKG)/include/STAFCommandParser.h \
+  $(PKG)/include/STAFCommandParserInlImpl.cpp \
+  $(PKG)/include/STAFDataTypes.h \
+  $(PKG)/include/STAFDataTypesInlImpl.cpp \
+  $(PKG)/include/STAFDynamicLibrary.h \
+  $(PKG)/include/STAFDynamicLibraryInlImpl.cpp \
+  $(PKG)/include/STAFError.h \
+  $(PKG)/include/STAFFileSystem.h \
+  $(PKG)/include/STAFFileSystemInlImpl.cpp \
+  $(PKG)/include/STAFEventSem.h \
+  $(PKG)/include/STAFEventSemInlImpl.cpp \
+  $(PKG)/include/STAFException.h \
+  $(PKG)/include/STAFLogService.h \
+  $(PKG)/include/STAFMonitorService.h \
+  $(PKG)/include/STAFMutexSem.h \
+  $(PKG)/include/STAFMutexSemInlImpl.cpp \
+  $(PKG)/include/STAFOSTypes.h \
+  $(PKG)/include/STAFRefPtr.h \
+  $(PKG)/include/STAFResPoolService.h \
+  $(PKG)/include/STAFServiceInterface.h \
+  $(PKG)/include/STAFString.h \
+  $(PKG)/include/STAFStringInlImpl.cpp \
+  $(PKG)/include/STAFThread.h \
+  $(PKG)/include/STAFTimestamp.h \
+  $(PKG)/include/STAFTimestampInlImpl.cpp \
+  $(PKG)/include/STAFUtil.h \
+  $(PKG)/include/STAF_fstream.h \
+  $(PKG)/include/STAF_iostream.h \
+  $(PKG)/samples/c/LogIt.c \
+  $(PKG)/samples/cpp/LogIt.cpp \
+  $(PKG)/samples/demo/STAFDemoController.java \
+  $(PKG)/samples/demo/STAFProcess.java \
+  $(PKG)/samples/java/JPing.java \
+  $(PKG)/samples/misc/OldVars.cfg \
+  $(PKG)/samples/rexx/PingTest.cmd \
+  $(PKG)/samples/rexx/Sample1.cmd \
+  $(PKG)/samples/rexx/Sample2.cmd \
+  $(PKG)/samples/rexx/Sample3.cmd \
+  $(PKG)/samples/rexx/Sample4.cmd \
+  $(PKG)/codepage/alias.txt \
+  $(subst $(SRC),$(PKG),$(subst ucm,bin,$(shell find $(SRC) -name "*.ucm")))
+
+# XXX: Re-add the next line above when working on Linux
+# $(PKG)/samples/demo/STAFDemo.jar \
+
+Targets += $(Pkg_Targets) \
+           $(PKG_ROOT)/stafpkg_$(OS_NAME).tgz
+
+CleanupTargets += Pkg_cleanup
+
+# Standard inference rule for copying files from REL tree to PKG tree
+
+$(PKG)/%: $(REL)/%
+	$(COPY_FILE)
+
+# Special rule for Win32 for copying files from REL/lib tree to PKG/bin
+
+$(PKG)/bin/%: $(REL)/lib/%
+	$(COPY_FILE)
+
+$(PKG_ROOT)/stafpkg_$(OS_NAME).tgz: $(Pkg_Targets)
+	@echo "*** Creating $(@F) ***"
+	-@$(DEL) $@ $(OUT_ERR_TO_DEV_NULL)
+	@cd $(PKG_ROOT); tar cfz $@ *
+
+Pkg_cleanup:
+	-@$(DEL) -Rf $(PKG) $(OUT_ERR_TO_DEV_NULL)

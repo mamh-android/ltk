@@ -1,0 +1,953 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.***************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : SrvSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Service Service
+.*  Detail:
+.*
+.*     This file describes the STAF Service Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.services
+:i2.service service
+:h2 id=srvService.Service Service
+:h3.Description
+:p.The SERVICE service is one of the internal STAF services.  It provides the
+following commands.
+:ul compact.
+:li.LIST - Displays information about the services, service loaders, or
+authenticators available on the machine, or requests that have been submitted
+on the machine
+:li.QUERY - Displays information about a service, authenticator, or service
+loader available on the machine, or about a request that has been submitted
+on the machine
+:li.ADD - Add (register) a service
+.*:li.REPLACE - Replace a service
+.*:li.RENAME - Rename a service
+:li.REMOVE - Remove (unregister) a service
+:li.FREE - Frees resources for requests that have been submitted on the 
+machine
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.service service
+:h3.LIST
+:p.LIST will display information about the services, service loaders, or
+authenticators available on the machine, or requests that have been
+submitted on the machine.
+:h4.Syntax
+:xmp.
+LIST &lbrk. SERVICES | SERVICELOADERS | AUTHENTICATORS |
+       REQUESTS <&lbrk.PENDING&rbrk. &lbrk.COMPLETE&rbrk. &lbrk.LONG&rbrk.> | &lbrk.SUMMARY&rbrk. &rbrk.
+:exmp.
+:p.:xph.SERVICES:exph. specifies that you want a list of services that are registered.
+:p.:xph.SERVICELOADERS:exph. specifies that you want a list of the service loaders
+that are registered.
+:p.:xph.AUTHENTICATORS:exph. specifies that you want a list of the authenticators
+that are registered.
+:p.:xph.REQUESTS:exph. specifies that you want a list of requests.
+:p.:xph.PENDING:exph. specifies that the request list should include pending
+requests, i.e. requests which are still being processed.
+:p.:xph.COMPLETE:exph. specifies that the request list should include completed
+requests which have not yet been :xph.FREE:exph.d.
+:p.:xph.LONG:exph. specifies that the request list should include more detailed
+information about each request.
+:p.If neither :xph.PENDING:exph. nor :xph.COMPLETE:exph. is specified the default
+is :xph.PENDING:exph..
+:p.:xph.SUMMARY:exph. specifies that you want summary information about requests
+such as the number of active requests, the total number of requests that have
+been submitted since STAFProc was started, the number of times the request number
+has been reset, the request number range, and the maximum number of active requests.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain information
+about the request based on the options specified: 
+:ul.
+:li.
+The result buffer for a :xph.LIST SERVICES:exph., :xph.LIST SERVICELOADERS:exph.,
+or :xph.LIST AUTHENTICATORS:exph. request will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Service/ServiceInfo>:exph.
+representing the services, serviceloaders, or authenticators that are
+currently registered. The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Service/ServiceInfo
+:tnote text='Description'.This map class represents a service, serviceloader,
+or authenticator.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.library
+:c.Library
+:c.&stringObj.
+:c.:xph.'<Internal>':exph., :xph.'<Delegated>':exph. or library name if external service
+:row.
+:c.executable
+:c.Executable
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The value for "Library" will depend on the type of service:
+  :ul compact.
+  :li.Internal service:  :xph.<Internal>:exph.
+  :li.Delegated service:  :xph.<Delegated>:exph.
+  :li.External service:  The name of the shared library which implements the
+  service or acts as a proxy for the service.  External Java services
+  and authenticators will have a library name of :xph.JSTAF:exph..
+  :eul.
+:li.For external Java services, the value for "Executable" will be the 
+name of the Java jar file which implements a service, serviceloader, or authenticator.
+For non-proxy services libraries (e.g. internal services, delegated services,
+C++ services), the value for "Executable" will be &noneObj..
+:eol.
+:etnote.
+:etable.
+:p.
+:li.The result buffer for a :xph.LIST REQUESTS:exph. request without the
+:xph.SUMMARY:exph. option specified will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/Service/RequestInfo>:exph. representing
+requests that have been submitted on the machine.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Service/RequestInfo
+:tnote text='Description'.This map class represents information
+about a request that has been submitted.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.requestNumber
+:c.Request#
+.br
+(Req#)
+:c.&stringObj.
+:c.
+:row.
+:c.state:sup.3:esup.
+:c.Status
+:c.&stringObj.
+:c.:xph.'Pending' | 'Complete':exph.
+:row.
+:c.sourceMachine:sup.1:esup.
+:c.Source Machine
+.br
+(Source)
+:c.&stringObj.
+:c.
+:row.
+:c.sourceHandleName:sup.1:esup.
+:c.Source Handle Name
+.br
+(Handle Name)
+:c.&stringObj.
+:c.
+:row.
+:c.sourceHandle:sup.1:esup.
+:c.Source Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+.br
+(Date-Time)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.targetMachine:sup.1:esup.
+:c.Target Machine
+.br
+(Target)
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.&maskPrivate.
+:row.
+:c.rc:sup.2:esup.
+:c.Return Code
+.br
+(RC)
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.result:sup.2:esup.
+:c.Result
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:sl compact.
+:li.:sup.1:esup.  This field is only present if the :xph.LONG:exph. option is
+specified in the request.
+:li.:sup.2:esup.  This field is only present if options :xph.COMPLETE:exph. and
+:xph.LONG:exph. are specified in the request.
+:li.:sup.3:esup.  This field is only present if options :xph.COMPLETE:exph.,
+:xph.PENDING:exph., and :xph.LONG:exph. are specified in the request.
+:esl.
+:ul compact.
+:li.The value for "Request#" is the request number.
+:li.The value for "Status" is the state of the request.  This will be either
+:xph.Pending:exph. or :xph.Complete:exph..
+:li.The values for "Source Machine", "Source Handle Name", and "Source Handle"
+are the machine endpoint, handle name, and handle number of the process that
+originated the request.
+:li.The value for "Start Date-Time" is the timestamp when the request started.
+:li.The value for "Target Machine" is the machine to which the request was sent.
+:li.The value for "Service" is the service to which the request was sent.
+:li.The value for "Request" is the request which was sent.
+:li.The value for "Return Code" is the return code from the request.  This will be
+&noneObj. if the request status is :xph.Pending:exph..
+:li.The value for "Result" is the result buffer from the request.  This will be
+&noneObj. if the request status is :xph.Pending:exph..
+:eul.
+:etnote.
+:etable.
+
+:p.
+:li.The result buffer for a :xph.LIST REQUESTS SUMMARY:exph. request will
+contain a marshalled :xph.<Map&colon.STAF/Service/Service/RequestSummary>:exph.
+representing summary information about requests.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Service/RequestSummary
+:tnote text='Description'.This map class represents summary information
+about requests.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.activeRequests
+:c.Active Requests
+:c.&stringObj.
+:c.
+:row.
+:c.totalRequests
+:c.Total Requests
+:c.&stringObj.
+:c.
+:row.
+:c.resetCount
+:c.Reset Count
+:c.&stringObj.
+:c.
+:row.
+:c.requestNumberRange
+:c.Request Number Range
+:c.&stringObj.
+:c.<Minimum - Maximum>
+:row.
+:c.maxActiveRequests
+:c.Maximum Active Requests
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ul compact.
+:li.The value for "Active Requests" is the number of pending and complete
+(but not freed) requests.
+:li.The value for "Total Requests" is the total number of requests that
+have been submitted since STAFProc was started.
+:li.The value for "Reset Count" is the number of times the request number
+has been reset back to 1.
+:li.The value for "Request Number Range" is the range of values for
+the request number.
+:li.The value for "Maximum Active Requests" is the maximum number of
+active (pending and complete but not freed) requests.
+:eul.
+:etnote.
+:etable.
+
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List all the services registered on a machine.
+:p.:hp2.Syntax::ehp2. :xph.LIST SERVICES:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Name     Library    Executable
+-------- ---------- -------------------------------------
+CRON     JSTAF      C:\STAF\services\STAFCron.jar
+DELAY    <Internal> <None>
+DIAG     <Internal> <None>
+ECHO     <Internal> <None>
+EM       JSTAF      C:\STAF\services\STAFEventManager.jar
+EMAIL    JSTAF      C:\STAF\services\STAFEmail.jar
+EVENT    JSTAF      C:\STAF\services\STAFEvent.jar
+FS       <Internal> <None>
+HANDLE   <Internal> <None>
+HELP     <Internal> <None>
+LOG      STAFLog    <None>
+MISC     <Internal> <None>
+MONITOR  STAFMon    <None>
+NC       JSTAF      C:\STAF\services\STAFNamedCounter.jar
+PING     <Internal> <None>
+PROCESS  <Internal> <None>
+QUEUE    <Internal> <None>
+RESPOOL  STAFPool   <None>
+SEM      <Internal> <None>
+SERVICE  <Internal> <None>
+SHUTDOWN <Internal> <None>
+STAX     JSTAF      C:\STAF\services\STAX.jar
+TIMER    JSTAF      C:\STAF\services\STAFTimer.jar
+TRACE    <Internal> <None>
+TRUST    <Internal> <None>
+VAR      <Internal> <None>
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the service loaders registered on a machine.
+:p.:hp2.Syntax::ehp2.  :xph.LIST SERVICELOADERS:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Name               Library  Executable
+------------------ -------- ----------------------------------------
+STAFSERVICELOADER1 STAFDSLS <None>
+STAFSERVICELOADER2 JSTAF    C:\STAF\services\CustomServiceLoader.jar
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the authenticators registered on a machine.
+:p.:hp2.Syntax::ehp2.  :xph.LIST AUTHENTICATORS:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Name       Library Executable
+---------- ------- --------------------------------------------------------
+AUTHSAMPLE JSTAF   C:\STAF\services\AuthSample.jar
+IBM        JSTAF   C:\STAF\services\STAFIBMIntraAuth.jar
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the pending requests on a machine.
+:p.:hp2.Syntax::ehp2. :xph.LIST REQUESTS:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Request# Start Date-Time   Service Request
+-------- ----------------- ------- ------------------------------------------
+39       20050321-16:33:03 QUEUE   GET WAIT
+63       20050321-16:33:03 QUEUE   GET WAIT 10000
+102      20050321-16:34:42 QUEUE   GET WAIT 120000 TYPE ProductA/Test2/Status
+165      20050321-16:34:52 DELAY   DELAY 60000
+106      20050321-16:34:58 SERVICE LIST REQUESTS
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List detailed information on all the pending
+requests on a machine.
+:p.:hp2.Syntax::ehp2. :xph.LIST REQUESTS LONG:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Req# Source  Handle Name  H# Date-Time Target     Service Request
+---- ------- ------------ -- --------- ---------- ------- ---------------------
+39   local:/ STAF/SERVICE 11 20050321- client1.co QUEUE   GET WAIT
+     /local  /eM             14:25:04  mpany.com
+63   local:/ STAF/Service 16 20050321- client1.co QUEUE   GET WAIT 10000
+     /local  /TimeR/Watch    14:25:04  mpany.com                              
+102  local:/ ProductA/Tes 21 20050321- client1.co QUEUE   GET WAIT 120000 TYPE
+     /local  t2              16:34:42  mpany.com          ProductA/Test2/Status
+165  local:/ STAF/Client  27 20050321- client2    DELAY   DELAY 60000
+     /local                  16:34:52                           
+180  local:/ STAF/Client  34 20050321- client1.co SERVICE LIST REQUESTS LONG
+     /local                  14:39:04  mpany.com
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List detailed information on all the pending and
+complete requests on a machine.
+:p.:hp2.Syntax::ehp2. :xph.LIST REQUESTS PENDING COMPLETE LONG:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Req# State   Source  Handle Name H# Date-Time Target Service Request  RC Result
+---- ------- ------- ----------- -- --------- ------ ------- -------- -- ------
+39   Pending local:/ STAF/SERVIC 11 20050321- client QUEUE   GET WAIT <N <None>
+             /local  E/eM           14:25:04  1.comp                  on
+                                              any.co                  e>
+                                              m
+63   Pending local:/ STAF/Servic 16 20050321- client QUEUE   GET WAIT <N <None>
+             /local  e/TimeR/Wat    14:25:04  1.comp          10000   on
+                     ch                       any.co                  e>
+                                              m
+102  Pending local:/ ProductA/Te 21 20050321- client QUEUE   GET WAIT <N <None>
+             /local  st2            16:34:42  1.comp         120000 T on
+                                              any.co         YPE Prod e>
+                                              m              uctA/Tes
+                                                             t2/Statu
+                                                             s
+165  Pending local:/ STAF/Client 27 20050321- client DELAY   DELAY 60 <N <None>
+             /local                 16:34:52  2              000      on
+                                                                      e>
+176  Complet local:/ TestA       36 20050321- client MISC    VERSION  0  3.0.0
+     e       /local                 13:30:14  1.comp
+                                              any.co
+                                              m                      
+180  Pending local:/ STAF/Client 38 20050321- client SERVICE LIST REQ <N <None>
+             /local                 13:30:16  1.comp         UESTS PE on
+                                              any.co         NDING CO e>
+                                              m              MPLETE L
+                                                             ONG
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List detailed information on all the complete requests on a machine.
+:p.:hp2.Syntax::ehp2. :xph.LIST REQUESTS COMPLETE LONG:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Req# Source  Handle Name H# Date-Time Target     Service Request  RC Result
+---- ------- ----------- -- --------- ---------- ------- -------- -- ------
+176  local:/ TestA       36 20050321- client1.co MISC    VERSION  0  3.0.0
+     /local                 13:30:14  mpany.com
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List summary information about requests.
+:p.:hp2.Syntax::ehp2. :xph.LIST REQUESTS SUMMARY:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in default form, could look like:
+:xmp.
+Active Requests        : 12
+Total Requests         : 24127
+Reset Count            : 0
+Request Number Range   : 1 - 2147483647
+Maximum Active Requests: 2147483647
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih2.QUERY
+:i3.service service
+:h3.QUERY
+:p.QUERY will display information about a service, authenticator, or service
+loader available on the machine, or about a request that has been submitted
+on the machine.
+:h4.Syntax
+:xmp.
+QUERY SERVICE <Service Name> | SERVICELOADER <ServiceLoader Name> |
+      AUTHENTICATOR <Authenticator Name> | REQUEST <Request Number>
+:exmp.
+:p.:xph.SERVICE:exph. specifies the name of the service to be queried.
+:p.:xph.SERVICELOADER:exph. specifies the name of the service loader
+to be queried.
+:p.:xph.AUTHENTICATOR:exph. specifies the name of the authenticator service
+to be queried.
+:p.:xph.REQUEST:exph. specifies the number of the request to be queried.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from QUERY are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+If successful, the result buffer will contain the following based on
+the request:
+:ul.
+:li.The result buffer for a :xph.QUERY SERVICE:exph.,
+:xph.QUERY SERVICELOADER:exph., or :xph.QUERY AUTHENTICATOR:exph. request
+will contain a marshalled :xph.<Map&colon.STAF/Service/Service/QueryService>:exph.
+representing the specified service, service loader, or authenticator.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Service/QueryService
+:tnote text='Description'.This map class represents a service, service
+loader, or authenticator.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.library
+:c.Library
+:c.&stringObj.
+:c.:xph.'<Internal>':exph., :xph.'<Delegated>':exph. or library name if external service
+:row.
+:c.executable
+:c.Executable
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.options
+:c.Options
+:c.List of &stringObj.
+:c.
+:row.
+:c.parameters
+:c.Parameters
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The value for "Name" is the name of the service, service
+loader, or authenticator.
+:li.The value for "Library" will depend on the type of service:
+  :ul compact.
+  :li.Internal service:  :xph.<Internal>:exph.
+  :li.Delegated service:  :xph.<Delegated>:exph.
+  :li.External service:  The name of the shared library which implements the
+  service or acts as a proxy for the service.  External Java services
+  and authenticators will have a library name of :xph.JSTAF:exph..
+  :eul.
+:li.For external Java services, the value for "Executable" will be the 
+name of the Java jar file which implements a service, serviceloader, or authenticator.
+For non-proxy services libraries (e.g. internal services, delegated services,
+C++ services), the value for "Executable" will be &noneObj..
+:li.The value for "Options" is a list of the options specified when
+registering the service.
+:li.The value for "Parameters" is a string containing the parameters
+specified when registering the service or &noneObj. if no parameters
+were specified.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.The result buffer for a :xph.QUERY REQUEST:exph. request will contain
+a marshalled :xph.<Map&colon.STAF/Service/Service/QueryRequest>:exph.
+representing the specified request.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Service/QueryRequest
+:tnote text='Description'.This map class represents a request that has been submitted.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.requestNumber
+:c.Request#
+:c.&stringObj.
+:c.
+:row.
+:c.state
+:c.Request Status
+:c.&stringObj.
+:c.:xph.'Pending' | 'Complete':exph.
+:row.
+:c.sourceMachine
+:c.Source Machine
+:c.&stringObj.
+:c.
+:row.
+:c.sourceHandleName
+:c.Source Handle Name
+:c.&stringObj.
+:c.
+:row.
+:c.sourceHandle
+:c.Source Handle
+:c.&stringObj.
+:c.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.targetMachine
+:c.Target Machine
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.
+:row.
+:c.rc
+:c.Return Code
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The value for "Request#" is the request number.
+:li.The value for "Request Status" is the state of the request.  This will be either
+:xph.Pending:exph. or :xph.Complete:exph..
+:li.The values for "Source Machine", "Source Handle Name", and "Source Handle" are the
+machine endpoint, handle name, and handle number of the process that originated
+the request.
+:li.The value for "Start Date-Time" is the timestamp when the request started.
+:li.The value for "Target Machine" is the machine to which the request was sent, i.e. the
+target machine.
+:li.The value for "Service" is the service to which the request was sent.
+:li.The value for "Request" is the request which was sent.
+:li.The value for "Return Code" is the return code from the request.  This will be
+&noneObj. if the request status is :xph.Pending:exph..
+:li.The value for "Result" is the result buffer from the request.  This will be
+&noneObj. if the request status is :xph.Pending:exph..
+:eol.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul compact.
+:li.:hp2.Goal::ehp2. Query the information for the LOG service (a C++ service).
+:p.:hp2.Syntax::ehp2.  :xph.QUERY SERVICE LOG:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Name      : LOG
+  Library   : STAFLog
+  Executable: <None>
+  Options   : []
+  Parameters: DEFAULTMAXQUERYRECORDS 50
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query the information for the STAX service (a Java service).
+:p.:hp2.Syntax::ehp2.  :xph.QUERY SERVICE STAX:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Name      : STAX
+  Library   : JSTAF
+  Executable: C:\STAF\services\stax\STAX.jar
+  Options   : [
+    JVMName=STAX
+    J2=-Xmx512m
+  ]
+  Parameters: EXTENSIONXMLFILE C:/STAF/services/stax/extensions.xml
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query the information for the authenticator service
+named AuthSample.
+:p.:hp2.Syntax::ehp2.  :xph.QUERY AUTHENTICATOR AuthSample:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Name      : AUTHSAMPLE
+  Library   : JSTAF
+  Executable: C:\STAF\authenticators\AuthSample.jar
+  Options   : [
+    JVMName=Auth
+  ]
+  Parameters: USERPROPERTIESFILE C:/STAF/authenticators/authsample.properties
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query the information for the service loader service
+names STAFServiceLoader1.
+:p.:hp2.Syntax::ehp2.  :xph.QUERY SERVICELOADER STAFServiceLoader1:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Name      : STAFSERVICELOADER1
+  Library   : STAFDSLS
+  Executable: <None>
+  Options   : []
+  Parameters: <None>
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query the information for request number 34.
+:p.:hp2.Syntax::ehp2.  :xph.QUERY REQUEST 34:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Request Number    : 34
+Request Status    : Pending
+Source Machine    : local://local
+Source Handle Name: STAF/SERVICE/EM
+Source Handle     : 10
+Start Date-Time   : 20050321-19:02:28
+Target Machine    : server1.company.com
+Service           : QUEUE
+Request           : GET WAIT
+Return Code       : <None>
+Result            : <None>
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.ADD
+:i3.service service
+:h3.ADD
+:p.ADD will add (register and initialize) the specified external service and make it
+available on the machine.
+:h4.Syntax
+:xmp.
+ADD SERVICE <Service Name> LIBRARY <Library Name> &lbrk.EXECUTE <Executable>&rbrk.
+    &lbrk.OPTION <Name&lbrk.=Value&rbrk.>&rbrk.... &lbrk.PARMS <Parameters>&rbrk.
+:exmp.
+:p.:xph.SERVICE:exph. specifies the name by which this service will be known on this machine. 
+:p.:xph.LIBRARY:exph. specifies the name of the shared library / DLL which implements the
+service or acts as a proxy for the service. See the information for each
+external service to determine the appropriate value for this option. 
+:p.:xph.EXECUTE:exph. is used by service proxy libraries / DLLs to specify what the proxy
+library should execute. For example, this might be the name of the Java jar file
+which actually implements the service. This option has no significance for non-proxy service
+libraries. See section :hdref refid=jvmcfg. for information
+regarding the JSTAF service proxy library.
+Otherwise, see the documentation provided by the service proxy library.
+:p.:xph.OPTION:exph. specifies a configuration option that will be passed on to the service
+library / DLL. This is typically used by service proxy libraries to further control the
+interface to the actual service implementation. You may specify multiple OPTIONs for a given
+service. See section :hdref refid=jvmcfg. for acceptable options for
+the JSTAF service proxy library.
+Otherwise, see the documentation provided with the service (proxy) library. 
+:p.:xph.PARMS:exph. specifies optional parameters that will be passed to the service during
+initialization. 
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from ADD are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain nothing. 
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Add the Monitor service, an external C++ service.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD SERVICE Monitor LIBRARY STAFMon:exph.
+:p.
+:li.:hp2.Goal::ehp2. Add the STAX service, an external Java service, specifying a parameter.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD SERVICE STAX LIBRARY JSTAF EXECUTE C:\STAF\services\STAX.jar PARMS "NUMTHREADS 8":exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+.*:ih1.service commands
+.*:ih2.REPLACE
+.*:i3.service service
+.*:h3.REPLACE
+.*:h4.Syntax
+.*:p.REPLACE will replace the specified external service with a new service and make it
+.*available on the machine.  If the RENAME option is specified, the service being replaced
+.*will be renamed and will continue to be available.  If the RENAME option is not specified,
+.*the service being replaced is removed, providing an atomic remove/add request.
+.*:xmp.
+.*REPLACE SERVICE <Service Name> LIBRARY <Library Name> &lbrk.EXECUTE <Executable>&rbrk.
+.*        &lbrk.OPTION <Name&lbrk.=Value&rbrk.>&rbrk.... &lbrk.PARMS <Parameters>&rbrk.
+.*        &lbrk.RENAME <Service Name>&rbrk.
+.*:exmp.
+.*:p.:xph.SERVICE:exph. specifies the name of the service to be replaced. 
+.*:p.:xph.LIBRARY:exph. specifies the name of the shared library / DLL which implements the
+.*new service or acts as a proxy for the service. See the information for each
+.*external service to determine the appropriate value for this option. 
+.*:p.:xph.EXECUTE:exph. is used by service proxy libraries / DLLs to specify what the proxy
+.*library should execute. For example, this might be the name of the Java class
+.*which actually implements the service. This option has no significance for non-proxy service
+.*libraries. See section :hdref refid=jvmcfg. for information
+.*regarding the JSTAF service proxy library.
+.*Otherwise, see the documentation provided by the service proxy library.
+.*:p.:xph.OPTION:exph. specifies a configuration option that will be passed on to the service
+.*library / DLL. This is typically used by service proxy libraries to further control the
+.*interface to the actual service implementation. You may specify multiple OPTIONs for a given
+.*service. See section :hdref refid=jvmcfg. for acceptable options for
+.*the JSTAF service proxy library.
+.*Otherwise, see the documentation provided with the service (proxy) library. 
+.*:p.:xph.PARMS:exph. specifies optional parameters that will be passed to the service during
+.*initialization. 
+.*:p.:xph.RENAME:exph. specifies a new name for the service being replaced.
+.*:h4.Security
+.*:p.&seclvl. 5.
+.*:h4.Return Codes
+.*:p.All return codes from REPLACE are documented in :hdref refid=retcode..
+.*:h4.Results
+.*:p.On successful return, the result buffer will contain nothing. 
+.*:h4.Examples
+.*:p.Goal&colon. Replace the Monitor service, an external C++ service.
+.*:xmp.
+.*REPLACE SERVICE Monitor LIBRARY STAFMon
+.*:exmp.
+.*:p.Goal&colon. Replace the Event service, an external Java service.
+.*:xmp.
+.*REPLACE SERVICE Event LIBRARY JSTAF EXECUTE com.ibm.staf.service.event.EventService
+.*:exmp.
+.*:p.Goal&colon. Replace the Log service, an external C++ service, renaming it to Log2.
+.*:xmp.
+.*REPLACE SERVICE Log LIBRARY STAFLog RENAME Log2
+.*:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+.*:ih1.service commands
+.*:ih2.RENAME
+.*:i3.service service
+.*:h3.RENAME
+.*:h4.Syntax
+.*:p.RENAME will rename the specified external service to a new name.
+.*:xmp.
+.*RENAME SERVICE <Service Name> TO <New Service Name>
+.*:exmp.
+.*:p.:xph.SERVICE:exph. specifies the name of the service to be renamed. 
+.*:p.:xph.TO:exph. specifies a new name for the service.
+.*:h4.Security
+.*:p.&seclvl. 5.
+.*:h4.Return Codes
+.*:p.All return codes from RENAME are documented in :hdref refid=retcode..
+.*:h4.Results
+.*:p.On successful return, the result buffer will contain nothing. 
+.*:h4.Examples
+.*:p.Goal&colon. Rename the Monitor service, an external C++ service.
+.*:xmp.
+.*RENAME SERVICE Monitor TO Monitor2
+.*:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.REMOVE
+:i3.service service
+:h3.REMOVE
+:p.REMOVE will remove (unregister and terminate) the specified external service,
+ making it no longer available on the machine.
+:p.
+:note.If pending requests for the service exist, it may take up to a minute
+or so after the REMOVE request has completed in order for the service to
+complete its termination process.  This can be especially true for a service
+that is registered using a service proxy library such as JSTAF which is used
+when registering Java services as it may take another minute or so for the JVM
+that this service was running in to be terminated (assuming that the Java
+service being removed is the only Java service running in this JVM).
+
+:h4.Syntax
+:xmp.
+REMOVE SERVICE <Service Name>
+:exmp.
+:p.:xph.SERVICE:exph. specifies the name of the service to remove. 
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from REMOVE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain nothing.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Remove the Event service.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REMOVE SERVICE Event:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih2.FREE
+:i3.service service
+:h3 id=srvreqf.FREE
+:p.FREE returns the results of a completed request that was submitted using
+the kSTAFReqQueue or kSTAFReqQueueRetain options (see :hdref refid=apiss2. for
+more information).  This command also removes the request from the request list.
+
+:h4.Syntax
+:xmp.
+FREE REQUEST <Request Number> &lbrk.FORCE&rbrk.
+:exmp.
+:p.:xph.REQUEST:exph. specifies which request should be freed.
+:p.:xph.FORCE:exph. must be specified if any process other than the originating
+process tries to :xph.FREE:exph. the request's results.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes from FREE are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+If successful, the result buffer for a :xph.FREE:exph. request will contain
+a marshalled :xph.<Map&colon.STAF/Service/Service/FreeRequestInfo>:exph.
+representing the results of the completed request.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Service/QueryRequest
+:tnote text='Description'.This map class represents the results of a completed request.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.rc
+:c.Return Code
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The value for "Return Code" is the return code from the request.
+:li.The value for "Result" is the result buffer from the request.
+:eol.
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul compact.
+:li.:hp2.Goal::ehp2. Free request 16.  Let's assume this was a :xph.VERSION:exph.
+request to the :xph.MISC:exph. service.
+:p.:hp2.Syntax::ehp2.  :xph.FREE REQUEST 16:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Return Code: 0
+Result     : 3.0.0
+:exmp.
+:eul.

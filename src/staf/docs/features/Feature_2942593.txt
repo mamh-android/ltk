@@ -1,0 +1,583 @@
+Feature ID  : 2942593
+Title       : Suggest to support withdraw of a pending request
+
+Description
+-----------
+
+Provide the ability to cancel a pending request for a resource
+pool entry.  
+
+Problem(s) Solved
+-----------------
+
+Here's an example of a scenario that a STAF user has which
+requires the ability to cancel a pending request for a
+resource pool entry:
+
+Two STAX jobs are submitted which both require a resource
+(e.g. system1) so both submit a REQUEST request to the
+RESPOOL service for a resource.  However, both jobs can share
+the same resource.  So, if job 1 acquires the resource first,
+e.g. system1, job 2 checks a STAF variable they use to
+indicate if the resource is deployed, and since it is already
+deployed, job 2 shares the usage of system1 which was acquired
+by job 1.  So, job2 now needs to cancel the pending request it
+made for resource system1.  If job 1 completes before job 2,
+it should not release system1.  Instead, it updates the STAF
+variable to indicate that it is finished using system1.  Then,
+when job 2 completes, it checks the STAF variable and sees that
+no more jobs are using system1, so it can then release the
+resource entry, system1.
+
+
+Related Features/Patches
+------------------------
+
+Should also implement a similar feature for the SEM service
+to allow cancelling a pending request for a mutex semaphore,
+and perhaps to allow cancelling waiting for an event semaphore
+to be posted.
+
+
+External Changes
+----------------
+
+a) Add a CANCEL request to the RESPOOL service:
+
+Description:
+
+CANCEL allows you to cancel a pending request for a resource
+pool entry.  By default, it cancels the last pending request
+in the Pending Requests list (which is sorted in ascending
+order by priority, and then by the request timestamp) that
+was submitted by the same handle/machine submitting the CANCEL
+request.
+
+Syntax:
+
+CANCEL  POOL <PoolName>
+        [FORCE [MACHINE <Machine>] [HANDLE <Handle #> | NAME <Handle Name>]]
+        [ENTRY <Value>] [PRIORITY <Number>] [FIRST | LAST]
+
+POOL specifies the name of the resource pool from which you
+want to cancel a request in its Pending Requests list.  This
+option will resolve variables.
+
+FORCE allows you to force cancelling the pending request.
+By default, only the requester (e.g. the handle on the machine
+that submitted the REQUEST POOL request) may CANCEL the pending
+request unless the FORCE option is specified, along with
+the MACHINE. and/or HANDLE/NAME options.
+
+MACHINE specifies the machine that submitted a request in
+the Pending Requests list that you want to cancel.
+If not specified, it defaults to the machine submitting the
+CANCEL request.  This option will resolve variables.
+
+HANDLE specifies the handle number that submitted a request
+in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the number of the handle
+submitting the CANCEL request.  This option will resolve
+variables.
+
+NAME specifies the name of a handle that submitted a request
+in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the name of the handle
+submitting the CANCEL request.  This option will resolve
+variables.
+
+ENTRY specifies a resource entry that matches the "Requested
+Entry" field in the Pending Requests list for the request
+that you want to cancel.  It can be specified only if a
+particular resource entry was specified by the REQUEST
+request that you want to cancel.
+
+PRIORITY specifies the priority of the request you want to
+cancel.  It must be a number from 1 to 99, where 1 indicates
+the highest priority.  This option will resolve variables.
+
+FIRST specifies to cancel the first entry in the Pending
+Requests list (which is sorted in ascending order by
+priority and then by the request timestamp) that matches the
+selection criteria.
+
+LAST specifies to cancel the last entry in the Pending
+Requests list (which is sorted in ascending order by
+priority and then by the request timestamp) that matches the
+selection criteria.
+
+Security:
+
+Command CANCEL requires trust level 3.
+
+Command CANCEL FORCE requires trust level 4 if you are not
+the requester (e.g. the handle on the machine that submitted
+the REQUEST POOL request that you are trying to cancel).
+
+Return Codes:
+
+In addition to the return codes documented in Appendix A,
+"API Return Codes", CANCEL also returns some of the return
+codes documented in 8.14.12, "Resource Pool Error Code
+Reference". 
+
+Results:
+
+The result buffer will contain no data upon successful return
+from the CANCEL command. 
+
+Examples:
+
+  1) Goal: Cancel the last pending request in the Pending Requests
+     list for resource pool "TestMachines" that was submitted by
+     my handle.
+
+     STAF local RESPOOL CANCEL POOL TestMachines
+     or
+     STAF local RESPOOL CANCEL POOL TestMachines LAST
+
+  2) Goal: Cancel the first pending request in the Pending Requests
+     list for resource pool "TestMachines" that was submitted by a
+     handle named "STAX/Job/3" on my machine.
+
+     STAF local RESPOOL CANCEL POOL TestMachines
+                        FORCE NAME STAX/Job/3 FIRST
+
+  3) Goal: Cancel the last pending request in the Pending Requests
+     list for resource pool "TestMachine" with priority 30 and with
+     requested entry "system1" that was submitted by handle number
+     43 on machine "client1.company.com".
+
+     STAF local RESPOOL CANCEL POOL TestMachines FORCE
+                        MACHINE client1.company.com HANDLE 43
+                        ENTRY system1 PRIORITY 30
+
+b) Define a new return code for the RESPOOL service:
+
+Error Code : 4011
+Description: Not pending requester
+Details    : You cannot cancel a pending request your handle did
+             not submit unless you specify the FORCE option.
+
+Internal Changes
+----------------
+
+Files changed:
+
+services/respool/STAFResPoolService.h
+services/respool/STAFResPoolService.cpp
+docs/userguide/PoolSrv.script
+docs/userguide/CmdRef.script
+test/STAFTest.xml
+
+1) Changes to stafproc/STAFResPoolSerivce.h:
+
+   a) Added defining a new error code 4011:
+
+   typedef enum STAFResPoolRC_e {     
+       kSTAFResPoolNotEntryOwner = 4005,
+       kSTAFResPoolHasPendingRequests = 4006,
+       kSTAFResPoolNoEntriesAvailable = 4007,
+       kSTAFResPoolCreatePoolPathError = 4008,
+       kSTAFResPoolInvalidFileFormat = 4009,
+       kSTAFResPoolEntryIsOwned = 4010,
+       kSTAFResPoolNotRequester = 4011
+   } STAFResPool_t;
+
+2) Changes to stafproc/STAFResPoolService.cpp:
+
+  a) Defined a parser for a CANCEL request:
+
+  STAFCommandParserPtr fCancelParser;  // RESPOOL CANCEL command parser
+
+  // CANCEL REQUEST options
+  pData->fCancelParser = STAFCommandParserPtr(
+      new STAFCommandParser, STAFCommandParserPtr::INIT);
+  pData->fCancelParser->addOption("CANCEL", 1,
+                                  STAFCommandParser::kValueNotAllowed);
+  pData->fCancelParser->addOption("POOL", 1,
+                                  STAFCommandParser::kValueRequired);
+  pData->fCancelParser->addOption("FORCE", 1,
+                                  STAFCommandParser::kValueNotAllowed);
+  pData->fCancelParser->addOption("HANDLE", 1,
+                                  STAFCommandParser::kValueRequired);
+  pData->fCancelParser->addOption("NAME", 1,
+                                  STAFCommandParser::kValueRequired);
+  pData->fCancelParser->addOption("MACHINE", 1,
+                                  STAFCommandParser::kValueRequired);
+  pData->fCancelParser->addOption("PRIORITY", 1,
+                                  STAFCommandParser::kValueRequired);
+  pData->fCancelParser->addOption("ENTRY", 1,
+                                  STAFCommandParser::kValueRequired);
+  pData->fCancelParser->addOption("FIRST", 1,
+                                  STAFCommandParser::kValueNotAllowed);
+  pData->fCancelParser->addOption("LAST", 1,
+                                  STAFCommandParser::kValueNotAllowed);
+  pData->fCancelParser->addOptionNeed("CANCEL", "POOL");
+  pData->fCancelParser->addOptionNeed(
+      "POOL FORCE PRIORITY ENTRY FIRST LAST", "CANCEL");
+  pData->fCancelParser->addOptionNeed("MACHINE HANDLE NAME", "FORCE");
+  pData->fCancelParser->addOptionGroup("HANDLE NAME", 0, 1);
+  pData->fCancelParser->addOptionGroup("FIRST LAST", 0, 1);
+
+  b) Added the help text for the new CANCEL request:
+
+  // Assign the help text string for the service
+
+  sHelpMsg = STAFString("*** ") + pData->fShortName + " Service Help ***" +
+      ...
+      sLineSep + sLineSep +
+      "CANCEL  POOL <PoolName>" +
+      sLineSep +
+      "        [FORCE [MACHINE <Machine>] [HANDLE <Handle #> | NAME <Handle Name>]]" +
+      sLineSep +
+      "        [ENTRY <Entry>] [PRIORITY <Priority>] [FIRST | LAST]" +
+      ...
+
+  c) Changed STAFServiceAcceptRequest() to check if a CANCEL request
+     is specified:
+
+  ...
+  else if (action == "cancel")
+      result = handleCancel(pInfo, pData);
+  ...
+
+  d) Registered help data for new error code 4011 in the
+     STAFServiceInit() method:
+
+  registerHelpData(pData, kSTAFResPoolNotRequester,
+      STAFString("Not pending requester"),
+      STAFString("You cannot cancel a pending request you did not "
+                 "submit unless you specify the FORCE option."));
+
+  e) Unregistered help data for new error code 4011 in the
+     STAFServiceTerm() method:
+
+  unregisterHelpData(pData, kSTAFResPoolNotRequester);
+
+  f) In the handleRequest() method, instead of only checking
+     if the request's return code is kSTAFTimeout or kSTAFDoesNotExist,
+     to determine if need to remove the pending request and delete
+     the handle garbage collection notification, also need to check
+     for kSTAFRequestCancelled.  Change to check if not kSTAFOk instead
+     of checking for these individual return codes as any failure should
+     remove the pending request from the list.
+
+    // If request's return code is not 0 (e.g. timed out or if a specific
+    // entry was requested but it no longer exists in the resource list,
+    // or if the request was cancelled), remove the request from the list.
+    // Save the cost of getting a semaphore lock by first checking if the
+    // request failed.
+
+    if (requestDataPtr->retCode != kSTAFOk)
+    {
+        // Lock the poolData semaphore for the duration of this block
+
+        STAFMutexSemLock lock(*poolPtr->accessSem);
+
+        if (requestDataPtr->retCode != kSTAFOk)
+        {
+            poolPtr->requestList.remove(requestDataPtr);
+
+            if (garbageCollect)
+            {
+                // Delete the notification from the handle notification list
+
+                submitSTAFNotifyUnregisterRequest(
+                    pData, pInfo->handle, pInfo->endpoint,
+                    pInfo->stafInstanceUUID);
+            }
+        }
+    }
+
+  g) Add the new handleCancel() method:
+
+// Handles cancelling a pending request for a resource pool
+
+STAFResultPtr handleCancel(STAFServiceRequestLevel30 *pInfo, 
+                           ResPoolServiceData *pData)
+{
+    STAFString result;
+    STAFRC_t rc = kSTAFOk;
+
+    // Verify the requester has at least trust level 3
+
+    VALIDATE_TRUST(3, pData->fShortName, "CANCEL", pData->fLocalMachineName);
+    
+    // Parse the request
+
+    STAFCommandParseResultPtr parsedResult = 
+        pData->fCancelParser->parse(pInfo->request);
+
+    if (parsedResult->rc != kSTAFOk)
+    {
+        return STAFResultPtr(new STAFResult(kSTAFInvalidRequestString,
+                             parsedResult->errorBuffer), STAFResultPtr::INIT);
+    }
+    
+    // Set the poolName variable (resolve the pool name)
+
+    STAFResultPtr resultPtr = resolveOp(pInfo, pData, parsedResult, sPool);
+
+    if (resultPtr->rc != 0) return resultPtr;
+
+    STAFString poolName = resultPtr->result;
+    
+    // Determine if the FORCE option is specified
+
+    unsigned int force = parsedResult->optionTimes(sForce);
+
+    // Default machine, handle, and handle name to that of the
+    // originating requester who is submitting the CANCEL request
+
+    STAFString orgMachine = pInfo->machine;
+    STAFHandle_t orgHandle = pInfo->handle;
+    STAFString orgHandleName = pInfo->handleName;
+    
+    if (force)
+    {
+        // Determine if the MACHINE option is specified
+
+        if (parsedResult->optionTimes(sMachine) > 0)
+        {
+            resultPtr = resolveOp(pInfo, pData, parsedResult, sMachine);
+
+            if (resultPtr->rc != 0) return resultPtr;
+        
+            orgMachine = resultPtr->result;
+        }
+
+        // Determine if the HANDLE or NAME option is specified
+
+        if (parsedResult->optionTimes(sHandle) > 0)
+        {
+            resultPtr = resolveOp(pInfo, pData, parsedResult, sHandle);
+
+            if (resultPtr->rc != kSTAFOk) return resultPtr;
+
+            // Convert resolved option string to an unsigned integer in range
+            // 1 to UINT_MAX
+        
+            unsigned int handle;
+
+            resultPtr = convertOptionStringToUInt(
+                resultPtr->result, sHandle, handle, 1);
+
+            if (resultPtr->rc != kSTAFOk) return resultPtr;
+
+            orgHandle = handle;
+            orgHandleName = "";  // Indicates not to check for a match
+        }
+        else if (parsedResult->optionTimes(sName) > 0)
+        {
+            resultPtr = resolveOp(pInfo, pData, parsedResult, sName);
+
+            if (resultPtr->rc != 0) return resultPtr;
+        
+            orgHandleName = resultPtr->result;
+            orgHandle = 0;  // Indicates not to check for a match
+        }
+    }
+
+    // Determine if the ENTRY option is specified
+
+    STAFString requestedEntry;
+    bool matchEntry = false;
+
+    if (parsedResult->optionTimes(sEntry) > 0)
+    {
+        matchEntry = true;
+        
+        resultPtr = resolveOp(pInfo, pData, parsedResult, sEntry);
+
+        if (resultPtr->rc != kSTAFOk) return resultPtr;
+
+        requestedEntry = resultPtr->result;
+    }
+
+    // Determine if the PRIORITY option is specified
+
+    unsigned int priority = sDefaultPriority;
+    bool matchPriority = false;
+
+    if (parsedResult->optionTimes(sPriority) > 0)
+    {
+        matchPriority = true;
+
+        resultPtr = resolveOp(pInfo, pData, parsedResult, sPriority);
+
+        if (resultPtr->rc != kSTAFOk) return resultPtr;
+
+        // Convert resolved option string to an unsigned integer in range
+        // 0 to 99
+
+        resultPtr = convertOptionStringToUInt(
+            resultPtr->result, sPriority, priority,
+            sMinimumPriority, sMaximumPriority);
+
+        if (resultPtr->rc != kSTAFOk) return resultPtr;
+    }
+
+    // Determine if the FIRST or LAST option is specified
+    // The default is to find the last entry in the Pending Requests List
+    // that matches the criteria.  The FIRST option can be specified to
+    // find the first entry in the Pending Requests List that matches.
+
+    bool first = false;   // Last is the default
+
+    if (parsedResult->optionTimes(sFirst) > 0)
+        first = true;
+
+    // Get a read lock on the Pool Map for the duration of this block
+
+    STAFRWSemRLock rLock(*pData->fPoolMapRWSem);
+
+    // Make sure that the resource pool is in pData->poolMap
+
+    PoolMap::iterator poolIterator;
+    PoolDataPtr poolPtr;
+
+    poolIterator = pData->fPoolMap.find(poolName.toUpperCase());
+
+    if (poolIterator == pData->fPoolMap.end())
+    {  
+        return STAFResultPtr(new STAFResult(kSTAFDoesNotExist, poolName),
+                             STAFResultPtr::INIT);
+    }
+    
+    poolPtr = (*poolIterator).second;
+
+    // Lock the poolData semaphore for the duration of this block
+    
+    STAFMutexSemLock lock(*poolPtr->accessSem);
+    
+    // Check if a pending request entry matches all the following conditions:
+    // - A handle# is not specified or it matches and
+    // - A handle name is not specified or it matches (case-insensitive)
+    // - A machine is not specified or it matches (case-insensitive)
+    // - A entry is not specified or it matches (case-sensitive)
+    // - A priority is not specified or it matches
+
+    bool requestFound = false;
+    RequestDataPtr reqPtr;
+    
+    if (first)
+    {
+        // The FIRST option was specified, so iterate forward in the Pending
+        // Requests list to find the first entry that matches the criteria
+        
+        for (RequestList::iterator iter = poolPtr->requestList.begin();
+             iter != poolPtr->requestList.end() && !requestFound; ++iter)
+        {                                          
+            reqPtr = *iter;
+
+            if (((orgHandle == 0) || (reqPtr->orgHandle == orgHandle)) &&
+                ((orgHandleName == "") || (reqPtr->orgName.isEqualTo(
+                    orgHandleName, kSTAFStringCaseInsensitive))) &&
+                ((orgMachine == "") || (reqPtr->orgMachine.isEqualTo(
+                    orgMachine, kSTAFStringCaseInsensitive))) &&
+                ((!matchEntry) || (reqPtr->requestedEntry == requestedEntry)) &&
+                ((!matchPriority) || (reqPtr->priority == priority)))
+            {
+                requestFound = true;
+            }
+        }
+    }
+    else
+    {
+        // The LAST option is specified (or neither the FIRST or LAST option
+        // was specified), so do a reverse iterate to find the last entry in
+        // the Pending Requests list that matches the criteria
+
+        for (RequestList::reverse_iterator riter = poolPtr->requestList.rbegin();
+             riter != poolPtr->requestList.rend() && !requestFound; ++riter)
+        {
+            reqPtr = *riter;
+
+            if (((orgHandle == 0) || (reqPtr->orgHandle == orgHandle)) &&
+                ((orgHandleName == "") || (reqPtr->orgName.isEqualTo(
+                    orgHandleName, kSTAFStringCaseInsensitive))) &&
+                ((orgMachine == "") || (reqPtr->orgMachine.isEqualTo(
+                    orgMachine, kSTAFStringCaseInsensitive))) &&
+                ((!matchEntry) || (reqPtr->requestedEntry == requestedEntry)) &&
+                ((!matchPriority) || (reqPtr->priority == priority)))
+            {
+                requestFound = true;
+            }
+        }
+    }
+
+    if (!requestFound)
+    {
+        STAFString noMatchMessage = "No pending requests exist that match "
+            "the following criteria:";
+
+        if (orgHandle != 0)
+            noMatchMessage = noMatchMessage + " Handle=" + orgHandle;
+
+        if (orgHandleName != "")
+            noMatchMessage = noMatchMessage + " HandleName=" + orgHandleName;
+
+        if (orgMachine != "")
+            noMatchMessage = noMatchMessage + " Machine=" + orgMachine;
+
+        if (matchEntry)
+            noMatchMessage = noMatchMessage + " RequestedEntry=" +
+                             requestedEntry;
+
+        if (matchPriority)
+            noMatchMessage = noMatchMessage + " Priority=" + priority;
+
+        return STAFResultPtr(
+            new STAFResult(kSTAFDoesNotExist, noMatchMessage),
+            STAFResultPtr::INIT);
+    }
+
+    // Check if you are the requester of the matching pending request entry
+
+    unsigned int requester = 0;   // 0 means not the requester
+
+    if ((reqPtr->orgUUID == pInfo->stafInstanceUUID) &&
+        (reqPtr->orgHandle == pInfo->handle))
+    {
+        requester = 1;    // 1 means you are the requester
+    }
+
+    // If you are not the requester and FORCE is specified, need trust level 4
+
+    if (!requester && force)
+    {
+        // Verify the requester has at least trust level 4
+
+        VALIDATE_TRUST2(4, pData->fShortName, "CANCEL FORCE",
+                        pData->fLocalMachineName);
+    }
+
+    // To cancel the request, you must be the requester or the FORCE option
+    // must be specified
+
+    if (!requester && !force)
+    {
+        return STAFResultPtr(
+            new STAFResult(
+                kSTAFResPoolNotRequester,
+                "Cannot cancel a request you did not submit "
+                "unless you specify the FORCE option"),
+            STAFResultPtr::INIT);
+    }
+    
+    // Tell its requester the request was cancelled and wake it up
+
+    reqPtr->retCode = kSTAFRequestCancelled;
+    reqPtr->resultBuffer = "The request was cancelled by a RESPOOL CANCEL "
+        "request";
+    reqPtr->wakeup->post();
+
+    return STAFResultPtr(new STAFResult(kSTAFOk), STAFResultPtr::INIT);
+}
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

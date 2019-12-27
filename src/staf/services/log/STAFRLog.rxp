@@ -1,0 +1,272 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/****************************************************************************/
+/* STAF_SERVICE_INTERFACE_LEVEL:2                                           */
+/****************************************************************************/
+/* REXX Remote Log Service for Software Testing Automation Framework (STAF) */
+/* ------------------------------------------------------------------------ */
+/* Desc: Request to remotely use the log service on another machine.        */
+/*       This version of the log merely passes the log request to the       */
+/*       remote log server.  The only processing it does, and why it was    */
+/*       was implemented was to check the mask to see if the message will   */
+/*       be logged based on the log mask.  If the message is not selected   */
+/*       based on the mask then it is not sent to the remote server.        */
+/* ------------------------------------------------------------------------ */
+/* Options:                                                                 */
+/*  See the Log Service for details.                                        */
+/*                                                                          */
+/* Note: This program requires RxPP (REXX pre-processor) to be used to      */
+/*       generate the executable cmd file.                                  */
+/* ------------------------------------------------------------------------ */
+/* History:                                                                 */
+/*  0.10  DHR  02/22/1998  Initial implementation                           */
+/*  0.30  DHR  03/16/1998  Parser changes                                   */
+/*  0.50  DHR  03/26/1998  Added new API data structure                     */
+/*  1.00  DHR  05/08/1998  Sync up release level                            */
+/*  1.75  DHR  09/15/1998  Add the new INTERFACE_LEVEL, call format, new    */
+/*                         variable naming convention, remoteServiceName    */
+/*  1.80  CVR  04/30/1999  Remove old variable name support, warn at INIT.  */
+/****************************************************************************/
+options "EXMODE ETMODE"
+
+parse source osType invokeType functionName
+
+call STAFErrorText              /* Set the STAF common error codes and text */
+call LogMonErrorText            /* Set the Log/Monitor error codes and text */
+
+/* Make sure we are being called correctly */
+if invokeType \= "FUNCTION" then
+  RETURN MakeSTAFResult(STAFError.!ServiceConfigurationError)
+
+/* Call the appropriate function */
+SIGNAL VALUE TRANSLATE(functionName)
+
+/****************************************************************************/
+/* Functions                                                                */
+/****************************************************************************/
+
+/****************************************************************************/
+/* STAFServiceInit - Initializes the service                                */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The service parameters                                          */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceInit:
+
+  parse arg serviceName, serviceParms
+
+  /* Load system functions */
+  call RxFuncAdd "SysLoadFuncs", "REXXUTIL", "SysLoadFuncs"
+  call SysLoadFuncs
+
+  /* Load STAF functions */
+  call RxFuncAdd "STAFLoadFuncs", "RXSTAF", "STAFLoadFuncs"
+  call STAFLoadFuncs
+
+  /* Register Monitor to STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then RETURN MakeSTAFResult(STAFError.!STAFRegistrationError, ,
+    STAFError.!STAFRegistrationError.!text": "RESULT)
+
+  me      = "STAF/Service/"serviceName"/"    /* New variable style >= 1.75  */
+  oldMe   = "STAFRLog/"                      /* Old variable style < 1.75   */
+  logMask = SUBSTR('1', 1, 32, '1')
+  resolveMessage = 0
+
+  call STAFSubmit "LOCAL", "VAR", "RESOLVE {"me"LogServer}",
+                  "RESOLVE {"me"Mask} RESOLVE {"me"ResolveMessage}",
+                  "RESOLVE {"oldMe"LogServer} RESOLVE {"oldMe"Mask}",
+                  "RESOLVE {"oldMe"ResolveMessage}"
+
+  if RESULT = 0 then
+  do
+    parse var STAFResult meLogServerRC ':' meLogServer '00'x,
+                         meMaskRC ':' meMask '00'x,
+                         meResMessRC ':' meResMess '00'x,
+                         oldMeLogServerRC ':' oldMeLogServer '00'x,
+                         oldMeMaskRC ':' oldMeMask '00'x,
+                         oldMeResMessRC ':' oldMeResMess '00'x
+
+    if (meLogServerRC \= 0) & (oldMeLogServerRC = 0) then
+      call DisplayOldVarErrorMessage "LogServer", "<No valid log server>"
+
+    if (meMaskRC \= 0) & (oldMeMaskRC = 0) then
+      call DisplayOldVarErrorMessage "Mask", logMask
+
+    if (meResMessRC \= 0) & (oldMeResMessRC = 0) then
+      call DisplayOldVarErrorMessage "ResolveMessage", resolveMessage
+  end
+
+  if meLogServerRC \= 0 then
+    RETURN MakeSTAFResult(errorNoRemote, errorNoRemote.!text)
+
+RETURN MakeSTAFResult(STAFError.!Ok)
+/* End of STAFServiceInit */
+
+/****************************************************************************/
+/* STAFServiceAcceptRequest - Handles a service request from STAF           */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The name of the originating machine                             */
+/*          The registered name of the originating process                  */
+/*          The handle of the originating process                           */
+/*          The actual request string                                       */
+/*                                                                          */
+/* Returns: 0 , on success                                                  */
+/*          >0, otherwise                                                   */
+/****************************************************************************/
+STAFServiceAcceptRequest:
+
+  parse arg serviceName, thisMachine, clientMachine, clientEffective, ,
+            clientTrust, origName, origHandle, origRequest
+
+  /* Initialization */
+  version = "1.80"
+  numeric digits 10                    /* Initialize digits to precision 10 */
+
+  /* Register Remote Log to STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then RETURN MakeSTAFResult(STAFError.!STAFRegistrationError, ,
+    STAFError.!STAFRegistrationError.!text": "RESULT)
+
+  /* Validate variables needed */
+  if ProcessVars() then RETURN MakeSTAFResult(errorNoRemote, errorNoRemote.!text)
+
+  if clientTrust = 0 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+    STAFError.!AccessDenied.!text)
+
+  /* If only asking for VERSION, then return it to them */
+  parse var origRequest type .
+  type = TRANSLATE(type)
+  if type = "VERSION" then RETURN MakeSTAFResult(STAFError.!Ok, version)
+
+  if type = "LOG" then
+  do
+    call InitParser
+    call InitializeLogOption
+    rc = ParseString(origRequest, "errorBuffer")
+    if rc \= 0 then RETURN MakeSTAFResult(STAFError.!InvalidRequestString, ,
+      STAFError.!InvalidRequestString.!text || crlf || errorBuffer)
+    level = ResolveVariable(OptionValue("LEVEL"))
+    if LENGTH(level) \= 32 then level = ExpandLevel(level)
+    if DATATYPE(level,b) = 0 | LENGTH(level) \= 32 | CHARCOUNT("1", level) = 0 | ,
+      CharCount("1", level) > 1 then RETURN MakeSTAFResult(errorLevel, errorLevel.!text)
+    if B2X(BITAND(level, logmask)) = 0 then RETURN MakeSTAFResult(STAFError.!Ok)
+    resolveMessage = 0
+    if optionTimes("RESOLVEMESSAGE") > 0 then resolveMessage = 1
+    else if optionTimes("NORESOLVEMESSAGE") > 0 then resolveMessage = 0
+    message = OptionValue("MESSAGE")
+    if resolveMessage then message = ResolveVariable(message)
+    select
+      when optionTimes("GLOBAL") > 0  then type = "LOG GLOBAL"
+      when optionTimes("MACHINE") > 0 then type = "LOG MACHINE"
+      when optionTimes("HANDLE") > 0  then type = "LOG HANDLE"
+    end
+    origRequest = type "LOGNAME" ResolveVariable(OptionValue("LOGNAME")) ,
+      "LEVEL" level "MESSAGE" STAFWrapData(message) ,
+      "RMTMACHINE" clientEffective "RMTHANDLE" origHandle "RMTNAME" origName
+    /* If resolving message here, then don't do it again at the remote log */
+    if resolveMessage then origRequest = origRequest" NORESOLVEMESSAGE"
+  end
+  else origRequest = origRequest "RMTMACHINE" clientEffective
+
+  STAFRC = STAFSubmit(where, remoteServiceName, origRequest)
+
+RETURN MakeSTAFResult(STAFRC, STAFResult)
+/* End of STAFServiceAcceptRequest */
+
+/****************************************************************************/
+/* ProcessVars - Using the RxThread functions, determine the STAF           */
+/*               variables need for Monitor.                                */
+/*                                                                          */
+/* Accepts: action, serviceName                                             */
+/* Returns: 0                                                               */
+/****************************************************************************/
+ProcessVars: PROCEDURE EXPOSE lineSep fileSep directory maxRetry maxSize ,
+                              resolveMessage STAFHandle STAFResult logMask ,
+                              where remoteServiceName serviceName ,
+                              STAFError.
+
+  me      = "STAF/Service/"serviceName"/"    /* New variable style >= 1.75  */
+  oldMe   = "STAFRLog/"                      /* Old variable style < 1.75   */
+  lineSep = '0D0A'x
+  fileSep = '\'
+  logMask = SUBSTR('1', 1, 32, '1')
+  remoteServiceName = "LOG"
+
+  if thisMachine = clientMachine then type = "HANDLE" origHandle
+  else type = "GLOBAL"
+
+  call STAFSubmit "LOCAL", "VAR", type "RESOLVE {STAF/Config/Sep/Line}",
+                  "RESOLVE {STAF/Config/Sep/File} RESOLVE {"me"LogServer}",
+                  "RESOLVE {"me"Mask} RESOLVE {"me"ResolveMessage}",
+                  "RESOLVE {"me"ServiceName}"
+
+  if RESULT = 0 then
+  do
+    parse var STAFResult lineSepRC ':' newLineSep '00'x,
+                         fileSepRC ':' newFileSep '00'x,
+                         meLogServerRC ':' meLogServer '00'x,
+                         meMaskRC ':' meMask '00'x,
+                         meResMessRC ':' meResMess '00'x,
+                         meServiceNameRC ':' meServiceName '00'x
+
+    if lineSepRC = 0 then lineSep = newLineSep
+    if fileSepRC = 0 then fileSep = newFileSep
+    if meMaskRC = 0 then logMask = meMask
+    if meResMessRC = 0 then resolveMessage = meResMess
+    if meServiceNameRC = 0 then remoteServiceName = meServiceName
+
+    if meLogServerRC = 0 then where = meLogServer
+    else RETURN 1
+
+    if DATATYPE(logMask,'B') & LENGTH(logMask) = 32 then nop
+    else
+    do
+      input = logMask
+      rest  = input
+      logMask = SUBSTR('0', 1, 32, '0')       /* Init levelmask to 32 zeros */
+      do while rest > ''                      /* Loop through logmask list  */
+        parse var input level rest
+        level = ExpandLevel(level)
+        if DATATYPE(level,'B') = 0 | LENGTH(level) \= 32 then
+        do
+          logMask = SUBSTR('0', 1, 32, '0')
+          leave
+        end
+        /* Overlay levelmask with a 1 in position where 1 in returned level */
+        logMask = OVERLAY('1', logMask, POS('1',level))
+        input = rest
+      end
+    end
+
+  end
+
+RETURN STAFError.!Ok
+/* End of ProcessVars */
+
+/****************************************************************************/
+/* STAFServiceTerm - Terminates the service                                 */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceTerm:
+
+  parse arg serviceName
+
+RETURN MakeSTAFResult(STAFError.!Ok)
+/* End of STAFServiceTerm */
+
+/******************************************************************************/
+/* From here on are imported functions, DO NOT CHANGE ANYTHING BELOW HERE     */
+/******************************************************************************/
+#From STAFUtil Import MakeSTAFResult STAFErrorText STAFWrapData
+#From LogMon   Import LogMonErrorText DisplayOldVarErrorMessage
+#From LogMon   Import InitializeLogOption ResolveVariable ExpandLevel
+#From STAFCPar Import All
+#From Misc     Import CharCount

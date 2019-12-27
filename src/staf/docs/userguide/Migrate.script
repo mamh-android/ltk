@@ -1,0 +1,462 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Migrate SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Services
+.*  Detail:
+.*
+.*     This is the high level file which imbeds the other utilities
+.*     descriptions
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.migration
+:h1 id=migr.STAF V3.0 Migration Preparation
+:p.In STAF 3.0, commands that return a "multi-valued" result will
+have a new result format and the syntax of some commands will be
+changed to follow the STAF standardization rules.  To help current 
+STAF 2.x customers prepare for migrating from STAF 2.x to 3.0,
+a new DIAG (Diagnostics) internal service is provided which
+allows for the recording of diagnostics data.  The DIAG service
+is being used to track any invocation of a command that will be
+changing in STAF 3.0.  The DIAG service will record the diagnostic
+trigger (in this case, the service/request that will be changing
+in STAF 3.0) along with the source of the trigger (the
+machine/handle/handle name that originated the request).  By
+running with diagnostics enabled, users are able to identify which
+test cases, applications, and services they have written will need
+to be updated to work with STAF 3.0.
+
+:h3.Prerequisites
+:p.You must install STAF V2.6.0 (or a later 2.x version)
+to take advantage of this migration aid.  In addition, the following
+external Java services have been instrumented to record STAF V3.0
+migration diagnostics data.  If you use any of the following
+external services, you should also install the new versions of
+these services:
+:ul compact.
+:li.Cron V1.2.1
+:li.Event V1.3.1
+:li.EventManager V1.2.1
+:li.FSExt V1.2.3
+:li.HTTP V1.0.5
+:li.NamedCounter V1.2.0
+:li.STAX V1.5.1
+:li.SXE V2.1.2
+:li.Timer V1.1.0
+:eul.
+
+:note.The above versions of Java services require STAF 2.6.0 (or a
+later 2.x version).
+
+:h3.Enabling/Disabling Recording Diagnostics
+:p.To record diagnostics for STAF-enabled test cases, applications, or
+services that you have written, you will need to enable diagnostics
+on the machines involved.  To enable diagnostics, you can use the
+:xph.ENABLE:exph. request for the DIAG service.  See
+:hdref refid=diagEnable. for more information on using enabling
+diagnostics dynamically.  Or, you can enable diagnostics
+automatically when STAF starts via the :xph.ENABLEDIAG:exph.
+operational setting in the STAF configuration file.  
+See :hdref refid=opparms. for more information on using this
+operational setting.  After you have completed running the 
+STAF-enabled testcases, applications, and/or services, and
+diagnostics have been recorded, you can disable diagnostics on the
+machines involved.  See :hdref refid=diagDisable. for more information
+on disabling diagnostics.
+
+:h4.Notes:
+:ol.
+:li.Enabling diagnostics slows down the performance of
+STAF commands that have been instrumented to record diagnostics,
+so only enable diagnostics if you're planning to use the diagnostics
+data and remember to disable diagnostics when you're done collecting
+the diagnostics data.
+:li.When STAF shuts down, any diagnostics data that has been collected
+is no longer available.  Diagnostics data is not persistent.
+:li.You can clear the diagnostics data that has been collected using
+the :xph.RESET:exph. request for the DIAG service.
+See :hdref refid=diagReset. for more information on resetting
+diagnostics.
+:eol.
+
+:h3.STAF V3.0 Migration Diagnostic Triggers
+
+:p.This section contains a list of the triggers for all STAF
+commands owned by the STAF Development team that will be changing
+in STAF 3.0 due to one or both of the following reasons:
+:ol.
+:li.The result can "logically" return more than one value so the
+format of the result will be changing to allow for easier parsing
+of the result.
+:p.Note that many results vary depending on the request options
+specified, with results for some requests sometimes containing
+multiple values and at other times only containing one value.
+:li.The syntax of the STAF command is changing in STAF 3.0.
+For example, we're going to create a new :xph.TRACE:exph. service in STAF
+3.0 and move the :xph.TRACE:exph. commands from the :xph.MISC:exph.
+service to a new :xph.TRACE:exph. service so the syntax for all 
+:xph.TRACE:exph. commands will be changing.
+:eol.
+
+:h4.Trigger Syntax
+:p.The format of the trigger recorded by STAF services to aid
+in migrating to STAF 3.0 is:
+:xmp.
+STAF/V3.0-Mig/<Service> <Request>
+:exmp.
+where:
+:ul compact.
+:li.:xph.&lt;Service>:exph. is the name of the STAF service
+:li.:xph.&lt;Request>:exph. identifies the option(s) identifying the
+service request that is changing in STAF 3.0.
+:eul.
+:p.
+:h4.Source Syntax
+:p.The format of the source recorded by STAF services to aid
+in migrating to STAF 3.0 is:
+:xmp.
+<Handle Name>;<Machine Name>;<Handle#>
+:exmp.
+where:
+:ul compact.
+:li.:xph.&lt;Handle Name>:exph. is the name of the handle originating
+the request.
+:li.:xph.&lt;Machine Name>:exph. is the name of the machine originating
+the request.
+:li.:xph.&lt;Handle#>:exph. is the number of the handle originating
+the request.
+:eul.
+
+:table id     = migrateTriggersTable
+       headhi = 3
+       frame  = box
+       split  = yes
+       cols   = '2* 3*'
+       align  = 'l l'.
+:tcap.STAF V3.0 Migration Diagnostics Triggers
+.*-----------------------------
+:thd.
+:c.Trigger
+:c.Meaning
+:ethd.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/CRON LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.CRON:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/EVENT LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.EVENT:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/EVENT QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.EVENT:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/EVENTMANAGER LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.EVENTMANAGER:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FS COPY DIRECTORY (no IGNOREERRORS):exph.
+:c.This indicates a :xph.COPY DIRECTORY:exph. request to the :xph.FS:exph.
+service, without the :xph.IGNOREERRORS:exph. option.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FS DELETE (no IGNOREERRORS):exph.
+:c.This indicates a :xph.DELETE:exph. request to the :xph.FS:exph. service,
+without the :xph.IGNOREERRORS:exph. option.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FS GET ENTRY SIZE:exph.
+:c.This indicates a :xph.GET ENTRY:exph. request to the :xph.FS:exph. service,
+with the :xph.SIZE:exph. option specified.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FS LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.FS:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FS QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.FS:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FSEXT QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.FSEXT:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FSEXT COMPAREDIR (No EXISTS):exph.
+:c.This indicates a :xph.COMPARDIR:exph. request to the :xph.FSEXT:exph.
+service that does not specify the :xph.EXISTS:exph. option.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FSEXT FILECONTAINS NOT:exph.
+:c.This indicates a :xph.FILECONTAINS:exph. request to the :xph.FSEXT:exph.
+service with the :xph.NOT:exph. option specified.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/FSEXT LINECONTAINS:exph.
+:c.This indicates a :xph.LINECONTAINS:exph. request to the :xph.FSEXT:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/HANDLE QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.HANDLE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/HELP ERROR:exph.
+:c.This indicates a :xph.ERROR:exph. request to the :xph.HELP:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/HELP LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.HELP:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/HTTP REQUEST|POST|DOGET:exph.
+:c.This indicates a :xph.REQUEST:exph., :xph.POST:exph.,
+or :xph.DOGET:exph. request to the :xph.HTTP:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/LOG LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.LOG:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/LOG PURGE:exph.
+:c.This indicates a :xph.PURGE:exph. request to the :xph.LOG:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/LOG QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.LOG:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/LOG SET:exph.
+:c.This indicates a :xph.SET:exph. request to the :xph.LOG:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/MISC TRACE:exph.
+:c.This indicates any :xph.TRACE:exph. request to the :xph.MISC:exph. service,
+other than a :xph.TRACE LIST:exph. request.
+The syntax for the request will change in STAF V3.0 due to moving
+the :xph.TRACE:exph. requests from the :xph.MISC:exph. service to
+a new :xph.TRACE:exph. service.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/MISC TRACE LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.MISC:exph. service.
+The result for the request will change in STAF V3.0, as well as
+the syntax.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/MONITOR LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.MONITOR:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/MONITOR QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.MONITOR:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/MONITOR SET:exph.
+:c.This indicates a :xph.SET:exph. request to the :xph.MONITOR:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/NAMEDCOUNTER LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.NAMEDCOUNTER:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/PROCESS FREE ALL|WORKLOAD:exph.
+:c.This indicates a :xph.FREE ALL:exph. or :xph.FREE WORKLOAD:exph.
+request to the :xph.PROCESS:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/PROCESS NOTIFY LIST:exph.
+:c.This indicates a :xph.NOTIFY LIST:exph. request to the :xph.PROCESS:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/PROCESS QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.PROCESS:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/PROCESS START WAIT:exph.
+:c.This indicates a :xph.START:exph. request to the :xph.PROCESS:exph. service
+with the option :xph.WAIT:exph. specified.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/PROCESS STOP ALL|WORKLOAD:exph.
+:c.This indicates a :xph.STOP ALL:exph. or :xph.STOP WORKLOAD:exph.
+request to the :xph.PROCESS:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/QUEUE GET|PEEK:exph.
+:c.This indicates a :xph.GET:exph. or :xph.PEEK:exph. request to
+the :xph.QUEUE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/QUEUE LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.QUEUE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/RESPOOL LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.RESPOOL:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/RESPOOL QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.RESPOOL:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SEM EVENT QUERY:exph.
+:c.This indicates an :xph.EVENT QUERY:exph. request to the :xph.SEM:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SEM LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.SEM:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SEM MUTEX QUERY:exph.
+:c.This indicates a :xph.MUTEX QUERY:exph. request to the :xph.SEM:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SERVICE FREE:exph.
+:c.This indicates a :xph.FREE:exph. request to the :xph.SERVICE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SERVICE LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.SERVICE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SERVICE QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.SERVICE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SHUTDOWN NOTIFY LIST:exph.
+:c.This indicates a :xph.NOTIFY LIST:exph. request to the :xph.SHUTDOWN:exph.
+service.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/STAX EXECUTE TEST RETURNDETAILS:exph.
+:c.This indicates a :xph.TEST:exph. request to the :xph.STAX:exph. service
+specifying option :xph.RETURNDETAILS:exph..
+The result for the request will change in STAF V3.0.
+Note that :xph.RETURNDETAILS:exph. is an undocumented option and
+is for use by STAF developers only.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/STAX EXECUTE WAIT RETURNRESULT:exph.
+:c.This indicates an :xph.EXECUTE:exph. request to the :xph.STAX:exph. service
+specifying options :xph.WAIT:exph. and :xph.RETURNRESULT:exph..
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/STAX LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.STAX:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/STAX QUERY:exph.
+:c.This indicates a :xph.QUERY:exph. request to the :xph.STAX:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/STAX SET:exph.
+:c.This indicates a :xph.SET:exph. request to the :xph.STAX:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/SXE EXECUTE:exph.
+:c.This indicates an :xph.EXECUTE:exph. request to the :xph.SXE:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/TIMER LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.TIMER:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/TRUST LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.TRUST:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/VAR LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.TRUST:exph. service.
+The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/VAR RESOLVE (Multiple):exph.
+:c.This indicates a :xph.RESOLVE:exph. request to the :xph.VAR:exph. service,
+specifying more than one :xph.RESOLVE:exph. option such that
+the result returns the resolved value for more than one STAF
+variable.  The result for the request will change in STAF V3.0.
+.*-----------------------------
+:row.
+:c.:xph.STAF/V3.0-Mig/ZIP LIST:exph.
+:c.This indicates a :xph.LIST:exph. request to the :xph.ZIP:exph. service.
+The result for the request will change in STAF V3.0.
+:etable.
+
+:note.The above table is subject to change.
+
+:h3.Viewing STAF V3.0 Migration Diagnostics
+
+:p.To view the diagnostics data that has been recorded, use
+the :xph.LIST:exph. request for the :xph.DIAG:exph. service.
+See :hdref refid=diagList. for more information.
+:h4.Notes
+:ol.
+:li.STAF-enabled applications provided by the STAF Development team
+may also record STAF V3.0 migration diagnostics data.  For example,
+the STAX Monitor will record STAF V3.0 migration diagnostics data
+because it submits :xph.QUERY:exph. requests to the :xph.STAX:exph.
+service and :xph.GET/PEEK:exph. requests to the :xph.QUEUE:exph. service.
+Diagnostics data recorded by the STAX Monitor have a source that starts
+with :xph.STAX/JobMonitor/:exph. or :xph.STAX/Job/:exph..
+The STAF development team will be updating the STAX Monitor for STAF V3.0.
+:li.If a STAF request that is changing in STAF V3.0 originates from the
+STAF executable, its source recorded in the diagnostics map will start with
+:xph.STAF/Client:exph. since that's the handle name for any STAF command
+submitted at the command line. 
+:eol.
+

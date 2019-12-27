@@ -1,0 +1,1498 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<!--
+  File name:    InstallAndTestSTAF.xml
+  
+  This job installs STAF on one or more remote machines and runs tests
+  to test STAF on the remote machine.
+  
+-->
+
+<stax>
+
+  <defaultcall function="STAF_Install_And_Test"/>
+  
+  <script>
+    # importMachine MUST be set to the machine where STAXUtil.xml resides
+    importMachine = STAXJobXMLMachine
+
+    # importDirectory must be set to the directory which contains the STAXUtil.xml file.
+    importDirectory = '{STAF/Config/STAFRoot}/services/stax/libraries'
+       
+    # testDirectory must be set to the directory which contains the STAFTest.xml file
+    # on the local machine.
+    testDirectory = 'C:/automation/test'
+
+    # Machine and directory containing the STAF install files for the version
+    # of STAF that you want to upgrade to.
+    installerMachine = 'staf4g.austin.ibm.com'
+    
+    defaultPort = 6599
+  </script>
+
+  <function name="STAF_Install_And_Test">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Installs and tests STAF on a remote target machine.
+        The target machine where STAF will be installed to a new version must
+        already have STAF running.</p>
+        <p>
+        The minimum version of STAF that must be running on the target 
+        machine(s) is:</p>
+        <ul compact>
+        <li>3.0.0 if the target machine is a Windows machine
+        <li>3.1.3 if the target machine is a Unix machine
+        </ul>
+        <p>
+        The STAX machine must be running STAF V3.1.0 or later.</p>
+        <p>The target machine(s) must give the STAX machine trust level 5
+        and must give the installer machine trust level 4 or higher.</p>
+        <p>The installer machine must give the STAX machine trust level
+        4 or higher.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>Returns a list containing the return code, and a list of the target
+        machines that were successfully upgraded, and a list of the target
+        machines that were not sucessfully upgraded.
+        The return code will be 0 if all of the target machines were
+        successfully upgraded.
+        Otherwise, the return code will contain the number of target machines
+        that were not successfully upgraded.
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine that is already running an instance of
+        STAF and which will be used to install STAF into a different location.
+        If your target machine does not have a STAF interface listening on the
+        same port as your STAX machine and Installer machine, then you will
+        need to specify the port explicitly, e.g. mysystem.company.com@6500.
+        Or, if your target machine is running multiple instances of STAF, then you will 
+        need to specify the port explicitly to be sure to communicate with the 
+        instance of STAF that you want to use to install STAF into a different location.
+      </function-required-arg>
+      <function-required-arg name="targetInstallDir">
+        The directory where STAF will be installed on the target machine.  If
+        STAF is already installed there, it will be uninstalled and the directory
+        will be deleted.
+      </function-required-arg>
+      <function-required-arg name="installerFile">
+        The fully-qualified name of the STAF installer file that resides
+        on the installerMachine.  This file will be used to upgrade STAF on
+        the target machine.
+      </function-required-arg>
+      <function-required-arg name="test_timeout">
+        The maximum time allows to run STAFTest.xml on a test machine before timing out.
+      </function-required-arg>
+      <function-required-arg name="runSTAXLocally">
+        If set to 1, runs the tests the local STAX service on the target machine.
+        If set to 0, runs the tests as a sub-job on the ISMP machine's STAX machine.
+      </function-required-arg>
+      <function-optional-arg name="installerMachine" default="installerMachine">
+        The endpoint for the machine where the STAF installer files reside
+      </function-optional-arg>
+      <function-optional-arg name="installShieldTempDir" default="None">
+        The directory on the target machine to use for storing temporary
+        files created by InstallShield.  This argument is only used if an
+        InstallShield file (e.g. .bin or .exe) is used to install STAF.
+        If the install fails because InstallShield does not have enough
+        space to extract temporary files, you will either need to make
+        free up space in the default temporary directory for InstallShield
+        or use this argument to specify a different temporary directory.
+      </function-optional-arg>
+      <function-optional-arg name="port" default="6599">
+        A port number to be used for the tcp interface for the STAFProc
+        instance that will be installed.  This port must not currently be used
+        by any instance of STAF running on the target machine.
+      </function-optional-arg>
+      <function-optional-arg name="installType" default="'Typical'">
+        Indicates whether to install the additional codepage support.
+        The valid values are 'Typical', 'Full', or 'Minimal'.
+        Note that a 'Full' install type installs all STAF files including all
+        supported codepages. 
+      </function-optional-arg>
+      <function-optional-arg name="javaBinDir" default="None">
+        A directory on the target machine where the Java executable resides.
+        This directory will be added to the PATH when starting STAFProc.
+      </function-optional-arg>
+      <function-optional-arg name="updateEnvVars" default="'None'">
+        Indicates the type of environment variables to update.
+        This argument is only used if an InstallShield file (e.g. .bin or .exe)
+        is used to upgrade STAF.
+        The valid values are "System", "User", and "None".
+        "System" specifies to update the system environment variables
+        and the start menu (if on Windows).
+        "User" specifies to update the user's environment variables.
+        "None" specifies to not update the environment.
+      </function-optional-arg>
+      <function-optional-arg name="tcpipVersion" default="'IPv4 only'">
+        Indicates whether to install support for IPv4 only or for IPv4 and
+        IPv6.  The valid values are "IPv4 only" and "IPv4 and IPv6".
+        Note that the target machine must support IPv6 in order to install
+        support for IPv4 and IPv6.
+      </function-optional-arg>
+      <function-optional-arg name="importMachine" default="STAXJobXMLMachine">
+        The endpoint for the machine where the STAXUtil.xml file resides.
+        This function imports and uses functions in the STAXUtil.xml file
+        provided with STAX.
+      </function-optional-arg>
+      <function-optional-arg name="importDirectory" default="'{STAF/Config/STAFRoot}/services/stax/libraries'">
+        The directory where the STAXUtil.xml file resides on the importMachine.
+      </function-optional-arg>
+      <function-optional-arg name="testDirectory" default="'C:/automation/test'">
+        The directory where the STAFTest.xml files reside on the local machine.
+      </function-optional-arg>
+    </function-map-args>
+
+    <sequence>
+    
+      <script>
+        gResultMap = STAXGlobal( { 'result': 'Fail', 'failedTests': [], 'passedTests': [] } )
+        
+        # Can set to 0 for debugging purposes to skip the install and start STAFProc
+        # steps (but STAF must already be installed and running using the specified port).
+        performInstall = 1
+        
+        # Turn on the flags to also send a message to the STAX Monitor whenever
+        # a message is logged via a log element and to log a message whenever it
+        # is sent to the STAX Monitor.
+        STAXMessageLog = 1
+        STAXLogMessage = 1
+        
+        portIndex = targetMachine.find('@')
+        if portIndex == -1:
+          testMachine = '%s@%s' % (targetMachine, port)
+        else:
+          testMachine = '%s@%s' % (targetMachine[0:portIndex], port)
+      </script>
+      
+      <try>
+        <sequence>
+
+          <testcase name="'Import STAFInstallUtil.xml'">
+            <sequence>
+
+              <script>
+                import os.path 
+                stafInstallUtilFile = '%s/STAFInstallUtil.xml' % (os.path.dirname(STAXJobXMLFile))
+              </script>
+              <log>
+                '[%s] Importing file %s from machine %s...' % \
+                (testMachine, stafInstallUtilFile, STAXJobXMLMachine) 
+              </log>
+            
+              <import machine="STAXJobXMLMachine" file="stafInstallUtilFile"/>
+
+              <if expr="STAXResult[0] != None">
+                <sequence>
+                  <script>
+                    errMsg = '[%s] Error importing file %s from machine %s.  STAXResult=%s' % \
+                     (testMachine, stafInstallUtilFile, STAXJobXMLMachine, STAXResult)
+                  </script>
+                  <log level="'error'">errMsg</log>
+                  <tcstatus result="'fail'">errMsg</tcstatus>
+                  <terminate/>
+                </sequence>
+              </if>
+              
+            </sequence>
+          </testcase>
+
+          <script>
+            # Replace any '.'s in test machine name with '-'s so that this
+            # modified machine name can be used in block and testcase names
+            # without creating a hierarchy of blocks and testcases.
+            machine_noDots = targetMachine.replace('.', '-')            
+          </script>
+
+          <script>
+            # List of tests to run on each target machine
+            # Note:  Each STAX xml job file in testList must return a dictionary
+            #        containing keys: 'passes' and 'fails'
+            testList = [ 'STAFTest.xml' ]
+          </script>  
+
+          <testcase name="machine_noDots" mode="'strict'">
+            <block name="machine_noDots">
+              <sequence>
+              
+                <!-- Install STAF on the target machine and start a STAFProc instance
+                      configured to use the specified port -->
+
+                <call function="'Install_and_Start_STAF'"/>
+                <if expr="STAXResult != 'Pass'">
+                  <return>STAXResult</return>
+                </if>
+ 
+                <!-- Run tests on the instance of STAFProc just installed -->
+                
+                <log message="1">
+                  '[%s] Start running tests (e.g. STAFTest.xml)' % \
+                  (testMachine)
+                </log>
+                <call function="'Run_STAF_Tests'">
+                  {
+                    'testMachine': testMachine,
+                    'testList': testList,
+                    'testDirectory': testDirectory,
+                    'runSTAXLocally': runSTAXLocally
+                  }                    
+                </call>
+
+                <!-- Shutdown the instance of STAF running on the specified port
+
+                <log message="1">
+                  '[%s] Shutting down STAF after running tests and waiting 2 minutes' % (testMachine)
+                </log>
+                <stafcmd name="'Shutdown STAF'">
+                  <location>testMachine</location>
+                  <service>'SHUTDOWN'</service>
+                  <request>'SHUTDOWN'</request>
+                </stafcmd>  
+                <if expr="RC != STAFRC.Ok">
+                  <log message="1">
+                   '[%s] ERROR:  Shutting down STAF failed after running tests. RC=%s STAFResult=%s' % \
+                   (testMachine, RC, STAFResult)
+                  </log>
+                </if>
+                <stafcmd name="'Delay for 2 minutes to wait for STAF to finish shutting down'">
+                  <location>'local'</location>
+                  <service>'DELAY'</service>
+                  <request>'DELAY 120000'</request>
+                </stafcmd>
+                -->
+                
+              </sequence>
+            </block>
+          </testcase>
+        </sequence>
+        <finally>
+          <sequence>
+            <script>
+              totalNumberOfTests = len(testList) + 1
+              if (len(gResultMap['failedTests']) == 0 and
+                  len(gResultMap['passedTests']) == totalNumberOfTests):
+                gResultMap['result'] = 'Pass'
+            </script>
+            <return>gResultMap.get()</return>
+          </sequence>
+        </finally>
+      </try>
+      
+    </sequence>  
+  </function>
+
+  <function name="STAF_Install_And_Test_IA">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Installs and tests STAF on a remote target machine.
+        The target machine where STAF will be installed to a new version must
+        already have STAF running.</p>
+        <p>
+        The minimum version of STAF that must be running on the target 
+        machine(s) is:</p>
+        <ul compact>
+        <li>3.0.0 if the target machine is a Windows machine
+        <li>3.1.3 if the target machine is a Unix machine
+        </ul>
+        <p>
+        The STAX machine must be running STAF V3.1.0 or later.</p>
+        <p>The target machine(s) must give the STAX machine trust level 5
+        and must give the installer machine trust level 4 or higher.</p>
+        <p>The installer machine must give the STAX machine trust level
+        4 or higher.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>Returns a list containing the return code, and a list of the target
+        machines that were successfully upgraded, and a list of the target
+        machines that were not sucessfully upgraded.
+        The return code will be 0 if all of the target machines were
+        successfully upgraded.
+        Otherwise, the return code will contain the number of target machines
+        that were not successfully upgraded.
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine that is already running an instance of
+        STAF and which will be used to install STAF into a different location.
+        If your target machine does not have a STAF interface listening on the
+        same port as your STAX machine and Installer machine, then you will
+        need to specify the port explicitly, e.g. mysystem.company.com@6500.
+        Or, if your target machine is running multiple instances of STAF, then you will 
+        need to specify the port explicitly to be sure to communicate with the 
+        instance of STAF that you want to use to install STAF into a different location.
+      </function-required-arg>
+      <function-required-arg name="targetInstallDir">
+        The directory where STAF will be installed on the target machine.  If
+        STAF is already installed there, it will be uninstalled and the directory
+        will be deleted.
+      </function-required-arg>
+      <function-required-arg name="installerFile">
+        The fully-qualified name of the STAF installer file that resides
+        on the installerMachine.  This file will be used to upgrade STAF on
+        the target machine.
+      </function-required-arg>
+      <function-required-arg name="test_timeout">
+        The maximum time allows to run STAFTest.xml on a test machine before timing out.
+      </function-required-arg>
+      <function-required-arg name="runSTAXLocally">
+        If set to 1, runs the tests the local STAX service on the target machine.
+        If set to 0, runs the tests as a sub-job on the ISMP machine's STAX machine.
+      </function-required-arg>
+      <function-optional-arg name="installerMachine" default="installerMachine">
+        The endpoint for the machine where the STAF installer files reside
+      </function-optional-arg>
+      <function-optional-arg name="installShieldTempDir" default="None">
+        The directory on the target machine to use for storing temporary
+        files created by InstallShield.  This argument is only used if an
+        InstallShield file (e.g. .bin or .exe) is used to install STAF.
+        If the install fails because InstallShield does not have enough
+        space to extract temporary files, you will either need to make
+        free up space in the default temporary directory for InstallShield
+        or use this argument to specify a different temporary directory.
+      </function-optional-arg>
+      <function-optional-arg name="port" default="6599">
+        A port number to be used for the tcp interface for the STAFProc
+        instance that will be installed.  This port must not currently be used
+        by any instance of STAF running on the target machine.
+      </function-optional-arg>
+      <function-optional-arg name="installType" default="'Typical'">
+        Indicates whether to install the additional codepage support.
+        The valid values are 'Typical', 'Full', or 'Minimal'.
+        Note that a 'Full' install type installs all STAF files including all
+        supported codepages. 
+      </function-optional-arg>
+      <function-optional-arg name="javaBinDir" default="None">
+        A directory on the target machine where the Java executable resides.
+        This directory will be added to the PATH when starting STAFProc.
+      </function-optional-arg>
+      <function-optional-arg name="updateEnvVars" default="'None'">
+        Indicates the type of environment variables to update.
+        This argument is only used if an InstallShield file (e.g. .bin or .exe)
+        is used to upgrade STAF.
+        The valid values are "System", "User", and "None".
+        "System" specifies to update the system environment variables
+        and the start menu (if on Windows).
+        "User" specifies to update the user's environment variables.
+        "None" specifies to not update the environment.
+      </function-optional-arg>
+      <function-optional-arg name="tcpipVersion" default="'IPv4 only'">
+        Indicates whether to install support for IPv4 only or for IPv4 and
+        IPv6.  The valid values are "IPv4 only" and "IPv4 and IPv6".
+        Note that the target machine must support IPv6 in order to install
+        support for IPv4 and IPv6.
+      </function-optional-arg>
+      <function-optional-arg name="importMachine" default="STAXJobXMLMachine">
+        The endpoint for the machine where the STAXUtil.xml file resides.
+        This function imports and uses functions in the STAXUtil.xml file
+        provided with STAX.
+      </function-optional-arg>
+      <function-optional-arg name="importDirectory" default="'{STAF/Config/STAFRoot}/services/stax/libraries'">
+        The directory where the STAXUtil.xml file resides on the importMachine.
+      </function-optional-arg>
+      <function-optional-arg name="testDirectory" default="'C:/automation/test'">
+        The directory where the STAFTest.xml files reside on the local machine.
+      </function-optional-arg>
+    </function-map-args>
+
+    <sequence>
+    
+      <script>
+        gResultMap = STAXGlobal( { 'result': 'Fail', 'failedTests': [], 'passedTests': [] } )
+        
+        # Can set to 0 for debugging purposes to skip the install and start STAFProc
+        # steps (but STAF must already be installed and running using the specified port).
+        performInstall = 1
+        
+        # Turn on the flags to also send a message to the STAX Monitor whenever
+        # a message is logged via a log element and to log a message whenever it
+        # is sent to the STAX Monitor.
+        STAXMessageLog = 1
+        STAXLogMessage = 1
+        
+        portIndex = targetMachine.find('@')
+        if portIndex == -1:
+          testMachine = '%s@%s' % (targetMachine, port)
+        else:
+          testMachine = '%s@%s' % (targetMachine[0:portIndex], port)
+      </script>
+      
+      <try>
+        <sequence>
+
+          <testcase name="'Import STAFInstallUtil.xml'">
+            <sequence>
+
+              <script>
+                import os.path 
+                stafInstallUtilFile = '%s/STAFInstallUtil.xml' % (os.path.dirname(STAXJobXMLFile))
+              </script>
+              <log>
+                '[%s] Importing file %s from machine %s...' % \
+                (testMachine, stafInstallUtilFile, STAXJobXMLMachine) 
+              </log>
+            
+              <import machine="STAXJobXMLMachine" file="stafInstallUtilFile"/>
+
+              <if expr="STAXResult[0] != None">
+                <sequence>
+                  <script>
+                    errMsg = '[%s] Error importing file %s from machine %s.  STAXResult=%s' % \
+                     (testMachine, stafInstallUtilFile, STAXJobXMLMachine, STAXResult)
+                  </script>
+                  <log level="'error'">errMsg</log>
+                  <tcstatus result="'fail'">errMsg</tcstatus>
+                  <terminate/>
+                </sequence>
+              </if>
+              
+            </sequence>
+          </testcase>
+
+          <script>
+            # Replace any '.'s in test machine name with '-'s so that this
+            # modified machine name can be used in block and testcase names
+            # without creating a hierarchy of blocks and testcases.
+            machine_noDots = targetMachine.replace('.', '-')            
+          </script>
+
+          <script>
+            # List of tests to run on each target machine
+            # Note:  Each STAX xml job file in testList must return a dictionary
+            #        containing keys: 'passes' and 'fails'
+            testList = [ 'STAFTest.xml' ]
+          </script>  
+
+          <testcase name="machine_noDots" mode="'strict'">
+            <block name="machine_noDots">
+              <sequence>
+              
+                <!-- Install STAF on the target machine and start a STAFProc instance
+                      configured to use the specified port -->
+
+                <call function="'Install_and_Start_STAF_IA'"/>
+                <if expr="STAXResult != 'Pass'">
+                  <return>STAXResult</return>
+                </if>
+ 
+                <!-- Run tests on the instance of STAFProc just installed -->
+                
+                <log message="1">
+                  '[%s] Start running tests (e.g. STAFTest.xml)' % \
+                  (testMachine)
+                </log>
+                <call function="'Run_STAF_Tests'">
+                  {
+                    'testMachine': testMachine,
+                    'testList': testList,
+                    'testDirectory': testDirectory,
+                    'runSTAXLocally': runSTAXLocally
+                  }                    
+                </call>
+
+                <!-- Shutdown the instance of STAF running on the specified port
+
+                <log message="1">
+                  '[%s] Shutting down STAF after running tests and waiting 2 minutes' % (testMachine)
+                </log>
+                <stafcmd name="'Shutdown STAF'">
+                  <location>testMachine</location>
+                  <service>'SHUTDOWN'</service>
+                  <request>'SHUTDOWN'</request>
+                </stafcmd>  
+                <if expr="RC != STAFRC.Ok">
+                  <log message="1">
+                   '[%s] ERROR:  Shutting down STAF failed after running tests. RC=%s STAFResult=%s' % \
+                   (testMachine, RC, STAFResult)
+                  </log>
+                </if>
+                <stafcmd name="'Delay for 2 minutes to wait for STAF to finish shutting down'">
+                  <location>'local'</location>
+                  <service>'DELAY'</service>
+                  <request>'DELAY 120000'</request>
+                </stafcmd>
+                -->
+                
+              </sequence>
+            </block>
+          </testcase>
+        </sequence>
+        <finally>
+          <sequence>
+            <script>
+              totalNumberOfTests = len(testList) + 1
+              if (len(gResultMap['failedTests']) == 0 and
+                  len(gResultMap['passedTests']) == totalNumberOfTests):
+                gResultMap['result'] = 'Pass'
+            </script>
+            <return>gResultMap.get()</return>
+          </sequence>
+        </finally>
+      </try>
+      
+    </sequence>  
+  </function>
+
+  <function name="Run_STAF_Tests" scope="local">
+    <function-prolog>
+      <![CDATA[
+        <p>
+          Runs the list of tests in testList to test STAF. 
+       </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns: None</h4>
+      ]]>
+    </function-epilog>
+    
+    <function-map-args>
+      <function-required-arg name="testMachine">
+        Endpoint for the machine to run STAF tests on
+      </function-required-arg>
+      <function-required-arg name="testList">
+        List of STAX XML files contains STAF tests to run
+      </function-required-arg>
+      <function-required-arg name="testDirectory">
+        Directory path that contains the STAX XML files in testList
+      </function-required-arg>
+      <function-required-arg name="runSTAXLocally">
+        If set to 1, runs the tests the local STAX service on the target machine.
+        If set to 0, runs the tests as a sub-job on the ISMP machine's STAX machine.
+      </function-required-arg>
+    </function-map-args>
+    
+    <sequence>
+
+      <script>
+        jvmOption = ''
+        jvmOptionsScript = ''
+        if platform_name == 'hpux-ia64-64':
+          jvmOption = 'OPTION J2=-d64'
+          jvmOptionsScript = "RequiredJVMOptions = '%s'" % (jvmOption)
+          
+        testScopeScript = ''  # Run all test scopes
+        #testScopeScript = "TestScopes = ['MONITOR']"
+        
+        staxMachine = 'local'
+      </script>    
+           
+      <if expr="runSTAXLocally">
+        <sequence>
+        
+          <!-- Run as a STAX job on the testMachine -->
+          
+          <script>
+            startTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+            startTimeElapsed = time.time()
+            testName = 'STAXSetup'
+            testJobID = STAXJobID
+            staxMachine = 'local'
+          </script>
+          
+          <!-- Find the name of the STAX jar file for the STAX service running on the
+               local machine.  We'll use it for testing, so make sure that it's using
+               a current version of STAX -->          
+          
+          <script>
+            request = 'QUERY SERVICE %s' % (STAXServiceName)
+          </script>
+          
+          <log message="1">
+           '[%s] STAF local SERVICE %s' % (testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF local SERVICE %s' % (request)">
+            <location>'local'</location>
+            <service>'SERVICE'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC == 0">
+            <script>fromStaxJarFile = STAFResult['executable']</script>
+            <else>  
+              <sequence>
+                <script>
+                  errMsg = 'STAF local SERVICE %s failed.  RC=%s Result=%s' % \
+                           (request, RC, STAFResult)
+                </script> 
+                <log message="1" level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+                <tcstatus result="'fail'">errMsg</tcstatus>
+                <script>
+                  endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                  durationString = '%.0f' % (time.time() - startTimeElapsed)
+                  duration = int(durationString)
+                
+                  testData = { 'name': testName, 'result': errMsg,
+                    'startTime': startTimeString, 'endTime': endTimeString,
+                    'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                  gResultMap['failedTests'].append(testData)
+                </script>
+                <return/>                
+              </sequence>
+            </else>  
+          </if>
+          
+          <!-- Create a directory on the test machine for where to copy the STAX.jar file -->
+          
+          <script>
+            testMachStaxDir = '{STAF/Config/STAFRoot}/services/stax'
+            request = 'CREATE DIRECTORY %s FULLPATH' % (testMachStaxDir)
+          </script>
+          
+          <log message="1">
+           '[%s] STAF %s FS %s' % (testMachine, testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF %s FS %s' % (testMachine, request)">
+            <location>testMachine</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC != 0">
+            <sequence>
+              <script>
+                errMsg = 'STAF %s FS %s failed.  RC=%s Result=%s' % \
+                         (testMachine, request, RC, STAFResult)
+              </script> 
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+            </sequence>
+          </if>
+          
+          <!-- Copy the STAX jar file to the testMachine -->
+          
+          <script>
+            toStaxJarFile = '%s/STAX.jar' % (testMachStaxDir)
+            request = 'COPY FILE %s TOFILE %s TOMACHINE %s' % (fromStaxJarFile, toStaxJarFile, testMachine)
+          </script>
+          
+          <log message="1">
+           '[%s] STAF local FS %s' % (testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC != 0">
+            <sequence>
+              <script>
+                errMsg = 'STAF local FS %s failed.  RC=%s Result=%s' % \
+                         (request, RC, STAFResult)
+              </script> 
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+
+              <return/>
+            </sequence>
+          </if>
+          
+          <!-- Copy the STAFEvent jar file to the testMachine -->
+          
+          <script>
+            import os.path 
+            fromEventJarFile = '%s/STAFEvent.jar' % (os.path.dirname(fromStaxJarFile))
+            toEventJarFile = '%s/STAFEvent.jar' % (testMachStaxDir)
+            request = 'COPY FILE %s TOFILE %s TOMACHINE %s' % (fromEventJarFile, toEventJarFile, testMachine)
+          </script>
+          
+          <log message="1">
+           '[%s] STAF local FS %s' % (testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC != 0">
+            <sequence>
+              <script>
+                errMsg = 'STAF local FS %s failed.  RC=%s Result=%s' % \
+                         (request, RC, STAFResult)
+              </script> 
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+
+              <return/>
+            </sequence>
+          </if>
+                    
+          <!-- Copy the Device Service jar file to the testMachine -->
+          
+          <script>
+            fromDeviceJarFile = '%s/STAFDeviceService.jar' % (testDirectory)
+            toDeviceJarFile = '{STAF/Config/STAFRoot}/lib/STAFDeviceService.jar'
+            request = 'COPY FILE %s TOFILE %s TOMACHINE %s' % (fromDeviceJarFile, toDeviceJarFile, testMachine)
+          </script>
+          
+          <log message="1">
+           '[%s] STAF local FS %s' % (testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC != 0">
+            <sequence>
+              <script>
+                errMsg = 'STAF local FS %s failed.  RC=%s Result=%s' % \
+                         (request, RC, STAFResult)
+              </script> 
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+
+              <return/>
+            </sequence>
+          </if>
+          
+          <!-- Copy the .xml files in the C:\Automation\test directory on the local
+               STAX machine to the testMachine -->
+          
+          <script>
+            toTestDir = '{STAF/Config/STAFRoot}/test'
+            request = 'COPY DIRECTORY %s TODIRECTORY %s EXT xml TOMACHINE %s' % \
+                      (testDirectory, toTestDir, testMachine)
+            testDirectory = toTestDir # Reset test directory to the one on the test machine          
+          </script>
+          
+          <log message="1">
+           '[%s] STAF local FS %s' % (testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC != 0">
+            <sequence>
+              <script>
+                errMsg = 'STAF local FS %s failed.  RC=%s Result=%s' % \
+                         (request, RC, STAFResult)
+              </script> 
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+
+              <return/>
+            </sequence>
+          </if>
+          
+          <!-- Copy the STAX service's libraries directory to the testMachine -->
+          
+          <script>
+            import os.path 
+            fromStaxLibrariesDir = '%s/libraries' % (os.path.dirname(fromStaxJarFile))
+            toStaxLibrariesDir = '%s/libraries' % (testMachStaxDir)
+            request = 'COPY DIRECTORY %s TODIRECTORY %s TOMACHINE %s RECURSE' % \
+                      (fromStaxLibrariesDir, toStaxLibrariesDir, testMachine)
+          </script>
+          
+          <log message="1">
+           '[%s] STAF local FS %s' % (testMachine, request)
+          </log>
+          
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+          
+          <if expr="RC != 0">
+            <sequence>
+              <script>
+                errMsg = 'STAF local FS %s failed.  RC=%s Result=%s' % \
+                         (request, RC, STAFResult)
+              </script> 
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+
+              <return/>
+            </sequence>
+          </if>            
+                    
+          <!-- Register the STAX service on the testMachine -->
+
+          <script>
+            startTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+            startTimeElapsed = time.time()
+            staxJarFile = toStaxJarFile
+            request = 'ADD SERVICE STAX LIBRARY JSTAF EXECUTE %s OPTION J2=-Xmx512m %s' % (staxJarFile, jvmOption)
+            maxWaitTime = '5m'
+          </script>
+           
+          <log message="1">
+           '[%s] STAF %s SERVICE %s' % (testMachine, testMachine, request)
+          </log>
+          
+          <timer duration="maxWaitTime">
+            <sequence>
+            
+              <stafcmd name="'STAF %s SERVICE %s' % (testMachine, request)">
+                <location>testMachine</location>
+                <service>'SERVICE'</service>
+                <request>request</request>
+              </stafcmd>
+                 
+              <if expr="RC != 0">
+                <sequence>
+                  <script>
+                    errMsg = 'STAF %s SERVICE %s failed. RC=%s Result=%s' % \
+                             (testMachine, request, RC, STAFResult)
+                  </script>
+                  <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+                  <tcstatus result="'fail'">errMsg</tcstatus>
+                  <script>
+                    endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                    durationString = '%.0f' % (time.time() - startTimeElapsed)
+                    duration = int(durationString)
+                
+                    testData = { 'name': testName, 'result': errMsg,
+                      'startTime': startTimeString, 'endTime': endTimeString,
+                      'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                    gResultMap['failedTests'].append(testData)
+                  </script>
+                  <return/>
+                </sequence>
+              </if>
+          
+            </sequence>
+          </timer>
+          
+          <if expr="RC == 1">
+            <sequence>
+              <!-- Timer popped while trying to register the STAX service -->
+              <script>
+                testName = 'STAXSetup'
+                errMsg = '%s failed.  STAX service registration did not complete within %s' % \
+                         (testName, maxWaitTime)
+              </script>
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+              <return/>
+            </sequence>
+          </if>
+          
+          <!-- Register the Event service on the testMachine -->
+
+          <script>
+            startTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+            startTimeElapsed = time.time()
+            eventJarFile = toEventJarFile
+            request = 'ADD SERVICE Event LIBRARY JSTAF EXECUTE %s' % (eventJarFile)
+            maxWaitTime = '5m'
+          </script>
+           
+          <log message="1">
+           '[%s] STAF %s SERVICE %s' % (testMachine, testMachine, request)
+          </log>
+          
+          <timer duration="maxWaitTime">
+            <sequence>
+            
+              <stafcmd name="'STAF %s SERVICE %s' % (testMachine, request)">
+                <location>testMachine</location>
+                <service>'SERVICE'</service>
+                <request>request</request>
+              </stafcmd>
+                 
+              <if expr="RC != 0">
+                <sequence>
+                  <script>
+                    errMsg = 'STAF %s SERVICE %s failed. RC=%s Result=%s' % \
+                             (testMachine, request, RC, STAFResult)
+                  </script>
+                  <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+                  <tcstatus result="'fail'">errMsg</tcstatus>
+                  <script>
+                    endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                    durationString = '%.0f' % (time.time() - startTimeElapsed)
+                    duration = int(durationString)
+                
+                    testData = { 'name': testName, 'result': errMsg,
+                      'startTime': startTimeString, 'endTime': endTimeString,
+                      'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                    gResultMap['failedTests'].append(testData)
+                  </script>
+                  <return/>
+                </sequence>
+              </if>
+          
+            </sequence>
+          </timer>
+          
+          <if expr="RC == 1">
+            <sequence>
+              <!-- Timer popped while trying to register the Event service -->
+              <script>
+                testName = 'STAXSetup'
+                errMsg = '%s failed.  Event service registration did not complete within %s' % \
+                         (testName, maxWaitTime)
+              </script>
+              <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+              <tcstatus result="'fail'">errMsg</tcstatus>
+              <script>
+                endTimeString = time.strftime("%Y%m%d-%H:%M:%S")        
+                durationString = '%.0f' % (time.time() - startTimeElapsed)
+                duration = int(durationString)
+                
+                testData = { 'name': testName, 'result': errMsg,
+                  'startTime': startTimeString, 'endTime': endTimeString,
+                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                gResultMap['failedTests'].append(testData)
+              </script>
+              <return/>
+            </sequence>
+          </if>          
+          
+        </sequence>
+      </if>  
+                 
+      <iterate var="testName" in="testList">
+       <sequence>
+       
+         <script>
+           startTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+           startTimeElapsed = time.time()
+         </script>
+         
+         <script>
+           testJobID = 0
+         </script>  
+                      
+         <timer duration="test_timeout">
+           <sequence>
+         
+             <script>
+               fileName = '%s/%s' % (testDirectory, testName)
+               jobName = 'Run %s' % (testName)
+               testJobID = 0
+               jobResultMap = ''
+               jobStatus = ''
+             </script>
+             
+             <if expr="runSTAXLocally">
+             
+               <sequence>
+                 <!-- Run as a STAX job on the testMachine -->
+                 
+                 <script>
+                   scriptData = ''
+                   if jvmOptionsScript != '':
+                     scriptData += "SCRIPT %s" % (STAFUtil.wrapData(jvmOptionsScript))
+                   if testScopeScript != '':
+                     scriptData += " SCRIPT %s" % (STAFUtil.wrapData(testScopeScript))
+                   
+                   staxMachine = testMachine
+                   request = 'EXECUTE FILE %s MACHINE local JOBNAME %s %s WAIT RETURNRESULT' % \
+                     (STAFUtil.wrapData(fileName), STAFUtil.wrapData(jobName), scriptData)
+                 </script>
+                 
+                 <log message="1">'[%s]STAF %s STAX %s' % (testMachine, testMachine, request)</log>
+                 
+                 <stafcmd name="'STAF %s STAX %s' % (testMachine, request)">
+                   <location>testMachine</location>
+                   <service>'STAX'</service>
+                   <request>request</request>
+                 </stafcmd>
+                 
+                 <log message="1">
+                   '[%s]STAF %s STAX %s - RC=%s STAFResult=%s\n' % (testMachine, testMachine, request, RC, STAFResult)
+                 </log>
+                 
+                 <if expr="RC == 0">
+                   <script>
+                     testJobID = STAFResult['jobID']
+                     jobStatus = STAFResult['status']
+                     
+                     # The job result is returned as a string - convert it back to a map
+                     jobResultMap = eval(STAFResult['result'])
+                    </script>
+                 </if>  
+
+               </sequence>
+               
+               <else>
+                 <sequence>
+                   <!-- Run as a STAX job on the ISMP Machine -->
+                   
+                   <script>
+                     fileName = '%s/%s' % (testDirectory, testName)
+                   </script>  
+                   
+                   <job name="jobName" clearlogs="'enabled'">
+                     <job-file>fileName</job-file>
+                     <job-script eval="1">"TestMachines = [ '%s' ]" % (testMachine)</job-script>
+                     <job-script eval="1">jvmOptionsScript</job-script>
+                     <job-script eval="1">testScopeScript</job-script>
+                   </job>
+                   <script>
+                     staxMachine = 'local'
+                     testJobID = STAXSubJobID
+                     jobResultMap = STAXResult
+                     jobStatus = STAXSubJobStatus
+                   </script>
+                 </sequence>   
+               </else>
+               
+             </if>
+
+             <script>
+               endTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+               durationString = '%.0f' % (time.time() - startTimeElapsed)
+               duration = int(durationString)
+             </script>  
+ 
+             <if expr="RC != 0">
+               <sequence>
+                 <script>
+                   errMsg = '%s failed.  RC=%s Result=%s' % (testName, RC, STAFResult)
+                   testData = { 'name': testName, 'result': errMsg,
+                                'startTime': startTimeString, 'endTime': endTimeString,
+                                'duration': duration, 'jobID': '', 'staxMachine': staxMachine }
+                   gResultMap['failedTests'].append(testData)
+                 </script>
+                 <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+                 <tcstatus result="'fail'">errMsg</tcstatus>
+               </sequence>
+               <elseif expr="jobStatus != 'Normal'">
+                 <sequence>
+                   <script>
+                     errMsg = '%s failed.  JobStatus=%s JobResult=%s' % \
+                       (testName, jobStatus, jobResultMap)
+                     testData = { 'name': testName, 'result': errMsg,
+                                  'startTime': startTimeString, 'endTime': endTimeString,
+                                  'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                     gResultMap['failedTests'].append(testData)
+                   </script>
+                   <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+                   <tcstatus result="'fail'">errMsg</tcstatus>
+                 </sequence>
+               </elseif>
+               <else>
+                 <sequence>
+                   <script>
+                     import types
+                     if (type(jobResultMap) != types.DictType or
+                       not jobResultMap.has_key('fails') or
+                       not jobResultMap.has_key('passes')):
+                       errMsg = "Invalid job result from test.  " + \
+                         "Job result is invalid because not a dictionary with keys 'fails' and 'passes'.  " + \
+                         "Job Result: %s" % (jobResultMap)
+                     elif jobResultMap['fails'] > 0 or jobResultMap['passes'] &lt;= 0:
+                       errMsg = str(jobResultMap)
+                     else:
+                       errMsg = ''
+                   </script>
+                   <if expr="errMsg == '' ">
+                     <sequence>
+                       <log level="'pass'">
+                         '[%s] %s completed successfully.  Result: %s' % (testMachine, testName, jobResultMap)
+                       </log>
+                       <tcstatus result="'pass'">'%s' % (jobResultMap)</tcstatus>
+                       <script>
+                         testData = { 'name': testName, 'result': str(jobResultMap),
+                                      'startTime': startTimeString, 'endTime': endTimeString,
+                                      'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                         gResultMap['passedTests'].append(testData)
+                       </script>
+                     </sequence>
+                     <else>
+                       <sequence>
+                         <script>
+                           errMsg = '%s failed.  JobStatus=%s JobResult=%s' % \
+                             (testName, jobStatus, errMsg)
+
+                           testData = { 'name': testName, 'result': errMsg,
+                                        'startTime': startTimeString, 'endTime': endTimeString,
+                                        'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+                           gResultMap['failedTests'].append(testData)                       
+                         </script>
+                         <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+                         <tcstatus result="'fail'">errMsg</tcstatus>
+                       </sequence>
+                     </else>
+                   </if>
+                 </sequence>
+               </else>
+             </if>
+         
+           </sequence>  
+         </timer>
+                        
+         <if expr="RC == 1">
+           <sequence>
+             <script>
+               errMsg = '%s failed.  Did not complete within timeout value %s' % \
+                        (testName, test_timeout)
+ 
+               endTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+               durationString = '%.0f' % (time.time() - startTimeElapsed)
+               duration = int(durationString)
+
+               testData = { 'name': testName, 'result': errMsg,
+                 'startTime': startTimeString, 'endTime': endTimeString,
+                 'duration': duration, 'jobID': testJobID, 'staxMachine': staxMachine }
+               
+               gResultMap['failedTests'].append(testData)
+             </script>
+             <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+             <tcstatus result="'fail'">errMsg</tcstatus>
+           </sequence>
+         </if>                  
+         
+       </sequence>
+     </iterate>
+
+     <!-- Unregister the STAX and Event services on the testMachine -->
+     <if expr="runSTAXLocally">
+       <iterate var="service" in="['STAX', 'Event']">
+         <sequence>
+           
+           <script>
+             request = 'REMOVE SERVICE %s' % (service)
+             maxWaitTime = '5m'
+           </script>
+           
+           <log message="1">
+            '[%s] STAF %s SERVICE %s' % (testMachine, testMachine, request)
+           </log>
+
+           <timer duration="maxWaitTime">
+             <sequence>
+             
+               <stafcmd name="'STAF %s SERVICE %s' % (testMachine, request)">
+                 <location>testMachine</location>
+                 <service>'SERVICE'</service>
+                 <request>request</request>
+               </stafcmd>
+        
+               <if expr="RC != 0">
+                 <log level="'error'">
+                   '[%s] STAF %s SERVICE %s failed with RC=%s STAFResult=%s' % \
+                   (testMachine, testMachine, request, RC, STAFResult)
+                 </log>
+               </if>
+               
+             </sequence>  
+           </timer>
+           
+           <if expr="RC == 1">
+             <log level="'error'">
+               '[%s] STAF %s SERVICE %s did not complete within %s' % \
+               (testMachine, testMachine, request, maxWaitTime)
+             </log>
+           </if>
+         
+         </sequence>
+       </iterate>  
+     </if>
+     
+   </sequence>
+  </function>
+
+  <function name="Install_and_Start_STAF" scope="local">
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Installs STAF and starts STAFProc using the newly installed version of STAF
+        configured to use the specified TCP port.
+        </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      <ol>
+        <li>'Pass' if install and start STAFProc was successful.</li>
+        <li>'Fail' if install failed or if could not start STAFProc and adds info to
+              gResultMap on the error.</li>
+      </ol>
+      </p>
+      ]]>
+    </function-epilog>
+
+    <sequence>
+
+      <if expr="performInstall == 0">
+        <return>'Pass'</return>
+      </if>
+
+      <script>
+        startTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+        startTimeElapsed = time.time()
+      </script>
+      
+      <call function="'STAFInstall'">
+       { 
+         'targetMachine': targetMachine,
+         'targetInstallDir': targetInstallDir,
+         'installerFile': installerFile,
+         'installerMachine': installerMachine,
+         'installShieldTempDir': installShieldTempDir,
+         'port': port,
+         'javaBinDir': javaBinDir,
+         'installType': installType,
+         'updateEnvVars': updateEnvVars,
+         'tcpipVersion': tcpipVersion,
+         'importMachine': importMachine,
+         'importDirectory': importDirectory
+       }
+     </call>
+
+     <script>
+       [rc, result] = STAXResult
+       testName = 'STAFInstall'
+
+     </script>
+     
+     <if expr="rc != 0">
+       <sequence>
+         <script>
+           errMsg = '%s failed.  RC=%s Result=%s' % (testName, rc, result)
+         </script>
+         <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+         <tcstatus result="'fail'">errMsg</tcstatus>
+       </sequence>
+       <else>
+         <sequence>
+           <log level="'pass'">
+             '[%s] %s completed successfully.  Result: %s' % (testMachine, testName, result)
+           </log>
+           <tcstatus result="'pass'">'%s' % (result)</tcstatus>
+         </sequence>
+       </else>
+     </if>  
+     
+     <stafcmd name="'Delay 1 second before assigning end time'">
+       <location>'local'</location>
+       <service>'DELAY'</service>
+       <request>'DELAY 1000'</request>
+     </stafcmd>
+     
+     <script>
+       endTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+       durationString = '%.0f' % (time.time() - startTimeElapsed)
+       duration = int(durationString)
+
+       testData = { 'name': testName, 'result': str(result),
+                    'startTime': startTimeString, 'endTime': endTimeString,
+                    'duration': duration, 'jobID': STAXJobID, 'staxMachine': 'local' }
+     </script>
+     
+     <if expr="rc == 0">
+       <sequence>
+         <script>gResultMap['passedTests'].append(testData)</script>
+         <return>'Pass'</return>
+       </sequence>
+       <else>
+         <sequence>
+           <script>gResultMap['failedTests'].append(testData)</script>
+           <return>'Fail'</return>
+         </sequence>
+       </else>
+     </if>  
+ 
+    </sequence>
+  </function>
+
+  <function name="Install_and_Start_STAF_IA" scope="local">
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Installs STAF and starts STAFProc using the newly installed version of STAF
+        configured to use the specified TCP port.
+        </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      <ol>
+        <li>'Pass' if install and start STAFProc was successful.</li>
+        <li>'Fail' if install failed or if could not start STAFProc and adds info to
+              gResultMap on the error.</li>
+      </ol>
+      </p>
+      ]]>
+    </function-epilog>
+
+    <sequence>
+
+      <if expr="performInstall == 0">
+        <return>'Pass'</return>
+      </if>
+
+      <script>
+        rc = 99  # Initialize to something before calling STAFInstall_IA
+        result = 'Initialize to something before calling STAFInstall_IA'
+        startTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+        startTimeElapsed = time.time()
+      </script>
+      
+      <call function="'STAFInstall_IA'">
+       { 
+         'targetMachine': targetMachine,
+         'targetInstallDir': targetInstallDir,
+         'installerFile': installerFile,
+         'installerMachine': installerMachine,
+         'installShieldTempDir': installShieldTempDir,
+         'port': port,
+         'javaBinDir': javaBinDir,
+         'installType': installType,
+         'updateEnvVars': updateEnvVars,
+         'tcpipVersion': tcpipVersion,
+         'importMachine': importMachine,
+         'importDirectory': importDirectory
+       }
+     </call>
+
+     <script>
+       if STAXResult != None:
+         [rc, result] = STAXResult
+       else:
+         rc = 99
+         result = 'Function STAFInstall_IA failed on %s and returned STAXResult=None (probably due to being terminated)' % (targetMachine)
+       testName = 'STAFInstall'
+     </script>
+     
+     <if expr="rc != 0">
+       <sequence>
+         <script>
+           errMsg = '%s failed.  RC=%s Result=%s' % (testName, rc, result)
+         </script>
+         <log level="'fail'">'[%s] %s' % (testMachine, errMsg)</log>
+         <tcstatus result="'fail'">errMsg</tcstatus>
+       </sequence>
+       <else>
+         <sequence>
+           <log level="'pass'">
+             '[%s] %s completed successfully.  Result: %s' % (testMachine, testName, result)
+           </log>
+           <tcstatus result="'pass'">'%s' % (result)</tcstatus>
+         </sequence>
+       </else>
+     </if>  
+     
+     <stafcmd name="'Delay 1 second before assigning end time'">
+       <location>'local'</location>
+       <service>'DELAY'</service>
+       <request>'DELAY 1000'</request>
+     </stafcmd>
+     
+     <script>
+       endTimeString = time.strftime("%Y%m%d-%H:%M:%S")
+       durationString = '%.0f' % (time.time() - startTimeElapsed)
+       duration = int(durationString)
+
+       testData = { 'name': testName, 'result': str(result),
+                    'startTime': startTimeString, 'endTime': endTimeString,
+                    'duration': duration, 'jobID': STAXJobID, 'staxMachine': 'local' }
+     </script>
+     
+     <if expr="rc == 0">
+       <sequence>
+         <script>gResultMap['passedTests'].append(testData)</script>
+         <return>'Pass'</return>
+       </sequence>
+       <else>
+         <sequence>
+           <script>gResultMap['failedTests'].append(testData)</script>
+           <return>'Fail'</return>
+         </sequence>
+       </else>
+     </if>  
+ 
+    </sequence>
+  </function>
+ 
+</stax>

@@ -1,0 +1,73 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+ifndef COMMONS_CODEC_ROOT
+  $(error You must set COMMONS_CODEC_ROOT to the full pathname containing commons-codec-<VERSION>.jar)
+endif
+
+# Find the commons-codec-<VERSION>.jar file in the root directory for Commons Codec
+COMMONS_CODEC_JAR = $(wildcard $(COMMONS_CODEC_ROOT)/commons-codec-*.jar)
+COMMONS_CODEC_JAR_FILE = $(notdir $(COMMONS_CODEC_JAR))
+
+EMAIL_MANIFEST = $(O)/services/email/MANIFEST.MF
+
+email_class_targets =\
+  $(O)/services/email/STAF-INF/classes/com/ibm/staf/service/email/EmailService.class
+  
+email_jar_targets =\
+  $(EMAIL_MANIFEST)\
+  $(O)/services/email/STAF-INF/jars/$(COMMONS_CODEC_JAR_FILE) \
+
+email_targets += $(email_class_targets)\
+                 $(email_jar_targets)\
+                 $(REL)/lib/STAFEmail.jar
+Targets += $(email_targets)
+CleanupTargets += cleanup_email
+
+$(email_targets): SUBSYS_REL := services/email
+SUBSYS_REL := services/email
+
+# Include inference rules
+include $(InferenceRules)
+
+$(email_targets): $(REL)/lib/JSTAF.zip
+
+EMAIL_CLASSPATH = $(OS_O)/services/email$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)$(OS_PS)$(COMMONS_CODEC_JAR)
+
+define EMAIL_JAVA_COMPILE_IT
+   @echo "*** Compiling Email Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/email/STAF-INF/classes -classpath '$(EMAIL_CLASSPATH)' $(OS_SRC)/services/email/*.java
+endef
+
+$(O)/services/email/STAF-INF/classes/com/ibm/staf/service/email/%.class: $(SRC)/services/email/%.java
+	$(EMAIL_JAVA_COMPILE_IT)
+
+# Email Java targets
+
+$(O)/services/email/STAF-INF/jars/commons-codec-1.3.jar: $(COMMONS_CODEC_JAR)
+	$(COPY_FILE)
+
+# Create the MANIFEST.MF file dynamically for the Email service because the name
+# of the Commons Codec jar file in the "Packaged-Jars:" line in the manifest can
+# vary depending on the version of Commons Codec used to build the Email service
+
+$(EMAIL_MANIFEST): $(SRC)/services/email/*.java $(COMMONS_CODEC_JAR)
+	@echo "*** Creating $(@F) for Email Service ***"
+	-@echo "Manifest-Version: 1.0" > $(EMAIL_MANIFEST)
+	-@echo "" >> $(EMAIL_MANIFEST)
+	-@echo "Name: staf/service/info" >> $(EMAIL_MANIFEST)
+	-@echo "Service-Class: com.ibm.staf.service.email.EmailService" >> $(EMAIL_MANIFEST)
+	-@echo "Packaged-Jars: $(COMMONS_CODEC_JAR_FILE)" >> $(EMAIL_MANIFEST)
+
+$(REL)/lib/STAFEmail.jar: $(email_class_targets) $(email_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/email; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF
+
+cleanup_email:
+	-@$(DEL) $(O)/services/email/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/JSTAF.zip $(OUT_ERR_TO_DEV_NULL)

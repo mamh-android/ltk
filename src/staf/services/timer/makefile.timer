@@ -1,0 +1,54 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+timer_class_targets =\
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/Timer.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/TimerCmdParser.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/TimerList.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/TimerManager.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/TimerObject.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/TimerRequestHandler.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/TimerUtils.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/WatchList.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/WatchManager.class \
+  $(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/WatchObject.class \
+  $(O)/services/timer/MANIFEST.MF
+timer_targets += $(timer_class_targets)\
+                $(REL)/lib/STAFTimer.jar
+Targets += $(timer_targets)
+CleanupTargets += cleanup_timer
+
+$(timer_targets): SUBSYS_REL := services/timer
+SUBSYS_REL := services/timer
+
+# Include inference rules
+include $(InferenceRules)
+
+$(timer_targets): $(REL)/lib/JSTAF.zip
+
+TIMER_CLASSPATH = $(OS_O)/services/timer$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define TIMER_JAVA_COMPILE_IT
+   @echo "*** Compiling TIMER Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/timer/STAF-INF/classes -classpath '$(TIMER_CLASSPATH)' $(OS_SRC)/services/timer/*.java
+endef
+
+$(O)/services/timer/STAF-INF/classes/com/ibm/staf/service/timer/%.class: $(SRC)/services/timer/%.java
+	$(TIMER_JAVA_COMPILE_IT)
+
+# TIMER Java targets
+
+$(O)/services/timer/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(REL)/lib/STAFTimer.jar: $(timer_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/timer; $(JAR) cfm '$(OS_@)' MANIFEST.MF `find . -name "*.class" -print`
+
+cleanup_timer:
+	-@$(DEL) $(O)/services/timer/* $(OUT_ERR_TO_DEV_NULL)

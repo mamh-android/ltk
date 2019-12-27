@@ -1,0 +1,55 @@
+COMPILATION INSTRUCTIONS
+========================
+
+Prerequisites:
+--------------
+
+* Perl 5.8.0 or higher
+* STAF 2.4.0.1 or higher
+
+To build:
+---------
+
+Step 1 is to create the Makefile for the build, using something like:
+
+perl Makefile.PL INC=-I/usr/local/staf/include/ \
+LIBS="-L/usr/local/staf/lib -lSTAF"
+
+Change both instances of "/usr/local/staf" above to the location to
+which staf was installed.  A plain:
+
+perl Makefile.PL
+
+Should work if you installed STAF in the default location of 
+/usr/local/staf, or in the FHS recommended place -- /opt/staf.
+
+Next, run `make'.
+
+You should now run the test suite to ensure that your build was
+successful.  To run the tests, you will need to have a STAF daemon running
+locally (STAFProc).  Just run `make test'.  If the results are not a 100%
+pass, then check the following:
+
+If all tests fail then you've not got your libraries set up right,
+fix them.
+
+If all tests in `basic' pass, but the others fail most of their tests,
+there is a problem with your STAF installation, or you're not running
+STAFProc.
+
+If an odd few fail but the majority pass, we need to know about it,
+so please run `make test TEST_VERBOSE=1' and copy _all_ of the output
+of make test into a file and attach it to a bug report on:
+
+http://sourceforge.net/tracker/?group_id=33142&atid=407381
+
+To install:
+-----------
+
+Don't install it unless the tests pass.
+
+If they do, then just running `make install' will install PLSTAF to the
+standard location for Perl modules st your site.
+
+If you don't want them in the standard place you need to read `perldoc
+ExtUtils::MakeMaker'

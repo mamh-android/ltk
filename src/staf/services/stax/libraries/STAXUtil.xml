@@ -1,0 +1,2149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>
+
+  <!--
+    File:         STAXUtil.xml
+    Description:  Library of common utility functions provided with STAX
+    -->
+
+  <function name="STAF" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      Submits a request to STAF.  It's a shortcut for the &lt;stafcmd> element.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>The STAF request's RC and STAFResult in a list.</p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's a simple example that calls the STAF function with a request
+        to obtain the version of STAF that's currently running on the local
+        system:
+        <pre>
+  &lt;call function="'STAF'">['local', 'MISC', 'VERSION']&lt;/call></pre>
+        If successful, STAXResult could look like:
+        <pre>  [0, '2.4.2']</pre>
+        If not successful because the machine isn't available, STAXResult could
+        look like:
+        <pre>  [ 16, 'getInAddrByName: 11001' ]</pre>
+        </li>
+        <p></p>
+        <li>
+        Here's another example that calls the STAF function with a request to
+        resolve a STAF variable on a machine.
+        This example shows how you can save STAXResult into two variables
+        (e.g. rc and result) immediately following the function call, instead
+        of referencing STAXResult[0] and STAXResult[1].  This example also uses
+        the STAXUtilCheckSuccess function to check if the STAF request was
+        successful and to log a pass or fail message and send it to the STAX
+        Monitor.
+        <pre>
+  &lt;call function="'STAF'">[machName, 'VAR', 'RESOLVE STRING {STAF/Version}']&lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'Failed with RC=%s STAFResult=%s' % (rc, result),
+      'passMsg': 'STAF Version on %s is %s' % (machName, result),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="location">
+        The name of the machine of which you wish to make a request
+      </function-required-arg>
+
+      <function-required-arg name="service">
+        The name of the STAF service to which you are submitting a request
+      </function-required-arg>
+
+      <function-required-arg name="request">
+        The actual request string that you wish to submit to the STAF service
+      </function-required-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <stafcmd>
+        <location>location</location>
+        <service>service</service>
+        <request>request</request>
+      </stafcmd>
+
+      <return>[RC, STAFResult]</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAFProcess" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        Submits a STAF request to start a process in a separate shell (using
+        the default shell command).
+        It's a shortcut for the &lt;process> element when you only need to
+        specify the command to be started in a separate shell.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>Returns the process's RC and STAFResult in a list.</p>
+      <p>
+        If the process ran successfully and returns a 0 to indicate this,
+        STAXResult would look like:
+        <pre>  [0, '']</pre>
+        If the process fails to run because the machine isn't available,
+        STAXResult would look like:
+        <pre>  [ 16, 'getInAddrByName: 11001' ]</pre>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's a simple example that calls the STAFProcess function to run
+        shell script '/tests/test1.sh' on machine 'machA'.
+        <pre>
+  &lt;call function="'STAFProcess'">['machA', '/tests/test1.sh']&lt;/call></pre>
+        </li>
+        <p></p>
+        <li>Here's another example that calls the STAFProcess function to run
+        a complex shell command on a machine.  This example shows how you can
+        save STAXResult into two variables (e.g. rc and result) immediately
+        following the function call, instead of referencing STAXResult[0] and
+        STAXResult[1].  This example also uses the STAXUtilCheckSuccess
+        function to check if the STAF process request was successful and to
+        log a pass or fail message and send it to the STAX Monitor.
+        <pre>
+  &lt;call function="'STAFProcess'">
+    [ machName,
+      'cd %s; tar cvfp - %s | (cd %s; tar xvfp -)' % (Source,tarFile,Target) ]
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'Failed with RC=%s STAFResult=%s' % (rc, result),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="location">
+        The name of the machine of which you wish to make a request
+      </function-required-arg>
+
+      <function-required-arg name="command">
+        The name of the command you want to start in a separate shell
+      </function-required-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <process>
+        <location>location</location>
+        <command mode="'shell'">command</command>
+      </process>
+
+      <return>[RC, STAFResult]</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAFProcessUsing" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        Submits a STAF request to start a process using a map to define values
+        for the process element's sub-elements.
+        It's a shortcut for the &lt;process> element when additional options
+        need to be specified.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+        Returns the process's RC, STAFResult, and STAXResult in a list.
+      </p>
+      <p>
+        For example, if the process's RC=0, and it's STAFResult=None, and it's
+        STAXResult=[[0, 'This is data written to stdout\n'],
+        [0, 'No errors\n']], then the STAXResult set after calling this
+        function is:
+        <pre>[0, None, [[0, 'This is data written to stdout\n'], [0, 'No errors\n']]]</pre>
+        If not successful because the machine isn't available, STAXResult
+        would look like:
+        <pre>[ 16, 'getInAddrByName: 11001', None ]</pre>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>
+          This example calls function STAFProcessUsing passing a map of options
+          for starting a process.
+          <pre>
+  &lt;call function="'STAFProcessUsing'">
+    {'location': machine, 'command': command, 'commandmode': 'shell',
+     'stdout': stdoutfile, 'stderr': 'stdout' }
+  &lt;/call>
+
+  &lt;script>[rc, result, returnedFileData] = STAXResult&lt;/script></pre>
+        </li>
+        <p></p>
+        <li>
+          This example programatically builds up the options to use for
+          starting a process in a map (dictionary) to be passed to this
+          function.  Then it saves the function's STAXResult into three
+          variables (e.g. rc, result, and returnedFileData) immediately
+          following the function call, instead of referencing them as
+          STAXResult[0], STAXResult[1], and STAXResult[2].  This example also
+          uses the STAXUtilCheckSuccess function to check if the STAF process
+          request was successful and if it fails, to log a failure message.
+          <pre>
+  &lt;script>
+    processMap = {'location': 'machineA', 'command': '/tests/test1.sh',
+                  'commandmode': 'shell'}
+    if returnOutput:
+      processMap['stdout'] = '/tests/test1.out'
+      processMap['stderr'] = 'stdout'
+      processMap['returnstdout'] = 1
+  &lt;/script>
+
+  &lt;call function="'STAFProcessUsing'">processMap&lt;/call>
+
+  &lt;script>[rc, result, returnedFileData] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'Failed with RC=%s STAFResult=%s STAXResult=%s' %
+                 (rc, result, returnedFileData) }
+  &lt;/call></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+
+      <function-required-arg name="location">
+        The name of the machine of which you wish to make a request.
+        It corresponds to the location element.
+      </function-required-arg>
+
+      <function-required-arg name="command">
+        The name of the command you want to start in a separate shell.
+        It corresponds to the command element.
+      </function-required-arg>
+
+      <function-optional-arg name="commandmode" default="'default'">
+        Specifies whether to execute the command via a separate shell or
+        not.  It must evaluate to 'shell' or 'default'.
+        It corresponds to the command element's mode attribute.
+      </function-optional-arg>
+
+      <function-optional-arg name="commandshell" default="''">
+        The shell to use when starting the command via a separate shell.
+        It overrides the default shell.  It is only used if command mode is
+        set to 'shell'.
+        It corresponds to the command element's shell attribute.
+      </function-optional-arg>
+
+      <function-optional-arg name="name" default="None">
+        <![CDATA[
+        The name that the STAX Monitor uses to refer to the process
+        element.  If not specified it defaults to Process&lt;number>,
+        where &lt;number> is a unique number for each process executed in a
+        job.  It corresponds to the name attribute for the process element.
+        ]]>
+      </function-optional-arg>
+
+      <function-optional-arg name="parms" default="None">
+        Parameters to pass to the command (shortcut for parms element)
+      </function-optional-arg>
+
+      <function-optional-arg name="workdir" default="None">
+        The directory from which the command should be executed.
+        If you do not specify this element, the command will be started from
+        whatever directory STAFProc is currently in.
+        It corresponds to the workdir element.
+      </function-optional-arg>
+
+      <function-optional-arg name="title" default="None">
+        Program Title for the process.  If not specified, the title will be
+        the text that is displayed on the title bar of the application.
+        It corresponds to the title element.
+      </function-optional-arg>
+
+      <function-optional-arg name="workload" default="None">
+        Name of the workload for which this process is a member.
+        It corresponds to the workload element.
+      </function-optional-arg>
+
+      <function-optional-arg name="vars" default="None">
+        STAF Variables that go into the process-specific STAF variable pool.
+        The format for each variable is: 'varname=value'.  So, a list
+        containing three variables could look like:
+          ['var1=value1', 'var2=value2', 'var3=value3']
+        Specifying only one variable could look like either:
+          ['var1=value1'] or 'var1=value1'
+        It corresponds to the vars element.
+      </function-optional-arg>
+
+      <function-optional-arg name="envs" default="None">
+        Environment variables that will be set for the process.  Environment
+        variable names may be mixed case, however, most programs assume
+        environment variable names will be uppercase, so, in most cases,
+        ensure that your environment variable names are uppercase.
+        The format for each variable is: 'varname=value'.  So, a list
+        containing three variables could look like:
+          ['ENV_VAR1=value1', 'ENV_VAR2=value2', 'ENV_VAR3=value3']
+        Specifying only one variable could look like either:
+          ['ENV_VAR1=value1'] or 'ENV_VAR1=value1'
+        It corresponds to the envs element.
+      </function-optional-arg>
+
+      <function-optional-arg name="useprocessvars" default="None">
+        Specifies that STAF variable references should try to be resolved
+        from the STAF variable pool associated with the process being started
+        first.  If the STAF variable is not found in this pool, the STAF global
+        variable pool should then be searched.  Specify any nonzero number or
+        nonempty object (e.g. 1, 'yes').
+        It corresponds to the useprocessvars element.
+      </function-optional-arg>
+
+      <function-optional-arg name="stopusing" default="None">
+        Specifies the method by which this process will be STOPed, if not
+        overridden on the STOP command.
+        It corresponds to the stopusing element.
+      </function-optional-arg>
+
+      <function-optional-arg name="console" default="None">
+        Specifies if the process should get a new console window or share the
+        STAFProc console.  The value specified must evaluate via Python to
+        'new' or 'same'.  This determines whether the the process should get a
+        new console window (which is the default for Win32 systems) or if the
+        process should share the STAFProc console (which is the default for
+        Unix systems).
+        It corresponds to the console element.
+      </function-optional-arg>
+
+      <function-optional-arg name="username" default="None">
+        The user name under which the process should be started.
+        It corresponds to the username element.
+      </function-optional-arg>
+
+      <function-optional-arg name="password" default="None">
+        The password with which to authenticate the user specified with the
+        username element.
+        It corresponds to the password element.
+      </function-optional-arg>
+
+      <function-optional-arg name="disabledauth" default="None">
+        Specifies the action to take if a username/password is
+        specified but authentication has been disabled.  The value specified
+        must evaluate via Python to a string containing either 'error' or
+        'ignore'.  Specifying 'error' says that an error should be returned.
+        Specifying 'ignore' says that any username/password specified is
+        ignored if authentication is disabled.
+        This action overrides any default specified in the STAF cfg file.
+        It corresponds to the disabledauth element.
+      </function-optional-arg>
+
+      <function-optional-arg name="stdin" default="None">
+        The name of the file from which standard input will be read.
+        It corresponds to the stdin element.
+      </function-optional-arg>
+
+      <function-optional-arg name="stdout" default="None">
+        The name of the file to which standard output will be redirected.
+        It corresponds to the stdout element.
+      </function-optional-arg>
+
+      <function-optional-arg name="stdoutmode" default="'replace'">
+        Specifies what to do if the file specified for stdout already exists.
+        The value must evaluate via Python to 'replace' or 'append'.
+        Specifying 'replace' means that the file will be replaced (the
+        default).  Specifying 'append' means that the process' standard output
+        will be appended to the file.
+        It corresponds to the stdout element's mode attribute.
+      </function-optional-arg>
+
+      <function-optional-arg name="stderr" default="None">
+        The name of the file to which standard error will be redirected.
+        It corresponds to the stderr element.
+      </function-optional-arg>
+
+      <function-optional-arg name="stderrmode" default="'replace'">
+        Specifies what to do if the file specified for stderr already exists.
+        The value must evaluate via Python to 'replace', 'append', or 'stdout'.
+        Specifying 'replace' means the file will be replaced (the default).
+        Specifying 'append'  means the process' standard error will be
+        appended to the file.  Specifying 'stdout' means to write standard
+        error to the stdout file.
+        It corresponds to the stderr element's mode attribute.
+      </function-optional-arg>
+
+      <function-optional-arg name="returnstdout" default="None">
+        Specifies to return in STAXResult the contents of the file
+        where standard output was redirected when the process completes.
+        Specify any nonzero number or nonempty object (e.g. 1, 'yes').
+        It corresponds to the returnstdout element.
+      </function-optional-arg>
+
+      <function-optional-arg name="returnstderr" default="None">
+        Specifies to return in STAXResult the contents of the file
+        where standard error was redirected when the process completes.
+        Specify any nonzero number or nonempty object (e.g. 1, 'yes').
+        It corresponds to the returnstderr element.
+      </function-optional-arg>
+
+      <function-optional-arg name="returnfiles" default="None">
+        Specifies to return in STAXResult the contents of the specified file(s)
+        when the process completes.  The value must evaluate via Python to a
+        string (containing a file name) or a list of strings (each containing
+        a file name).
+        It corresponds to the returnfiles element.
+      </function-optional-arg>
+
+      <function-optional-arg name="statichandlename" default="None">
+        Specifies that a static handle should be created for this process.
+        The value specified will be the registered name of the static handle.
+        Using this option will also cause the environment variable
+        STAF_STATIC_HANDLE to be set appropriately for the process.
+        It corresponds to the statichandlename element.
+      </function-optional-arg>
+
+      <function-optional-arg name="other" default="None">
+        Specifies any other STAF parameters that may arise in the future.
+        Used to pass additional data to the STAF PROCESS START request.
+        The value is evaluated via Python to a string.
+        It corresponds to the other element.
+      </function-optional-arg>
+
+      <function-optional-arg name="processActionFunction" default="None">
+        Specifies the name of a function to be called when a process has
+        started.  It corresponds to the process-action element, by
+        letting you call a function as the task in the process-action
+        element.
+      </function-optional-arg>
+
+      <function-optional-arg name="processActionParms" default="None">
+        Specifies the parameters to pass to processActionFunction.  It is
+        only used if processActionFunction is specified.
+      </function-optional-arg>
+
+    </function-map-args>
+
+    <sequence>
+
+      <if expr="name == None">
+        <process>
+          <location>location</location>
+          <command mode="commandmode" shell="commandshell">command</command>
+          <parms if="parms">parms</parms>
+          <workdir if="workdir">workdir</workdir>
+          <title if="title">title</title>
+          <workload if="workload">workload</workload>
+          <vars if="vars">vars</vars>
+          <envs if="envs">envs</envs>
+          <useprocessvars if="useprocessvars"/>
+          <username if="username">username</username>
+          <password if="password">password</password>
+          <disabledauth if="disabledauth" action="disabledauth"/>
+          <stdin if="stdin">stdin</stdin>
+          <stdout if="stdout" mode="stdoutmode">stdout</stdout>
+          <stderr if="stderr or stderrmode == 'stdout'" mode="stderrmode">stderr</stderr>
+          <returnstdout if="returnstdout"/>
+          <returnstderr if="returnstderr"/>
+          <returnfiles if="returnfiles">returnfiles</returnfiles>
+          <stopusing if="stopusing">stopusing</stopusing>
+          <console if="console" use="console"/>
+          <statichandlename if="statichandlename">
+            statichandlename
+          </statichandlename>
+          <other if="other">other</other>
+          <process-action if="processActionFunction">
+            <if expr="processActionParms == None">
+              <call function="processActionFunction"/>
+            <else>
+              <call function="processActionFunction">processActionParms</call>
+            </else>
+            </if>
+          </process-action>
+        </process>
+      <else>
+        <process name="name">
+          <location>location</location>
+          <command mode="commandmode" shell="commandshell">command</command>
+          <parms if="parms">parms</parms>
+          <workdir if="workdir">workdir</workdir>
+          <title if="title">title</title>
+          <workload if="workload">workload</workload>
+          <vars if="vars">vars</vars>
+          <envs if="envs">envs</envs>
+          <useprocessvars if="useprocessvars"/>
+          <username if="username">username</username>
+          <password if="password">password</password>
+          <disabledauth if="disabledauth" action="disabledauth"/>
+          <stdin if="stdin">stdin</stdin>
+          <stdout if="stdout" mode="stdoutmode">stdout</stdout>
+          <stderr if="stderr or stderrmode == 'stdout'" mode="stderrmode">stderr</stderr>
+          <returnstdout if="returnstdout"/>
+          <returnstderr if="returnstderr"/>
+          <returnfiles if="returnfiles">returnfiles</returnfiles>
+          <stopusing if="stopusing">stopusing</stopusing>
+          <console if="console" use="console"/>
+          <statichandlename if="statichandlename">
+            statichandlename
+          </statichandlename>
+          <other if="other">other</other>
+          <process-action if="processActionFunction">
+            <if expr="processActionParms == None">
+              <call function="processActionFunction"/>
+            <else>
+              <call function="processActionFunction">processActionParms</call>
+            </else>
+            </if>
+          </process-action>
+        </process>
+      </else>
+      </if>
+
+      <return>[RC, STAFResult, STAXResult]</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilLogAndMsg" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+        Logs a message and sends the message to the STAX Monitor.
+        It's a shortcut for specifying the &lt;message> and &lt;log> elements
+        for the same message.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>Nothing.  That is, STAXResult = None.</p>
+      <h4>Example:</h4>
+      <pre>
+  &lt;call function="'STAXUtilLogAndMsg'">'Here is my message'&lt;/call></pre>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="message">
+        The message you want to log in the STAX Job User log and to send to
+        the STAX Monitor.
+      </function-required-arg>
+
+      <function-optional-arg name="level" default="'info'">
+        The level of the message to be logged in the STAX Job User log.
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <log level="level" message="1">message</log>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilWaitForSTAF" scope="local" requires="STAF">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+        Waits for STAF to become available (that is, for the STAFProc daemon
+        to be running) on one or more machines.  A maximum wait time can be
+        specified, overriding the default maximum wait time of 5 minutes.
+        If one or more machines are not available, and the maximum wait time
+        has not been exceeded, delays 5 seconds and then retries.
+        This function can be useful after rebooting one or more systems.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing a return code and result.</p>
+      <p>
+        If the machine(s) all have STAF available within the maximum wait
+        time, returns a return code of 0 and None for the result.  That is,
+        STAXResult would be:
+        <pre>  [0, None]</pre>
+      </p>
+      <p>
+        If the maximum wait time is exceeded, returns a return code of 1 and
+        a list of machines that are not available.  For example, if machines
+        'machA' and 'machB' were not available, STAXResult would be:
+        <pre>  [1, ['machA', 'machB']]</pre>
+      </p>
+      <p>
+        If an invalid (non-integer) maxWaitTime value is specified,
+        returns a return code of -1 and None for the result.  That is,
+        STAXResult would be:
+        <pre>  [-1, None]</pre>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's an example that waits for STAF to become available on machA
+        for the default time of 5 minutes:
+        <pre>
+  &lt;call function="'STAXUtilWaitForSTAF'">'machA'&lt;/call></pre>
+        </li>
+        <p></p>
+        <li>Here's an example that waits for STAF to become available on
+        three systems for a maximum of 60 seconds.  If STAF is not available
+        on all three systems within 60 seconds, a failure message is logged
+        and sent to the STAX Monitor.
+        <pre>
+  &lt;script>machList = [ 'machA', 'machB', 'machC' ]&lt;/script>
+
+  &lt;call function="'STAXUtilWaitForSTAF'">[ machList, 60 ]&lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script>
+
+  &lt;if expr="rc != 0">
+    &lt;call function="'STAXUtilLogAndMsg'">
+      'STAXUtilWaitForSTAF failed. RC=%s Result=%s' % (rc, result)
+    &lt;/call>
+  &lt;/if></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="machineList">
+        A single machine or a list of machines for which you want to wait
+        for STAF to become available
+      </function-required-arg>
+
+      <function-optional-arg name="maxWaitTime" default="300">
+        The maximum length of time in seconds you want to wait for STAF to
+        become available on the specified machine(s).  The default is 5
+        minutes (300 seconds).
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <!-- Check if maxWaitTime is numeric -->
+      <if expr="not type(maxWaitTime) in [type(1)]">
+        <return>[-1, None]</return>
+      </if>
+
+      <script>gPingFailList = STAXGlobal([])</script>
+
+      <script>
+        import time
+        starttime = time.time() # record starting time
+      </script>
+
+      <!-- <timer duration="maxWaitTime"> -->
+
+        <loop until="time.time() - starttime >= maxWaitTime">
+
+          <sequence>
+
+            <script>gPingFailList = STAXGlobal([])</script>
+
+            <paralleliterate var="machName" in="machineList">
+
+              <sequence>
+
+                <call function="'STAF'">machName, 'PING', 'PING'</call>
+                <script>[rc, result] = STAXResult</script>
+
+                <if expr="rc != 0">
+                  <script>
+                    gPingFailList.append(machName)
+                  </script>
+                </if>
+
+              </sequence>
+
+            </paralleliterate>
+
+            <if expr="len(gPingFailList) == 0">
+              <return>[0, None]</return>
+            </if>
+
+            <call function="'STAF'">'local', 'DELAY', 'DELAY 5000'</call>
+
+          </sequence>
+
+        </loop>
+
+      <!-- </timer>  -->
+
+      <return>[1, gPingFailList.get()]</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilCopyFiles" scope="local"
+            requires="STAXUtilListDirectory STAF">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+        Copies files from a directory on a machine to a directory on the same
+        or different machine.  You can specify which files to copy from a
+        directory using the name pattern, extension pattern, case sensitivity,
+        and/or regular expression arguments.
+      </p>
+      <p>
+        The regular expression allows you to define complicated pattern
+        matching rules to determine which files to copy.
+      </p>
+      <p>
+        Note that this function only copies files; no subdirectories will be
+        copied.
+      </p>
+      <p>
+        For performance reasons, the files are copied in groups of up to 5
+        in parallel.  If the toDirectory does not exist, it will be created.
+        If any of the files being copied already exist on the toMachine, they
+        will be replaced.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+        Returns a list containing: a return code, the number of files copied,
+        and an error list.  The return code will be set to one of the following
+        values:
+        <ul>
+          <li>0 - if all files were copied successfully</li>
+          <li>1 - if one or more files could not be copied</li>
+          <li>2 - if the toDirectory could not be created</li>
+          <li>3 - if the fromDirectory could not be listed</li>
+        </ul>
+      </p>
+      <p>
+      If the return code is zero, the error list is set to None.
+      </p>
+      <p>
+      If the return code is not zero, the error list will contain a list of
+      errors that occurred while trying to copy the files.  Each entry in
+      the error list will be a sub-list that consists of the following:
+        <ul>
+          <li>Name of the file that couldn't be copied (or the name
+              of the directory that couldn't be listed or created),</li>
+          <li>RC from the STAF request that failed,</li>
+          <li>Result from the STAF request that failed.</li>
+        </ul>
+      </p>
+      <p>
+      For example, if all files were copied successfully and there were 25
+      files to copy, STAXResult would look like:
+        <pre>[0, 25, None]</pre>
+      </p>
+      <p>
+      If file /test/test14.out could not be opened, but 24 files were copied,
+      STAXResult could look like:
+        <pre>[ 1, 24, [['/test/test14.out', 17, '/test/test14.out']] ]</pre>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+      <li>
+        Copy files from directory /test on machine machA to directory
+        /test/summary on machine machB, only copying files whose names begin
+        with 'test' and whose extension is 'out'.
+        <pre>
+  &lt;call function="'STAXUtilCopyFiles'">
+    { 'machine': 'machA', 'directory': '/test',
+      'toMachine': 'machB', 'toDirectory': '/test/summary',
+      'name': 'test*', 'ext': 'out' }
+  &lt;/call></pre>
+      </li>
+      <li>
+        Copy files from directory C:/test/test1 on machine machA to
+        directory C:/test/test1 on machine machB, only copying files whose
+        names begin with 'a' or 'b' OR whose extensions are 'out'.
+        <p>
+        Also saves the function's STAXResult into three variables (e.g. rc,
+        numFilesCopied, and errorList) immediately following the function call,
+        instead of referencing them as STAXResult[0], STAXResult[1], and
+        STAXResult[2].  Uses the STAXUtilCheckSuccess function to check if all
+        the files were copied successfully.  If not, logs a failure message
+        and sends it to the STAX Monitor.
+        </p>
+      <pre>
+  &lt;call function="'STAXUtilCopyFiles'">
+    { 'machine': 'machA', 'directory': 'C:/test/test1',
+      'toMachine': 'machB', 'toDirectory': '/test1/summary',
+      'regularExpression': '[ab].*|.out' }
+  &lt;/call>
+
+  &lt;script>[rc, numFilesCopied, errorList] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'CopyFiles failed. RC: %s. Files copied: %s Error List: %s' %
+                 (rc, numFilesCopied, errorList),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call></pre>
+      </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+
+      <function-required-arg name="machine">
+        Name of the machine from which files are to be copied
+      </function-required-arg>
+
+      <function-required-arg name="directory">
+        Name of the directory from which files are to be copied
+      </function-required-arg>
+
+      <function-required-arg name="toDirectory">
+        Name of the directory to which files will be copied on the toMachine
+      </function-required-arg>
+
+      <function-required-arg name="toMachine">
+        Name of the machine to which files are to be copied
+      </function-required-arg>
+
+      <function-optional-arg name="name" default="'*'">
+        A pattern used to match the name of child entries. Child entries
+        whose name match this pattern will be copied.
+
+        Note:  This pattern recognizes two special characters,
+        '*' and '?', where '*' matches any string of characters (including an
+        empty string) and '?' matches any single character (the empty string
+        does not match).
+      </function-optional-arg>
+
+      <function-optional-arg name="ext" default="'*'">
+        A pattern used to match the extension of child entries. Child
+        entries whose extension match this pattern will be copied.
+
+        Note:  This pattern recognizes two special characters,
+        '*' and '?', where '*' matches any string of characters (including an
+        empty string) and '?' matches any single character (the empty string
+        does not match).
+      </function-optional-arg>
+
+      <function-optional-arg name="regularExpression" default="None">
+        A regular expression uses to match the child entries.  Child
+        entries which match the regular expression will be copied.
+        Regular expressions are strings that let you define complicated
+        pattern matching.  For example, '[ab].*|.out' specifies to copy all
+        files whose names begin with a or b OR whose extensions end in out.
+      </function-optional-arg>
+
+      <function-optional-arg name="caseSensitive" default="None">
+        Specifies the case sensitivity for the patterns specified by name and
+        ext.
+        0 specifies that the patterns specified by name and ext are to be
+        matched in a case insensitive manner.
+        1 specifies that the patterns specified by name and ext are to be
+        matched in a case sensitive manager.
+        The default is None which specifies that case sensitivity is determined
+        by the operating system, where unix systems default to 1 (case
+        sensitive) and all others default to 0 (case insensitive).
+      </function-optional-arg>
+
+    </function-map-args>
+
+    <sequence>
+
+      <script>
+        # Initialize information to be returned
+        rc = 0
+        result = ''
+        numRequested = None
+      </script>
+
+      <!-- Get a list of the files in the directory that match -->
+      <call function="'STAXUtilListDirectory'">
+        { 'machine': machine, 'directory': directory, 'name': name,
+          'ext': ext, 'caseSensitive': caseSensitive,
+          'regularExpression': regularExpression }
+      </call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <return>[ 3, 0, [[directory, rc, result]] ]</return>
+      </if>
+
+      <script>fileList = result</script>
+
+      <!-- Check if there are no files with the specified extension -->
+      <if expr="not fileList">
+        <return>[ 0, 0, None ]</return>
+      </if>
+
+      <script>numRequested = len(fileList)</script>
+
+      <!-- Create the toDirectory on the toMachine if it doesn't already
+           exist so that the COPY request won't fail if it doesn't exist. -->
+
+      <script>request = 'CREATE DIRECTORY %s' % (toDirectory)</script>
+      <call function="'STAF'">toMachine, 'FS', request</call>
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <return>[ 2, 0, [[toDirectory, rc, result]] ]</return>
+      </if>
+
+      <!-- Iterate through the list, copying files in groups in parallel
+           to the specified directory and machine -->
+
+      <script>
+        numRemaining = len(fileList)
+        gNumCopied = STAXGlobal([0])
+        numCopyInParallel = 5
+        groupNum = 0
+        gErrorList = STAXGlobal([])
+      </script>
+
+      <loop while="numRemaining > 0">
+        <sequence>
+
+          <script>
+            groupSize = min(numRemaining, numCopyInParallel)
+            fileGroup = fileList[gNumCopied[0]:gNumCopied[0]+groupSize]
+            groupNum = groupNum + 1
+          </script>
+
+          <paralleliterate var="file" in="fileGroup" indexvar="i">
+            <sequence>
+
+              <script>
+                request = 'COPY FILE %s/%s TOFILE %s/%s TOMACHINE %s' % \
+                  (directory, file, toDirectory, file, toMachine)
+              </script>
+
+              <call function="'STAF'">machine, 'FS', request</call>
+              <script>[rc, result] = STAXResult</script>
+
+              <if expr="rc == 0">
+                <script>gNumCopied[0] = gNumCopied[0] + 1</script>
+                <else>
+                  <script>gErrorList.append([file, rc, result])</script>
+                </else>
+              </if>
+
+            </sequence>
+          </paralleliterate>
+
+          <script>numRemaining = numRemaining - groupSize</script>
+
+        </sequence>
+      </loop>
+
+      <if expr="len(gErrorList) == 0">
+        <return>[0, gNumCopied[0], None]</return>
+        <else>
+          <return>[1, gNumCopied[0], gErrorList.get()]</return>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilListDirectory" scope="local" requires="STAF">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Lists files in a directory on a machine.  You can specify which files
+      to list using the name pattern, extension pattern, case sensitivity,
+      and/or regular expression arguments.
+      </p>
+      <p>
+      The regular expression allows you to define complicated pattern matching
+      rules to determine which files to copy.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      Returns the RC from the FS LIST DIRECTORY request and the result.
+      </p>
+      <p>
+      If the RC is 0, the files in the directory were successfully listed and
+      the result contains a Python list of the files.
+      </p>
+      <p>
+      If the RC is not 0, the FS LIST DIRECTORY request failed and the result
+      contains the STAFResult from the request which may contain more
+      information on why it failed.
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>
+        List the files in directory /tests on machA with an extension of out:
+        <pre>
+  &lt;call function="'STAXUtilListDirectory'">
+    { 'machine': 'machA', 'directory': '/tests', 'ext': 'out' }
+  &lt;/call></pre>
+        If successful, STAXResult could be:</p>
+        <pre>  [ 0, ['test1.out', 'test2.out', 'test3.out'] ]</pre>
+        If not successful because directory /tests does not exist on machine
+        machA, STAXResult would be:
+        <pre>  [48, 'FS LIST DIRECTORY /tests failed on machA. Result=/tests']</pre>
+        </li>
+        <p></p>
+        <li>
+        List the files in directory C:\test\test1 on machine machA whose names
+        begin with 'a' or 'b' OR whose extensions are 'out'.
+        <p>
+        Also saves the function's STAXResult into two variables (e.g. rc,
+        result) immediately following the function call, instead of referencing
+        them as STAXResult[0] and STAXResult[1].  Uses the STAXUtilCheckSuccess
+        function to check if all the files were listed successfully.  If not,
+        logs a failure message and sends it to the STAX Monitor.</p>
+        <pre>
+  &lt;call function="'STAXUtilListDirectory'">
+    { 'machine': 'machA', 'directory': 'C:/test/test1',
+      'regularExpression': '[ab].*|.out' }
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'List directory failed. RC=%s Result=%s' % (rc, result),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+
+      <function-required-arg name="machine">
+        Name of the machine on which to list the directory contents
+      </function-required-arg>
+
+      <function-required-arg name="directory">
+        Name of the directory whose contents are to to be listed
+      </function-required-arg>
+
+      <function-optional-arg name="name" default="'*'">
+        A pattern used to match the name of child entries. Only child entries
+        whose name match this pattern will be copied.
+
+        Note: The name and extension match patterns recognize two special
+        characters, '*' and '?', where '*' matches any string of characters
+        (including an empty string) and '?' matches any single character (the
+        empty string does not match).
+      </function-optional-arg>
+
+      <function-optional-arg name="ext" default="'*'">
+        A pattern used to match the extension of child entries. Only child
+        entries whose extension match this pattern will be copied.
+
+        Note:  The name and extension match patterns recognize two special
+        characters, '*' and '?', where '*' matches any string of characters
+        (including an empty string) and '?' matches any single character (the
+        empty string does not match).
+      </function-optional-arg>
+
+      <function-optional-arg name="caseSensitive" default="None">
+        Specifies the case sensitivity for the patterns specified by name and
+        ext.
+        0 specifies that the patterns specified by name and ext are to be
+        matched in a case insensitive manner.
+        1 specifies that the patterns specified by name and ext are to be
+        matched in a case sensitive manager.
+        The default is None which specifies that case sensitivity is determined
+        by the operating system, where unix systems default to 1 (case
+        sensitive) and all others default to 0 (case insensitive).
+      </function-optional-arg>
+
+      <function-optional-arg name="regularExpression" default="None">
+        A regular expression uses to match the child entries.  Child
+        entries which match the regular expression will be copied.
+        Regular expressions are strings that let you define complicated
+        pattern matching.  For example, '[ab].*|.out' specifies to list all
+        files whose names begin with a or b OR whose extensions end in out.
+      </function-optional-arg>
+
+    </function-map-args>
+
+    <sequence>
+
+      <script>
+        if caseSensitive == 0:
+          case = 'CASEINSENSITIVE'
+        elif caseSensitive == 1:
+          case = 'CASESENSITIVE'
+        else:
+          case = ''
+
+        request = 'LIST DIRECTORY %s NAME %s EXT %s TYPE F %s' % \
+                  (directory, name, ext, case)
+      </script>
+
+      <call function="'STAF'">machine, 'FS', request</call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <sequence>
+          <script>
+            msg = 'FS %s failed on %s. Result=%s' % (request, machine, result)
+          </script>
+          <return>[rc, msg]</return>
+        </sequence>
+      </if>
+
+      <script>
+        if type(result) != type(''):  # Check if not a string
+
+          # In STAF 3.0 and later, the result from a FS LIST DIRECTORY request
+          # is a marshalled list of strings, where each string contains
+          # the name of an entry in the directory.
+
+          fileList = result
+
+        else:
+          
+          # In STAF 2.x, the result from a FS LIST DIRECTORY request is a string.
+          # Split up result so that each line is an entry in a list
+          # Handle line separators for Windows ('\n') and Unix systems ('\r\n')
+          import string
+          fileList = result.replace('\r\n', '\n').split('\n')
+        
+          # If the last entry in the list is a blank line, delete it
+          if fileList[len(fileList) - 1] == '':
+            del fileList[len(fileList) - 1]
+      </script>
+
+      <if expr="regularExpression == None">
+        <return>[0, fileList]</return>
+      </if>
+
+      <script>
+        newFileList = []
+        import re
+        matchstr = re.compile(regularExpression)
+
+        # Iterate through fileList, checking if each file name matches the
+        # the regular expression, and if so, adding it to newFileList.
+
+        for file in fileList:
+          result = matchstr.search(file)
+          if result != None:
+            newFileList.append(file)
+      </script>
+
+      <return>[0, newFileList]</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilCheckSuccess" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Checks if a result indicates success or failure.  If the result
+      evaluates to a true value:
+      </p>
+      <ol>
+        <li>
+          If a pass message is provided, it is logged in the STAX User Log
+          and, optionally, sent to the STAX Monitor.
+        </li>
+        <li>
+          A testcase status of pass is recorded if the recordStatus
+          evaluates to a true expression.
+        </li>
+      </ol>
+      <p>
+      Otherwise, if the result evaluates to a false value:
+      </p>
+      <ol>
+        <li>
+          If a failure message is provided, it is logged in the STAX User
+          Log and, optionally, sent to the STAX Monitor.
+        </li>
+        <li>
+          A testcase status of fail is recorded if the recordStatus
+          evaluates to a true expression.
+        </li>
+      </ol>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>If the result evaluates to a true value, 0 is returned.
+        <br>If the result evaluates to a false value, 1 is returned.</br>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's an example that says if RC is 0 or 48, then it's successful.
+            Otherwise, it fails and logs a failure message.
+        <pre>
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': RC in [0, 48],
+      'failMsg': 'Failed with RC=%s STAFResult=%s' % (RC, STAFResult) }
+  &lt;/call></pre>
+        </li>
+        <p></p>
+        <li>Here's an example that says if RC is 0, then it's successful and it
+        logs the pass message and sends it to the STAX Monitor, and records a
+        testcase pass status.  Otherwise, it fails and it logs the failure
+        message and sends it to the STAX Monitor and records a testcase fail
+        status.
+        <pre>
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': RC == 0,
+      'failMsg': 'ProcessA failed with RC=%s' % RC,
+      'passMsg': 'ProcessA was successful',
+      'sendToMonitor': 1,
+      'recordStatus': 1 }
+  &lt;/call></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+
+      <function-required-arg name="result">
+        Specifies an expression or value to be evaluated.  Success is indicated
+        if it evaluates to a true value;  Failure is indicated if it evaluates
+        to a false value.
+      </function-required-arg>
+
+      <function-optional-arg name="failMsg" default="None">
+        A failure message to be logged if the result evaluates to treu
+      </function-optional-arg>
+
+      <function-optional-arg name="passMsg" default="None">
+        A pass message to be logged if the result evaluates to true
+      </function-optional-arg>
+
+      <function-optional-arg name="sendToMonitor" default="None">
+        Indicates whether to send the pass and/or failure message (if provided)
+        to the STAX Monitor
+      </function-optional-arg>
+
+      <function-optional-arg name="recordStatus" default="None">
+        Indicates whether to record a pass or fail for testcase status
+      </function-optional-arg>
+
+    </function-map-args>
+
+    <if expr="result">
+
+      <sequence>
+        <!-- Success -->
+        <log if="passMsg" level="'pass'" message="0">passMsg</log>
+        <message if="sendToMonitor and passMsg" log="0">passMsg</message>
+        <if expr="recordStatus">
+          <if expr="passMsg">
+            <tcstatus result="'pass'">passMsg</tcstatus>
+            <else>
+              <tcstatus result="'pass'"/>
+            </else>
+          </if>
+        </if>
+        <return>0</return>
+      </sequence>
+
+      <else>
+        <!-- Failure -->
+        <sequence>
+          <log if="failMsg" level="'fail'" message="0">failMsg</log>
+          <message if="sendToMonitor and failMsg" log="0">failMsg</message>
+          <if expr="recordStatus">
+            <if expr="failMsg">
+              <tcstatus result="'fail'">failMsg</tcstatus>
+              <else>
+                <tcstatus result="'fail'"/>
+              </else>
+            </if>
+          </if>
+          <return>1</return>
+        </sequence>
+      </else>
+
+    </if>
+
+  </function>
+
+
+  <function name="STAXUtilImportSTAFVars" requires="STAF">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Imports STAF variables on the specified machines, creating STAX
+      variables from them.
+      </p>
+      <p>
+      If only one machine is specified, for each STAF variable name that is
+      specified, a STAX variable with the specified name is created with
+      the resolved contents of the STAF variable for the specified machine
+      assigned to it.
+      </p>
+      <p>
+      If a list of machines is specified, for each STAF variable name that
+      is specified, a STAX map is created with the specified name which
+      contains an entry for each machine (key) with a value of the resolved
+      contents of the STAF variable for that machine assigned.
+      </p>
+      <p>
+      This function's scope must be global, not local, in order to set the
+      STAX variables so that they are accessible by the function caller.
+      Note that any variables that are used directly in a STAXUtil "global"
+      function are prefixed with STAXUtil to avoid name collisions.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      A list consisting of:
+      <ul>
+      <li>Return code - 0 if all STAF variables were successfully converted
+      to STAX variables or 1 if one or more errors occurred during the
+      conversion.
+      <li>Error list - A list of the STAF variables which could not be
+      converted (or None if all STAF variables were successfully converted).
+      The list is actually a list of lists where each sublist contains the
+      name of the STAF variable that could not be converted, the machine,
+      the RC, and the STAFResult.
+      </ul>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Import two STAF variables on machine 'machA', creating STAX
+        variables named mySTAFDir and mySTAFVersion.  This example also
+        shows how you can save STAXResult into two variables (e.g. rc and
+        errorList) immediately following the function call, instead of
+        referencing STAXResult[0] and STAXResult[1], and then check if
+        all the STAF variables were successfully converted.
+        <pre>
+  &lt;call function="'STAXUtilImportSTAFVars'">
+    [
+      {'STAF/Env/STAFDir': 'mySTAFDir', 'STAF/Version': 'mySTAFVersion'},
+      'machA'
+    ]
+  &lt;/call>
+
+  &lt;script>[rc, errorList] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'STAXUtilImportSTAFVars failed.  RC=%s ErrorList=%s' % \
+                 (rc, errorList),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call></pre>
+        If successful, STAXResult would be:
+        <pre>  [0, None]</pre>
+        and the resulting STAX variables could be:
+        <ul>
+          <li>mySTAFDir = 'C:\STAF'
+          <li>mySTAFVersion = '2.4.2'
+        </ul>
+        <p>
+        If not successful because STAF variable STAF/Version does not exist:
+        STAXResult would be:
+        </p>
+        <pre>  [ 1, [ ['STAF/Version', 'machA', 13, 'STAF/Version'] ] ]</pre>
+        </li>
+        <p></p>
+        <li>Import two STAF variables on machines 'machA' and 'machB', creating
+        STAX variables named mySTAFDir and mySTAFDir, where each is a map
+        containing two entries, one for 'machA' and another for 'machB'.
+        <pre>
+  &lt;call function="'STAXUtilImportSTAFVars'">
+    [
+      {'STAF/Env/STAFDir': 'mySTAFDir', 'STAF/Version': 'mySTAFVersion'},
+      ['machA', 'machB']
+    ]
+  &lt;/call></pre>
+        If successful, STAXResult would be:
+        <pre>  [0, None]</pre>
+        and the resulting STAX variables could be:
+        <ul>
+          <li>mySTAFDir = { 'machA': 'C:\STAF', 'machB': '/usr/local/staf' }
+          <li>mySTAFVersion = { 'machA': '2.4.2', 'machB': '2.4.2.2' }
+        </ul>
+        <p>These STAX variables could be accessed as follows:</p>
+        <pre>
+  mySTAFDir['machA']
+  mySTAFDir['machB']
+  mySTAFVersion['machA']
+  mySTAFVersion['machB']</pre>
+        If not successful because STAF variable STAF/Env/STAFDir does not exist
+        and machine machineB does not exist, STAXResult would be:
+        <pre>
+  [ 1,
+    [ ['STAF/Env/STAFDir', 'machA', 13, 'STAF/Env/STAFDir'],
+      ['STAF/Env/STAFDir', 'machB', 13, 'STAF/Env/STAFDir'],
+      ['STAF/Env/STAFDir', 'machB', 16, 'getInAddrByName: 11001'],
+      ['STAF/Version', 'machB', 16, 'getInAddrByName: 11001']
+  ] ]</pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="STAXUtilVarMap">
+        A map containing STAF variable names to be converted to STAX variables.
+        The key is the name of the STAF variable to convert and its value is
+        the name of the STAX variable to create.
+
+      </function-required-arg>
+
+      <function-required-arg name="STAXUtilMachList">
+        List of the machine(s) where the STAF variables to be converted reside.
+      </function-required-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <script>
+        # Use a map variable called STAXUtilMap to contain most of the
+        # temporary variables used by this function.
+        STAXUtilMap = {}
+
+        import types, string
+        STAXUtilErrorList = []
+
+        # Convert a single machine name to a list format
+        if (type(STAXUtilMachList) != types.ListType and
+            type(STAXUtilMachList) != types.TupleType):
+          STAXUtilMap['saveMachName'] = STAXUtilMachList
+          STAXUtilMachList = []
+          STAXUtilMachList.append(STAXUtilMap['saveMachName'])
+      </script>
+
+      <iterate var="STAXUtilMachName" in="STAXUtilMachList"
+               indexvar="STAXUtilMachNum">
+
+        <sequence>
+
+          <script>
+            # Create a VAR service request to resolve all the STAF variables
+
+            STAXUtilMap['request'] = 'RESOLVE '
+            STAXUtilMap['varSTAFMap'] = STAXUtilVarMap.keys()
+
+            for STAXUtilMap['varName'] in STAXUtilMap['varSTAFMap']:
+              STAXUtilMap['request'] = '%s STRING {%s} ' % \
+                  (STAXUtilMap['request'], STAXUtilMap['varName'])
+          </script>
+
+          <call function="'STAF'">
+            STAXUtilMachName, 'VAR', STAXUtilMap['request']
+          </call>
+
+          <if expr="STAXResult[0] != 0">
+            <sequence>
+              <script>
+                # Add variables which can't be resolved to STAXUtilErrorList
+                for STAXUtilMap['varName'] in STAXUtilMap['varSTAFMap']:
+                  STAXUtilErrorList.append([STAXUtilMap['varName'],
+                      STAXUtilMachName, STAXResult[0], STAXResult[1]])
+              </script>
+              <continue/>
+            </sequence>
+          </if>
+
+          <!--
+            The result returned from the VAR RESOLVE request if more than one
+            string is specified to be resolved is a marshalled list of maps,
+            where each map contains a rc to indicate if the resolve request was
+            successful and a result to contain the resolved string if successful
+            (or additional error information if the request failed).
+            more than 1 variable is resolved:
+             
+            If only 1 variable is resolved, the format is just <Result>.
+            -->
+          <script>
+            if len(STAXUtilMap['varSTAFMap']) == 1:
+              singleResultList = []
+              singleResultMap = {}
+              singleResultMap['rc'] = STAXResult[0]
+              singleResultMap['result'] = STAXResult[1]
+              singleResultList.append(singleResultMap)
+              STAXUtilMap['resultList'] = singleResultList
+            else:
+              STAXUtilMap['resultList'] = STAXResult[1]
+            </script>
+
+            <script>
+            for STAXUtilMap['i'] in range(len(STAXUtilVarMap)):
+              STAXUtilMap['rc'] = int(STAXUtilMap['resultList'][STAXUtilMap['i']]['rc'])
+              STAXUtilMap['value'] = STAXUtilMap['resultList'][STAXUtilMap['i']]['result']
+
+              if STAXUtilMap['rc'] != 0:
+                STAXUtilErrorList.append(
+                    [STAXUtilMap['varSTAFMap'][STAXUtilMap['i']],
+                    STAXUtilMachName, STAXUtilMap['rc'], STAXUtilMap['value']])
+              else:
+                if len(STAXUtilMachList) == 1:
+                  locals()[STAXUtilVarMap[STAXUtilMap['varSTAFMap']
+                      [STAXUtilMap['i']]]] = STAXUtilMap['value']
+                else:
+                  if STAXUtilMachNum == 0:
+                    # Create a dictionary called the STAX variable name
+                    locals()[STAXUtilVarMap[STAXUtilMap['varSTAFMap']
+                        [STAXUtilMap['i']]]] = {}
+
+                  # Create an entry in the dictionary with the machine name
+                  # and assign the resolved value
+                  locals()[STAXUtilVarMap[STAXUtilMap['varSTAFMap']
+                      [STAXUtilMap['i']]]][STAXUtilMachName] = \
+                      STAXUtilMap['value']
+          </script>
+
+        </sequence>
+
+      </iterate>
+
+      <script>
+        del STAXUtilMap
+        del STAXUtilMachName
+        del STAXUtilMachNum
+      </script>
+
+      <if expr="len(STAXUtilErrorList) == 0">
+        <return>[0, None]</return>
+        <else>
+          <return>[1, STAXUtilErrorList]</return>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilImportSTAFConfigVars" scope="local"
+            requires="STAXUtilImportSTAFVars">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Imports STAF Configuration variables on the specified machine,
+        creating a STAX variable map containing their values.  The following
+        is a list of the names of the keys in the STAX variable map returned
+        and the STAF Config variables whose values are contained in each key::
+        </p>
+        <ul>
+          <li>'OSMajorVersion':  STAF/Config/OS/MajorVersion</li>
+          <li>'OSMinorVersion':  STAF/Config/OS/MinorVersion</li>
+          <li>'OSName':  STAF/Config/OS/Name</li>
+          <li>'OSRevision':  STAF/Config/OS/Revision</li>
+          <li>'FileSep':  STAF/Config/Sep/File</li>
+          <li>'LineSep':  STAF/Config/Sep/Line</li>
+          <li>'PathSep':  STAF/Config/Sep/Path</li>
+        </ul>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      A list consisting of:
+      <ul>
+        <li>Return code - 0 if all STAF Config variables were successfully
+        converted to STAX variables or 1 if one or more errors occurred during
+        the conversion.</li>
+        <li>Config Map:  If the return code is 0, contains a map containing the
+        values of the STAX Configuration variables.  If the return code is not
+        0, it's set to None.</li>
+        <li>Error list - If the return code is not 0, contains a list of the
+        STAF variables which could not be converted (or None if the return code
+        is 0).  The list is actually a list of lists where each sublist contains
+        the name of the STAF variable that could not be converted, the machine,
+        the RC, and the STAFResult.</li>
+      </ul>
+      <h4>Example:</h4>
+        <p>
+        Import the STAF Configuration variables on machine 'machA' creating
+        a STAX variable map containing their values.  This example also shows
+        how you can save STAXResult into three variables (e.g. rc, the name of
+        a map containing the STAF Configuration variable values, and an
+        errorList) immediately following the function call, instead of
+        referencing STAXResult[0], STAXResult[1], STAXResult[2].  Then it
+        checks if all the STAF variables were successfully converted and stored
+        in the map and shows how the the values in the map can be accessed.
+        <pre>
+  &lt;call function="'STAXUtilImportSTAFConfigVars'">'machA'&lt;/call>
+
+  &lt;script>[rc, configMap, errorList] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'STAXUtilImportSTAFConfigVars failed.  RC=%s ErrorList=%s' % \
+                 (rc, errorList),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call>
+
+  &lt;if expr="rc == 0">
+    &lt;sequence>
+
+      &lt;!-- Now you can use the configMap as needed.  For example: -->
+
+      &lt;message>'Config info for machine %s:' % machName&lt;/message>
+      &lt;message>'  OS Name:  %s' % configMap["OSName"]&lt;/message>
+      &lt;message>'  OS Major Version:  %s' % configMap["OSMajorVersion"]&lt;/message>
+      &lt;message>'  OS Minor Version:  %s' % configMap["OSMinorVersion"]&lt;/message>
+      &lt;message>'  OS Revision :  %s' % configMap["OSRevision"]&lt;/message>
+      &lt;message>'  File Separator :  %s' % configMap["FileSep"]&lt;/message>
+      &lt;message>'  Path Separator :  %s' % configMap["PathSep"]&lt;/message>
+      &lt;message>'  Line Separator :  %s' % configMap["LineSep"]&lt;/message>
+
+    &lt;/sequence>
+  &lt;/if></pre>
+        If successful, STAXResult could look be:
+        <pre>  [0, {'OSRevision': '2195', 'OSMinorVersion': '0', 'OSName': 'Win2000', 'OSMajorVersion': '5',
+   'LineSep': '\r\n', 'PathSep': ';', 'FileSep': '\\'}, None]</pre>
+        <p>
+        If not successful because STAF variable STAF/Config/OS/Revision does not exist on machA:
+        STAXResult would be:
+        </p>
+        <pre>  [1, None, [['STAF/Config/OS/Revision', 'machA', 13, 'STAF/Config/OS/Revision']]]</pre>
+      </p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="machName">
+        Machine from which to resolve STAF variables
+      </function-required-arg>
+
+    </function-list-args>
+    <sequence>
+
+    <call function="'STAXUtilImportSTAFVars'">
+      [
+         { 'STAF/Config/OS/MajorVersion': 'OSMajorVersion',
+           'STAF/Config/OS/MinorVersion': 'OSMinorVersion',
+           'STAF/Config/OS/Name'        : 'OSName',
+           'STAF/Config/OS/Revision'    : 'OSRevision',
+           'STAF/Config/Sep/File'       : 'FileSep',
+           'STAF/Config/Sep/Line'       : 'LineSep',
+           'STAF/Config/Sep/Path'       : 'PathSep' },
+           machName
+      ]
+      </call>
+
+      <script>[rc, errorList] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <return>[rc, None, errorList]</return>
+      </if>
+
+      <!-- Create a map of the STAF/Config variable values -->
+      <script>
+        configMap = {}
+        configMap["OSMajorVersion"] = OSMajorVersion
+        configMap["OSMinorVersion"] = OSMinorVersion
+        configMap["OSName"    ] = OSName
+        configMap["OSRevision"] = OSRevision
+        configMap["FileSep"] = FileSep
+        configMap["LineSep"] = LineSep
+        configMap["PathSep"] = PathSep
+      </script>
+
+      <return>[0, configMap, None]</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAXUtilExportSTAFVars" scope="local" requires="STAF">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Exports STAX variables, creating STAF variables from them on the
+      specified machines.
+      </p>
+      <p>
+      For each STAX variable name that is specified, a STAF variable with
+      the specified name is created for the specified machines.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      If all STAX variables were successfully converted to STAF variables on
+      the specified machines, returns a return code of 0.
+      </p>
+      <p>
+      If one or more errors occurred during conversion, returns a return code
+      of 1 and a result which contains a list of the STAX variables which could
+      not be converted.  The list is actually list of lists, where each sublist
+      contains the name of the STAX variable, the machine, the RC, and the
+      STAFResult.
+      </p>
+      <h4>Example:</h4>
+        <p>
+        Export two STAX variables, and convert them into STAF variables named
+        myProject/testDir and myProject/testProject on machines 'machA' and
+        'machB'.
+        </p>
+        <pre>
+  &lt;call function="'STAXUtilExportSTAFVars'">
+    [
+      {'testDir': 'myProject/testDir', 'testProject': 'myProject/testProject'},
+      ['machA', 'machB' ]
+    ]
+  &lt;/call></pre>
+        If successful, STAXResult=0.
+        <p>
+        If not successful because STAX variable testDir does not exist and
+        machine machineB does not exist, STAXResult would be:
+        </p>
+        <pre>
+  [ 1,
+    [ ['testDir', 'machA', 1, 'KeyError: testDir'],
+      ['testDir', 'machB', 1, 'KeyError: testDir'],
+      ['testDir', 'machB', 16, 'getInAddrByName: 11001'],
+      ['testProject', 'machB', 16, 'getInAddrByName: 11001']
+  ] ]</pre>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="varMap">
+        A map containing STAX variable names to be converted to STAF variables.
+        The key is the name of the STAX variable to convert and its value is
+        the name of the STAF variable to create.
+
+      </function-required-arg>
+
+      <function-required-arg name="machList">
+        List of the machine(s) where the STAF variables are to be created.
+      </function-required-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <script>
+        import types, string
+        machName = ''
+        errorList = []
+
+        # Convert a single machine name to a list format
+        if (type(machList) != types.ListType and
+            type(machList) != types.TupleType):
+          saveMachName = machList
+          machList = []
+          machList.append(saveMachName)
+      </script>
+
+      <iterate var="machName" in="machList" indexvar="machNum">
+
+        <sequence>
+
+          <script>
+            # Create a VAR service request to set all STAF variables
+            # on a machine
+
+            request = 'SET '
+            varSTAXMap = varMap.keys()
+
+            # For each STAX variable name specified, if it exists, assign
+            # its value to the STAF variable name specified for it.  If
+            # it doesn't exist, add an error with RC=1 to the errorList.
+            for varName in varSTAXMap:
+              if locals().has_key(varName):
+                request = '%s VAR %s' % \
+                     (request, STAFUtil.wrapData('%s=%s' % (varMap[varName], locals()[varName])))
+              else:
+                errorList.append(
+                          [varName, machName, 1, 'KeyError: %s' % varName])
+          </script>
+
+          <call function="'STAF'">[machName, 'VAR', request]</call>
+
+          <if expr="STAXResult[0] != 0">
+            <script>
+              # Add variables which could not be resolved to the errorList
+              for varName in varSTAXMap:
+                errorList.append([varName, machName,
+                                  STAXResult[0], STAXResult[1]])
+            </script>
+          </if>
+
+        </sequence>
+
+      </iterate>
+
+      <if expr="len(errorList) == 0">
+        <return>0</return>
+        <else>
+          <return>[1, errorList]</return>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilQueryAllTests" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Query the results for all testcases in the currently running job,
+      accumulating the total number of testcases, passes, and fails
+      recorded so far as well as a map of all the testcases and their
+      passes, fails, elapsed time, and number of starts.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>
+      Returns the following in a list:
+      <ul>
+        <li>Return code (0 if successful; if not successful, set to the
+        return code from the STAX LIST TESTCASES request or 1 if an error
+        occurs parsing the results from the LIST request),
+        </li>
+        <li>Result (blank if the query is successful; otherwise, it
+        contains information about the error),
+        </li>
+        <li>List containing the total number of testcases, the total number
+        of passes, and the total number of fails (an empty list if fails),
+        </li>
+        <li>Testcase results map containing an entry for each testcase (an
+        empty map if fails).  The map's key is testcase name and its value
+        is a list of the number of passes, number of fails, elapsed time,
+        and number of starts.
+        </li>
+      </ul>
+      <p>
+      For example, if the query of testcase results was successful and
+      there were 2 testcases, TestA and TestB, where Test A had 4 passes,
+      1 fail, ran for 5 minutes and 23 seconds, and was started once and
+      Test B had 1 pass, 0 fails, ran for 26 hours 5 minutes and 45 seconds
+      and was started 5 times, and "Log TC Elapsed Time" and "Log TC Num Starts"
+      are enabled for the job, the following would
+      be returned:
+      <pre>  [0, '', [2, 5, 1], {'TestA': [4, 1, '00:05:23', 1], 'TestB': [1, 0, '26:05:45', 5]}]</pre>
+
+      If the LIST TESTCASES request failed, the following could be returned
+      if a Python exception occurred while parsing the result:
+      <pre>[1, 'Error while processing result from STAX LIST TESTCASES JOB 5 ...', [], {}]</pre>
+
+      <h4>Example:</h4>
+      <p>
+      Here's an example that queries the results of all testcases run so
+      far in the current job.  If the query is successful, it checks if
+      there have been any testcase failures logged so far.  If so, it
+      logs a message and sends it to the STAX Monitor.  If the query fails,
+      it logs a failure message and sends it to the STAX Monitor.
+      </p>
+      <pre>
+  &lt;call function="'STAXUtilQueryAllTests'"/>
+
+  &lt;script>[rc, result, totals, testcases] = STAXResult&lt;/script>
+
+  &lt;if expr="rc == 0">
+    &lt;sequence>
+      &lt;script>[totalTests, totalPasses, totalFails] = totals&lt;/script>
+      &lt;if expr="totalFails > 0">
+        &lt;call function="'STAXUtilLogAndMsg'">
+          'Total Testcases: %s, Total Passes: %s, Total Fails: %s\nTestcases: %s' % \
+            (totalTests, totalPasses, totalFails, testcases)
+        &lt;/call>
+      &lt;/if>
+    &lt;/sequence>
+    &lt;else>
+      &lt;call function="'STAXUtilLogAndMsg'">
+        'STAXUtilQueryAllTests failed. RC=%s Result=%s' % (rc, result)
+      &lt;/call>
+    &lt;/else>
+  &lt;/if></pre>
+      ]]>
+    </function-epilog>
+
+    <function-no-args/>
+
+    <sequence>
+
+      <message>'Querying results for all testcases'</message>
+
+      <script>request = 'LIST JOB %s TESTCASES' % (STAXJobID)</script>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>STAXServiceName</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <return>[RC, STAFResult, [], {}]</return>
+      </if>
+
+      <script>result = STAFResult</script>
+
+      <script>
+        import string
+        errorMsg = ''     # If not '', an error occurred getting the result
+        totalTestcases = 0
+        totalPasses = 0
+        totalFails = 0
+        testcaseMap = {}
+
+        # In STAF 3.0 and later, the result from a STAX LIST TESTCASES
+        # request is a marshalled list of maps, where each map contains
+        # information about a testcase in the job.
+
+        try:
+          for testcase in result:
+            tcName = testcase['testcaseName']
+            numPasses = int(testcase['numPasses'])
+            numFails = int(testcase['numFails'])
+            elapsedTime = testcase['elapsedTime']
+            numStarts = int(testcase['numStarts'])
+
+            totalTestcases = totalTestcases + 1
+            totalPasses = totalPasses + numPasses
+            totalFails = totalFails + numFails
+            testcaseMap[tcName] = [numPasses, numFails, elapsedTime, numStarts]
+        except:
+          import sys
+          errorMsg = ('Error while processing result from ' +
+                      'STAX %s request.  ' % (request) +
+                      'Exception: %s  Info: %s' % (sys.exc_type, sys.exc_value))
+      </script>
+
+      <if expr="errorMsg == ''">
+        <return>
+          [0, '', [totalTestcases, totalPasses, totalFails], testcaseMap]
+        </return>
+        <else>
+          <return>[1, errorMsg, [], {}]</return>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="STAXUtilQueryTest" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Query the results for a single testcase in the currently running job.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+
+      <p>
+      Returns the following in a list:
+      <ul>
+        <li>Return code (0 if the query is successful; if not successful,
+        set to the return code from the query request or 1 if an error
+        occurs parsing the results from the query),
+        </li>
+        <li>Result (blank if the query is successful; otherwise, it
+        contains information about the error),
+        </li>
+        <li>List containing the number of passes, the number of fails, the
+        elapsed time, and the number of starts for the testcase (or an
+        empty list if the query fails),
+        </li>
+      </ul>
+      <p>
+      For example, if the query of a testcase is successful and it had 4
+      passes, 1 fail, ran for 1 minute and 23 seconds, and was started 2
+      times, the following would be returned:
+      <pre>  [ 0, '', [4, 1, '00:01:23', 2] ]</pre>
+
+      If the query a testcase failed because the testcase specified does not
+      exist, the following could be returned:
+      <pre>  [ 48, 'Testcase does not exist', [] ]</pre>
+
+      <h4>Examples:</h4>
+      <ol>
+        <li>
+        Here's an example that queries the result of the current testcase.
+        If the query is successful, it logs the pass message and sends it
+        to the STAX Monitor.  If the query fails, it logs the failure
+        message and sends it to the STAX Monitor.
+        <pre>
+  &lt;call function="'STAXUtilQueryTest'"/>
+
+  &lt;script>[rc, result, totals] = STAXResult&lt;/script>
+
+  &lt;call function="'STAXUtilCheckSuccess'">
+    { 'result': rc == 0,
+      'failMsg': 'STAXUtilQueryTest failed.  RC=%s Result=%s' % (rc, result),
+      'passMsg': 'Testcase: %s, Passes: %s, Fails: %s' % \
+                 (STAXCurrentTestcase, totals[0], totals[1]),
+      'sendToMonitor': 1, 'recordStatus': 0 }
+  &lt;/call></pre>
+        </li>
+        <p></p>
+        <li>
+        Here's an example that queries the result of testcase 'FSTests.Test1'.
+        If the query is successful, it checks if there have been any fail
+        results recorded for this testcase.  If so, it logs the current
+        testcase result information and sends it to the STAX Monitor.
+        <pre>
+  &lt;script>testName = 'FSTests.Test1'&lt;/script>
+
+  &lt;call function="'STAXUtilQueryTest'">testNamelt;/call>
+
+  &lt;script>[rc, result, totals] = STAXResult&lt;/script>
+
+  &lt;if expr="rc == 0">
+    &lt;sequence>
+      &lt;script>[passes, fails, elapsedTime, numStarts] = totals&lt;/script>
+      &lt;if expr="fails > 0">
+        &lt;call function="'STAXUtilLogAndMsg'">
+          'Testcase: %s, Passes: %s, Fails: %s, ElapsedTime: %s, NumStarts: %s' % \
+          (testName, passes, fails, elapsedTime, numStarts)
+        &lt;/call>
+      &lt;/if>
+    &lt;/sequence>
+  &lt;/if></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-single-arg>
+      <function-optional-arg name="testname" default="STAXCurrentTestcase">
+        Name of the testcase to get the results for, so far.  The default
+        is the currently running testcase.
+      </function-optional-arg>
+    </function-single-arg>
+
+    <sequence>
+
+      <message>'Querying results for testcase %s' % (testname)</message>
+
+      <script>
+        request = 'QUERY JOB %s TESTCASE %s' % (STAXJobID, testname)
+      </script>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>STAXServiceName</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <return>[RC, STAFResult, []]</return>
+      </if>
+
+      <script>result = STAFResult</script>
+
+      <script>
+        import string
+        errorMsg = ''     # If not '', an error occurred getting the result
+
+        # In STAF 3.0 and later, the result from a STAX QUERY TESTCASE request
+        # is a marshalled map containing information about the testcase.
+
+        try:
+          tcName = result['testcaseName']
+          numPasses = int(result['numPasses'])
+          numFails = int(result['numFails'])
+          elapsedTime = result['elapsedTime']
+          numStarts = int(result['numStarts'])
+        except:
+          import sys
+          errorMsg = ('Error while processing result from ' +
+                      'STAX %s request.  ' % (request) +
+                      'Exception: %s  Info: %s' % (sys.exc_type, sys.exc_value))
+      </script>
+
+      <if expr="errorMsg == ''">
+        <return>[0, '', [numPasses, numFails, elapsedTime, numStarts]]</return>
+        <else>
+          <return>[1, errorMsg, []]</return>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+</stax>

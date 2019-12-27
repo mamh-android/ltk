@@ -1,0 +1,82 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2005                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+namespace_class_targets =\
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/Variable.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/VariableManager.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/XMLManipulator.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/NSException.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/Namespace.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/NamespaceManager.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/StorageManager.class \
+  $(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/NamespaceService.class \
+  $(O)/services/namespace/MANIFEST.MF
+
+namespace_resource_targets =\
+  $(O)/services/namespace/STAF-INF/classes/resources/Namespaces.dtd
+
+namespace_jar_targets =\
+  $(O)/services/namespace/MANIFEST.MF \
+  $(O)/services/namespace/STAF-INF/jars/xercesImpl.jar \
+  $(O)/services/namespace/STAF-INF/jars/xmlParserAPIs.jar
+  
+namespace_targets += $(namespace_class_targets) \
+		$(namespace_resource_targets) \
+                $(namespace_jar_targets)\
+                $(REL)/lib/Namespace.jar
+                
+Targets += $(namespace_targets)
+CleanupTargets += cleanup_namespace
+
+$(namespace_targets): SUBSYS_REL := services/namespace
+SUBSYS_REL := services/namespace
+
+# Include inference rules
+include $(InferenceRules)
+
+ifndef XERCES_ROOT
+  $(error You must set XERCES_ROOT to the full pathname containing xercesImpl.jar and xmlParserAPIS.jar)
+endif
+
+XERCESIMPL_JAR ?= $(XERCES_ROOT)/xercesImpl.jar
+XMLPARSERAPIS_JAR ?= $(XERCES_ROOT)/xmlParserAPIs.jar
+
+$(namespace_targets): $(REL)/lib/JSTAF.jar $(XERCESIMPL_JAR) $(XMLPARSERAPIS_JAR)
+
+NAMESPACE_CLASSPATH = $(OS_O)/services/namespace$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)$(OS_PS)$(XERCESIMPL_JAR)$(OS_PS)$(XMLPARSERAPIS_JAR)
+  
+define NAMESPACE_JAVA_COMPILE_IT
+   @echo "*** Compiling Namespace Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/namespace/STAF-INF/classes -classpath '$(NAMESPACE_CLASSPATH)' $(OS_SRC)/services/namespace/*.java
+endef
+
+$(O)/services/namespace/STAF-INF/classes/com/ibm/staf/service/namespace/%.class: $(SRC)/services/namespace/%.java
+	$(NAMESPACE_JAVA_COMPILE_IT)
+
+# Copy Namespace service objects
+
+$(O)/services/namespace/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(O)/services/namespace/STAF-INF/jars/xercesImpl.jar: $(XERCESIMPL_JAR)
+	$(COPY_FILE)
+
+$(O)/services/namespace/STAF-INF/jars/xmlParserAPIs.jar: $(XMLPARSERAPIS_JAR)
+	$(COPY_FILE)
+        
+$(O)/services/namespace/STAF-INF/classes/resources/%.dtd: $(SRC)/services/namespace/resources/%.dtd
+	$(COPY_FILE)
+
+# Create Namespace.jar
+        
+$(REL)/lib/Namespace.jar: $(namespace_class_targets) $(namespace_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/namespace; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF
+
+cleanup_namespace:
+	-@$(DEL) $(O)/services/namespace/* $(OUT_ERR_TO_DEV_NULL)

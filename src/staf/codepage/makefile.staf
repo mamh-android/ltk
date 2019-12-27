@@ -1,0 +1,70 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+ifeq ($(findstring $(CC_TYPE),MVC-SDK-IA64 MVC8-X64),)
+codepage_targets += $(O)/codepage/ucm2bin$(OS_EE)\
+                    $(REL)/codepage/alias.txt\
+                    codepage_bin_files
+else
+codepage_targets += $(O)/codepage/ucm2bin$(OS_EE)\
+                    $(REL)/codepage/alias.txt
+endif
+Targets += $(codepage_targets)
+CleanupTargets += cleanup_codepage
+
+$(codepage_targets): SUBSYS_REL := codepage
+SUBSYS_REL := codepage
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(codepage_targets): OBJS = $(codepage_objs)
+$(codepage_targets): LIBS = STAF
+
+codepage_objs :=\
+  ucm2bin
+
+codepage_sucms      := $(shell find $(SRC) -name "*.ucm" -print)
+codepage_sbins      := $(codepage_sucms:.ucm=.bin)
+codepage_rbins      := $(foreach sbin,$(codepage_sbins),$(shell \
+                        echo $(sbin) | sed -e 's@$(SRC)@$(REL)@g'))
+codepage_objs       := $(foreach obj,$(codepage_objs),$(O)/codepage/$(obj)$(OS_OE))
+codepage_dependents := $(codepage_objs:$(OS_OE)=.d)
+$(codepage_dependents): SUBSYS_REL := codepage
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(codepage_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+#ifneq ($(CC_TYPE),MVC-SDK-IA64)
+ifeq ($(findstring $(CC_TYPE),MVC-SDK-IA64 MVC8-X64),)
+# Add inference rule
+$(REL)/codepage/%.bin:  $(SRC)/codepage/%.ucm
+	$(OS_LD_PATH_NAME)=$(REL)/lib:$$$(OS_LD_PATH_NAME)\
+        STAFCONVDIR=$(REL)/codepage $(O)/codepage/ucm2bin '$(OS_<)'
+	@$(MOVE) $(SRC)/codepage/$(@F) $(@)
+endif
+
+# CODEPAGE targets
+
+codepage_targets_complete: $(codepage_targets) codepage_bin_files
+
+$(O)/codepage/ucm2bin$(OS_EE): $(codepage_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(LINK_IT)
+
+$(REL)/codepage/alias.txt: $(SUBSYS_REL_SRC)/alias.txt
+	$(COPY_FILE)
+
+codepage_bin_files: $(O)/codepage/ucm2bin$(OS_EE) $(codepage_rbins)
+
+cleanup_codepage:
+	-@$(DEL) $(O)/codepage/* $(OUT_ERR_TO_DEV_NULL)

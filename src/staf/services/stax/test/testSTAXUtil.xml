@@ -1,0 +1,1071 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+  File Name:   testSTAXUtil.xml
+  Description: Tests the functions provided in STAXUtil.xml, the Utility Functions
+               that are provided with STAX.
+
+               Set variable OpSys to 'Windows' or 'Unix'.
+               Change any of the initial values for the variables as needed.
+
+               There should be 29 passes and 0 fails recorded.
+  -->
+
+<stax>
+
+  <defaultcall function="Main"/>
+  
+  <function name="Main">
+  
+    <sequence>
+ 
+      <script>OpSys = 'Windows'  # OpSys = 'Unix' </script>
+
+      <if expr="OpSys == 'Windows'">
+        <script>
+          # Make sure the importDir is where you put STAXUtil.xml --> 
+          importDir = 'C:/dev/sf/src/staf/services/stax/libraries'
+ 
+          # Set this to a directory that contains some .jar files and .xml files
+          # on the local machine
+          copyFromDir = 'C:/dev/src/stax'
+ 
+          # Set this to a directory that contains some .txt files on the local machine
+          copyFromDir2 = 'C:/dev/src/stax/copyfiles'
+
+          # Set this to a directory that this test will copy files to on myMachine
+          copyToDir = 'C:/temp/testSTAXUtil'
+
+          # Set this to a machine that is running STAF
+          myMachine = 'lucas' 
+
+          # Set this to some shell command that produces output
+          shellCmd = 'java -version'
+
+          # Set this to a shell command that produces little or no output
+          shellCmd2 = 'java -version'
+
+          # Set this to some non-shell command
+          nonShellCmd = 'ps'
+
+          # Set this to the fully-qualified name of a file that stdout can be written to
+          # on the local machine.
+          stdoutfile = 'C:/temp/TestSTAFProcessUsing1.out'
+        </script>
+
+      <else>  <!-- Unix systems -->
+        <script>
+          # Make sure the importDir is where you put STAXUtil.xml --> 
+          importDir = '/test/STAXUtil'
+ 
+          # Set this to a directory that contains some .jar files and .xml files
+          # on the local machine
+          copyFromDir = '/test'
+ 
+          # Set this to a directory that contains some .txt files on the local machine
+          copyFromDir2 = '/test'
+
+          # Set this to a directory that this test will copy files to on myMachine
+          copyToDir = '/test/testSTAXUtil'
+
+          # Set this to a machine that is running STAF
+          myMachine = 'ev3a' 
+
+          # Set this to some shell command that produces output
+          shellCmd = 'java -version'
+
+          # Set this to a shell command that produces little or no output
+          shellCmd2 = 'java -version'
+
+          # Set this to some non-shell command
+          nonShellCmd = 'ps'
+
+          # Set this to the fully-qualified name of a file that stdout can be written to
+          # on the local machine.
+          stdoutfile = '/test/TestSTAFProcessUsing1.out'
+        </script>
+      </else>
+      </if>
+
+      <script>
+        import time
+      </script>
+       
+      <import machine="'local'" file="'%s/STAXUtil.xml' % importDir"/>
+
+      <call function="'TestSTAF'"/>
+
+      <call function="'TestSTAFProcess'"/>
+
+      <call function="'TestSTAXUtilQueryTests'"/>
+
+      <call function="'TestSTAFProcessUsing'"/>
+
+      <call function="'TestSTAXUtilListDirectory'"/>
+
+      <call function="'TestSTAXUtilCopyFiles'"/>
+
+      <call function="'TestSTAXUtilExportSTAFVars'"/>
+
+      <call function="'TestSTAXUtilImportSTAFVars'"/>
+
+      <call function="'TestSTAXUtilWaitForSTAF'"/>
+
+      <call function="'TestSTAXUtilQueryTests'"/>
+
+    </sequence>
+
+  </function>
+
+
+<function name="TestSTAXUtilListDirectory">
+
+  <testcase name="'TestSTAXUtilListDirectory'">
+
+    <sequence>
+
+      <!-- Test 1:  List the contents of a directory on the local system -->
+          
+      <!-- Set your variables to be passed to the CopyFiles function -->
+      <script>
+        machine = 'local'                   # from Machine
+        directory = copyFromDir             # from Directory
+      </script>
+      
+      <message>'List directory %s on machine %s' % (copyFromDir, machine)</message>
+
+      <call function="'STAXUtilListDirectory'">
+        { 'machine': machine, 'directory': directory }
+      </call>
+
+      <script>
+        [rc, result] = STAXResult
+        msg = 'List directory: rc=%s, result=%s' % (rc, result)
+      </script>
+ 
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+  </testcase>
+</function>
+
+
+<function name="TestSTAXUtilCopyFiles">
+
+  <testcase name="'TestSTAXUtilCopyFiles'">
+
+    <sequence>
+
+      <!-- Test 0:  Copy some files with extension txt from the local system -->
+          
+      <!-- Set your variables to be passed to the CopyFiles function -->
+      <script>
+        machine = 'local'                   # from Machine
+        directory = copyFromDir2            # from Directory
+        extension = 'txt'                   # Extension of files to copy
+        toDirectory = copyToDir             # to Directory  
+        toMachine = myMachine               # to Machine              
+      </script>
+
+      <script>
+        starttime = time.time() # record starting time
+      </script>
+      
+      <message>'Copying files with extension txt and name file1* from %s on %s to %s on %s' % \
+              (copyFromDir, machine, copyToDir, toMachine)</message>
+<!--
+      <call function="'STAXUtilCopyFiles'">
+        { 'machine': machine, 'directory': directory, 'name': 'file1*', 'ext': extension,
+          'toMachine': toMachine, 'toDirectory': toDirectory, 'caseSensitive': 1 }
+      </call> -->
+      <call function="'STAXUtilCopyFiles'">
+        { 'machine': machine, 'directory': directory, 'regularExpression': '[dF].*|.out',
+          'toMachine': toMachine, 'toDirectory': toDirectory, 'caseSensitive': 1 }
+      </call>
+
+
+      <script>
+        # Difference between current time and starttime yields time elapsed --> 
+        elapsed = time.time() - starttime
+        [copyRC, numCopied, errorList] = STAXResult
+        msg = 'Ran STAXUtilCopyFiles for extension %s in %d seconds' % \
+             (extension, elapsed)
+      </script>
+
+      <call function="'STAXUtilLogAndMsg'">msg</call>
+
+      <script>
+        passMsg = 'Copy files worked with RC=%s. %s files copied. errorList=%s.' % \
+                  (copyRC, numCopied, errorList)
+        failMsg = 'Copy files failed with RC=%s. %s files copied. errorList=%s' % \
+                  (copyRC, numCopied, errorList)
+      </script>
+ 
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': copyRC == 0, 'failMsg': failMsg, 'passMsg': passMsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 1:  Copy some files with extension jar from the local system -->
+          
+      <!-- Set your variables to be passed to the CopyFiles function -->
+      <script>
+        machine = 'local'                   # from Machine
+        directory = copyFromDir             # from Directory
+        extension = 'jar'                   # Extension of files to copy
+        toDirectory = copyToDir             # to Directory  
+        toMachine = myMachine               # to Machine              
+      </script>
+
+      <script>
+        starttime = time.time() # record starting time
+      </script>
+      <!--      
+      <message>'Copying *.%s files from %s on %s to %s on %s' % \
+              (extension, copyFromDir, machine, copyToDir, toMachine)</message>
+      
+      <call function="'STAXUtilCopyFiles'">
+        { 'machine': machine, 'directory': directory, 'ext': extension,
+          'toMachine': toMachine, 'toDirectory': toDirectory }
+      </call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed
+        elapsed = time.time() - starttime
+        [copyRC, numCopied, errorList] = STAXResult
+        msg = 'Ran STAXUtilCopyFiles for extension %s in %d seconds' % \
+             (extension, elapsed)
+      </script>
+
+      <call function="'STAXUtilLogAndMsg'">msg</call>
+      
+      <script>
+        passMsg = 'Copy files worked with RC=%s. %s files copied. errorList=%s.' % \
+                  (copyRC, numCopied, errorList)
+        failMsg = 'Copy files failed with RC=%s. %s files copied. errorList=%s' % \
+                  (copyRC, numCopied, errorList)
+      </script>
+ 
+      <call function="'STAXUtilCheckSuccess'">
+         { 'result': copyRC == 0, 'failMsg': failMsg, 'passMsg': passMsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+      -->    
+      <!-- Test 2:  Copy some files with extension noExist from the local system -->
+
+      <!-- Set your variables to be passed to the CopyFiles function -->
+      <script>
+        machine = 'local'                 # from Machine
+        directory = copyFromDir           # from Directory
+        extension = 'noExist'             # Extension of files to copy
+        toDirectory = copyToDir           # to Directory  
+        toMachine = myMachine             # to Machine              
+      </script>
+      
+      <script>
+        starttime = time.time() # record starting time
+      </script>
+      <!--             
+      <message>'Copying *.%s files from %s on %s to %s on %s' % (extension, copyFromDir, machine, copyToDir, toMachine)</message>
+                          
+      <call function="'STAXUtilCopyFiles'">
+        { 'machine': machine, 'directory': directory, 'ext': extension,
+          'toDirectory': toDirectory, 'toMachine': toMachine }
+      </call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed 
+        elapsed = time.time() - starttime
+        [copyRC, numCopied, errorList] = STAXResult
+        msg = 'Ran STAXUtilCopyFiles for extension %s in %d seconds' % \
+              (extension, elapsed)
+      </script>
+
+      <call function="'STAXUtilLogAndMsg'">msg</call>
+
+      <script>
+        passMsg = 'Copy files worked with RC=%s. %s files copied. errorList=%s.' % \
+                  (copyRC, numCopied, errorList)
+        failMsg = 'Copy files failed with RC=%s. %s files copied. errorList=%s' % \
+                  (copyRC, numCopied, errorList)
+      </script>
+ 
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': copyRC == 0, 'failMsg': failMsg, 'passMsg': passMsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+      -->
+      <!-- Test 2:  Copy some files with extension xml from the local system -->
+
+      <!-- Set your variables to be passed to the CopyFiles function -->
+      <script>
+        machine = 'local'                 # from Machine
+        directory = copyFromDir           # from Directory
+        extension = 'xml'                 # Extension of files to copy
+        toDirectory = copyToDir           # to Directory  
+        toMachine = myMachine             # to Machine              
+      </script>
+      
+      <script>
+        starttime = time.time() # record starting time
+      </script>
+      <!--      
+      <message>'Copying *.%s files from %s on %s to %s on %s' % (extension, copyFromDir, machine, copyToDir, toMachine)</message>
+                          
+      <call function="'STAXUtilCopyFiles'">
+        { 'machine': machine, 'directory': directory, 'ext': extension,
+          'toDirectory': toDirectory, 'toMachine': toMachine }
+      </call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed 
+        elapsed = time.time() - starttime
+        [copyRC, numCopied, errorList] = STAXResult
+        msg = 'Ran STAXUtilCopyFiles for extension %s in %d seconds' % \
+              (extension, elapsed)
+      </script>
+
+      <call function="'STAXUtilLogAndMsg'">msg</call>
+
+      <script>
+        passMsg = 'Copy files worked with RC=%s. %s files copied. errorList=%s.' % \
+                  (copyRC, numCopied, errorList)
+        failMsg = 'Copy files failed with RC=%s. %s files copied. errorList=%s' % \
+                  (copyRC, numCopied, errorList)
+      </script>
+ 
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': copyRC == 0, 'failMsg': failMsg, 'passMsg': passMsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+      -->  
+    </sequence>  
+
+  </testcase>
+  
+</function>
+  
+<function name="TestSTAXUtilWaitForSTAF">
+
+  <testcase name="'TestSTAXUtilWaitForSTAF'">
+
+    <sequence>  
+        
+      <!-- Test 1a:  Check if a single system is up.  Don't pass a max wait time -->
+
+      <script>starttime = time.time() # record starting time</script>
+                          
+      <call function="'STAXUtilWaitForSTAF'">'local'</call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed --> 
+        elapsed = time.time() - starttime
+        [rc, result] = STAXResult 
+        msg = 'STAXUtilWaitForSTAF1a RC=%s. Result=%s  Waited %d seconds' % \
+              (rc, result, elapsed) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg, 'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 1c:  Check if single system (that doesn't exist) is up, passing
+                     a max wait time of 12 seconds -->
+
+      <script>starttime = time.time() # record starting time</script>
+                          
+      <call function="'STAXUtilWaitForSTAF'">'noexist', 17</call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed --> 
+        elapsed = time.time() - starttime
+        [rc, result] = STAXResult 
+        msg = 'STAXUtilWaitForSTAF1c RC=%s. Result=%s  Waited %d seconds' % \
+              (rc, result, elapsed) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 1, 'failMsg': msg, 'passMsg': msg, 'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 1d:  Check if single system (that doesn't exist) is up, passing
+                     an invalid max wait time -->
+
+      <script>starttime = time.time() # record starting time</script>
+                          
+      <call function="'STAXUtilWaitForSTAF'">'noexist', '12s'</call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed --> 
+        elapsed = time.time() - starttime
+        [rc, result] = STAXResult 
+        msg = 'STAXUtilWaitForSTAF1d RC=%s. Result=%s  Waited %d seconds' % \
+              (rc, result, elapsed) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == -1, 'failMsg': msg, 'passMsg': msg, 'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 2:  Check if local system and myMachine are up, 
+                    passing in a max wait time of 10 seconds. -->
+
+      <script>starttime = time.time() # record starting time</script>
+                          
+      <call function="'STAXUtilWaitForSTAF'">
+        [['local', myMachine], 10]
+      </call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed --> 
+        elapsed = time.time() - starttime
+        [rc, result] = STAXResult 
+        msg = 'STAXUtilWaitForSTAF2 RC=%s. Result=%s  Waited %d seconds' % \
+              (rc, result, elapsed) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg, 'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 3:  Check if local system, myMachine, and two non-existing systems are up, 
+                    passing in a max wait time of 30 seconds. -->
+
+      <script>starttime = time.time() # record starting time</script>
+                          
+      <call function="'STAXUtilWaitForSTAF'">
+        [['local', myMachine, 'noExistSystem1', 'noExistSystem2'], 30]
+      </call>
+
+      <script>
+        # Difference between current time and starttime yields time elapsed --> 
+        elapsed = time.time() - starttime
+        [rc, result] = STAXResult 
+        msg = 'STAXUtilWaitForSTAF3 RC=%s. Result=%s  Waited %d seconds' % \
+              (rc, result, elapsed) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 1, 'failMsg': msg, 'passMsg': msg, 'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+
+  </testcase>
+
+</function>
+
+  
+<function name="TestSTAF">
+
+  <testcase name="'TestSTAF'">
+
+    <sequence>  
+        
+      <!-- Test 1:  Check if myMachine can be pinged -->
+      <call function="'STAF'">[myMachine, 'PING', 'PING']</call>
+
+      <script>
+        [rc, result] = STAXResult
+        msg = 'TestSTAF: STAF %s PING PING, RC=%s. STAFResult=%s' % (myMachine, rc, result) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 2:  Check what version of STAF is running on the local system -->
+                          
+      <call function="'STAF'">['local', 'MISC', 'VERSION']</call>
+
+      <script>
+        [rc, result] = STAXResult
+        msg = 'TestSTAF: STAF local MISC VERSION, RC=%s. STAFResult=%s' % (rc, result) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 3:  Submit a STAF command to a non-existing system. -->
+                          
+      <call function="'STAF'">['noExist', 'PING', 'PING']</call>
+
+      <script>
+        [rc, result] = STAXResult
+        msg = 'TestSTAF: STAF noExist PING PING, RC=%s. STAFResult=%s' % (rc, result) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 16, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+
+  </testcase>
+
+</function>
+
+  
+<function name="TestSTAFProcess">
+
+  <testcase name="'TestSTAFProcess'">
+
+    <sequence>  
+        
+      <!-- Test 1:  Check if a process can be run on the local system -->
+      
+      <script> 
+        machine = 'local'
+        command = shellCmd2
+      </script>
+
+      <call function="'STAFProcess'">[machine, command]</call>
+
+      <script>
+        [rc, result] = STAXResult
+        msg = 'TestSTAFProcess: machine=%s, command=%s, RC=%s. STAFResult=%s' % \
+              (machine, command, rc, result) 
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+
+  </testcase>
+
+</function>
+
+  
+<function name="TestSTAFProcessUsing">
+
+  <testcase name="'TestSTAFProcessUsing'">
+
+    <sequence>  
+        
+      <!-- Test 1:  Check if a process can be run on the local system and 
+                    return the results -->
+      
+      <script> 
+        machine = 'local'
+        command = shellCmd
+      </script>
+
+      <call function="'STAFProcessUsing'">
+        {'location': machine, 'command': command, 'commandmode': 'shell',
+         'stdout': stdoutfile, 'stderr': 'stdout', 'returnstdout': 1}
+      </call>
+
+      <script>
+        rc = STAXResult[0]
+        msg = 'TestSTAFProcessUsing: machine=%s, command=%s, RC=%s. STAFResult=%s\nSTAXResult=%s' % \
+              (machine, command, rc, STAXResult[1], STAXResult[2])
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+        
+      <!-- Test 2:  Check if a process can be run on the local system and 
+                    use the processActionFunction parameter -->
+
+      <call function="'STAFProcessUsing'">
+        {'location': machine, 'command': command, 'commandmode': 'shell',
+         'stdout': stdoutfile, 'stderr': 'stdout', 'returnstdout': 1,
+         'processActionFunction': 'TestProcessAction'
+        }
+      </call>
+
+      <script>
+        rc = STAXResult[0]
+        msg = 'TestSTAFProcessUsing2: machine=%s, command=%s, RC=%s. STAFResult=%s\nSTAXResult=%s' % \
+              (machine, command, rc, STAXResult[1], STAXResult[2])
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+        
+      <!-- Test 3:  Check if a process can be run on the local system and 
+                    use the processActionFunction and processActionParms
+                    parameters -->
+
+      <script>
+        processMap = {'location': machine, 'command': command,
+                      'commandmode': 'shell', 'stdout': stdoutfile,
+                      'stderr': 'stdout', 'returnstdout': 1}
+        if 1:
+          processMap['processActionFunction'] = 'TestProcessAction'
+          processMap['processActionParms'] = 5000
+      </script>                                                         
+      <call function="'STAFProcessUsing'">processMap</call>
+
+      <script>
+        rc = STAXResult[0]
+        msg = 'TestSTAFProcessUsing3: machine=%s, command=%s, RC=%s. STAFResult=%s\nSTAXResult=%s' % \
+              (machine, command, rc, STAXResult[1], STAXResult[2])
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+        
+      <!-- Test 4:  Check if a process can be run on the local system 
+                    in the default (non-shell) mode and specifying a process name -->
+
+      <script>
+        command = nonShellCmd
+        processMap = {'location': machine, 'command': command,
+                      'name': 'MyProcess', 'stdout': stdoutfile,
+                      'stderr': 'stdout', 'returnstdout': 1}  
+      </script>                                                         
+      <call function="'STAFProcessUsing'">processMap</call>
+
+      <script>
+        rc = STAXResult[0]
+        msg = 'TestSTAFProcessUsing4: name=%s, machine=%s, command=%s, RC=%s. STAFResult=%s\nSTAXResult=%s' % \
+              ('MyProcess', machine, command, rc, STAXResult[1], STAXResult[2])
+      </script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0, 'failMsg': msg, 'passMsg': msg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+
+  </testcase>
+
+</function>
+
+<function name="TestProcessAction">
+
+  <function-single-arg>
+    <function-optional-arg name="time" default="10000"></function-optional-arg>
+  </function-single-arg>
+ 
+  <sequence>
+    <call function="'STAXUtilLogAndMsg'">
+      ["Interaction Sequence is running! STAXProcessHandle = %s" % STAXProcessHandle, 'pass']
+    </call>
+    <call function="'STAXUtilLogAndMsg'">'Process-action:  Delay time %s' % time</call>
+    <stafcmd>
+      <location>machine</location>
+      <service>'delay'</service>
+      <request>'delay %s' % time</request>
+    </stafcmd>
+  </sequence>
+</function>
+
+
+<function name="TestSTAXUtilImportSTAFVars">
+
+  <testcase name="'TestSTAXUtilImportVars'">
+
+    <sequence>
+
+      <!-- Test 1:  Convert a single STAF variable for a single system and 
+                    return the results -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        {'STAF/Version': 'myTestVersion'}, [myMachine]
+      </call>
+
+      <script>
+        passmsg = ''
+        errmsg = ''
+      </script>
+
+      <if expr="STAXResult[0] == 0">
+        <script>
+          # Make sure the variables exist
+          if not locals().has_key('myTestVersion'):
+              errmsg = '%s\nVariable myTestVersion does not exist' % errmsg
+          if errmsg == '':
+            passmsg = 'STAXUtilImportSTAFVars Test1a: myTestVersion=%s' % \
+                      (myTestVersion)
+        </script>
+        <else>
+          <script>errmsg = 'STAXUtilImportSTAFVars Test1a failed. STAXResult=%s' % STAXResult</script>
+        </else>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': errmsg == '', 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 1b:  Convert multiple STAF variables for a single system (passed in a list)
+                     and return the results -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        [ {'STAF/Config/STAFRoot': 'mySTAFDir', 'STAF/Version': 'mySTAFVersion'},
+          [myMachine] ]  
+      </call>
+
+      <script>
+        passmsg = ''
+        errmsg = ''
+      </script>
+
+      <if expr="STAXResult[0] == 0">
+        <script>
+          # Make sure the variables exist
+          if not locals().has_key('mySTAFDir'):
+              errmsg = '%s\nVariable mySTAFDir does not exist' % errmsg
+          # Make sure the variables exist
+          if not locals().has_key('mySTAFVersion'):
+              errmsg = '%s\nVariable mySTAFVersion does not exist' % errmsg
+          if errmsg == '':
+            passmsg = 'STAXUtilImportSTAFVars Test1b: mySTAFDir=%s, mySTAFVersion=%s' % \
+                      (mySTAFDir, mySTAFVersion)
+        </script>
+        <else>
+          <script>errmsg = 'STAXUtilImportSTAFVars Test1b failed. STAXResult=%s' % STAXResult</script>
+        </else>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': errmsg == '', 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 2:  Convert STAF variables for a single system (passed in a string) and 
+                    return the results -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        [ {'STAF/Config/OS/Name': 'mySTAFOS', 'STAF/Env/Path': 'mySTAFPath'}, myMachine ]  
+      </call>
+
+      <script>
+        passmsg = '' 
+        errmsg = ''
+      </script>
+
+      <if expr="STAXResult[0] == 0">
+        <script>
+          # Make sure the variables exist
+          if not locals().has_key('mySTAFOS'):
+              errmsg = '%s\nVariable mySTAFOS does not exist' % errmsg
+          # Make sure the variables exist
+          if not locals().has_key('mySTAFPath'):
+              errmsg = '%s\nVariable mySTAFPath does not exist' % errmsg
+          if errmsg == '':
+            passmsg = 'STAXUtilImportSTAFVars Test2: mySTAFOS=%s, mySTAFPath=%s' % \
+                      (mySTAFOS, mySTAFPath)
+        </script>
+        <else>
+          <script>errmsg = 'STAXUtilImportSTAFVars Test2 failed. STAXResult=%s' % STAXResult</script>
+        </else>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': errmsg == '', 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 3:  Convert STAF variables for multiple systems (passed in a list) and 
+                    return the results -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        [ {'STAF/Config/Sep/Path': 'mySTAFSepPath', 'STAF/Config/STAFRoot': 'mySTAFRoot'},
+          ['local', myMachine] ]  
+      </call>
+
+      <script>
+        passmsg = ''
+        errmsg = ''
+      </script>
+
+      <if expr="STAXResult[0] == 0">
+        <script>
+          # Make sure the variables exist
+          if not locals().has_key('mySTAFSepPath'):
+              errmsg = '%s\nVariable mySTAFSepPath does not exist' % errmsg
+          else:
+            if not mySTAFSepPath.has_key('local'):
+              errmsg = "%s\nVariable mySTAFSepPath['local'] does not exist" % errmsg
+            if not mySTAFSepPath.has_key(myMachine):
+              errmsg = "%s\nVariable mySTAFSepPath[%s] does not exist" % (errmsg, myMachine)
+            
+          # Make sure the variables exist
+          if not locals().has_key('mySTAFRoot'):
+              errmsg = '%s\nVariable mySTAFRoot does not exist' % errmsg
+          else:
+            if not mySTAFRoot.has_key('local'):
+              errmsg = "%s\nVariable mySTAFRoot['local'] does not exist" % errmsg
+            if not mySTAFRoot.has_key(myMachine):
+              errmsg = "%s\nVariable mySTAFRoot[%s] does not exist" % (errmsg, myMachine)
+          if errmsg == '':
+            passmsg = "STAXUtilImportSTAFVars Test3: mySTAFSepPath['local']=%s, mySTAFSepPath[%s]=%s, mySTAFRoot['local']=%s, mySTAFRoot[%s]=%s" % \
+                      (mySTAFSepPath['local'], myMachine, mySTAFSepPath[myMachine], mySTAFRoot['local'], myMachine, mySTAFRoot[myMachine])
+        </script>
+        <else>
+          <script>errmsg = 'STAXUtilImportSTAFVars Test3 failed. STAXResult=%s' % STAXResult</script>
+        </else>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': errmsg == '', 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 4:  Verify error information when converting STAF variables for
+                    multiple systems is correct -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        [ {'STAF/NoExist': 'myNoExist', 'STAF/Config/STAFRoot': 'mySTAFRoot'},
+          [myMachine, 'MachNoExist'] ]  
+      </call>
+
+      <script>
+        [rc, result] = STAXResult
+        errmsg = 'STAXUtilImportSTAFVars Test4 should have failed because STAF/NoExist and MachNoExist do not exist. Result=%s' % result
+        passmsg = 'STAXUtilImportSTAFVars Test4 failed (as it should have). Result=%s' % result
+      </script>
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 1, 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+
+  </testcase>
+
+</function>
+
+<function name="TestSTAXUtilExportSTAFVars">
+
+  <testcase name="'TestSTAXUtilExportSTAFVars'">
+
+    <sequence>
+
+      <!-- Test 1:  Convert STAX variables to STAF variables for a single system
+                    (passed in a list) and return the results -->
+
+      <script>
+        testDir = 'C:/myProjects/tests'
+        testProject = 'myTestProject'
+      </script>
+
+      <call function="'STAXUtilExportSTAFVars'">
+        [
+          {'testDir': 'myProject/testDir', 'testProject': 'myProject/testProject'},
+          [myMachine ]
+        ]  
+      </call>
+
+      <script>errmsg = ''</script>
+      <if expr="STAXResult == 0">
+        <sequence>
+          <!-- Make sure the STAF variables exist -->
+          <call function="'STAF'">myMachine, 'VAR', 'RESOLVE STRING {myProject/testDir}'</call>
+          <if expr="STAXResult[0] != 0">
+            <script>errmsg = 'STAXUtilExportSTAFVars Test1 failed. STAXResult=%s' % STAXResult</script>
+            <elseif expr="STAXResult[1] != testDir">
+              <script>errmsg = 'STAXUtilExportSTAFVars Test1 failed. STAXResult[1]=%s' % STAXResult[1]</script>
+            </elseif>
+          </if>
+          <call function="'STAF'">myMachine, 'VAR', 'RESOLVE STRING {myProject/testProject}'</call>
+          <if expr="STAXResult[0] != 0">
+            <script>errmsg = 'STAXUtilExportSTAFVars Test1 failed. STAXResult=%s' % STAXResult</script>
+            <elseif expr="STAXResult[1] != testProject">
+              <script>errmsg = 'STAXUtilExportSTAFVars Test1 failed. STAXResult[1]=%s' % STAXResult[1]</script>
+            </elseif>
+          </if>
+        </sequence>
+      </if>
+
+      <script>
+        passmsg = 'STAXUtilExportSTAFVars Test1: {myProject/testDir}=%s, {myProject/testProject}=%s' % \
+                  (testDir, testProject)
+      </script>
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': errmsg == '', 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 2:  Convert STAX variables for a single system (passed in a string) and 
+                    return the results -->
+      <script>
+        testDirx = 'C:/myProjects/testsx'
+        testProjectx = 'myTestProjectx'
+      </script>
+
+      <call function="'STAXUtilExportSTAFVars'">
+        [
+          {'testDirx': 'myProject/testDirx', 'testProjectx': 'myProject/testProjectx'},
+          myMachine
+        ]  
+      </call>
+
+      <script>errmsg = ''</script>
+      <if expr="STAXResult == 0">
+        <sequence>
+          <!-- Make sure the STAF variables exist -->
+          <call function="'STAF'">myMachine, 'VAR', 'RESOLVE STRING {myProject/testDirx}'</call>
+          <if expr="STAXResult[0] != 0">
+            <script>errmsg = 'STAXUtilExportSTAFVars Test2 failed. STAXResult=%s' % STAXResult</script>
+            <elseif expr="STAXResult[1] != testDirx">
+              <script>errmsg = 'STAXUtilExportSTAFVars Test2 failed. STAXResult[1]=%s' % STAXResult[1]</script>
+            </elseif>
+          </if>
+          <call function="'STAF'">myMachine, 'VAR', 'RESOLVE STRING {myProject/testProjectx}'</call>
+          <if expr="STAXResult[0] != 0">
+            <script>errmsg = 'STAXUtilExportSTAFVars Test2 failed. STAXResult=%s' % STAXResult</script>
+            <elseif expr="STAXResult[1] != testProjectx">
+              <script>errmsg = 'STAXUtilExportSTAFVars Test2 failed. STAXResult[1]=%s' % STAXResult[1]</script>
+            </elseif>
+          </if>
+        </sequence>
+      </if>
+
+      <script>
+        passmsg = 'STAXUtilExportSTAFVars Test2: {myProject/testDirx}=%s, {myProject/testProjectx}=%s' % \
+              (testDirx, testProjectx)
+      </script>
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': errmsg == '', 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+      <!-- Test 3:  Verify error information is correct when converting STAX variables
+                    for multiple systems. -->
+
+      <script>myVar = 'myValue'</script>
+
+      <call function="'STAXUtilExportSTAFVars'">
+        [
+          {'nonExistingVar': 'STAF/NoExist/Var', 'myVar': 'myProjects/myVar'},
+          [myMachine, 'MachNoExist']
+        ]  
+      </call>
+
+      <script>
+        [rc, result] = STAXResult
+        errmsg  = 'STAXUtilExportSTAFVars Test3 should have failed because nonExistingVar and MachNoExist do not exist. Result=%s' % result
+        passmsg = 'STAXUtilExportSTAFVars Test3 failed (as it should have). Result=%s' % result
+      </script>
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 1, 'failMsg': errmsg, 'passMsg': passmsg,
+          'sendToMonitor': 1, 'recordStatus': 1 }
+      </call>
+
+    </sequence>
+
+  </testcase>
+
+</function>
+
+
+<function name="TestSTAXUtilQueryTests">
+
+  <testcase name="'TestSTAXUtilQueryTests'">
+
+    <sequence>
+
+      <!-- Use function STAXUtilQueryAllTests to check all the testcase results
+           recorded so far in the job -->
+
+      <call function="'STAXUtilQueryAllTests'"/>
+      <script>[rc, result, totals, testcases] = STAXResult</script>
+
+      <if expr="rc == 0">
+        <sequence>
+          <script>[totalTests, totalPasses, totalFails] = totals</script>
+          <call function="'STAXUtilLogAndMsg'">
+            'Total Testcases: %s, Total Passes: %s, Total Fails: %s\nTestcases: %s' % \
+            (totalTests, totalPasses, totalFails, testcases)
+          </call>
+          <tcstatus result="'pass'"/>
+        </sequence>
+        <else>
+          <sequence>
+            <call function="'STAXUtilLogAndMsg'">
+              'STAXUtilQueryAllTests failed. RC=%s Result=%s' % (rc, result)
+            </call>
+            <tcstatus result="'fail'"/>
+          </sequence>
+        </else>
+      </if>
+
+      <!-- 
+        Instead of doing a <log> and <message>, you may want to check if
+        totalNumFails is > 0 and do something, like terminate the job.
+        -->
+
+      <!-- Query the testcase results of the current testcase in the job -->
+
+      <call function="'STAXUtilQueryTest'"/>
+      <script>[rc, result, totals] = STAXResult</script>
+
+      <if expr="rc == 0">
+        <sequence>
+          <message>'totals=%s' % (totals)</message>
+          <script>[passes, fails] = totals[0:2]</script>
+          <call function="'STAXUtilLogAndMsg'">
+            'Testcase: %s, Passes: %s, Fails: %s' % (STAXCurrentTestcase, passes, fails)
+          </call>
+          <tcstatus result="'pass'"/>
+        </sequence>
+        <else>
+          <sequence>
+            <call function="'STAXUtilLogAndMsg'">
+              'STAXUtilQueryTest2 failed. RC=%s Result=%s' % (rc, result)
+            </call>
+            <tcstatus result="'fail'"/>
+          </sequence>
+        </else>
+      </if>
+
+      <!-- Query the testcase results for test 'NoExistTestcase' in the job -->
+
+      <script>testName = 'NoExistTestcase'</script>
+      <call function="'STAXUtilQueryTest'">testName</call>
+      <script>[rc, result, totals] = STAXResult</script>
+
+      <if expr="rc == 0">
+        <sequence>
+          <script>[passes, fails] = totals</script>
+          <call function="'STAXUtilLogAndMsg'">
+            'Testcase: %s, Passes: %s, Fails: %s' % (testName, passes, fails)
+          </call>
+          <tcstatus result="'fail'"/>
+        </sequence>
+        <else>
+          <sequence>
+            <call function="'STAXUtilLogAndMsg'">
+              'STAXUtilQueryTest2 failed (as it should have). RC=%s Result=%s' % (rc, result)
+            </call>
+            <tcstatus result="'pass'"/>
+          </sequence>
+        </else>
+      </if>
+  
+    </sequence>
+
+  </testcase>
+
+</function>
+
+</stax>
+
+
+
+
+
+
+

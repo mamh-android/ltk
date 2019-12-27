@@ -1,0 +1,176 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stafproc_targets += $(REL)/bin/STAFProc$(OS_EE)\
+                    $(REL)/bin/STAF.cfg \
+                    $(REL)/LICENSE.htm \
+                    $(REL)/NOTICES.htm \
+                    $(REL)/bin/STAFProc.ico
+
+Targets += $(stafproc_targets)
+
+ifdef STAF_USE_SSL
+    ifndef OPENSSL_ROOT
+        $(error You must set OPENSSL_ROOT to the full pathname where you installed OpenSSL)
+    endif
+
+    ifeq ($(OS_NAME),win32)
+        OPENSSL_LIBDIRS ?= $(OPENSSL_ROOT:/=)/bin
+        SSL_LIB1 = ssleay32
+        SSL_LIB2 = libeay32
+        LIB_SSL_V = $(subst Name,$(SSL_LIB1),$(DLL))
+        LIB_CRYPTO_V = $(subst Name,$(SSL_LIB2),$(DLL))
+    else
+        OPENSSL_LIBDIRS ?= $(OPENSSL_ROOT:/=)/lib
+        SSL_LIB1 = ssl
+        SSL_LIB2 = crypto
+        
+        # Determine the version used in the OpenSSL library names
+        ifeq ($(OS_NAME),macosx)
+            LIB_SSL_PART1 = $(OPENSSL_LIBDIRS)/lib$(SSL_LIB1).
+            LIB_SSL_PART2 = $(subst $(LIB_SSL_PART1),,$(shell ls $(LIB_SSL_PART1)*.dylib))
+            OPENSSL_VERSION ?= $(subst .dylib,,$(LIB_SSL_PART2))
+            LIB_SSL_V = $(subst Name,$(SSL_LIB1).$(OPENSSL_VERSION),$(DLL))
+            LIB_CRYPTO_V = $(subst Name,$(SSL_LIB2).$(OPENSSL_VERSION),$(DLL))
+        else
+            LIB_SSL_PART1 = $(OPENSSL_LIBDIRS)/$(subst Name,$(SSL_LIB1),$(DLL)).
+            OPENSSL_VERSION ?= $(subst $(LIB_SSL_PART1),,$(shell ls $(LIB_SSL_PART1)*))
+            LIB_SSL_V = $(subst Name,$(SSL_LIB1),$(DLL)).$(OPENSSL_VERSION)
+            LIB_CRYPTO_V = $(subst Name,$(SSL_LIB2),$(DLL)).$(OPENSSL_VERSION)
+        endif
+    endif
+
+    # Verify that the two OpenSSL libraries required exist
+    ifneq ($(OPENSSL_LIBDIRS)/$(LIB_SSL_V), $(shell find $(OPENSSL_LIBDIRS)/$(LIB_SSL_V) -print))
+        $(info find $(OPENSSL_LIBDIRS)/$(LIB_SSL_V) -print)
+        $(error Could not find file $(LIB_SSL_V) in directory $(OPENSSL_LIBDIRS).\
+          Check your settings for OPENSSL_ROOT, OPENSSL_VERSION, and STAF_USE_SSL.\
+          You may also have to set OPENSSL_LIBDIRS to the directory containing file $(LIB_SSL_V).)  
+    endif
+    ifneq ($(OPENSSL_LIBDIRS)/$(LIB_CRYPTO_V), $(shell find $(OPENSSL_LIBDIRS)/$(LIB_CRYPTO_V) -print))
+        $(info find $(OPENSSL_LIBDIRS)/$(LIB_CRYPTO_V) -print)
+        $(error Could not find file $(LIB_CRYPTO_V) in directory $(OPENSSL_LIBDIRS).\
+          Check your settings for OPENSSL_ROOT, OPENSSL_VERSION, and STAF_USE_SSL.\
+          You may also have to set OPENSSL_LIBDIRS to the directory containing file $(LIB_CRYPTO_V).)
+    endif
+    
+    ifneq ($(filter aix aix64,$(OS_NAME)),)
+        # On aix and aix64, don't include the version number in the OpenSSL library names shipped with STAF
+        LIB_SSL = $(subst Name,$(SSL_LIB1),$(DLL))
+        LIB_CRYPTO = $(subst Name,$(SSL_LIB2),$(DLL))
+    else
+        LIB_SSL = $(LIB_SSL_V)
+        LIB_CRYPTO = $(LIB_CRYPTO_V)
+    endif
+
+    Targets += $(REL)/lib/$(LIB_SSL) \
+               $(REL)/lib/$(LIB_CRYPTO)
+               
+    OPENSSL_INCLUDEDIRS ?= $(OPENSSL_ROOT:/=)/include
+    
+    CC_CFLAGS += -DSTAF_USE_SSL 
+endif           
+
+CleanupTargets += cleanup_stafproc
+
+$(stafproc_targets): SUBSYS_REL := stafproc
+SUBSYS_REL := stafproc
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafproc_targets): OBJS = $(stafproc_objs)
+$(stafproc_targets): LIBS = STAF $(if $(STAF_USE_SSL),$(SSL_LIB1) $(SSL_LIB2))
+
+stafproc_objs :=\
+  STAFProc\
+  STAFProcUtil\
+  STAFProcOSUtil\
+  STAFHandleManager\
+  STAFRequestManager\
+  STAFFSCopyManager\
+  STAFVariablePool\
+  STAFTrustManager\
+  STAFDiagManager\
+  STAFConnectionManager\
+  STAFServiceManager\
+  STAFNotificationList\
+  STAFService\
+  STAFSimpleServices\
+  STAFDelegatedService\
+  STAFProcessService\
+  STAFFSService\
+  STAFHandleService\
+  STAFLifeCycleService\
+  STAFVariableService\
+  STAFServiceService\
+  STAFQueueService\
+  STAFShutdownService\
+  STAFMiscService\
+  STAFTraceService\
+  STAFDiagService\
+  STAFSemService\
+  STAFTrustService\
+  STAFExternalService\
+  STAFHelpService\
+  STAFConfigService\
+  STAFConfig
+
+stafproc_objs        := $(foreach obj,$(stafproc_objs),$(O)/stafproc/$(obj)$(OS_OE))
+stafproc_dependents  := $(stafproc_objs:$(OS_OE)=.d)
+$(stafproc_dependents): SUBSYS_REL := stafproc
+
+ifdef STAF_USE_SSL
+    LIBDIRS += $(OPENSSL_ROOT)/lib
+    CC_INCLUDEDIRS += $(OPENSSL_INCLUDEDIRS)
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafproc_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFProc targets
+
+$(REL)/bin/STAFProc$(OS_EE): $(stafproc_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(LINK_IT)
+
+ifdef STAF_USE_SSL
+    $(REL)/bin/STAF.cfg: $(SRC)/stafproc/STAF.cfg $(MAKEFILE_NAME)
+	$(COPY_FILE)
+else
+    $(REL)/bin/STAF.cfg: $(SRC)/stafproc/STAFNonsecure.cfg $(MAKEFILE_NAME)
+	$(COPY_FILE)
+endif        
+
+$(REL)/lib/$(LIB_SSL): $(OPENSSL_LIBDIRS)/$(LIB_SSL_V)
+	$(COPY_FILE)
+
+$(REL)/lib/$(LIB_CRYPTO): $(OPENSSL_LIBDIRS)/$(LIB_CRYPTO_V)
+	$(COPY_FILE)
+
+$(REL)/LICENSE.htm: $(SRC)/LICENSE.htm $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/NOTICES.htm: $(SRC)/NOTICES.htm $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/bin/STAFProc.ico: $(SRC)/stafproc/STAFProc.ico $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafproc:
+	-@$(DEL) $(O)/stafproc/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAFProc$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/LICENSE.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/NOTICES.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAF.cfg $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_SSL) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_CRYPTO) $(OUT_ERR_TO_DEV_NULL)

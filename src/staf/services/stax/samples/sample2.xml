@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+
+  Runs some Processes in parallel, as well as in parallel with some
+  STAF Commands run in sequence
+
+-->
+
+<stax>
+
+  <!-- Beginning of job -->
+
+  <script>
+    # TestMachines should be set to a list of machines to test
+
+    TestMachines = ['local']
+
+    # Duration should be set to the total elapsed time you want the test to run
+
+    duration = '30m'
+
+    # STAXJarFile should be set to the fully-qualified name of the STAX.jar file
+
+    STAXServicesDir = '{STAF/Config/STAFRoot}/services'
+    STAXJarFile = '%s/stax/STAX.jar' % STAXServicesDir
+
+    largeTestFile = 'C:/temp/STAF314-setup-win32.exe'
+
+  </script>
+
+  <defaultcall function="DoAll"/>
+
+  <!-- Import necessary utilities -->
+
+  <script>
+    import re
+    import string
+
+    from com.ibm.staf import STAFUtil
+    from com.ibm.staf import STAFResult as STAFRetCode
+  </script>
+
+  <!-- Default variables -->
+
+  <script>
+
+    # Whether we should debug things
+    debug = 0
+
+    # TestScopes should be set to "None" if All tests should be run, otherwise
+    # it should be set to a list of test scopes
+
+    TestScopes = None
+
+    # Set these to some default values, just in case
+
+    STAFResult = ''
+    RC = 0
+
+  </script>
+
+  <!-- Start function definitions -->
+
+  <!-- ================================================================= -->
+  <!-- check-stafcmd - This function determines whether an arbitrary     -->
+  <!--                 staf command worked.  If not, it generates some   -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-stafcmd">
+    <if expr="RC != 0">
+      <sequence>
+        <message>
+          'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+        </message>
+        <log level="'error'">
+          'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+        </log>
+        <terminate/>
+      </sequence>
+    </if>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- InitTests - This function initializes all the test information    -->
+  <!-- ================================================================= -->
+
+  <function name="InitTests">
+    <script>
+
+        processTests = [
+
+        #
+        # Start out with some basic tests
+        #
+        # process name, command, parms, time duration
+
+        [ 'Solitaire', 'sol', '', '2s' ],
+        [ 'Notepad', 'notepad', '', '20s' ],
+        [ 'ListDir', 'dir C:/temp', '', '20s'],
+        [ 'TestProcess', 'java', 'com.ibm.staf.service.stax.TestProcess 10 15 100', '30s']
+
+        ]
+
+      allTests = [
+
+        #
+        # Start out with some basic tests
+        #
+        [ 'STD:Misc', 'PING', 'PING', [ 0 ], 'PONG' ],
+        [ 'STD:Misc', 'ping', 'ping', [ 0 ], 'PONG' ],
+        [ 'STD:Misc', 'PING', 'PONG', [ 7 ], None ],
+        # [ 'STD:Misc', 'PONG', 'PING', [ 2 ], None ]
+        [ 'STD:Misc', 'ECHO', 'ECHO Hello World', [ 0 ], 'Hello World' ],
+        [ 'STD:Misc', 'MISC', 'VERSION', [ 0 ], None ],
+        [ 'STD:Misc', 'VAR', 'RESOLVE STRING {STAF/Config/Machine}', [ 0 ], None ],
+        [ 'STD:Misc', 'SERVICE', 'LIST', [ 0 ], None ],
+
+        #
+        # FS tests
+        #
+
+        # Acquire lock and get all tracing to a known good point and verify it
+        [ 'STD:Trace', 'SEM', 'REQUEST MUTEX STAFTest/FS', [ 0 ], r'^$' ],
+        [ 'STD:Trace', 'FS', 'COPY FILE %s TOFILE {STAF/DataDir}/tmp/test.zip' % (largeTestFile), [ 0 ], r'^$' ],
+        [ 'STD:Trace', 'FS', 'QUERY ENTRY {STAF/DataDir}/tmp/test.zip', [ 0 ], None ],
+        [ 'STD:Trace', 'FS', 'COPY FILE %s TOFILE {STAF/DataDir}/tmp/test.zip' % (largeTestFile), [ 0 ], None ],
+        [ 'STD:Trace', 'FS', 'DELETE ENTRY {STAF/DataDir}/tmp/test.zip CONFIRM', [ 0 ], None ],
+        [ 'STD:Trust', 'SEM', 'RELEASE MUTEX STAFTest/FS', [ 0 ], r'^$' ],
+
+        #
+        # Trace tests
+        #
+
+        # Acquire lock and get all tracing to a known good point and verify it
+        [ 'STD:Trace', 'SEM', 'REQUEST MUTEX STAFTest/Tracing', [ 0 ], r'^$' ],
+        [ 'STD:Trace', 'TRACE', 'DISABLE ALL SERVICES', [ 0 ], r'^$' ],
+        [ 'STD:Trace', 'TRACE', 'DISABLE ALL TRACEPOINTS', [ 0 ], r'^$' ],
+        [ 'STD:Trace', 'TRACE', 'LIST SETTINGS', [ 0 ], None ],
+        [ 'STD:Trace', 'SEM', 'RELEASE MUTEX STAFTest/Tracing', [ 0 ], r'^$' ],
+
+        #
+        #Trust tests
+        #
+
+        [ 'STD:Trust', 'SEM', 'REQUEST MUTEX STAFTest/Trust', [ 0 ], r'^$' ],
+        [ 'STD:Trust', 'TRUST', 'SET DEFAULT LEVEL 5', [ 0 ], r'^$' ],
+        [ 'STD:Trust', 'TRUST', 'LIST', [ 0 ], None ],
+        [ 'STD:Trust', 'TRUST', 'SET MACHINE STAFTestMachine LEVEL 2', [ 0 ], r'^$' ],
+        # XXX: STAF is lower-casing the machine name.  Should it?
+        [ 'STD:Trust', 'TRUST', 'LIST', [ 0 ], None ],
+        [ 'STD:Trust', 'TRUST', 'DELETE MACHINE STAFTestDoesNotExist', [ 23 ],
+          r'^$' ],
+        [ 'STD:Trust', 'TRUST', 'SET MACHINE STAFTestMachine LEVEL 99', [ 24 ],
+          r'^$' ],
+        [ 'STD:Trust', 'TRUST', 'GET MACHINE STAFTestMachine', [ 0 ],
+          r'^2$' ],
+        # I'd like to be able to verify that it isn't in the list, but I'm not
+        # sure how to create the regex
+        [ 'STD:Trust', 'TRUST', 'DELETE MACHINE STAFTestMachine', [ 0 ],
+          r'^$' ],
+        [ 'STD:Trust', 'SEM', 'RELEASE MUTEX STAFTest/Trust', [ 0 ], r'^$' ]
+
+      ]
+    </script>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- GatherInfo - This function retrieves information about the        -->
+  <!--              system we are testing.                               -->
+  <!-- ================================================================= -->
+
+  <function name="GatherInfo">
+    <sequence>
+
+      <message>'Gathering information about machine %s' % TestMach</message>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/STAFRoot}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/STAFRoot}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>TestMachSTAFRoot = STAFResult</script>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name}'</script>
+
+      <call function="'check-stafcmd'"/>
+
+      <script>TestMachOSType = STAFResult</script>
+
+    </sequence>
+  </function>
+
+  <function name="InitTestMachine">
+    <sequence>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'sem'</service>
+        <request>'DELETE MUTEX STAFTest/Trace'</request>
+      </stafcmd>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'sem'</service>
+        <request>'DELETE MUTEX STAFTest/Trust'</request>
+      </stafcmd>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'sem'</service>
+        <request>'DELETE MUTEX STAFTest/FS'</request>
+      </stafcmd>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- run-standard-test - This function executes a standard STAF test   -->
+  <!-- ================================================================= -->
+
+  <function name="run-standard-test">
+    <sequence>
+
+      <message>
+        'Testing machine: %s service: %s request: %s' % (
+          TestMach, thisTest[1], thisTest[2])
+      </message>
+
+      <stafcmd name="'STAF %s %s %s' % (TestMach, thisTest[1], thisTest[2])">
+        <location>TestMach</location>
+        <service>thisTest[1]</service>
+        <request>thisTest[2]</request>
+      </stafcmd>
+
+      <if expr="RC not in thisTest[3]">
+        <tcstatus result="'fail'">
+          'Service: %s, Request: %s -- RC (%d) not in %s' % (
+            thisTest[1], thisTest[2], RC, thisTest[3])
+        </tcstatus>
+      <elseif expr="thisTest[4] and not re.match(thisTest[4], STAFResult)">
+        <tcstatus result="'fail'">
+          'Service: %s, Request: %s -- Grep error\nmatching:\n%s\nwith:\n%s' % (
+            thisTest[1], thisTest[2], thisTest[4], STAFResult)
+        </tcstatus>
+      </elseif>
+      <else>
+        <tcstatus result="'pass'"/>
+      </else>
+      </if>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- run-tests - This function runs the testcases on a given system    -->
+  <!-- ================================================================= -->
+
+  <function name="RunTests">
+    <sequence>
+
+      <testcase name="'STAF Command Tests'">
+      <block name="'STAF Command Tests'">
+
+      <iterate var="thisTest" in="allTests">
+        <sequence>
+
+          <script>
+            TestType = thisTest[0]
+            TestScope = None
+
+            if string.find(thisTest[0], ':') >= 0:
+              [ TestType, TestScope ] = string.split(thisTest[0], ':')
+          </script>
+
+          <if expr="TestType == 'STD'">
+            <if expr="not TestScopes or TestScope in TestScopes">
+              <call function="'run-standard-test'"/>
+            <else>
+              <continue/>
+            </else>
+            </if>
+          <else>
+            <message>'Unknown test type: %s' % thisTest[0]</message>
+          </else>
+          </if>
+
+        </sequence>
+      </iterate>
+
+      </block>
+      </testcase>
+    </sequence>
+  </function>
+
+
+  <!-- ================================================================= -->
+  <!-- run-tests - This function runs the testcases on a given system    -->
+  <!-- ================================================================= -->
+
+  <function name="RunProcessTests">
+
+    <sequence>
+
+      <testcase name="'Process Tests'">
+      <block name="'Process Tests'">
+
+        <paralleliterate var="thisTest" in="processTests">
+
+          <block name="thisTest[0]">
+
+            <sequence>
+
+              <message>
+                'Testing machine: %s command: %s parms: %s' % (TestMach, thisTest[1], thisTest[2])
+              </message>
+
+              <script>
+                processName = thisTest[0]
+                command = thisTest[1]
+                parms = thisTest[2]
+                duration = thisTest[3]
+              </script>
+
+              <timer duration="duration">
+                <process name="processName">
+                  <location>TestMach</location>
+                  <command>command</command>
+                  <parms>parms</parms>
+                  <env if="parms == 'com.ibm.staf.service.stax.TestProcess 5 7 0'">
+                    'CLASSPATH=%s{STAF/Config/Sep/Path}{STAF/Env/ClassPath}' % STAXJarFile
+                  </env>
+                  <focus if="command.startswith('notepad')" mode="'Minimized'"/>
+                </process>
+              </timer>
+
+              <tcstatus result="'pass'"/>
+
+            </sequence>
+
+          </block>
+
+        </paralleliterate>
+
+      </block>
+      </testcase>
+    </sequence>
+
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- DoAll - This function is the main function called and drives the  -->
+  <!--         overall build process.                                    -->
+  <!-- ================================================================= -->
+
+  <function name="DoAll">
+
+    <sequence>
+      <script>
+        import time
+        starttime = time.time(); # record starting time
+      </script>
+
+      <message>
+        'duration=%s, TestMachines=%s' % (duration, TestMachines)
+      </message>
+
+
+      <!-- Resolve the STAXJarFile which may contain STAF variables -->
+      <stafcmd>
+        <location>'local'</location>
+        <service>'var'</service>
+        <request>'resolve string %s' % STAXJarFile</request>
+      </stafcmd>
+
+      <if expr="RC == 0">
+        <sequence>
+          <script>STAXJarFile = STAFResult</script>
+          <message>'STAXJarFile=%s' % (STAXJarFile)</message>
+        </sequence>
+        <else>
+          <sequence>
+            <message>
+              'Error resolving STAXJarFile: RC=%s, STAFResult=%s, \
+               STAXJarFile=%s' % (RC, STAFResult, STAXJarFile)
+            </message>
+            <message>'Terminating job'</message>
+            <terminate block="'main'"/>
+          </sequence>
+        </else>
+      </if>
+
+      <timer duration="duration">
+
+          <loop var="loopNum">
+
+            <paralleliterate var="TestMach" in="TestMachines">
+
+              <block name="TestMach">
+
+                <sequence>
+
+                  <call function="'GatherInfo'"/>
+
+                  <testcase name="TestMachOSType + '.' + TestMach">
+
+                    <sequence>
+
+                      <call function="'InitTests'"/>
+                      <call function="'InitTestMachine'"/>
+
+
+                      <parallel>
+                        <call function="'RunTests'"/>
+                        <call function="'RunProcessTests'"/>
+                      </parallel>
+
+                      <message>
+                        'STAF Testing Completed on machine %s' % TestMach
+                      </message>
+
+                    </sequence>
+                  </testcase>
+
+                </sequence>
+
+              </block>
+
+            </paralleliterate>
+
+          </loop>
+
+      </timer>
+
+      <script>
+        stoptime = time.time()             # record ending time
+        elapsedSecs = stoptime - starttime # difference yields time elapsed in seconds
+      </script>
+
+      <if expr="RC == 1">
+        <message>'Test complete - ran for %d seconds' % elapsedSecs</message>
+        <else>
+          <message>'Timer only ran for %d seconds. RC=%d' % (elapsedSecs, RC)</message>
+        </else>
+      </if>
+
+    </sequence>
+
+ </function>
+
+</stax>

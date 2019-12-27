@@ -1,0 +1,418 @@
+Feature ID  : 2881935
+Title       : Don't resolve variables in PROCESS START COMMAND, PARMS, etc
+
+Description
+-----------
+
+Provide the ability to not assume when resolving variables in a string
+that a unescaped left curly brace, "{", always indicates a reference to
+a variable.  Instead of returning RC 13 if the value contained between
+a { and } is not an existing STAF variable name, provide the ability
+to simply leave the text as is, including the { and }.  Same goes for
+RC 15 when a string containas a { without a matching }.  Instead of
+returning RC 15, provide the ability to simply leave the text as is,
+including the {.
+
+Also, use this new "IgnoreErrors" capability when resolving variables
+in a options specified on a PROCESS START request as this will allow
+option strings that contain a left curly brace, "{", to not have to be
+escaped using a caret, "^".
+
+
+Problem(s) Solved
+-----------------
+
+Specifying a { in an option value that doesn't indicate a STAF variable
+can be quite common, especially in the COMMAND or PARMS option value on
+a PROCESS START request.  Many people first using STAF don't know that
+a "{" indicates a reference to a STAF variable, so they certainly don't
+know that they must escape any "{" that does not denote a variable
+reference with a "^".
+
+Here's an example of a PROCESS START request whose PARMS option value
+contain a { that does not indicate a STAF variable, so you get an RC 13
+(Variable Does Not Exist):
+
+STAF local PROCESS START COMMAND "/bin/grep"
+           PARMS "Node Count = /tests/cli.out | awk '{print $8}'"
+           RETURNSTDOUT STDERRTOSTDOUT WAIT
+Error submitting request, RC: 13
+
+Frequently, STAF users post a question on a Help forum asking why they
+are getting a RC 13 (Variable Does not Exist) or a RC 15 (Invalid
+Resolve String) on a PROCESS START request.  This problem would no
+longer exist if the PROCESS service resolved STAF variables in option
+values ignoring these errors and not treat every "{" as denoting a
+variable reference.
+
+Also, if you specify a caret, ^, via the STAF command line executable
+on Windows, it strips off the ^ so you need to use ^^ to escape it.
+This is another case where it would be better if you didn't have to use
+a caret in the first place to escape a { that doesn't denote a variable
+reference. 
+
+Also, when submitting a PROCESS START request from a program or STAX
+job, you currently have to check if any of the option values contain
+a "{" that doesn't denote a variable reference and replace any "{" with
+"^{".  You would no longer have to do this with this feature.
+
+
+Related Features/Patches
+------------------------
+
+None
+
+
+External Changes
+----------------
+
+a) VAR RESOLVE Request Syntax:
+
+Add a new optional option IGNOREERRORS to the VAR RESOLVE request to
+indicate that STAF should not assume that every "{" in the string being
+resolved denotes a reference to a STAF variable.  When using this option,
+you will not get any RC 13 (Variable Does Not Exist) or RC 15 (Invalid
+Resolve String) errors.  If a "{" does not denote a reference to a STAF
+variable then the it will be left "as is" instead of returning RC 13.
+If a "{" has no matching closing "}", then it will be left "as is"
+instead of returning RC 15.
+
+Examples:
+
+Here is how variable resolution currently works without the
+IGNOREERRORS option on a VAR RESOLVE request assuming only the following
+STAF variables exist in the system variable pool:
+
+h=Hi
+Hi=HI
+^Hi=Hello
+
+C:\>STAF local VAR RESOLVE STRING {h} STRING {Hi} STRING "{^Hi}" STRING "^{{h}"
+STRING "^{{h}}" STRING "{{h}}" STRING "^^{{h}}" STRING "^{^{h}}" STRING "{^{h}}"
+ STRING "{Mismatch" STRING "{NoExist}" STRING "{{h} there}" STRING "{{^Hi} there"
+Response
+--------
+RC Result
+-- ----------------------------------------------------------------------------
+0  Hi
+0  HI
+0  Hello
+0  {Hi
+0  {Hi}
+0  HI
+0  ^HI
+0  {{h}}
+0  Hello
+15 Variable resolution failed for string: {Mismatch  You are trying to resolve
+   a variable reference that has a non-matching left or right curly brace.
+13 Variable resolution failed for string: {NoExist}  You are trying to resolve
+   a variable that does not exist.
+13 Variable resolution failed for string: {{h} there}  You are trying to resolve
+   a variable that does not exist.
+15 Variable resolution failed for string: {{^Hi} there  You are trying to resolve
+   a variable reference that has a non-matching left or right curly brace.
+
+Here is how variable resolution will work using the IGNOREERRORS option on
+a VAR RESOLVE request:
+
+C:\>STAF local VAR RESOLVE STRING {h} STRING {Hi} STRING "{^Hi}" STRING "^{{h}"
+STRING "^{{h}}" STRING "{{h}}" STRING "^^{{h}}" STRING "^{^{h}}" STRING "{^{h}}"
+ STRING "{Mismatch" STRING "{NoExist}" STRING "{{h} there}" STRING "{{^Hi} there
+" IGNOREERRORS
+Response
+--------
+RC Result
+-- ------------
+0  Hi
+0  HI
+0  Hello
+0  {Hi
+0  {Hi}
+0  HI
+0  ^HI
+0  {{h}}
+0  Hello
+0  {Mismatch
+0  {NoExist}
+0  {Hi there}
+0  {Hello there
+
+b) PROCESS START Request:
+
+Document that when resolving strings for options in a PROCESS START request,
+STAF will specify the "IgnoreErrors" option so that you don't have to escape
+"{" with a "^" if it doesn't denote a variable reference.
+
+Internal Changes
+----------------
+
+1) Changes to stafproc/STAFVariablePool.h:
+
+Add a new optional Boolean argument, ignoreVarResolveErrors, to the resolve()
+method with a default value of false.
+
+    static STAFRC_t resolve(const STAFString &aString,
+                            const STAFVariablePool *poolList[],
+                            unsigned int numPools,
+                            STAFString &result,
+                            bool ignoreVarResolveErrors = false);
+
+2) Changes to stafproc/STAFVariablePool.cpp:
+
+Modify the resolve() method as follows:
+
+  a) If there is no matching closing brace, "}", check if the
+     ignoreErrors flag is true, and if so, assume that the "{"
+     does not denote a STAF variable and continue on instead of
+     returning RC 15 (Invalid Resolve String)
+
+137a139,144
+>                 if (ignoreErrors)
+>                 {
+>                     // Assume that this is not a STAF variable
+>                     break;
+>                 }
+>
+
+  b) If variable resolution fails for a value contained within
+     a "{" and "}", check if the ignoreErrors flag is true,
+     and if so, assume that the "{" does not denote a STAF
+     variable and continue on instead of returning RC 13
+     (Variable Does Not Exist).
+
+185,189c192,209
+<                 result = STAFString(
+<                     "Variable resolution failed for string: " + aString +
+<                     "\n\nYou are trying to resolve a variable that does "
+<                     "not exist.");
+<                 return rc;
+---
+>                 if (ignoreErrors)
+>                 {
+>                     // Assume that this is not a STAF variable
+>                     i++;
+>                 }
+>                 else
+>                 {
+>                     result = STAFString(
+>                         "Variable resolution failed for string: " + aString +
+>                         "\n\nYou are trying to resolve a variable that does "
+>                         "not exist.");
+>                     return rc;
+>                 }
+>             }
+>             else
+>             {
+>                 result = result.subString(0, openIndex) + varValue +
+>                          result.subString(closeIndex + 1);
+191,193d210
+<
+<             result = result.subString(0, openIndex) + varValue +
+<                      result.subString(closeIndex + 1);
+
+3) Changes to stafproc/STAFProcUtil.h:
+
+a) Add  boolean argument named ignoreVarResolveErrors to the resolveString()
+and resolveStringIfExists() methods with a default value of false.
+
+extern STAFRC_t resolveStringIfExists(STAFCommandParseResultPtr &parsedResult,
+                                      const STAFString &optionName,
+                                      const STAFVariablePool *varPoolList[],
+                                      unsigned int varPoolListSize,
+                                      STAFString &result,
+                                      STAFString &errorBuffer,
+                                      bool ignoreVarResolveErrors = false);
+
+extern STAFRC_t resolveString(const STAFString &unresolved,
+                              const STAFVariablePool *varPoolList[],
+                              unsigned int varPoolListSize,
+                              STAFString &result, STAFString &errorBuffer,
+                              bool ignoreVarResolveErrors = false);
+ 
+b) Define new macro, RESOLVE_STRING_OPTION_IGNORE_ERRORS, that is just
+like macro RESOLVE_STRING_OPTION, except it calls the resolveString()
+method passing true for the ignoreVarResolveErrors argument:
+
+#define RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(option, result)\
+resolveStringIfExists(parsedResult, option, varPoolList, varPoolListSize,\
+                      result, errorBuffer, true);
+
+b) Define new macro, RESOLVE_INDEXED_STRING_OPTION_IGNORE_ERRORS, that
+is just like macro RESOLVE_INDEXED_STRING_OPTION, except it calls the
+resolveString() method passing true for the ignoreVarResolveErrors
+argument:
+
+#define RESOLVE_INDEXED_STRING_OPTION_IGNORE_ERRORS(option, index, result)\
+resolveString(parsedResult->optionValue(option, index), varPoolList,\
+              varPoolListSize, result, errorBuffer, true);
+
+4) Changes to stafproc/STAFProcUtil.cpp:
+
+a) Add the new boolean argument named ignoreVarResolveErrors to the
+resolveStringIfExists() method:
+
+STAFRC_t resolveStringIfExists(
+    STAFCommandParseResultPtr &parseResult, const STAFString &optionName,
+    const STAFVariablePool *varPoolList[], unsigned int varPoolListSize,
+    STAFString &result, STAFString &errorBuffer, bool ignoreVarResolveErrors)
+{
+    if (parseResult->optionTimes(optionName) == 0)
+        return kSTAFOk;
+
+    return resolveString(parseResult->optionValue(optionName), varPoolList,
+                         varPoolListSize, result, errorBuffer,
+                         ignoreVarResolveErrors);
+}
+
+b) Change the resolveString() method by adding the new boolean argument
+named ignoreVarResolveErrors and call the STAFVariablePool::resolve()
+method passing the new ignoreVarResolveErrors argument:
+
+STAFRC_t resolveString(const STAFString &unresolved,
+                       const STAFVariablePool *varPoolList[],
+                       unsigned int varPoolListSize, STAFString &result,
+                       STAFString &errorBuffer, bool ignoreVarResolveErrors)
+{
+    STAFRC_t rc = STAFVariablePool::resolve(unresolved, varPoolList,
+                                            varPoolListSize, result,
+                                            ignoreVarResolveErrors);
+
+    if (rc != kSTAFOk)
+    {
+        errorBuffer = result;
+    }
+
+    return rc;
+}
+
+5) Changes to stafproc/STAFProcessService.cpp:
+
+Change the handleStart() method to use the new
+RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS and
+RESOLVE_INDEXED_STRING_OPTION_IGNORE_ERRORS macros instead of the
+RESOLVE_OPTIONAL_STRING_OPTION and RESOLVE_INDEXED_STRING_OPTION macros.
+
+Note that it still uses the RESOLVE_OPTIONAL_UINT_OPTION_RANGE macro to
+resolve and convert the value for the HANDLE and PRIORITY options to an
+unsigned integer and uses the RESOLVE_DEFAULT_DURATION_OPTION macro to
+resolve and convert the value for the WAIT option to a valid duration
+value.  No changes were needed to ignore STAF variables because a valid
+unsigned integer cannot contain a "{" and a valid duration cannot
+contain a "{".
+
+Here are the actual code changes:
+
+1324c1324,1325
+<     STAFRC_t rc = RESOLVE_OPTIONAL_STRING_OPTION("WORKLOAD", process->workload
+);
+---
+>     STAFRC_t rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "WORKLOAD", process->workload);
+1327,1330c1328,1335
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("COMMAND", process->command);
+
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("WORKDIR", process->workdir);
+
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("PARMS", process->parms);
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("TITLE", process->title);
+---
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "COMMAND", process->command);
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "WORKDIR", process->workdir);
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "PARMS", process->parms);
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "TITLE", process->title);
+1335c1340,1341
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("KEY", process->key);
+---
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "KEY", process->key);
+1341,1342c1347,1349
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("NAME", name);
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("MACHINE", machine);
+---
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS("NAME", name);
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "MACHINE", machine);
+1357c1364,1365
+<             rc = RESOLVE_OPTIONAL_STRING_OPTION("STDIN", stdInp);
+---
+>             rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>                 "STDIN", stdInp);
+1366c1374,1375
+<             rc = RESOLVE_OPTIONAL_STRING_OPTION("STDOUT", stdOut);
+---
+>             rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>                 "STDOUT", stdOut);
+1371c1380,1381
+<             rc = RESOLVE_OPTIONAL_STRING_OPTION("STDOUTAPPEND", stdOut);
+---
+>             rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>                 "STDOUTAPPEND", stdOut);
+1380c1390,1391
+<             rc = RESOLVE_OPTIONAL_STRING_OPTION("STDERR", stdErr);
+---
+>             rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>                 "STDERR", stdErr);
+1385c1396,1397
+<             rc = RESOLVE_OPTIONAL_STRING_OPTION("STDERRAPPEND", stdErr);
+---
+>             rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>                 "STDERRAPPEND", stdErr);
+1433,1434c1445,1446
+<     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION("STATICHANDLENAME",
+<                                                  staticHandleName);
+---
+>     if (!rc) rc = RESOLVE_OPTIONAL_STRING_OPTION_IGNORE_ERRORS(
+>         "STATICHANDLENAME", staticHandleName);
+1560c1572
+<             rc = RESOLVE_INDEXED_STRING_OPTION(
+---
+>             rc = RESOLVE_INDEXED_STRING_OPTION_IGNORE_ERRORS(
+1734c1746
+<         rc = RESOLVE_INDEXED_STRING_OPTION("ENV", i, envVar);
+---
+>         rc = RESOLVE_INDEXED_STRING_OPTION_IGNORE_ERRORS("ENV", i, envVar);
+
+Design Considerations
+---------------------
+
+1) Note that ignore variable resolution errors is not as "fast" as
+not resolving variables in a string (e.g. not calling the resolve()
+method).  However, since the majority of strings don't contain a "{"
+that doesn't indicate a STAF variable and since it allows for a
+string to contain multiple "{"s where some reference variables and
+some don't without requiring any extra effort on the part of the
+user (e.g. doesn't require escape them with a caret), I think the
+benefits outweigh the performance hit.
+
+2) Could we change more (all?) services now (instead of just a
+PROCESS START request) to take advantage this new capability to
+ignore errors when resolving variables without impacting backward
+compatibility?
+
+3) And/or, in the next major new STAF version (e.g. 4.0), we could see
+if we want to change the default behavior for the STAFVariablePool::resolve()
+method to set ignoreVarResolveErrors to true instead of false so that
+all services could take advantage of this feature when resolving
+variables in option strings (without any changes in the service itself).
+
+
+Backward Compatibility Issues
+-----------------------------
+
+- You could get a different return code on a PROCESS START request
+which might effect someone's code.  Instead of getting a RC 13 on
+a PROCESS START request if a "{" was meant to denote a STAF variable
+but the variable doesn't exist (and instead of getting a RC 15 on a
+PROCESS START request if you forgot to provide a closing "}" in an
+option value), no error will be returned and STAF will attempt to
+start the process so you may then end up getting a different error
+(returned by the process itself), or possibly no error, depending
+on the option that contains the variable that wasn't successfully
+resolved and how it effected the running of the process.
+However, I think the benefits outweigh this risk, and we would be
+releasing this under a 3.4 version (instead of a 3.3.6 version),
+and we do allow for some minor differences in a new point release.

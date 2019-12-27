@@ -1,0 +1,2342 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<article class="faq">
+<title>STAF Diagnostics Guide</title>
+<para>
+June 27, 2008
+</para>
+<para>
+This document will describe common techniques to debug problems when running
+the Software Testing Automation Framework (STAF).
+</para>
+<para>
+To find more detailed information on using STAF, go to the main 
+<ulink url="http://staf.sourceforge.net">STAF web page</ulink>
+</para>
+
+<qandaset>
+
+<qandadiv>
+<title>General Debugging Information</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>STAFProc console output</para>
+</question>
+<answer>
+<para>
+When STAFProc starts on a machine, the initial output will contain the
+following information:
+</para>
+<programlisting><![CDATA[
+Machine          : staf3a.austin.ibm.com
+Machine nickname : staf3a.austin.ibm.com
+Startup time     : 20080626-08:35:57
+
+STAFProc version 3.3.0 initialized
+]]></programlisting>
+<para>
+The first line, <command>Machine</command>, indicates the TCP/IP hostname
+(or the IP address if a hostname is not available) used to identify the machine.
+</para>
+<para>
+The second line, <command>Machine nickname</command>, indicates the machine
+nickname that is used for the machine.  This nickname is not used for any
+network communication; it is used only by STAF services (such as the Log and
+Monitor services) which store data based on the machine from which it came.
+</para>
+<para>
+The third line, <command>Startup time</command>, indicates the time and date
+that STAFProc was started on the machine.
+</para>
+<para>
+The fourth line indicates the version of STAF.  You can find specific
+features and bug fixes that were added to a version of STAF by examining the
+<ulink url="http://staf.sourceforge.net/history.php">STAF History file</ulink>.
+</para>
+<para>
+Note that if errors are encountered while STAFProc is starting, details about
+the errors will be displayed in the STAFProc console output.  If you are
+starting STAFProc on Windows via the Start Menu, and errors occur during
+startup, the command prompt containing the console output will close and you
+will not be able to see the error information.  If this occurs, open your own
+command prompt and run "STAFProc" to start STAF and see the errors in the
+console output.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Redirecting STAFProc console output</para>
+</question>
+<answer>
+<para>
+If errors occur with the STAFProc daemon, the error messages may be displayed
+in its console output.  In order to ensure that this data is accessible, it
+is recommended that you redirect the STAFProc console output to a file, so that
+the information is available if the STAFProc console is closed.
+</para>
+<para>
+To redirect STAFProc's stdout and stderr to a file, you can execute the
+following when starting STAFProc:
+</para>
+<para>On Windows:</para>
+<programlisting><![CDATA[
+STAFProc >> STAFProc.out
+]]></programlisting>
+<para>On Unix:</para>
+<programlisting><![CDATA[
+STAFProc >STAFProc.out 2>&1 &
+]]></programlisting>
+<para>On Unix (on systems where logging out of the terminal would cause
+the STAFProc process to be terminated):
+</para>
+<programlisting><![CDATA[
+nohup STAFProc >STAFProc.out 2>&1 &
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Configuring STAF</para>
+</question>
+<answer>
+<para>
+STAF is configured through a text file called the STAF Configuration File.  This
+file may have any name you choose, but the default is STAF.cfg.  By default,
+this file is located in c:\STAF\bin on Windows, /usr/local/staf/bin on
+UNIX, and /Library/staf/bin on Mac OS X.
+</para>
+<para>
+When you start STAFProc on a system, that system's STAF.cfg file will be read to
+determine how STAF should be configured on the machine.  If you make any changes
+to a machine's STAF.cfg file, you must restart STAFProc on that machine to make
+these changes have effect.
+</para>
+<para>
+Some configuration items, such as Trust levels, can be changed dynamically
+(via an associated STAF service, such as the TRUST service) while STAFProc
+is running.  However, once STAFProc is restarted, these dynamic changes will
+no longer be in effect.  So, usually after making a dynamic change on a machine,
+you will want to also update the machine's STAF.cfg file, so that the change
+will be active the next time STAFProc is restarted.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+
+<qandadiv>
+<title>STAF Installation Verification</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>STAF Install location</para>
+</question>
+<answer>
+<para>
+By default STAF will be installed to C:\STAF (on Windows), /Library/staf on 
+Mac OS X, and /usr/local/staf on all other Unix platforms.  During STAF
+installation, the user can select any directory as the target for the
+installation.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF Install packages</para>
+</question>
+<answer>
+<para>
+STAF provides 2 ways to install STAF:  InstallAnywhere (for Windows and most
+Unix platforms), and a tar.gz STAFInst script (for all Unix platforms).
+</para>
+<para>
+Both installers will install the same files to the target install directory.
+The InstallAnywhere installer will perform additional system updates, such as
+automatically updating system/user environment variables.
+</para>
+<para>
+The STAF InstallAnywhere installers for most platforms are available as an
+executable file (.exe on Windows, .bin on Unix); on Mac OS X the
+InstallAnywhere installer is available as a .zip file.  The "Bundled JVM"
+executable file includes a bundled JVM that will be used during the install
+and uninstall of STAF.  The "NoJVM" executable file will require the system to
+have an existing JVM.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF directories</para>
+</question>
+<answer>
+<para>
+The following directories will be created when STAF is installed:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+bin
+</para>
+<para>
+Contains the binary STAF files and the default STAF configuration file.  On
+Windows, the bin directory will also contain all of the STAF library (dll and
+jar) files.
+</para>
+</listitem>
+<listitem>
+<para>
+codepage
+</para>
+<para>
+Contains the STAF codepage files.
+</para>
+</listitem>
+<listitem>
+<para>
+data
+</para>
+<para>
+The default directory where STAF will write data.
+</para>
+</listitem>
+<listitem>
+<para>
+docs
+</para>
+<para>
+Contains the STAF documentation files.
+</para>
+</listitem>
+<listitem>
+<para>
+include
+</para>
+<para>
+Contains the STAF C++ header files.
+</para>
+</listitem>
+<listitem>
+<para>
+lib
+</para>
+<para>
+On Unix, contains the STAF library (so/sl and jar) files.
+</para>
+</listitem>
+<listitem>
+<para>
+samples
+</para>
+<para>
+Contains the STAF sample files.
+</para>
+</listitem>
+</itemizedlist>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Key STAF files</para>
+</question>
+<answer>
+<para>
+The following are descriptions of some of the key STAF files that are installed
+in the root STAF directory:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+STAFEnv.bat (STAFEnv.sh on Unix)
+</para>
+<para>
+A script file that can be used to set the environment variables required by
+STAF.  Note that the correct way to source this file on Unix is by executing: 
+". ./STAFEnv.sh".
+</para>
+</listitem>
+<listitem>
+<para>
+bin/STAFProc.exe (bin/STAFProc on Unix)
+</para>
+<para>
+This is the STAFProc executable.
+</para>
+</listitem>
+<listitem>
+<para>
+bin/STAF.exe (bin/STAF on Unix)
+</para>
+<para>
+This is the STAF command line utility.  Note that on Unix platforms where
+filenames are case-sensitive, "staf" (lower-case) is created as a soft-link
+to this file.  Note that filenames are not case-sensitive on iSeries and
+Mac OS X.
+</para>
+</listitem>
+<listitem>
+<para>
+bin/FmtLog.exe (bin/FmtLog on Unix)
+</para>
+<para>
+This is the Format Log Utility.  Note that on Unix platforms where
+filenames are case-sensitive, "fmtlog" (lower-case) is created as a soft-link
+to this file.  Note that filenames are not case-sensitive on iSeries and
+Mac OS X.
+</para>
+</listitem>
+<listitem>
+<para>
+bin/STAF.cfg
+</para>
+<para>
+The default STAF configuration file.
+</para>
+</listitem>
+<listitem>
+<para>
+bin/STAF.dll (lib/libSTAF.so on Unix)
+</para>
+<para>
+The main STAF library.  Note that the filename extension for the Unix file
+will vary depending on the operating system (i.e. it will not always be .so).
+</para>
+</listitem>
+<listitem>
+<para>
+bin/STAFTCP.dll (lib/libSTAFTCP.so on Unix)
+</para>
+<para>
+The STAF TCP/IP connection provider library.  Note that the filename extension
+for the Unix file will vary depending on the operating system (i.e. it will not
+always be .so).
+</para>
+</listitem>
+<listitem>
+<para>
+bin/STAFLIPC.dll (lib/libSTAFLIPC.so on Unix)
+</para>
+<para>
+The STAF "local" connection provider library.  Note that the filename extension
+for the Unix file will vary depending on the operating system (i.e. it will not
+always be .so).
+</para>
+</listitem>
+<listitem>
+<para>
+bin/JSTAF.jar (lib/JSTAF.jar on Unix)
+</para>
+<para>
+The jar file containing the STAF Java classes.
+</para>
+</listitem>
+</itemizedlist>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF Environment</para>
+</question>
+<answer>
+<para>
+There are multiple environment settings required for STAF to function
+correctly.  You can find more information about the STAF environment
+variables in the
+<ulink url="http://staf.sourceforge.net/current/STAFUG.htm#HDRENVVARS">
+STAF User's Guide.</ulink>  To view the current environment variables on a
+system, you can run "set" on Windows or "export" on Unix.
+</para>
+<para>
+Note that on Windows the InstallAnywhere installer will update the
+appropriate system/user environment variables.  These can be viewed in
+Control Panel -> System -> Advanced -> Environment Variables.
+</para>
+<para>
+On Unix, the InstallAnywhere installer will update the /etc/profile file with
+the appropriate environment variables.  If you used a tar.gz installer, you
+must set the environment variables for STAF either by running STAFEnv.sh or
+by updating the /etc/profile file.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Determining which version/architecture of STAF is installed</para>
+</question>
+<answer>
+<para>
+After the STAF install is complete, an install.properties file will be created
+in the root STAF install directory.  The file will contain key/value pairs
+that provide information about the version of STAF that has been installed.
+</para>
+<para>
+The install.properties file will contain the following information:
+<itemizedlist>
+<listitem>
+<command>version</command> - the version of STAF that has been
+installed
+</listitem>
+<listitem>
+<command>platform</command> - the STAF platform name
+</listitem>
+<listitem>
+<command>architecture</command> - the architecture of the STAF build (32-bit or
+64-bit)
+</listitem>
+<listitem>
+<command>installer</command> - the type of installer (InstallAnywhere, STAFInst)
+</listitem>
+<listitem>
+<command>file</command> - the file used to install STAF
+</listitem>
+<listitem>
+<command>osname</command> - the operating system name for the STAF build
+(equivalent to the "os.name" Java property)
+</listitem>
+<listitem>
+<command>osversion</command> - the operating system version supported by the
+STAF build ("*" indicates the build is supported on any version of the OS; a
+version number followed by a "+" indicates the build supports that version or
+later)
+</listitem>
+<listitem>
+<command>osarch</command> - the operating system architecture supported by
+the STAF build (equivalent to the "os.arch" Java property)
+</listitem>
+</itemizedlist>
+</para>
+<para>Here is a sample install.properties file from a Windows system
+(using the IA installer):
+</para>
+<programlisting><![CDATA[
+version=3.3.0
+platform=win32
+architecture=32-bit
+installer=IA
+file=STAF330-setup-win32.exe
+osname=Windows
+osversion=*
+osarch=x86
+]]></programlisting>
+<para>Here is a sample install.properties file from a Mac OS X i386 system
+(using the STAFInst installer):
+</para>
+<programlisting><![CDATA[
+version=3.3.0
+platform=macosx-i386
+architecture=32-bit
+installer=STAFInst
+file=STAF330-macosx-i386.tar
+osname=Mac OS X
+osversion=10.4+
+osarch=i386
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>STAF Variables</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>VAR LIST</para>
+</question>
+<answer>
+<para>
+To view all currently set STAF variables, you can run the following command:
+</para>
+<programlisting><![CDATA[
+STAF local VAR LIST
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+STAF/Config/BootDrive           : C:
+STAF/Config/CodePage            : IBM-437
+STAF/Config/ConfigFile          : C:\STAF\bin\STAF.cfg
+STAF/Config/DefaultAuthenticator: none
+STAF/Config/DefaultInterface    : tcp
+STAF/Config/InstanceName        : STAF
+STAF/Config/Machine             : staf3a.austin.ibm.com
+STAF/Config/MachineNickname     : staf3a.austin.ibm.com
+STAF/Config/Mem/Physical/Bytes  : 2135666688
+STAF/Config/Mem/Physical/KB     : 2085612
+STAF/Config/Mem/Physical/MB     : 2036
+STAF/Config/OS/MajorVersion     : 5
+STAF/Config/OS/MinorVersion     : 1
+STAF/Config/OS/Name             : WinXP
+STAF/Config/OS/Revision         : 2600
+STAF/Config/Sep/Command         : &
+STAF/Config/Sep/File            : \
+STAF/Config/Sep/Line            :
+
+STAF/Config/Sep/Path            : ;
+STAF/Config/STAFRoot            : C:\STAF
+STAF/Config/StartupTime         : 20070731-19:22:32
+STAF/DataDir                    : C:\STAF\data\STAF
+STAF/Env/ALLUSERSPROFILE        : C:\Documents and Settings\All Users
+STAF/Env/ANT_HOME               : C:\apache-ant-1.6.5
+STAF/Env/APPDATA                : C:\Documents and Settings\Administrator\Applic
+ation Data
+STAF/Env/CLASSPATH              : C:\STAF\bin\JSTAF.jar;C:\STAF\samples\demo\STA
+FDemo.jar;
+STAF/Env/CLIENTNAME             : Console
+STAF/Env/CommonProgramFiles     : C:\Program Files\Common Files
+STAF/Env/COMPUTERNAME           : STAF3A
+STAF/Env/ComSpec                : C:\WINDOWS\system32\cmd.exe
+STAF/Env/FP_NO_HOST_CHECK       : NO
+STAF/Env/HOMEDRIVE              : C:
+STAF/Env/HOMEPATH               : \Documents and Settings\Administrator
+STAF/Env/LOGONSERVER            : \\STAF3A
+STAF/Env/NUMBER_OF_PROCESSORS   : 2
+STAF/Env/OS                     : Windows_NT
+STAF/Env/Path                   : C:\STAF\bin;C:\ibmjava142\bin;C:\WINDOWS\syste
+m32;C:\WINDOWS;
+STAF/Env/PATHEXT                : .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.W
+SH;.pyo;.pyc;.py;.pyw
+STAF/Env/PROCESSOR_ARCHITECTURE : x86
+STAF/Env/PROCESSOR_IDENTIFIER   : x86 Family 15 Model 4 Stepping 4, GenuineIntel
+STAF/Env/PROCESSOR_LEVEL        : 15
+STAF/Env/PROCESSOR_REVISION     : 0404
+STAF/Env/ProgramFiles           : C:\Program Files
+STAF/Env/SESSIONNAME            : Console
+STAF/Env/STAFCONVDIR            : C:\STAF\codepage
+STAF/Env/SystemDrive            : C:
+STAF/Env/SystemRoot             : C:\WINDOWS
+STAF/Env/TCLLIBPATH             : C:\STAF\bin;C:\STAF\bin
+STAF/Env/TEMP                   : C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp
+STAF/Env/TMP                    : C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp
+STAF/Env/tvdebugflags           : 0x260
+STAF/Env/tvlogsessioncount      : 5000
+STAF/Env/USERDOMAIN             : STAF3A
+STAF/Env/USERNAME               : staf
+STAF/Env/USERPROFILE            : C:\Documents and Settings\Administrator
+STAF/Env/windir                 : C:\WINDOWS
+STAF/Version                    : 3.2.2
+]]></programlisting>
+<para>
+The following sections will describe some STAF variables that can be useful
+when debugging STAF.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/Config/Machine</para>
+</question>
+<answer>
+<para>
+This variable shows the TCP/IP hostname used to identify the machine.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/Config/MachineNickname</para>
+</question>
+<answer>
+<para>
+This variable shows the machine nickname that is used for the machine.  This
+nickname is not used for any network communication; it is used only by STAF
+services which store data based on the machine from which it came.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/Config/ConfigFile</para>
+</question>
+<answer>
+<para>
+This variable shows the STAF configuration file that was used when STAFProc
+was started.  Note that if you have made changes to your STAF configuration
+file, and restarted STAFProc, but the changes made to the STAF configuration
+file have not been used, then verify that this STAF variable is showing the
+expected configuration file.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/Config/InstanceName</para>
+</question>
+<answer>
+<para>
+This variable shows the name of this STAF instance.  STAF Instance Names are
+used when you want to run multiple instances of STAFProc at the same time on
+the same system.
+</para>
+<para>
+This STAF variable is set to the value (when STAFProc is started) of
+environment variable STAF_Instance_Name.  If this environment variable is not
+set when STAFProc is started, the default instance name
+<command>STAF</command> will be used.
+</para>
+<para>
+Note that if the value of STAF variable STAF/Config/InstanceName is set to
+an empty string, that is not the same as having it set to the
+default instance name <command>STAF</command>.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/Config/STAFRoot</para>
+</question>
+<answer>
+<para>
+This variable shows the root STAF directory for the currently running instance
+of STAF.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/DataDir</para>
+</question>
+<answer>
+<para>
+This variable shows directory that STAF and its services use to write data
+(based on the DATADIR operational parameter).
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF/Env/*</para>
+</question>
+<answer>
+<para>
+These environment variables show all of the environment variables that were
+set when STAFProc started.  For example, the value set for environment
+variable <command>CLASSPATH</command> will be use to set the value
+for STAF variable <command>STAF/Env/CLASSPATH</command>.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Service Help and Error Codes</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Obtaining STAF service syntax</para>
+</question>
+<answer>
+<para>
+Every STAF service provides a HELP command which returns the commands that the
+service accepts along with the options that are available for each command.
+</para>
+<para>
+To determine which STAF services are available on the machine, you can run
+the following:
+</para>
+<programlisting><![CDATA[
+STAF <machine> SERVICE LIST
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Name     Library    Executable
+-------- ---------- ------------------------------------
+DELAY    <Internal> <None>
+DIAG     <Internal> <None>
+ECHO     <Internal> <None>
+EMAIL    JSTAF      C:\STAF/services/email/STAFEmail.jar
+EVENT    JSTAF      C:\STAF/services/stax/STAFEvent.jar
+FS       <Internal> <None>
+HANDLE   <Internal> <None>
+HELP     <Internal> <None>
+LOG      STAFLog    <None>
+MISC     <Internal> <None>
+PING     <Internal> <None>
+PROCESS  <Internal> <None>
+QUEUE    <Internal> <None>
+SEM      <Internal> <None>
+SERVICE  <Internal> <None>
+SHUTDOWN <Internal> <None>
+STAX     JSTAF      C:\STAF/services/stax/STAX.jar
+TRACE    <Internal> <None>
+TRUST    <Internal> <None>
+VAR      <Internal> <None>
+]]></programlisting>
+<para>
+You can submit a <command>&lt;service> HELP</command> request to each service to
+obtain its request syntax.  Here is an example of getting the command syntax
+for the TRACE service:
+</para>
+<programlisting><![CDATA[
+STAF <machine> TRACE HELP
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Trace service help
+
+ENABLE ALL  [ TRACEPOINTS | SERVICES ]
+ENABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+ENABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]...
+ENABLE SERVICE <Service> [SERVICE <Service>]...
+
+DISABLE ALL  [ TRACEPOINTS | SERVICES ]
+DISABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+DISABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]...
+DISABLE SERVICE <Service> [SERVICE <Service>]...
+
+SET DESTINATION TO < STDOUT | STDERR | FILE <File name> >
+SET DEFAULTSERVICESTATE < Enabled | Disabled >
+
+LIST [SETTINGS]
+
+PURGE
+
+HELP
+]]></programlisting>
+<para>
+You can find more information about the commands and options, including examples,
+in the User's Guide documentation for the service.  All internal services, and
+the Log, Monitor, Respool, and Zip services, have their commands/options
+documented in the
+<ulink url="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREF">
+STAF User's Guide</ulink>.
+All other external services have their
+commands/options documented in the service User's Guide (for example, the
+STAX User's Guide and the Email User's Guide).  Service User's Guides are
+distributed with each service and are available via the
+<ulink url="http://staf.sourceforge.net/getservices.php">
+Download Services</ulink> page.
+</para>
+<para>
+When examining the syntax for each service, keep the following rules in mind:
+<itemizedlist>
+<listitem>
+<para>
+Unadorned options are required
+</para>
+</listitem>
+<listitem>
+<para>
+Options or values surrounded by angle brackets, e.g. &lt; and >, are required.
+</para>
+</listitem>
+<listitem>
+<para>
+Options or values surrounded by square brackets, e.g. [ and ] , are optional.
+</para>
+</listitem>
+<listitem>
+<para>
+Options in a group are separated by a vertical bar (e.g. |). Only one of the options
+in a group may be specified.
+</para>
+</listitem>
+<listitem>
+<para>
+Options followed by <command>...</command> indicate that the option may
+be specified multiple times.
+</para>
+</listitem>
+</itemizedlist>
+More information on the option syntax is provided in the appropriate user's
+guide.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAF service syntax errors</para>
+</question>
+<answer>
+<para>
+If you submit an invalid request to a STAF service, it will return an RC 7,
+which indicates that the request string was invalid.  The result will contain
+details about why the request string was invalid.  Here is an example of
+an invalid request for the TRACE service:
+</para>
+<programlisting><![CDATA[
+STAF <machine> TRACE SET DESTINATION TO
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Error submitting request, RC: 7
+Additional info
+---------------
+When specifying one of the options TO, you must also specify one of the options
+STDOUT STDERR FILE
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+
+<qandaentry>
+<question>
+<para>STAF error codes</para>
+</question>
+<answer>
+<para>
+You can use the HELP service to obtain help about STAF error codes.  For
+example, to get a brief overview of all STAF error codes, you can run:
+</para>
+<programlisting><![CDATA[
+STAF <machine> HELP LIST ERRORS
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Return Code Description
+----------- ------------------------------
+0           No error
+1           Invalid API
+2           Unknown service
+3           Invalid handle
+4           Handle already exists
+5           Handle does not exist
+6           Unknown error
+7           Invalid request string
+8           Invalid service result
+9           REXX Error
+10          Base operating system error
+11          Process already complete
+12          Process not complete
+13          Variable does not exist
+14          Unresolvable string
+15          Invalid resolve string
+16          No path to endpoint
+17          File open error
+18          File read error
+19          File write error
+20          File delete error
+21          STAF not running
+22          Communication error
+23          Trusteee does not exist
+24          Invalid trust level
+25          Insufficient trust level
+26          Registration error
+27          Service configuration error
+28          Queue full
+29          No queue element
+30          Notifiee does not exist
+31          Invalid API level
+32          Service not unregisterable
+33          Service not available
+34          Semaphore does not exist
+35          Not sempahore owner
+36          Semaphore has pending requests
+37          Timeout
+38          Java error
+39          Converter error
+40          Not used
+41          Invalid object
+42          Invalid parm
+43          Request number not found
+44          Invalid asynchronous option
+45          Request not complete
+46          Process authentication denied
+47          Invalid value
+48          Does not exist
+49          Already exists
+50          Directory Not Empty
+51          Directory Copy Error
+52          Diagnostics Not Enabled
+53          Handle Authentication Denied
+54          Handle Already Authenticated
+55          Invalid STAF Version
+56          Request Cancelled
+4000+       Service specific errors
+]]></programlisting>
+<para>
+The STAF User's Guide has detailed information about each error code.  You can
+also get detailed information for each error code via the HELP service.  For
+example, you can run:
+</para>
+<programlisting><![CDATA[
+STAF <machine> HELP ERROR 25
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Description: Insufficient trust level
+Details    : You have submitted a request for which you do not have the required
+ trust level to perform the request.
+
+Note: Additional information regarding the required trust level may be provided
+in the result passed back from the submit call.
+]]></programlisting>
+<para>
+In addition to the standard STAF error codes, external STAF services can use
+error codes that are specific for the service.  These error codes will always
+be in the range of 4000 and beyond.  The service User's Guide will have more
+information about the service-specific error codes.  You can also use the HELP
+service to get detailed information about these service-specific error codes.
+For example, you can run:
+</para>
+<programlisting><![CDATA[
+STAF <machine> HELP SERVICE LOG ERROR 4004
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Description: Invalid level
+Details    : An invalid level was specified
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>MISC service</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>MISC service</para>
+</question>
+<answer>
+<para>
+The STAF MISC (Miscellaneous) service provides some useful debugging
+information.  You can run the <command>MISC WHOAMI</command>
+request to determine information about who a system thinks you are.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>MISC WHOAMI</para>
+</question>
+<answer>
+<para>
+For example, you can run the following command:
+</para>
+<programlisting><![CDATA[
+STAF <remote-machine> MISC WHOAMI
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Instance Name   : STAF
+Instance UUID   : A5CA1346980800000903D3D661663361
+Request Number  : 106693
+Interface       : tcp
+Logical ID      : staf3a.austin.ibm.com
+Physical ID     : 9.3.211.214
+Endpoint        : tcp://staf3a.austin.ibm.com@6500
+Machine         : staf3a.austin.ibm.com
+Machine Nickname: staf3a.austin.ibm.com
+Local Request   : No
+Handle          : 26
+Handle Name     : STAF/Client
+User            : none://anonymous
+Trust Level     : 5
+]]></programlisting>
+<para>
+The <command>Instance Name</command> value contains the STAF instance
+name that identifies the instance of STAF to which the request is communicating
+(in case multiple instances of STAF are running).
+The default STAF instance name is "STAF".
+</para>
+<para>
+The <command>Logical ID</command> value contains the hostname of your machine.
+</para>
+<para>
+The <command>Physical ID</command> value contains the IP address of your machine.
+</para>
+<para>
+The <command>Trust Level</command> value contains trust level that the
+remote machine has granted your machine.  If you are encountering trust-related
+problems, then check this value and compare it to the trust defintions on the
+remote machine by running
+<command>STAF &lt;remote-machine> TRUST LIST</command>.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>MISC WHOAREYOU</para>
+</question>
+<answer>
+<para>
+The <command>MISC WHOAREYOU</command> request will display information about
+a system, such as the STAF
+instance name, instance UUID, machine name (the value of the STAF/Config/Machine
+system variable for the machine), machine nickname, (the value of the
+STAF/Config/MachineNickname variable for the machine) and if it's the same
+system as the machine who submitted the request.
+</para>
+<para>
+For example, you can run the following command:
+</para>
+<programlisting><![CDATA[
+STAF <machine> MISC WHOAREYOU
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Instance Name   : STAF
+Instance UUID   : 711E9E411B0A00000929359245636173
+Machine         : client2.austin.ibm.com
+Machine Nickname: client2.austin.ibm.com
+Local Request   : Yes
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>MISC LIST INTERFACES</para>
+</question>
+<answer>
+<para>
+The <command>MISC LIST INTERFACES</command> request shows you information
+about the network interfaces that STAF is currently using.
+</para>
+<para>
+For example, you can run the following command:
+</para>
+<programlisting><![CDATA[
+STAF local MISC LIST INTERFACES
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+[
+  {
+    Interface Name: local
+    Library       : STAFLIPC
+    Options       : {
+      IPCMethod: Shared memory
+      IPCName  : STAF
+    }
+  }
+  {
+    Interface Name: tcp
+    Library       : STAFTCP
+    Options       : {
+      ConnectTimeout: 5000
+      Port          : 6500
+      Protocol      : IPv4
+      Secure        : No
+    }
+  }
+]
+]]></programlisting>
+<para>
+Note that normally you would have a "local" interface, and one or more "tcp"
+interfaces (note that the default TCP/IP port is 6500).
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>MISC LIST PROPERTIES</para>
+</question>
+<answer>
+<para>
+The <command>MISC LIST PROPERTIES</command> request shows you the install
+properties for the version of STAF that is currently running.
+</para>
+<para>
+The output of this request will contain the following information:
+<itemizedlist>
+<listitem>
+<command>version</command> - the version of STAF that has been
+installed
+</listitem>
+<listitem>
+<command>platform</command> - the STAF platform name
+</listitem>
+<listitem>
+<command>architecture</command> - the architecture of the STAF build (32-bit or
+64-bit)
+</listitem>
+<listitem>
+<command>installer</command> - the type of installer (InstallAnywhere, STAFInst)
+</listitem>
+<listitem>
+<command>file</command> - the file used to install STAF
+</listitem>
+<listitem>
+<command>osname</command> - the operating system name for the STAF build
+(equivalent to the "os.name" Java property)
+</listitem>
+<listitem>
+<command>osversion</command> - the operating system version supported by the
+STAF build ("*" indicates the build is supported on any version of the OS; a
+version number followed by a "+" indicates the build supports that version or
+later)
+</listitem>
+<listitem>
+<command>osarch</command> - the operating system architecture supported by
+the STAF build (equivalent to the "os.arch" Java property)
+</listitem>
+</itemizedlist>
+</para>
+<para>
+For example, you can run the following command:
+</para>
+<programlisting><![CDATA[
+STAF local MISC LIST PROPERTIES
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+version     : 3.3.0
+platform    : win32
+architecture: 32-bit
+installer   : IA
+file        : STAF330-setup-win32.exe
+osname      : Windows
+osversion   : *
+osarch      : x86
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Debugging STAF communication problems</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Debugging STAF communication problems</para>
+</question>
+<answer>
+<para>
+If you are having problems getting two STAF machines to communicate, you should
+first verify that a non-STAF ping between the two machines is successful.  If it
+is not, then there is a basic TCP/IP communication problem between the machines.
+</para>
+<para>
+If a non-STAF ping between the two machines is successful, then check the
+following:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+Is STAFProc running on each machine?  You can run <command>STAF local PING
+PING</command> on each machine to verify that STAFProc is running.
+</para>
+</listitem>
+<listitem>
+<para>
+Which TCP/IP network interfaces and ports is each machine configured to use?
+You can run <command>STAF local
+MISC LIST INTERFACES</command> to see the TCP/IP network interfaces and
+ports that STAFProc is using.
+</para>
+</listitem>
+<listitem>
+<para>
+Are there any firewalls (on either machine) blocking the TCP/IP communication
+on the ports your machines are using?
+</para>
+</listitem>
+<listitem>
+<para>
+If the network is very slow because machines are located far apart, etc., you
+may need to increase your CONNECTTIMEOUT value for the network interface and/or
+increase your CONNECTATTEMPTS value in your STAF.cfg file.
+</para>
+</listitem>
+</itemizedlist>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Debugging STAF trust problems</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Debugging STAF trust problems</para>
+</question>
+<answer>
+<para>
+If you are having trust related problems when submitting requests to STAF
+services (such as RC 25, which indicates you have submitted a request for
+which you do not have the required trust level to perform the request), you
+can use the TRUST service to verify that the correct trust levels have been
+set.
+</para>
+<para>
+You can run the following command on a machine to see the current trust
+settings on that machine:
+</para>
+<programlisting><![CDATA[
+STAF <machine> TRUST LIST
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Type    Entry                         Trust Level
+------- ----------------------------- -----------
+Default <None>                        1
+Machine *://*.austin.ibm.com          2
+Machine *://9.31.73.14*               3
+Machine *://9.31.73.147               5
+Machine *://client1.austin.ibm.com    5
+Machine *://client3.austin.ibm.com    3
+Machine local://local                 5
+Machine tcp://client2.austin.ibm.com  0
+]]></programlisting>
+<para>
+You can use the GET request to determine the effective trust level of a
+specific machine.  For example:
+</para>
+<programlisting><![CDATA[
+STAF <machine> GET MACHINE client4.austin.ibm.com
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+2
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>STAF Handles</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>HANDLE LIST</para>
+</question>
+<answer>
+<para>
+You can view all of the currently active STAF handles by running the
+following command:
+</para>
+<programlisting><![CDATA[
+STAF local HANDLE LIST HANDLES PENDING STATIC REGISTERED INPROCESS LONG
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+Handle Handle Name                     State      Last Used Date-Time PID
+------ ------------------------------- ---------- ------------------------
+1      STAF_Process                    InProcess  20070712-10:36:42   1636
+2      STAF/Service/STAFServiceLoader1 InProcess  20070709-16:56:22   1636
+3      STAF/Service/STAX               Registered 20070709-16:56:22   2844
+4      STAF/Service/LOG                InProcess  20070709-16:56:22   1636
+5      STAF/SERVICE/Event              Registered 20070709-16:56:22   2844
+32     STAF/Client                     Registered 20070712-23:09:16   2900
+]]></programlisting>
+<para>
+Note that the "PID" value will contain the process id assigned by the operating
+system.  This can be useful when debugging Java services, for example.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>STAF Processes</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>PROCESS LIST</para>
+</question>
+<answer>
+<para>
+You can obtain information about all of the processes started via STAF
+by running the following command:
+</para>
+<programlisting><![CDATA[
+STAF local PROCESS LIST LONG
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<para>
+<programlisting><![CDATA[
+H# Workload Command          PID  Start Date-Time   End Date-Time     RC     
+-- -------- ---------------- ---- ----------------- ----------------- ---------
+17 <None>   notepad.exe      1444 20070625-11:33:14 20070625-11:37:55 0     
+25 <None>   java TestProcess 2836 20070625-11:53:18 20070625-11:53:18 1     
+             5 5 0
+29 My Test  java TestA       3376 20070625-12:01:05 20070625-12:05:23 0     
+43 My Test  java TestB       2776 20070625-12:32:38 <None>            <None>
+47 My Test  C:/tests/MyTest. 2448 20070625-12:32:56 <None>            <None>
+            exe
+56 TC1      C:/tests/tc1.exe 2840 20070625-12:33:24 20070625-12:35:32 3
+]]></programlisting>
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Debugging PROCESS START errors</para>
+</question>
+<answer>
+<para>
+If you are having problems starting processes via STAF, you can try the
+following:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+Try the command without STAF first and verify that it works and returns when
+complete.
+</para>
+</listitem>
+<listitem>
+<para>
+Use the RETURNSTDOUT/RETURNSTDERR options to retrieve any errors that are
+written to stdout/stderr by the process.
+</para>
+</listitem>
+<listitem>
+<para>
+Add the SHELL options to the PROCESS START request.
+</para>
+</listitem>
+</itemizedlist>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>TRACE output</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>TRACE output</para>
+</question>
+<answer>
+<para>
+STAF provides tracing facilities that allow you do dynamically obtain more
+information about what is happening in your STAF environment.  This can be
+done by enabling tracepoints for one or more (or all) currently registered
+STAF services.
+</para>
+<para>
+You can enable tracing during STAF startup by adding TRACE statements to the
+STAF.cfg file, or you can dynamically enable/disable tracing after STAFProc has
+started by sending requests to the TRACE service.  In both cases, the syntax
+to enable/disable tracing is the same.
+</para>
+<para>
+The most common tracepoints that you will enable for debugging are
+SERVICEREQUEST, SERVICERESULT, and SERVICECOMPLETE:
+</para>
+<itemizedlist>
+<listitem>
+<para>ServiceRequest - The trace point which causes a trace message to be
+generated for every incoming service request before it is processed by the
+service.</para>
+</listitem>
+<listitem>
+<para>	ServiceResult - The trace point which causes a trace message to be
+generated for every incoming service request after it is processed by the
+service. Note that the trace message will include the return code and result
+for the service request.</para>
+</listitem>
+<listitem>
+<para>ServiceComplete - The trace point which causes a trace message to be
+generated for every incoming service request after it is processed by the
+service. Note that the trace message will include the return code and result
+length for the service request, but not the result data.</para>
+</listitem>
+</itemizedlist>
+<para>
+By default the trace output will be in the STAFProc console.  However, in most
+cases you will want to redirect the trace output to a file, using the
+<command>TRACE SET DESTINATION TO FILE</command> request.
+</para>
+<para>
+Enabling ServiceRequest/ServiceResult/ServiceComplete will result in trace
+output for all services, which can give you a lot of extra, unnecessary, trace
+information, so typically you would only enable these tracepoints for a few
+services.
+</para>
+<para>
+Here is an example of enabling the ServiceRequest and ServiceComplete
+tracepoints for only the FS and Process services (and redirecting the trace
+output to a file):
+</para>
+<para>
+<programlisting><![CDATA[
+STAF local TRACE ENABLE TRACEPOINTS "ServiceRequest ServiceComplete"
+STAF local TRACE SET DESTINATION TO FILE /usr/local/staf/STAFTrace.out
+STAF local TRACE DISABLE ALL SERVICES
+STAF local TRACE ENABLE SERVICES "FS Process"
+]]></programlisting>
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Debugging Java problems</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Determining Java version</para>
+</question>
+<answer>
+<para>
+When using Java STAF services (which require a JVM on the machine where the
+service will be configured) or Java classes that call into the STAF Java APIs,
+it is often useful to determine the exact version of Java that will be used.
+You can use "java -version" to determine the exact version of Java.
+</para>
+<para>
+By default, STAF will use the first "java" executable that is found in the
+System PATH (unless you specify the full path to the Java executable).  To
+find which version of Java STAF is using by default, you can run the following
+command:
+</para>
+<programlisting><![CDATA[
+STAF local PROCESS START SHELL COMMAND "java -version" RETURNSTDOUT STDERRTOSTDOUT WAIT
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : [
+    {
+      Return Code: 0
+      Data       : java version "1.6.0"
+Java(TM) SE Runtime Environment (build 1.6.0-b105)
+Java HotSpot(TM) Client VM (build 1.6.0-b105, mixed mode)
+
+    }
+  ]
+}
+]]></programlisting>
+<para>
+Note that you can specify to use a different Java version for a Java service
+when registering it by specifying
+<command>OPTION JVM=&lt;location of java executable></command> and
+<command>OPTION JVMName=&lt;JVM name></command>.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Debugging multiple STAF Java services</para>
+</question>
+<answer>
+<para>
+When debugging multiple STAF Java services, it is recommended that you run
+each Java service in its own JVM.  You can specify to run a Java service
+in its own JVM when registering it by specifying
+<command>OPTION JVMName=&lt;JVM name></command>.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Testing STAF Java support</para>
+</question>
+<answer>
+<para>
+The TestJSTAF class allows you to submit a command-line STAF request using
+STAF Java support. This class is useful if you want to verify that STAF
+Java support is working correctly, without requiring a GUI display or any
+modifications to the CLASSPATH.
+</para>
+<para>
+The syntax of this class is:
+</para>
+<programlisting><![CDATA[
+Usage: java com.ibm.staf.TestJSTAF <Endpoint | LOCAL> <Service> <Request>
+]]></programlisting>
+<para>
+Here is an example of using this class:
+</para>
+<programlisting><![CDATA[
+C:\> java com.ibm.staf.TestJSTAF LOCAL MISC VERSION
+TestJSTAF using STAF handle 15
+RC=0
+Result=3.2.1
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>JVM Logs</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>JVM Logs</para>
+</question>
+<answer>
+<para>
+Each Java service that is registered with STAF runs in a JVM (Java Virtual
+Machine). Each JVM created by STAF has a JVM Log file associated with it. Note
+that more than one Java service may use the same JVM (and thus the same JVM Log
+file) depending on the options used when registering the service.
+</para>
+<para>
+A JVM Log file contains JVM start information such as the date/time when the
+JVM was created, the JVM executable, and the J2 options used to start the JVM.
+It also contains any other information logged by the JVM. This includes any
+errors that may have occurred while the JVM was running, and any information
+written to standard output/error by the STAF Java services running in the JVM.
+</para>
+<para>
+STAF stores JVM Log files in the {STAF/DataDir}/lang/java/jvm/&lt;JVMName>
+directory. STAF retains a configurable number of JVM Logs (5 by default) for
+each JVM. The current JVM log file is named JVMLog.1 and older saved JVM log
+files, if any, are named JVMLog.2 to JVMLog.&lt;MAXLOGS>. When a JVM is started,
+if the size of the JVMLog.1 file exceeds the maximum configurable size (1M by
+default), the JVMLog.1 file is copied to JVMLog.2 and so on for any older JVM
+Logs, and a new JVMLog.1 file will be created.
+</para>
+<para>
+This JVM log will contain something similar to:
+</para>
+<programlisting><![CDATA[
+******************************************************************************
+*** 20070718-09:18:01 - Start of Log for JVMName: STAFJVM1
+*** JVM Executable: C:/jdk1.6.0/jre/bin/java
+*** JVM Options   : none
+*** JVM PID       : 4736
+******************************************************************************
+]]></programlisting>
+<para>
+Note that the JVM log includes the System <command>PID</command> for the JVM.
+This can be used to determine system information, such as CPU and memory
+utilization, for the JVM.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Viewing JVM Logs via the STAX Monitor</para>
+</question>
+<answer>
+<para>
+To display the JVM Log for the STAX service or for any Java service on any
+machine, from the main STAX Job Monitor window's Display menu bar, select one
+of the following menu items:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+Display STAX JVM Log - Selecting this option causes the current JVM Log for
+the STAX service to be displayed. Only the entries in the JVM Log from the
+last time the JVM was created are shown (though you can later use the
+"View->Show All" option to change it to display all entries in the JVM Log).
+This option is only enabled if STAF V3.2.1 or later is running on the STAX
+Monitor machine.
+</para>
+</listitem>
+<listitem>
+<para>
+Display Other JVM Log... - Selecting this option allows you to display the
+current JVM Log for any service currently registered on any machine. This
+option is only enabled if STAF V3.2.1 or later is running on the STAX Monitor
+machine.
+</para>
+</listitem>
+</itemizedlist> 
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Viewing JVM Logs via the STAFJVMLogViewer class</para>
+</question>
+<answer>
+<para>
+The STAFJVMLogViewer class provides a Java GUI that can display a JVM
+Log for any STAF Java service that is currently registered.  For more
+information on how to use the STAFJVMLogViewer class, see section
+"3.6.2 Class STAFJVMLogViewer" in the
+<ulink url="http://staf.sourceforge.net/current/STAFJava.htm#Header_STAFJVMLogViewer">
+STAF Java User's Guide</ulink>.
+</para>
+<para>
+Here is an example of using the STAFJVMLogViewer class to display the current
+JVM Log for the Cron service on machine client1.company.com:
+</para>
+<programlisting><![CDATA[
+java com.ibm.staf.STAFJVMLogViewer -serviceName Cron -machine server1.company.com
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Service logs</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Service logs</para>
+</question>
+<answer>
+<para>
+Many STAF services write information to a STAF log file.  These services include:
+<itemizedlist>
+<listitem>
+<para>STAX</para>
+</listitem>
+<listitem>
+<para>EventManager</para>
+</listitem>
+<listitem>
+<para>Cron</para>
+</listitem>
+<listitem>
+<para>Email</para>
+</listitem>
+</itemizedlist>
+</para>
+<para>
+These logs are machine logs.  Here is an example of querying a service log:
+</para>
+<programlisting><![CDATA[
+STAF local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME EventManager LAST 5
+]]></programlisting>
+<para>
+Here is an example of the output:
+</para>
+<programlisting><![CDATA[
+20070717-15:44:52 Info  [ID=3] [local://local, STAF/EventManager/UI] Registered
+                         a STAF command. Register request: REGISTER MACHINE :5:
+                        local SERVICE :4:misc REQUEST :7:version PREPARE :3:a=1
+                        TYPE :3:abcSUBTYPE :3:abcDESCRIPTION :20:Get the STAF v
+                        ersion
+20070717-15:56:54 Info  [ID=4] [local://local, STAF/EventManager/UI] Registered
+                         a STAF command. Register request: REGISTER MACHINE :5:
+                        local SERVICE :4:stax REQUEST :35:execute file c:/tests
+                        /startregr.xml TYPE :7:prodXYZSUBTYPE :5:win32DESCRIPTI
+                        ON :26:Start the regression tests
+20070717-15:57:02 Info  [ID=4] [local://local, STAF/EventManager/UI] Triggering
+                         a STAF command. TRIGGER ID 4
+20070717-15:57:02 Info  [ID=4] [dave2268.austin.ibm.com:2884] Submitted a STAF
+                        command. Event information: N/A Submitted STAF command:
+                         STAF local stax execute file c:/tests/startregr.xml
+20070717-15:57:02 Fail  [ID=4] [dave2268.austin.ibm.com:2884] Completed a STAF
+                        command. RC=48, Result=Error getting XML file c:/tests/
+                        startregr.xml from machine local://local  c:/tests/star
+                        tregr.xml
+]]></programlisting>
+<para>
+You can refer to the individual service user's guides for more information
+on the records that are written to the service log.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Viewing STAF service logs</para>
+</question>
+<answer>
+<para>
+In addition to using LOG QUERY requests from the command line to query logs
+for STAF services, you can also use the service's UI, if applicable.
+</para>
+<para>
+For example, the STAX Monitor allows you to view the STAX service logs, and
+the EventManagerUI/CronUI applications allow you to view the service logs for
+the EventManager and Cron services.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>System CPU/memory utilization</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>System CPU/memory utilization - Windows</para>
+</question>
+<answer>
+<para>
+To determine CPU and memory utilization on Windows, use "Task Manager".
+"STAFProc.exe" should be listed as an "Image Name" in the "Process" tab.
+You can have additional data displayed by selecting View -> Select Columns...
+and selecting "Handle Count" and "Thread Count".
+</para>
+<para>
+If you have any Java STAF services configured, each "java.exe" will also
+be listed in the "Process" tab.  You can find the PID for the Java executable
+used by your Java STAF services by examining the JVM log(s) for the services,
+or by submitting a <command>STAF local HANDLE LIST HANDLES LONG</command>
+request.
+</para>
+<para>
+Here is an example of the STAF-related utilization data (in this example there
+are 4 JVMs being used for Java STAF services):
+<programlisting><![CDATA[
+Image Name   PID  User Name     CPU  Mem Usage  Peak Mem Usage  Handles  Threads
+================================================================================
+java.exe     4060 Administrator 00    29,438K    34,244K        364      18
+java.exe     4040 Administrator 00    53,148K    99,608K        338      11
+java.exe     3632 Administrator 00   103,612K   137,780K        575      18
+java.exe     1756 Administrator 00    14,308K    21,992K        348      12
+STAFProc.exe  440 Administrator 00    12,748K    55,708K        699      68
+java.exe      340 Administrator 00    15,140K    19,520K        350      12
+]]></programlisting>
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>System CPU/memory utilization - Unix</para>
+</question>
+<answer>
+<para>
+Examining CPU/memory utilization varies depending on the Unix operating
+system.  For example, on Linux you can use the "top" command to display the
+utilization data.  You can run "ps -ea" to get the PID for STAFProc, and
+you can find the PID for the Java executable used by your Java STAF services by
+examining the JVM log(s) for the services.
+</para>
+<para>
+Here is an example of the STAF-related utilization data (in this example there
+is 1 JVM being used for Java STAF services):
+<programlisting><![CDATA[
+> top -p 28991 -p 28997
+
+top - 14:39:07 up 135 days,  3:23,  3 users,  load average: 0.00, 0.00, 0.00
+Tasks:   2 total,   0 running,   2 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.0% us,  0.0% sy,  0.0% ni, 100.0% id,  0.0% wa,  0.0% hi,  0.0% si
+Mem:   2066304k total,  2008560k used,    57744k free,    47216k buffers
+Swap:  2031608k total,      160k used,  2031448k free,  1699204k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+28991 root      16   0  271m 5636 3780 S  0.0  0.3   0:19.23 STAFProc
+28997 root      16   0  635m  54m 4628 S  0.0  2.7   1:17.98 java
+]]></programlisting>
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Debugging STAX Jobs</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Testing STAX Jobs</para>
+</question>
+<answer>
+<para>
+Whenever you make changes to a STAX xml file, including a file that is going to
+be imported by other STAX jobs, you should always test it to show any XML
+parsing or Python compile errors.  You can test a STAX job by submitting a
+<command>STAX EXECUTE FILE ...  TEST</command> request, or by clicking on the
+<command>Test</command> button the STAX Monitor's "STAX Job Parameters"
+dialog.  If there are any XML parsing errors or Python compile errors, details
+will be displayed about the errors.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Debugging XML Parsing Errors</para>
+</question>
+<answer>
+<para>
+The STAX DTD is a formal description, in XML Declaration Syntax, of what names
+are to be used for the different types of elements in your STAX job, where they
+may occur, and how they all fit together.  Every STAX job must comply with the
+STAX DTD.  When you test a STAX job, or submit a STAX job for execution,
+if it does not conform to the STAX DTD,
+you will receive a STAXXMLParseException, with details about syntax errors,
+including the line number where the error occurred.
+</para>
+<para>
+For example, if your STAX job contains a <command>&lt;stafcmd></command>
+element without the required <command>&lt;service></command> element:
+</para>
+<programlisting><![CDATA[
+<stafcmd>
+    <location>machine</location>
+    <request>'PING'</request>
+</stafcmd>
+]]></programlisting>
+<para>
+you would get the following error:
+</para>
+<programlisting><![CDATA[
+Caught com.ibm.staf.service.stax.STAXXMLParseException:
+  Line 27: The content of element type "stafcmd" must match
+           "(location,service,request)".
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Using XML-aware Editors</para>
+</question>
+<answer>
+<para>
+You can use XML-aware editors, along with the STAX DTD, to provide syntax
+checking while you are editing your STAX XML files.  Some examples of XML-aware
+editors are <ulink url="http://www.xmlcooktop.com/">XML Cooktop</ulink> and
+<ulink url="http://www.jedit.org/">JEdit</ulink>.
+</para>
+<para>
+To use these types of editors to validate your STAX jobs, you will need to have
+a copy of the STAX DTD file.  Since the STAX DTD is generated dynamically, you
+can retrieve the contents of the STAX DTD and save it on the local file
+system (in the directory where your STAX XML files are located) by running:
+</para>
+<programlisting><![CDATA[
+set STAF_QUIET_MODE=1
+STAF local STAX GET DTD > stax.dtd
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Debugging Python Compile-time Errors</para>
+</question>
+<answer>
+<para>When you test a STAX job, or submit a STAX job for execution, any
+Python code contained within the STAX job will be compiled, and any syntax
+errors will be reported as a STAXPythonCompileException.
+</para>
+<para>
+For example, if your STAX job contains a &lt;log> element which is missing a
+closing quote (') for the message:
+</para>
+<programlisting><![CDATA[
+<log level="'info'">'This is the start of the STAX job</log>
+]]></programlisting>
+<para>
+you would get the following error:
+</para>
+<programlisting><![CDATA[
+Caught com.ibm.staf.service.stax.STAXPythonCompileException: 
+  Element: log
+
+Python code compile failed for:
+'This is the start of the STAX job
+
+Traceback (innermost last):
+  (no code object) at line 0
+SyntaxError: ('Lexical error at line 1, column 35.  Encountered: "\\n" (10),
+  after : ""', ('<string>', 1, 35, "'This is the start of the STAX job"))
+]]></programlisting>
+<para>
+Note that the Python error message indicates the line (1) and column position
+(35) where the error occurred.
+</para>
+<para>
+Here is an example of a &lt;script> element that has multiple lines for a
+single Python statement:
+</para>
+<programlisting><![CDATA[
+<script>output = '%d file(s) returned in STAXResult' %
+                 len(STAXResult)</script>
+]]></programlisting>
+<para>
+you would get the following error:
+</para>
+<programlisting><![CDATA[
+Result=Caught com.ibm.staf.service.stax.STAXPythonCompileException: 
+  Element: script
+
+Python code compile failed for:
+output = '%d file(s) returned in STAXResult' %
+                         len(STAXResult)
+
+Traceback (innermost last):
+  (no code object) at line 0
+SyntaxError: ('invalid syntax', ('<string>', 1, 47,
+  "output = '%d file(s) returned in STAXResult' %"))
+]]></programlisting>
+<para>
+Note that the Python error message indicates the line (1) and column position
+(47) where the error occurred.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Debugging Python Run-time Errors</para>
+</question>
+<answer>
+<para>
+Some Python error cannot be detected at compile time.  Runtime Python errors
+that are encountered while your STAX job is executing will result in a
+STAXPythonEvaluationException signal being raised.  The default
+signalhandler for this signal sends a message to the STAX Monitor, logs a
+message in the STAX Job Log with level 'error', and terminates the job.
+</para>
+<para>
+For example, if your STAX job contains a reference to a Python variable which
+has not been defined (in this cases a variable named 'service');
+</para>
+<programlisting><![CDATA[
+<stafcmd>
+  <location>'local'</location>
+  <service>myService</service>
+  <request>'DELAY 5000'</request>
+</stafcmd>
+]]></programlisting>
+<para>
+you would get the following error:
+</para>
+<programlisting><![CDATA[
+===== Element Information =====
+
+<stafcmd>
+  <location>'local'</location>
+  <service>myService</service>
+  <request>'DELAY 5000'</request>
+</stafcmd>
+
+Stafcmd sub-element in error: <service>
+
+===== Python Error Information =====
+
+com.ibm.staf.service.stax.STAXPythonEvaluationException: 
+Python string evaluation failed for:
+myService
+
+Traceback (innermost last):
+  File "<pyEval string>", line 1, in ?
+NameError: myService
+
+===== Call Stack for STAX Thread 1 =====
+
+[
+  Block: main
+  Sequence: 25/25
+  Function: main
+  Sequence: 1/1
+]
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Displaying/logging data within your STAX jobs</para>
+</question>
+<answer>
+<para>
+When debugging a STAX job, you may find it useful to add log and/or message
+elements to your STAX job, or Python print statements in script elements.
+</para>
+<para>
+It is recommended that when you add &lt;message> elements to your STAX job,
+you include the <command>log</command> attribute (if the message is important)
+so that the message data is also written to the STAX Job User log.  For example:
+</para>
+<programlisting><![CDATA[
+<message log="1">'Whatever text/variables you want to see'</message>
+]]></programlisting>
+<para>
+This data will be displayed in the STAX Monitor and will be written to the STAX
+Job User log.
+</para>
+<para>
+You can also use Python print statements in script elements to debug your STAX
+jobs.  For example:
+</para>
+<programlisting><![CDATA[
+<script>
+  if debug:
+    print 'Debug info: ', machName, cmd
+</script>
+]]></programlisting>
+<para>
+Note that output from a Python print statement will be written to the STAX Job User
+Log by default, but this can be changed via the PYTHONOUTPUT setting.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Holding STAX jobs for debugging</para>
+</question>
+<answer>
+<para>
+When debugging a STAX job, you may also find it useful to hold a STAX job and
+then query the job. You can submit a HOLD request to the STAX service via the
+command line or via the STAX Monitor.
+</para>
+<para>
+You can also add the hold element at various points in your STAX job and then
+you can query information about the STAX job.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Debugging hung STAX jobs</para>
+</question>
+<answer>
+<para>
+If a STAX job appears to be hung (or you just want to see what it's currently
+executing), you can submit a
+<command>LIST JOB &lt;Job ID> THREADS</command> request to the STAX service
+to get a list of the threads currently running in the specified STAX job. Then,
+for each thread, submit a
+<command>QUERY JOB &lt;Job ID> THREAD &lt;Thread ID></command> request to the
+STAX service to get more information on the current state of a thread.
+</para>
+<para>
+Note that querying a thread provides a "Call Stack" and a "Condition Stack" for
+the thread which can be useful for debugging a STAX job. Note that the
+"Call Stack" shows you which elements in a STAX job are currently being executed.
+</para>
+<para>
+For example, if debugging job 10 that's currently running, you could submit
+the following requests:
+</para>
+<programlisting><![CDATA[
+C:\>STAF local STAX LIST JOB 10 THREADS
+Response
+--------
+Thread ID Parent TID State
+--------- ---------- -------
+1         <None>     Blocked
+
+
+C:\>STAF local STAX QUERY JOB 10 THREAD 1
+Response
+--------
+{
+  Thread ID      : 1
+  Parent TID     : <None>
+  Start Date-Time: 20070420-17:40:57
+  Call Stack     : [
+    Block: main
+    Sequence: 24/24
+    Function: Main
+    Finally:
+    Try:
+    Iterate: 2  clientMachines
+    Sequence: 2/3
+    STAFCommand: Delay 5 seconds
+  ]
+  Condition Stack: [
+    HoldThread: Source=STAFCommand, Priority=1000
+  ]
+}
+]]></programlisting>
+<para>
+Note that this is the output when querying the following STAX job when while
+it is currently running the &lt;stafcmd> element that delays for 5 seconds:
+</para>
+<programlisting><![CDATA[
+<script>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="Main"/>
+  
+  <script>
+    clientMachines = ['client1.company.com', 'client2.company.com']
+  </script>
+
+  <function name="Main">
+
+    <try>
+       
+      <iterate var="machine" in="clientMachines">
+        <sequence>
+
+          <log message="1">'Starting Try Block for machine %s' % (machine)</log>
+
+          <stafcmd name="'Delay 5 seconds'">
+            <location>'local'</location>
+            <service>'DELAY'</service>
+            <request>'DELAY 5000'</request>
+          </stafcmd>
+
+          <log message="1">'Ending Try Block for machine %s' % (machine)</log>
+
+        </sequence>
+      </iterate>
+
+      <finally> 
+        <block name="'FinallyBlock'">
+          <log message="1">'Starting Finally Block...'</log>
+        </block>
+      </finally>
+
+    </try>
+
+  </function>
+
+</stax>
+]]></programlisting>
+<para></para>
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>STAX Requests return RC 6</para>
+</question>
+<answer>
+<para>
+If you are receiving an RC 6 when submitting requests to the STAX service,
+check its JVM log to see if any additional information about the problem is
+logged, such as a Java exception.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Reducing overhead in STAX jobs</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Retrieving large files</para>
+</question>
+<answer>
+<para>
+You should use caution when doing large file retrievals into a STAX job.
+This is particularly problematic if you don't "clear" the variable
+before doing a &lt;parallel> or &lt;paralleliterate> as that will cause the
+variable to be replicated across all the threads.
+</para>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Getting additional support</title>
+<para></para>
+<para></para>
+<para></para>
+
+<qandaentry>
+<question>
+<para>Getting additional support</para>
+</question>
+<answer>
+<para>
+If you have read/searched this document and  you still need support
+(problems/questions/etc.) for STAF or any of the STAF
+services, there are several ways to get help.  First, we ask that you:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+Read/search the
+<ulink url="http://staf.sourceforge.net/current/STAFFAQ.htm">
+Frequently Asked Questions (FAQ) document.</ulink>
+</para>
+</listitem>
+<listitem>
+<para>
+Read/search the
+<ulink url="http://staf.sourceforge.net/docs.php">
+STAF User's Guide and other STAF documentation.</ulink>
+</para>
+</listitem>
+<listitem>
+<para>
+Check to see if there is already an open 
+<ulink url="http://sourceforge.net/tracker/?group_id=33142&amp;atid=407381">
+Bug</ulink> or 
+<ulink url="http://sourceforge.net/tracker/?group_id=33142&amp;atid=407384">
+Feature</ulink>.
+</para>
+</listitem>
+</itemizedlist>
+<para>
+There are several ways you can get support:
+</para>
+<itemizedlist>
+<listitem>
+<para>
+Search/post on our 
+<ulink url="http://sourceforge.net/forum/forum.php?forum_id=104046">
+Help forum</ulink>.
+</para>
+</listitem>
+<listitem>
+<para>
+Search the archives for our
+<ulink url="https://lists.sourceforge.net/lists/listinfo/staf-users">
+staf-users mailing list</ulink>, and subscribe and send a note.
+</para>
+</listitem>
+<listitem>
+<para>
+IBM employees can use the internal forum:
+<ulink url="http://ibmforums.ibm.com/forums/forum.jspa?forumID=2484">
+software.test.automation.staf-stax-ais on ibmforums.ibm.com</ulink>.
+</para>
+</listitem>
+</itemizedlist>
+<para></para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+</qandaset>
+
+</article>

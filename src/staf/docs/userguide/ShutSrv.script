@@ -1,0 +1,176 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : ShutSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Shutdown Service
+.*  Detail:
+.*
+.*     This file describes the STAF Shutdown Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.shutdown service
+:ih1.services
+:i2.shutdown service
+:h2 id=shutds.Shutdown Service
+:h3.Description
+:p.The SHUTDOWN service is an internal STAF service.  It provides the
+following commands.
+:ul compact.
+:li.SHUTDOWN - Shutdown the STAF Process
+:li.NOTIFY REGISTER - Register for shutdown notification
+:li.NOTIFY UNREGISTER - Unregister for shutdown notification
+:li.NOTIFY LIST - Display the list of machines/processes to receive shutdown
+notifications.
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SHUTDOWN
+:i3.shutdown service
+:h3.SHUTDOWN
+:p.SHUTDOWN, as the name implies, shuts down the STAFProc program.
+:h4.Syntax
+:xmp.
+SHUTDOWN
+:exmp.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from SHUTDOWN are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a SHUTDOWN command.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.start/shutdown notifications
+:i2.shutdown service
+:ih1.service commands
+:ih2.NOTIFY REGISTER/UNREGISTER
+:i3.shutdown service
+:ih1.registration
+:i2.notify on shutdown
+:h3.NOTIFY REGISTER/UNREGISTER
+:p.NOTIFY REGISTER/UNREGISTER allow you to either register or unregister to
+receive a notification when the STAF Process is SHUTDOWN.
+:h4.Syntax
+:xmp.
+NOTIFY <REGISTER | UNREGISTER> &lbrk.MACHINE <Machine>&rbrk.  &lbrk.PRIORITY <Priority>&rbrk.
+       &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+:exmp.
+:p.:xph.REGISTER:exph. indicates you want to register a shutdown notification.
+The type of the notification message will be :xph.STAF/Shutdown:exph. with a blank message.
+:p.:xph.UNREGISTER:exph. indicates you want to unregister a shutdown
+notification
+:p.:xph.MACHINE:exph. specifies the machine to which the notification should
+be sent.  The default is the machine submitting the request. &varres.
+:p.:xph.PRIORITY:exph. specifies the priority of the notification message.
+The default is 5. &varres.
+:p.:xph.HANDLE:exph. specifies the handle to which the notification should be
+sent.  The default is the handle of the process submitting the request.
+&varres.
+:p.:xph.NAME:exph. specifies the registered name of the process(es) to which
+the notification should be sent. &varres.
+:h4.Security
+:p.These commands require trust level 3.
+:h4.Return Codes
+:p.All return codes from NOTIFY REGISTER/UNREGISTER are documented in
+:hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a NOTIFY
+REGISTER/UNREGISTER command.
+:h4.Examples
+:p.Goal&colon. Register the current process for a priority 3 shutdown
+notification.
+:xmp.
+NOTIFY REGISTER PRIORITY 3
+:exmp.
+:p.Goal&colon. Register to have a shutdown notification sent to all
+processes with registered name ShutdownCatcher on machine EventSrv1.
+:xmp.
+NOTIFY REGISTER MACHINE EventSrv1 NAME ShutdownCatcher
+:exmp.
+:p.Goal&colon. Unregister the shutdown notification for handle 43.
+:xmp.
+NOTIFY UNREGISTER HANDLE 43
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.NOTIFY LIST
+:i3.shutdown service
+:h3.NOTIFY LIST
+:p.NOTIFY LIST allows you to view the shutdown notification list.
+:h4.Syntax
+:xmp.
+NOTIFY LIST
+:exmp.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from NOTIFY LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+On successful return, the result buffer for a :xph.NOTIFY LIST:exph.
+request will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Shutdown/Notifiee>:exph.
+representing a list of all the registered notifiees.
+The map is defined as follows:
+:table cols='* * 3* 2*'.
+:tcap.Definition of map class STAF/Service/Shutdown/Notifiee
+:tnote text='Description'.This map class represents a registered shutdown notifiee.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.priority
+:c.Priority
+:c.&stringObj.
+:c.:xph.'Stdout' | 'Stderr':exph. or a file name
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.notifyBy
+:c.Notify By
+:c.&stringObj.
+:c.:xph.'Name' | 'Handle':exph.
+:row.
+:c.notifiee
+:c.Notifiee
+:c.&stringObj.
+:tnote text='Notes'.
+If the "Notify By" value is 'Name', the notifiee will be notified by handle name
+and the "Notifiee" value will be the handle name.
+Otherwise, if the "Notify By" value is 'Handle', the notifiee will be 
+notified by handle and the "Notifiee" value will be the handle number.
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Retrieve the list of shutdown notifiees.
+:p.:hp2.Request&colon.:ehp2.&nbsp; :xph.NOTIFY LIST:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Priority Machine                Notify By Notifiee
+-------- ---------------------- --------- ---------------
+5        server1.austin.ibm.com Name      ShutdownCatcher
+3        client2.austin.ibm.com Handle    18
+:exmp.
+:eul.

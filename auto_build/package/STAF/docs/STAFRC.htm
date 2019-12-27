@@ -1,0 +1,443 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>STAF API Return Code Reference</TITLE>
+<!-- Begin Header Records  ========================================== -->
+<!-- /opt/dev/autobuild/build/src/staf/docs/userguide/ErrRef.script   -->
+<!-- converted by b2h R4.3 (362) (LINUX) on 16 Dec 2013 at 12:16:50   -->
+<META HTTP-EQUIV="updated" CONTENT="Sun, 15 Dec 2013 12:07:56">
+<META HTTP-EQUIV="review" CONTENT="Mon, 15 Dec 2014 12:07:56">
+<META HTTP-EQUIV="expires" CONTENT="Tue, 15 Dec 2015 12:07:56">
+</HEAD><BODY BGCOLOR=WHITE>
+<!-- End Header Records  ============================================ -->
+<A NAME="Top_Of_Page"></A>
+<P>
+<HR><H1><A NAME="HDRRETCODE">API Return Codes</A></H1>
+<P><B>Note: </B>In some shell environments, return codes above 255 may be returned modulo
+256.  This can, in particular, cause service return codes (which range from
+4000 upward) to be mistaken for (possibly) non-existent common STAF return
+codes.  For example, if a service returned the return code 4010, this might
+appear to be the return code 170 (4010 modulo 256) in a shell
+environment.
+<BR>
+<P><B><A NAME="TBLERRTAB">Table 1. STAF API Return Codes</A></B><BR>
+<TABLE  BORDER>
+<TR>
+<TH ALIGN="CENTER" VALIGN="TOP" WIDTH="14%">Error Code
+</TH><TH ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Meaning
+</TH><TH ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">Comment
+</TH></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>0</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">No error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">
+<BR></TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>1</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid API
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that a process has tried to call an invalid internal STAF API.
+If this error occurs, report it to the authors.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>2</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Unknown Service
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You have tried to submit a request to a service that is unknown to STAFProc.
+Verify that you have correctly registered the service.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>3</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Handle
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You are passing an invalid handle to a STAF API.  Ensure that you are using
+the handle you received when you registered with STAF.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>4</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Handle already exists
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to register a process with one name when
+that process has already been registered with a different name.  If you
+register the same process multiple times, ensure that you use the same name
+on each registration call.
+<P><B>Note: </B>If you receive this error code when trying to perform an operation
+other than registering a service, report it to the authors.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>5</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Handle does not exist
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You are trying to perform an operation on a handle that does not exist.
+For example, you may be trying to stop a process, but you are specifying the
+wrong handle.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>6</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Unknown Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">An unknown error has occurred.  This error is usually an indication of an
+internal STAF error.  If this error occurs, report it the authors.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>7</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Request String
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You have submitted an improperly formatted request to a service.  See the
+appropriate section in this document for the syntax of the service's requests,
+or contact the provider of the service.
+<P><B>Note: </B>Additional information regarding the exact syntax error may be provided
+in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>8</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Service Result
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates an internal error with the service to which a request was
+submitted.  If this error occurs, report it to the authors and the service
+provider.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>9</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Rexx Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates an internal error in an external Rexx service.  If this error
+occurs, report it to the authors and the service provider.
+<P><B>Note: </B>The actual Rexx error code will be returned in the result passed back
+from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>10</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Base OS Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that a base operating system error was encountered.
+<P><B>Note: </B>The actual base operating system error code, and possibly additional
+information about the error, will be returned in the result passed back
+from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>11</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Process Already Complete
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You are trying to perform an invalid operation on a process that has
+already completed.  For example, you may be trying to stop the process or
+register for a process end notification.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>12</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Process Not Complete
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You are trying to free process information for a process that is still
+executing.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>13</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Variable Does Not Exist
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You are trying to get, remove, or resolve a variable that does not exist.
+Remember that variables are case sensitive.  The name of the variable that
+does not exist will be in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>14</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">UnResolvable String
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You have requested to resolve a string that cannot be resolved.  This
+indicates that you have exceeded the resolution depth of the VAR service.  The
+most common cause of this is recursive variables definitions.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>15</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Resolve String
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">The string you requested to be resolved has a non-matching left or right
+curly brace.  Ensure that all variable references have both left and right
+curly braces.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>16</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">No Path To Endpoint
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that STAFProc was not able to submit the request to
+the requested endpoint (i.e. target machine).  This error usually indicates
+one or more of the following:
+<P>
+<OL COMPACT TYPE=1>
+<LI>STAFProc is not running on the target machine.
+<LI>The requested endpoint is not valid.
+<LI>The network interface or port for the requested endpoint is not supported.
+<LI>A firewall is blocking communication via the port for the requested endpoint.
+<LI>A secure network interface is being used to communicate to a machine that
+doesn't have a secure network interface configured with the same certificate.
+</OL>
+Alternatively, you may need to increase your CONNECTTIMEOUT value for the
+network interface and/or increase your CONNECTATTEMPTS value in your STAF.cfg
+file.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>17</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">File Open Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that there was an error opening the requested file.
+Some possible explanations are that the file/path does not exist, contains
+invalid characters, or is locked.
+<P><B>Note: </B>Additional information regarding which file could not be opened may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>18</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">File Read Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that there was an error while trying to read data from a file.
+<P><B>Note: </B>Additional information regarding which file could not be read from may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>19</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">File Write Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that there was an error while trying to write data to a file.
+<P><B>Note: </B>Additional information regarding which file could not be written to may
+be provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>20</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">File Delete Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that there was an error while trying to delete a file or
+directory.
+<P><B>Note: </B>Additional information regarding which file or directory could not be
+deleted may be provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>21</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">STAF Not Running
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that STAFProc is not running on the local machine with the
+same STAF_INSTANCE_NAME (and/or the same STAF_TEMP_DIR if on a Unix machine).
+<P>
+<B>Notes:</B>
+<OL COMPACT TYPE=1>
+<LI>If the STAF_INSTANCE_NAME environment variable is not set, it defaults to "STAF".
+<LI>On Unix, if the STAF_TEMP_DIR environment variable is not set, it defaults to "/tmp".
+This environment variable is not used on Windows.
+<LI>This error can also occur when submitting a request using the local IPC
+interface on a Unix machine if the socket file that the local interface uses
+has been inadvertently deleted. 
+<LI>To get more information on this error, set special environment variable
+STAF_DEBUG_21=1 and resubmit your local STAF service request.
+</OL>
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>22</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Communication Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates an error transmitting data across the network, or to the
+local STAF process.  For example, you would receive this error if STAFProc.exe
+was terminated in the middle of a service request, or if a bridge went down
+in the middle of a remote service request.  This can also indicate that the
+requested endpoint is not valid (e.g. it has an invalid network interface and
+port combination such as a non-secure tcp interface with the port for a secure
+ssl interface).
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>23</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Trustee Does Not Exist
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You have requested to delete a trustee, and the trustee does not exist.
+Verify that you have specified the correct trustee.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>24</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Trust Level
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You have attempted to set a machine or default trust level to an invalid
+level.  The valid trust levels are from zero to five.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>25</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Insufficient Trust Level
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You have submitted a request for which you do not have the required
+trust level to perform the request.
+<P><B>Note: </B>Additional information regarding the required trust level may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>26</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">STAF Registration Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that an external service encountered a problem when trying
+to register with STAF.  Ensure that STAF has been properly installed and
+configured.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>27</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Service Configuration Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates an error with the configuration of an external service.  One 
+possible explanation is that the LIBRARY you specified when configuring the
+service does not exist.  Or, if you specified the EXECUTE option, verify that
+the executable exists and has the execute permission.  Or, if you specified the
+PARMS option, verify that all of the service configuration are valid.  Consult
+the appropriate documentation for the service to verify whether you have
+configured the service properly, or contact the service provider.
+<P><B>Note: </B>Additional information regarding why the service configuration failed
+may be provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>28</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Queue Full
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to queue a message to a handle's queue,
+but the queue is full.  The maximum queue size can be increased by using
+the MAXQUEUESIZE statement in the STAF Configuration File.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>29</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">No Queue Element
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you tried to GET or PEEK a particular element in a
+queue, but no such element exists, or the queue is empty.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>30</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Notifiee Does Not Exist
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to remove a message notification for
+a machine/process/priority combination which does not exist in the
+notification list.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>31</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid API Level
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that a process has tried to call an invalid level of an
+internal STAF API.  If this error occurs, report it to the authors.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>32</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Service Not Unregisterable
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to unregister a service that is not
+unregisterable.  Note that internal services are not unregisterable.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>33</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Service Not Available
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the service you requested is not currently able to
+accept requests.  The service may be in the process of initializing or
+terminating.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>34</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Semaphore Does Not Exist
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to release, query, or delete a semaphore
+that does not exist.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>35</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Not Semaphore Owner
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to release a semaphore for which your
+process is not the current owner.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>36</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Semaphore Has Pending Requests
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you are trying to delete either a mutex semaphore that
+is currently owned or an event semaphore that has waiting processes.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>37</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Timeout
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you submitted a request with a timeout value and the
+request did not complete within the requested time.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>38</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Java Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates an error performing a Java native method call.  A description
+of the error will be returned in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>39</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Converter Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates an error performing a codepage conversion.  The most likely
+cause of this error is that STAF was not properly installed.  However, it is
+possible that you are currently using a codepage that was not present or
+specified during STAF installation.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>40</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Move Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that there was an error while trying to move a file or
+directory.
+<P><B>Note: </B>Additional information regarding the error may be provided in the
+result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>41</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Object
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that an invalid object was specified to a STAF API.
+If you receive this return code via a standard STAFSubmit call, report it to
+the authors and the service provider.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>42</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Parm
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that an invalid parameter was specified to a STAF API.
+If you receive this return code via a standard STAFSubmit call, report it to 
+the authors and the service provider.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>43</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Request Number Not Found
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the specified Request Number was not found.  The 
+specified Request Number may be invalid, or the request's information may no 
+longer be available from the Service Service (for example, if the SERVICE FREE
+command had previously been issued for the request number).
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>44</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Asynch Option
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that an invalid Asynchronous submit option was specified.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>45</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Request Not Complete
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the specified request is not complete.  This error code 
+would be returned, for example, if you requested the result of a request which 
+has not yet completed.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>46</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Process Authentication Denied
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the userid/password you specified could not be 
+authenticated.  The userid/password may not be valid or authentication may be 
+disabled.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>47</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid Value
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that an invalid value was specified.  This is closely related
+to the Invalid Request String return code, but indicates that a specific value 
+in the request is invalid.  For example, you may not have specified a number 
+where a number was expected.
+<P><B>Note: </B>Additional information regarding which value is invalid may be provided
+in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>48</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Does Not Exist
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the item you specified does not exist.  
+<P><B>Note: </B>Additional information regarding which item could not be found may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>49</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Already Exists
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the item you specified already exists.  
+<P><B>Note: </B>Additional information regarding which item already exists may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>50</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Directory Not Empty
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you have tried to delete a directory, but that directory
+is not empty.
+<P><B>Note: </B>Additional information specifying the directory which could not be deleted
+may be provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>51</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Directory Copy Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you have tried to copy a directory, but errors occurred
+during the copy.
+<P><B>Note: </B>Additional information specifying the entries which could not be copied
+may be provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>52</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Diagnostics Not Enabled
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that you tried to record diagnostics data, but diagnostics
+have not been enabled.  You must enable diagnostics before you can record
+diagnostics data.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>53</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Handle Authentication Failed
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the user, credentials, and/or authenticator you specified
+could not be authenticated. The user/credentials may not be valid or the
+authenticator may not be registered.
+<P><B>Note: </B>Additional information specifying why authentication was denied may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>54</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Handle Already Authenticated
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the handle is already authenticated. The handle must be
+unauthenticated in order to be authenticated.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>55</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Invalid STAF Version
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the version of STAF (or the version of a STAF service)
+is lower than the minimum required version.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>56</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Request cancelled
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the request has been cancelled.
+<P><B>Note: </B>Additional information specifying why the request was cancelled may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>57</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Create Thread Error
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that a problem occurred creating a new thread. One possible
+explanation is that there's not enough memory available to create a new
+thread.
+<P><B>Note: </B>Additional information specifying why creating a new thread failed may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>58</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Maximum Size Exceeded
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that the size of a file exceeded the maximum size allowed
+(e.g. per the MAXRETURNFILESIZE operational parameter or per the
+MAXRETURNFILESIZE setting for the STAX service).
+A maximum file size is usually set to prevent the creation of result strings
+that require more memory than is available which can cause errors or crashes.
+<P><B>Note: </B>Additional information specifying why this error occurred may be
+provided in the result passed back from the submit call.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>59</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Maximum Handles Exceeded
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">This indicates that a new handle could not be created/registered
+because the maximum number of active handles allowed by STAF has been
+exceeded.  You need to delete one or more handles that are no longer
+being used.  The Handle service's LIST HANDLES SUMMARY request provides
+information on the maximum number of active STAF handles and this may be
+helpful in better understanding why this error occurred.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>60</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Not Pending Requester
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">You cannot cancel a pending request your handle did not submit unless
+you specify the FORCE option.
+</TD></TR><TR>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="14%"><B>4000+</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="29%">Service Defined
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="57%">Error codes of 4000 and beyond are service specific error codes.  Either
+see the appropriate section in this document for the syntax of the service's
+requests, or contact the provider of the service.
+</TD></TR></TABLE>
+<A NAME="Bot_Of_Page"></A>
+</BODY></HTML>

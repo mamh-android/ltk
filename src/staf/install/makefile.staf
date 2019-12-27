@@ -1,0 +1,40 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stafinst_targets += $(REL)/STAFInst\
+                    $(REL)/install.properties\
+                    $(REL)/STAFInst.mfs
+Targets += $(stafinst_targets)
+CleanupTargets += cleanup_stafinst
+
+$(stafinst_targets): SUBSYS_REL := stafinst
+SUBSYS_REL := stafinst
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+# STAFInst targets
+
+$(REL)/STAFInst: $(SRC)/install/unix/STAFInst $(MAKEFILE_NAME)
+	$(COPY_FILE)
+	@echo "*** Updating execute permission for $(@F) ***"
+	@chmod 751 $(REL)/$(@F)	
+
+$(REL)/STAFInst.mfs: $(SRC)/install/unix/STAFInst.mfs $(MAKEFILE_NAME)
+	@$(CREATE_PATH)
+	@echo "*** Creating $(@F) ***"
+	@sed -e 's/!SO!/$(OS_SHARED_LIB_SUFFIX)/g;' <$< >$@
+
+$(REL)/install.properties: $(SRC)/install/install.properties $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafinst:
+	-@$(DEL) $(REL)/STAFInst $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/install.properties $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/STAFInst.mfs $(OUT_ERR_TO_DEV_NULL)
+

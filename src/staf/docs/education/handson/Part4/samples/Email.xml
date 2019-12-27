@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <script>
+    from com.ibm.staf import STAFUtil
+    emailTo = 'user@company.com'
+    emailSubject = 'This is a test of STAX and the email service'
+    emailMessage = ('Hello\n\nSTAX Job ID %s Email test ' % STAXJobID +
+                   'successful!\n\nCheers!')
+  </script>
+
+  <defaultcall function="email_example"/>
+
+  <function name="email_example">
+
+    <sequence>
+
+      <stafcmd name="'Sending email'">
+        <location>'local'</location>
+        <service>'email'</service>
+        <request>
+          'send to %s subject %s message %s' % (emailTo, \
+            STAFUtil.wrapData(emailSubject), STAFUtil.wrapData(emailMessage))
+        </request>
+      </stafcmd>
+      
+      <message log="1">'Email RC=%s, Result=%s' % (RC, STAFResult)</message>
+
+    </sequence>
+
+  </function>
+
+</stax>

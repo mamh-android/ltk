@@ -1,0 +1,749 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : VarSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Variable Service
+.*  Detail:
+.*
+.*     This file describes the STAF Variables Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.variable service
+:ih1.services
+:i2.variable service
+:h2 id=varservice.Variable (VAR) Service
+:h3.Description
+:p.The Variable Service, called VAR, is one of the internal STAF services.  It
+allows you to manage the system, shared, and per-process variable pools.  It provides
+the following commands.
+:ul compact.
+:li.SET - Sets the value of one or more variables
+:li.GET - Retrieves the value of a given variable
+:li.LIST - Retrieves a list of all the variables and their associated values for
+a given variable pool
+:li.RESOLVE - Resolves the values of all variables in one or more strings
+:li.DELETE - Deletes one or more variables
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.variable service
+:h3.SET
+:p.SET will set a variable to a certain value.  The variable is created if it
+does not exist.
+:p.Note that you may SET multiple variables with a single request.
+:h4.Syntax
+:xmp.
+SET &lbrk.SYSTEM | SHARED | HANDLE <Handle>&rbrk. &lbrk.FAILIFEXISTS&rbrk.
+    VAR <Name=Value> &lbrk.VAR <Name=Value>&rbrk....
+:exmp.
+:p.:xph.SYSTEM:exph. specifies that you want to set the value of the variable
+in the system variable pool.
+:p.:xph.SHARED:exph. specifies that you want to set the value of the variable
+in the shared variable pool.
+:p.:xph.HANDLE:exph. indicates that you want to set the value of the variable
+in the variable pool associated with the specified handle.
+:p.If options :xph.SYSTEM:exph., :xph.SHARED:exph., and :xph.HANDLE:exph. are
+not specified, the variable will be set in the variable pool associated with the
+handle of the process that submitted the request unless the request came from another
+machine, in which case the variable will be set in the system variable pool.
+:p.:xph.FAILIFEXISTS:exph. specifies that the set request should fail with
+return code 49 (Already Exists) if the variable already exists in the specified
+variable pool and its current value will be returned in the result.
+If this option is not specified and the variable already exists, the variable's
+value will be updated.
+:p.:xph.VAR:exph. specifies the name of a variable and the value to which it
+should be set.  Its format must be Name=Value.  You can specify this option
+multiple times to set multiple variables.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes from SET are documented in :hdref refid=retcode..
+:p.If multiple variables are set via a single SET request and all variables
+were set successfully, the return code will be 0.  If one or more variables
+were not set successfully, the return code will be set to the return code
+of the first variable that could not be set successfully.  Note that all
+variables specified will be attempted to be set.
+
+:h4.Results
+:p.
+If successful, the result buffer will contain no data.
+:p.
+If the request failed, the result buffer's contents are based on whether
+the :xph.VAR:exph. option was specified once or multiple times as follows:
+:ul.
+:li.If only one variable is specified to be set:
+:ul compact.
+:li.If the request failed because the :xph.FAILIFEXISTS:exph. option
+was specified and the variable already exists, the return code will be 49
+(Already Exists) and the result buffer will contain the variable's value.
+:li.If the request failed for another reason, the result buffer may contain
+additional information about the error.
+:eul.
+:p.
+:li.If multiple variables are specified to be set:
+:ul compact.
+:li.If the request failed before it was able to set any variables (e.g. due
+to a request syntax error, insufficient trust, etc), the result buffer may
+contain additional information about the error.
+:li.Otherwise, the result buffer will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/Var/ErrorInfo>:exph. representing a list of the
+variable names and whether they were successfully set or not.  The entries
+in the list will be in the same order that the variables to be set are
+specified.  The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Var/ErrorInfo
+:tnote text='Description'.This map class represents information on whether
+a variable was successfully set.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:row.
+:c.rc
+:c.RC
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:p.If a variable is set successfully, its "RC" value will be '0' and its
+"Result" will be blank.  If a variable is not set successfully because the
+:xph.FAILIFEXISTS:exph. option was specified and the variable already exists,
+its "RC" value will be '49' (Already Exists) and its "Result" will contain
+the variable's value.  Otherwise, if another error occurred setting the
+variable, its "RC" value will contain the error return code and its "Result"
+may contain additional information about the error,
+:etnote.
+:etable.
+:eul.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Set the system WebServer variable to testsrv1.test.austin.ibm.com
+.br
+:hp2.Request::ehp2.&nbsp; :xph.SET SYSTEM VAR WebServer=testsrv1.test.austin.ibm.com:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the shared TestDirectory variable to /tests
+.br
+:hp2.Request::ehp2.&nbsp; :xph.SET SHARED VAR TestDirectory=/tests:exph.
+:p.
+:li.:hp2.Goal::ehp2. In the process local variable pool, set variable "Good String"
+to "Command completed successfully", and set variable "Bad String" to "SYS3175"
+.br
+:hp2.Request::ehp2.&nbsp; :xph.SET VAR &colon.42&colon.Good String=Command completed successfully VAR "Bad String=SYS3175":exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the variable STAF/Service/Log/Mask to "FATAL ERROR
+WARNING" in the variable pool associated with handle 37
+.br
+:hp2.Request::ehp2.&nbsp; :xph.SET HANDLE 37 VAR "STAF/Service/Log/Mask=FATAL ERROR WARNING":exph.
+:p.
+:li.:hp2.Goal::ehp2. Set system variable MyApp/Done to "Yes" only if the variable
+does not already exist.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.SET SYSTEM FAILIFEXISTS VAR MyApp/Done=Yes:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set multiple variables, MyApp/Build#=1099 and MyApp/Version=3.1.0,
+in the system variable pool
+.br
+:hp2.Request::ehp2.&nbsp; :xph.SET SYSTEM VAR MyApp/Build#=1099 VAR MyApp/Version=3.1.0:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.GET
+:i3.variable service
+:h3.GET
+:p.GET will retrieve the value of a variable.
+:p.
+:note.You almost never want to use the GET command.  Instead, you should use
+RESOLVE to retrieve the value of a variable.
+:h4.Syntax
+:xmp.
+GET &lbrk.SYSTEM | SHARED | HANDLE <Handle>&rbrk. VAR <Name>
+:exmp.
+:p.:xph.SYSTEM:exph. specifies that you want to get the value of the variable
+from the system variable pool.
+:p.:xph.SHARED:exph. specifies that you want to get the value of the variable
+from the shared variable pool.
+:p.:xph.HANDLE:exph. indicates that you want to get the value of the variable
+from the variable pool associated with the specified handle.
+:p.If options :xph.SYSTEM:exph., :xph.SHARED:exph., and :xph.HANDLE:exph. are
+not specified, the value of the variable will be retrieved from the variable
+pool associated with the handle of the process that submitted the request
+unless the request came from another machine, in which case the variable will
+be retrieved from the system variable pool.
+:p.:xph.VAR:exph. specifies the name of the variable whose value you want to get.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from GET are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain the value of the variable.
+:h4.Examples
+:p.
+:ul.
+:li.Goal&colon. Get the value of the variable WebServer from the system
+variable pool
+.br
+:hp2.Request::ehp2.&nbsp; :xph.GET SYSTEM VAR WebServer:exph.
+:p.
+:li.Goal&colon. Get the value of the varible TestDirectory from the shared
+variable pool
+.br
+:hp2.Request::ehp2.&nbsp; :xph.GET SHARED VAR TestDirectory:exph.
+:p.
+:li.Goal&colon. Get the value of the variable "Good String" from the process
+local variable pool
+.br
+:hp2.Request::ehp2.&nbsp; :xph.GET VAR "Good String":exph.
+:p.
+:li.Goal&colon. Get the value of the variable ConfigData from the variable pool
+associated with handle 59
+.br
+:hp2.Request::ehp2.&nbsp; :xph.GET HANDLE 59 VAR ConfigData:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.variable service
+:h3.LIST
+:p.LIST will return a list of all variables and their values.
+:h4.Syntax
+:xmp.
+LIST &lbrk.SYSTEM | SHARED | HANDLE <Handle> | ASHANDLE <Handle> | REQUEST &lbrk.<Number>&rbrk.&rbrk.
+:exmp.
+:p.:xph.SYSTEM:exph. specifies that you want the list of variables from the
+system variable pool only.
+:p.:xph.SHARED:exph. specifies that you want the list of variables from the
+shared variable pool only.
+:p.:xph.HANDLE:exph. specifies that you want the list of variables from the 
+handle variable pool only.
+:p.:xph.ASHANDLE:exph. indicates that you want the list of a merged set of 
+variables from the specified handle's variable pool, its system's shared 
+variable pool, and its system's system variable pool. Variables in a pool 
+earlier in the list override variables in a pool later in the list.
+:p.:xph.REQUEST:exph. with a request number indicates that you want a list of a merged set 
+of variables which will use variables from the originating handle's pool associated with the 
+request number, the originating system's shared pool, the local system's shared pool, and the 
+local system's system pool if the request came from remote; otherwise, will use the originating 
+handle's pool associated with the request number, the local system's shared pool, and the local 
+system's system pool if the request came from local. Variables in a pool earlier in the list 
+override variables in a pool later in the list. 
+:p.If a LIST REQUEST request is made without specifying a request number, the list is 
+constructed in the context of the LIST REQUEST request, itself.
+:p.If a LIST request is made without specifying :xph.SYSTEM:exph., :xph.SHARED:exph., 
+:xph.HANDLE:exph., :xph.ASHANDLE:exph., and :xph.REQUEST:exph., the behavior will be 
+identical to a LIST REQUEST request being made with no request number specified.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Var/VarInfo>:exph. with an entry for each variable.
+The map is defined as follows: 
+:table cols='* * * 3*'.
+:tcap.Definition of map class STAF/Service/Var/VarInfo
+:tnote text='Description'.This map class represents the variables.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.<Variable Name>
+:c.<Variable Name>
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+This map is dynamically generated with the key being a variable name and the
+value being the value for the variable.
+:etnote.
+:etable.
+:p.
+If the request is submitted from the command line, the result,  
+in default format, could look like:
+:xmp.
+Bad String                      : SYS3175
+Good String                     : Command completed successfully
+STAF/Config/BootDrive           : C:
+STAF/Config/CodePage            : IBM-437
+STAF/Config/ConfigFile          : C:\staf\bin\STAF.cfg
+STAF/Config/DefaultAuthenticator: AuthSample
+STAF/Config/DefaultInterface    : tcp
+STAF/Config/InstanceName        : STAF
+STAF/Config/Machine             : client1.company.com
+STAF/Config/MachineNickname     : client1
+STAF/Config/Mem/Physical/Bytes  : 804175872
+STAF/Config/Mem/Physical/KB     : 785328
+STAF/Config/Mem/Physical/MB     : 766
+STAF/Config/OS/MajorVersion     : 5
+STAF/Config/OS/MinorVersion     : 0
+STAF/Config/OS/Name             : Win2000
+STAF/Config/OS/Revision         : 2195
+STAF/Config/Processor/NumAvail  : 1
+STAF/Config/Sep/Command         : &
+STAF/Config/Sep/File            : \
+STAF/Config/Sep/Line            :
+
+STAF/Config/Sep/Path            : ;
+STAF/Config/STAFRoot            : C:\STAF
+STAF/Config/StartupTime         : 20080421-14:15:37
+STAF/DataDir                    : C:\STAF\data\STAF
+STAF/Env/ALLUSERSPROFILE        : C:\Documents and Settings\All Users
+STAF/Env/APPDATA                : C:\Documents and Settings\Administrator\Application Data
+STAF/Env/CLASSPATH              : .;C:\STAF\lib\JSTAF.jar
+STAF/Env/CommonProgramFiles     : C:\Program Files\Common Files
+STAF/Env/COMPUTERNAME           : CLIENT1
+STAF/Env/ComSpec                : C:\WINNT\system32\cmd.exe
+STAF/Env/CVS_RSH                : ssh
+STAF/Env/HOMEDRIVE              : C:
+STAF/Env/HOMEPATH               : \Documents and Settings\Administrator
+STAF/Env/INCLUDE                : C:\Program Files\ObjREXX\API
+STAF/Env/LIB                    : C:\Program Files\ObjREXX\API
+STAF/Env/LOGONSERVER            : \\CLIENT1
+STAF/Env/NUMBER_OF_PROCESSORS   : 1
+STAF/Env/OS                     : Windows_NT
+STAF/Env/Os2LibPath             : C:\WINNT\system32\os2\dll;
+STAF/Env/Path                   : C:\ibmjdk1.4.2\bin;C:\STAF\bin;C:\WINNT\system32;C:\WINNT;C:\WINNT\System32\Wbem;C:\cygwin\bin;
+STAF/Env/PATHEXT                : .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.RB;.RBW
+STAF/Env/PD_SOCKET              : 6874
+STAF/Env/PDBASE                 : C:\PROGRA~1\IBM\INFOPR~1
+STAF/Env/PDHOST                 :
+STAF/Env/PROCESSOR_ARCHITECTURE : x86
+STAF/Env/PROCESSOR_IDENTIFIER   : x86 Family 15 Model 2 Stepping 7, GenuineIntel
+
+STAF/Env/PROCESSOR_LEVEL        : 15
+STAF/Env/PROCESSOR_REVISION     : 0207
+STAF/Env/ProgramFiles           : C:\Program Files
+STAF/Env/PROMPT                 : $P$G
+STAF/Env/SOUNDPATH              : C:\WINNT
+STAF/Env/SystemDrive            : C:
+STAF/Env/SystemRoot             : C:\WINNT
+STAF/Env/TEMP                   : C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp
+STAF/Env/TMP                    : C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp
+STAF/Env/USERDOMAIN             : CLIENT1
+STAF/Env/USERNAME               : Administrator
+STAF/Env/USERPROFILE            : C:\Documents and Settings\Administrator
+STAF/Env/windir                 : C:\WINNT
+STAF/Service/NC/Persist         : True
+STAF/Version                    : 3.3.0
+WebServer                       : testsrv1.test.austin.ibm.com
+:exmp.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve the list of system variables
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST SYSTEM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the list of shared variables
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST SHARED:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the list of variables associated with handle 54
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST HANDLE 54:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the combined list of global variables and variables
+associated with handle 62
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST ASHANDLE 62:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the combined list of variables from originating handle's 
+pool associated with request number 48, the local system's shared pool, and the 
+local system's system pool if the request came from local; otherwise, from the 
+originating handle's pool associated with request number 48, the originating 
+system's shared pool, the local system's shared pool, and the local system's 
+system pool if the request came from remote.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST REQUEST 48:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the combined list of variables from originating handle's 
+pool associated with the current request's request number, the local system's 
+shared pool, and the local system's system pool if the request came from local; 
+otherwise, from the originating handle's pool associated with the current request's
+request number, the originating system's shared pool, the local system's shared pool, 
+and the local system's system pool if the request came from remote.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST REQUEST:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the combined list of variables from originating handle's 
+pool associated with the current request's request number, the local system's 
+shared pool, and the local system's system pool if the request came from local; 
+otherwise, from the originating handle's pool associated with the current request's
+request number, the originating system's shared pool, the local system's shared pool, 
+and the local system's system pool if the request came from remote.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.LIST:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.RESOLVE
+:i3.variable service
+:h3 id=varResolve.RESOLVE
+:p.RESOLVE allows you to have all variable references in a string resolved to
+their values. A variable reference is denoted by surrounding the variable in
+curly braces, for example, {WebServer}.  Recursive and compound variable
+references are allowed (see the examples).
+:p.Note that you may RESOLVE multiple strings with a single request.
+:p.
+Because of this special significance of "{", if you do not want variable
+substitution performed, use a caret, "^", as an escape character for "{"
+and "^", or specify the IGNOREERRORS option.
+Note that a caret cannot be used as an escape character within a variable reference
+(see the examples).
+:p.
+:h4.Syntax
+:xmp.
+RESOLVE &lbrk.SYSTEM | SHARED | HANDLE <Handle> | ASHANDLE <Handle> | REQUEST &lbrk.<Number>&rbrk.&rbrk. 
+        STRING <String> &lbrk.STRING <String>&rbrk.... [IGNOREERRORS]
+:exmp.
+:p.:xph.SYSTEM:exph. specifies that only variables from the system variable
+pool should be used to resolve a variable reference.
+:p.:xph.SHARED:exph. specifies that only variables from the shared variable
+pool should be used to resolve a variable reference.
+:p.:xph.HANDLE:exph. specifies that only variables from the handle variable
+pool should be used to resolve a variable reference. 
+:p.:xph.ASHANDLE:exph. indicates the variable reference should try to be resolved from
+the specified handle's variable pool, its system's shared variable pool, and its 
+system's system variable pool. Variables in a pool earlier in the list override 
+variables in a pool later in the list.
+:p.:xph.REQUEST:exph. with a request number indicates the variable reference 
+should try to be resolved from the originating handle's pool associated with 
+the specified request number, the originating system's shared pool, the local 
+system's shared pool, and the local system's system pool if the request came from 
+remote; otherwise, will use the originating handle's pool associated with the 
+specified request number, the local system's shared pool, and the local system's 
+system pool if the request came from local. Variables in a pool earlier in the list 
+override variables in a pool later in the list.
+:p.If the :xph.REQUEST:exph. option is specified without specifying a request number,
+variable resolution is done in the context of the RESOLVE request itself.
+Also, if you don't specify the :xph.SYSTEM:exph., :xph.SHARED:exph., :xph.HANDLE:exph.,
+:xph.ASHANDLE:exph., or :xph.REQUEST:exph. option, the behavior will be the
+same as when you specify the :xph.REQUEST:exph. option without specifiying a
+request number.
+:p.:xph.STRING:exph. specifies a string that may contain one or more variable
+references.
+:p.:xph.IGNOREERRORS:exph. specifies to not assume that every "{" in the
+string being resolved denotes a reference to a STAF variable.
+When using this option, you will not get a RC 13 (Variable Does Not Exist) or
+RC 15 (Invalid Resolve String) error because:
+:ul compact.
+:li.if a "{" does not denote a reference to a STAF variable, it will be
+left "as is" instead of returning RC 13, or
+:li.if a "{" has no matching closing "}", then it will be
+left "as is" instead of returning RC 15.
+:eul.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from RESOLVE are documented in :hdref refid=retcode..
+
+:h4.Results
+
+:p.On successful return, the result buffer will contain results based on whether
+the :xph.STRING:exph. option was specified once or multiple times:
+:ul.
+:li.If only one string is specified to be resolved, the result buffer will contain the
+input string with all variable references resolved.
+:p.
+:li.If multiple strings are specified to be resolved, the result buffer will contain a
+marshalled :xph.<List> of <Map&colon.STAF/Service/Var/ResolveString>:exph. representing
+a list of the strings with all variable references resolved.
+The entries in the list will be in the same order that the strings to be resolved
+are specified.  The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Var/ResolveString
+:tnote text='Description'.This map class represents a string with all variable references resolved.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.rc
+:c.RC
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:p.If all variables in the string are resolved successfully, the "RC" value will
+be '0' and the "Result" will contain the string with all variable references resolved.
+Otherwise, if an error occurred resolving a string, the "RC" value will
+contain the error return code and the result will contain additional information
+on the error, such as the name of a variable that could not be resolved.
+:etnote.
+:etable.
+:eul.
+:p.
+:h4.Examples
+:p.
+For the following examples, assume the following variables are in 
+System1's system variable pool
+:xmp.
+a=Partridge
+b=Doves
+c=Hens
+d=Birds
+e=Rings
+:exmp.
+the following variables are in System1's shared variable pool
+:xmp.
+a=Happy
+b=Sleepy
+:exmp.
+the following variables are in System1's originating handle variable pool 
+:xmp.
+a=One
+:exmp.
+the following variables are in System2's system variable pool
+:xmp.
+a=Geese
+b=Swans
+c=Maids
+d=Ladies
+e=Lords
+:exmp.
+the following variables are in System2's shared variable pool
+:xmp.
+d=Grumpy
+e=Dopey
+:exmp.
+and the following variables are in the System1's variable pool associated with handle 71
+:xmp.
+a=Dogs 
+b=Cats
+:exmp.
+Let's assume the following requests are done from System1:
+:p.
+:ul.
+:li.:hp2.Request::ehp2.&nbsp; :xph.staf local var resolve string "{a} {b} {c} {d} {e}":exph.
+.br
+:hp2.Result::ehp2.&nbsp; :xph.One Sleepy Hens Birds Two:exph.
+:li.:hp2.Request::ehp2.&nbsp; :xph.staf System2 var resolve string "{a} {b} {c} {d} {e}":exph.
+.br
+:hp2.Result::ehp2.&nbsp; :xph.One Sleepy Maids Grumpy Two:exph.
+:li.:hp2.Request::ehp2.&nbsp; :xph.staf local var resolve ashandle 71 string "{a} {b} {c} {d} {e}":exph.
+.br
+:hp2.Result::ehp2.&nbsp; :xph.Dogs Cats Hens Birds Two:exph.
+:eul.
+:p.
+The following examples show the use of a caret (^) as an escape character
+for "{" and "^".  Assume the following variables are in the
+system variable pool for these examples:
+:xmp.
+h=Hi
+Hi=HI
+^Hi=Hello
+:exmp.
+:p.
+:ul.
+:li.:hp2.Request::ehp2.&nbsp; :xph.RESOLVE SYSTEM STRING "^{{h}, ^{{h}}, {{h}}, ^^{{h}}, and ^{^{h}}:exph.
+.br
+:hp2.Result::ehp2.&nbsp; :xph.{Hi, {Hi}, HI, ^HI, and {{h}}:exph.
+:p.
+:li.:hp2.Request::ehp2.&nbsp; :xph.RESOLVE SYSTEM STRING "{^{h}}":exph.
+.br
+:hp2.Result::ehp2.&nbsp; :xph.Hello:exph.
+:eul.
+:p.
+Note that {^{h}} shows that a caret cannot be used as an escape character within a
+variable reference.
+:p.
+Here's an example of resolving multiple strings in a single RESOLVE request.
+:ul.
+:li.:hp2.Goal::ehp2. Resolve three different strings in a single :xph.RESOLVE:exph. request.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.RESOLVE STRING {STAF/Version} STRING {aaa} STRING {STAF/Config/BootDrive}:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following assuming no
+variable named aaa exists:
+:xmp. 
+RC Result
+-- ----------------------------------------------------------------------------
+0  3.4.1
+13 Variable resolution failed for string: {aaa}  You are trying to resolve a va
+   riable that does not exist: aaa
+0  C:
+:exmp.
+:eul.
+:p.
+Here's an example of using the IGNOREERRORS option on a VAR RESOLVE request:
+:ul.
+:li.:hp2.Goal::ehp2. Resolve a string that contains a "{" that does not denote
+a reference to a variable,
+.br
+:hp2.Request::ehp2.  :xph.RESOLVE STRING "PythonMap = {'x': 1, 'osName': '{STAF/Config/OS/Name}'}":exph.
+.br
+:hp2.Result::ehp2.  The result could look like the following if variable
+STAF/Config/OS/Name has value "Linux":
+:xmp.
+PythonMap = {'x': 1, 'osName': 'Linux'}
+:exmp.
+:p.
+If you did not use the IGNOREERRORS option, RC 13 (Variable Does Not Exist)
+would have been returned as follows:
+:xmp.
+Error submitting request, RC: 13
+Additional info
+---------------
+Variable resolution failed for string: PythonMap = {'x': 1, 'osName': '{STAF/Config/OS/Name}'}
+
+You are trying to resolve a variable that does not exist: 'x': 1, 'osName': 'Linux'
+:exmp.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.variable service
+:h3.DELETE
+:p.DELETE will remove the given variable from the appropriate variable pool.
+:p.Note that you may DELETE multiple variables with a single request.
+:h4.Syntax
+:xmp.
+DELETE &lbrk.SYSTEM | SHARED | HANDLE <Handle>&rbrk. VAR <Name> &lbrk.VAR <Name>&rbrk....
+:exmp.
+:p.:xph.SYSTEM:exph. specifies that you want to delete the variable from the
+system variable pool.
+:p.:xph.SHARED:exph. specifies that you want to delete the variable from the
+shared variable pool.
+:p.:xph.HANDLE:exph. indicates that you want to delete the variable from the
+variable pool associated with the specified handle.
+:p.If options :xph.SYSTEM:exph., :xph.SHARED:exph., and :xph.HANDLE:exph. are
+not specified, the variable will be deleted from the variable pool associated
+with the handle of the process that submitted the request unless the request
+came from another machine, in which case the variable will be deleted from the
+system variable pool.
+:p.:xph.VAR:exph. specifies the name of the variable you want to delete.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes from DELETE are documented in :hdref refid=retcode..
+:p.If multiple variables are deleted via a single DELETE request and all
+variables were deleted successfully, the return code will be 0.  If one or
+more variables were not deleted successfully, the return code will be set
+to the return code of the first variable that could not be deleted successfully.
+Note that all variables specified will be attempted to be deleted.
+
+:h4.Results
+:p.
+If successful, the result buffer will contain no data.
+:p.
+If the request failed, the result buffer's contents are based on whether
+the :xph.VAR:exph. option was specified once or multiple times as follows:
+:ul.
+:li.If only one variable is specified to be deleted, the result buffer
+may contain additional information about the error.
+:p.
+:li.If multiple variables are specified to be deleted:
+:ul compact.
+:li.If the request failed before it was able to delete any variables (e.g. due
+to a request syntax error, insufficient trust, etc), the result buffer may
+contain additional information about the error.
+:li.Otherwise, the result buffer will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/Var/ErrorInfo>:exph. representing a list of the
+variable names and whether they were successfully deleted or not.  The entries
+in the list will be in the same order that the variables to be deleted are
+specified.  The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Var/ErrorInfo
+:tnote text='Description'.This map class represents information on whether
+a variable was successfully deleted.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:row.
+:c.rc
+:c.RC
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:p.If a variable is deleted successfully, its "RC" value will be '0' and its
+"Result" will be blank.  If an error occurred deleting a variable, its "RC"
+value will contain the error return code and its "Result" may contain
+additional information about the error,
+:etnote.
+:etable.
+:eul.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete the variable WebServer from the system variable pool.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.DELETE SYSTEM VAR WebServer:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the variable TestDirectory from the shared variable pool.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.DELETE SHARED VAR TestDirectory:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the variable "Bad String" from the process local variable pool.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.DELETE VAR "Bad String":exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the variable ConfigData from the variable pool associated
+with handle 59
+.br
+:hp2.Request::ehp2.&nbsp; :xph.DELETE HANDLE 59 VAR ConfigData:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the variables MyApp/Build# and MyApp/Version from
+the system variable pool.
+.br
+:hp2.Request::ehp2.&nbsp; :xph.DELETE SYSTEM VAR MyApp/Build# VAR MyApp/Version:exph.
+:eul.

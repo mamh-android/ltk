@@ -1,0 +1,476 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/****************************************************************************/
+/* STAF_SERVICE_INTERFACE_LEVEL:2                                           */
+/****************************************************************************/
+/* REXX Monitor Service for Software Testing Automation Framework (STAF)    */
+/* ------------------------------------------------------------------------ */
+/* Description: This program provides a means to log and query monitor      */
+/*              (status) messages.                                          */
+/*              NOTE: This version hardens the data to the disk.            */
+/* Options:                                                                 */
+/*  Log     - Log a monitor message                                         */
+/*            Args: log <message>                                           */
+/*  Query   - query a monitor message                                       */
+/*            Args: query machine <machine> handle <handle>                 */
+/*  List    - List the monitor machines or machine handles                  */
+/*  Delete  - Delete monitor files and directories                          */
+/*  Refresh - Refresh the STAF/Service/<Name> variables                     */
+/*                                                                          */
+/*  Internal data format: <totlength>YYYYMMDD-HH:MM:SS<message>             */
+/*                                                                          */
+/*  Note: This program requires RxPP (REXX pre-processor) to be used to     */
+/*        generate the executable cmd file.                                 */
+/* ------------------------------------------------------------------------ */
+/* History:                                                                 */
+/*  0.10  DHR  02/01/1998  Initial implementation                           */
+/*  0.20  DHR  02/21/1998  Added variable resolution, unique variable id    */
+/*  0.30  DHR  03/16/1998  Parser changes                                   */
+/*  0.50  DHR  03/26/1998  Added new API data structure                     */
+/*  1.10  DHR  05/05/1998  Fixed DBCS error on totalen field                */
+/*  1.50  DHR  09/15/1998  Add the new INTERFACE_LEVEL, call format, and    */
+/*                         variable naming convention                       */
+/*  1.75  DHR  09/29/1998  New RXThread package, LIST, DELETE, REFRESH      */
+/*                         and INTERFACE_LEVEL:2                            */
+/*  1.80  DHR  04/07/1999  Remove old variable name support, warn at INIT.  */
+/****************************************************************************/
+options "EXMODE ETMODE"
+
+parse source osType invokeType functionName
+
+call STAFErrorText              /* Set the STAF common error codes and text */
+ext=".mon"                      /* Monitor file extension */
+
+/* Make sure we are being called correctly */
+if invokeType \= "FUNCTION" then
+  RETURN MakeSTAFResult(STAFError.!ServiceConfigurationError)
+
+/* Call the appropriate function */
+SIGNAL VALUE TRANSLATE(functionName)
+
+/****************************************************************************/
+/* Functions                                                                */
+/****************************************************************************/
+
+/****************************************************************************/
+/* STAFServiceInit - Initializes the service                                */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The service parameters                                          */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceInit:
+
+  parse arg serviceName, serviceParms
+
+  /* Load system functions */
+  call RxFuncAdd "SysLoadFuncs", "REXXUTIL", "SysLoadFuncs"
+  call SysLoadFuncs
+
+  /* Load STAF functions */
+  call RxFuncAdd "STAFLoadFuncs", "RXSTAF", "STAFLoadFuncs"
+  call STAFLoadFuncs
+
+  /* Load the STAF RxThread functions */
+  call RxFuncAdd "RxThreadLoadFuncs", "RxThread", "RxThreadLoadFuncs"
+  call RxThreadLoadFuncs
+
+  /* Register Monitor to STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then RETURN MakeSTAFResult(STAFError.!STAFRegistrationError, ,
+    STAFError.!STAFRegistrationError.!text || ": " || RESULT)
+
+  call ProcessVars "SET"
+
+  if TRANSLATE(serviceParms) = "DELETE" then call DeleteData
+
+RETURN MakeSTAFResult(STAFError.!Ok)
+
+/****************************************************************************/
+/* STAFServiceAcceptRequest - Handles a service request from STAF           */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The name of the originating machine                             */
+/*          The registered name of the originating process                  */
+/*          The handle of the originating process                           */
+/*          The actual request string                                       */
+/*                                                                          */
+/* Returns: 0 , on success                                                  */
+/*          >0, otherwise                                                   */
+/****************************************************************************/
+STAFServiceAcceptRequest:
+
+  parse arg serviceName, thisMachine, clientMachine, clientEffective, ,
+            clientTrust, origName, origHandle, origRequest
+
+  /* Initialization */
+  version = "1.80"                               /* Current version number */
+  call LogMonErrorText                           /* Set Monitor error text */
+
+  if clientTrust = 0 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+    STAFError.!AccessDenied.!text)
+
+  /* Read in the required variables using RxThread */
+  call ProcessVars "Read"
+
+  /* Register Monitor to STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then RETURN MakeSTAFResult(STAFError.!STAFRegistrationError, ,
+    STAFError.!STAFRegistrationError.!text": "RESULT)
+
+  /* Process all the parser options */
+  parse var origRequest type .
+  type = TRANSLATE(type)
+  call InitParser
+  call AddOption "LOG", 1, "NO"
+  call AddOption "QUERY", 1, "NO"
+  call AddOption "LIST", 1, "NO"
+  call AddOption "HELP", 1, "NO"
+  call AddOption "REFRESH", 1, "NO"
+  call AddOption "DELETE", 1, "NO"
+  call AddOption "VERSION", 1, "NO"
+  call AddOptionGroup "LOG QUERY LIST HELP REFRESH DELETE VERSION", 1, 1
+  select
+    when type = "LOG" then
+    do
+      call AddOption "MESSAGE", 1, "YES"
+      call AddOption "RESOLVEMESSAGE", 1, "NO"
+      call AddOption "NORESOLVEMESSAGE", 1, "NO"
+      call AddOptionNeed "LOG", "MESSAGE"
+      call AddOptionGroup "RESOLVEMESSAGE NORESOLVEMESSAGE", 0, 1
+    end
+    when type = "QUERY" then
+    do
+      call AddOption "MACHINE", 1, "YES"
+      call AddOption "HANDLE", 1, "YES"
+      call AddOptionNeed "QUERY", "MACHINE"
+      call AddOptionNeed "QUERY", "HANDLE"
+    end
+    when type = "LIST" then
+    do
+      call AddOption "MACHINES", 1, "NO"
+      call AddOption "MACHINE", 1, "YES"
+      call AddOptionGroup "MACHINE MACHINES", 1, 1
+    end
+    when type = "REFRESH" then
+    do
+      call AddOption "VAR", 1, "NO"
+      call AddOptionNeed "REFRESH", "VAR"
+    end
+    when type = "DELETE" then
+    do
+      call AddOption "CONFIRM", 1, "NO"
+      call AddOption "BEFORE", 1, "YES"
+      call AddOptionNeed "DELETE", "CONFIRM"
+    end
+    otherwise nop
+  end
+
+  rc = ParseString(origRequest, "errorBuffer")
+  if rc \= 0 then RETURN MakeSTAFResult(STAFError.!InvalidRequestString, ,
+    STAFError.!InvalidRequestString.!text || lineSep || errorBuffer)
+
+  select
+    when type = "QUERY" then
+    do
+      if clientTrust < 2 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      filePath = directory || fileSep || ResolveVariable(optionValue("MACHINE")) || ,
+        fileSep || ResolveVariable(optionValue("HANDLE")) || ext
+      rc = FileStatus(filePath, maxRetry, "read")
+      if rc = STAFError.!Ok then                        /* Make sure file READY */
+      do
+        dataLen = c2d(charin(filePath, 1, 4),4)
+        if dataLen < 1 then
+          rc = MakeSTAFResult(errorBadLog, errorBadLog.!text)
+        else rc = MakeSTAFResult(STAFError.!Ok, charin(filePath, 5, 8) || "-" || ,
+          charin(filePath, 13, 8) || " " || charin(filePath, 21, dataLen - 16))
+      end
+      else rc = MakeSTAFResult(STAFError.!FileOpenError, "File" filePath "not found")
+    end
+    when type = "LOG" then
+    do
+      if clientTrust < 3 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+
+      directory = directory || fileSep || clientEffective
+      filePath = directory || fileSep || origHandle || ext
+
+      if \CreatePath(directory, fileSep) then  /* Check/Create directory(s) */
+      do
+        status = FileStatus(filePath, maxRetry, "write")
+        if status \= 2 then
+        do
+
+          message = OptionValue("MESSAGE")
+
+          if optionTimes("RESOLVEMESSAGE") > 0 then resolveMessage = 1
+          else
+            if optionTimes("NORESOLVEMESSAGE") > 0
+            then resolveMessage = 0
+
+          if resolveMessage then
+          do
+            STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE" STAFWrapData(message))
+            if STAFRC = 0 then message = STAFResult
+          end
+
+          timestamp = date('s')||time()
+          dataLen = DBWIDTH(message) + DBWIDTH(timestamp)
+          if dataLen > maxSize then
+          do
+            message = left(message, maxSize)
+            dataLen = DBWIDTH(message) + DBWIDTH(timestamp)
+          end
+
+          options "NOEXMODE NOETMODE"
+          data = d2c(dataLen,4) || timestamp || message
+          options "EXMODE ETMODE"
+
+          rc = charout(filePath, data, 1)
+          if rc = STAFError.!Ok then rc = MakeSTAFResult(STAFError.!Ok)
+          else rc = MakeSTAFResult(STAFError.!FileWriteError, ,
+            STAFError.!FileWriteError.!text || ": " filePath)
+        end
+        else rc = MakeSTAFResult(STAFError.!FileOpenError, "File" filePath "not ready")
+      end
+      else rc = MakeSTAFResult(STAFError.!FileOpenError, "Error creating directory" directory)
+    end
+    when type = "LIST" then
+    do
+      if clientTrust < 2 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      if optionTimes("MACHINES") > 0 then
+      do
+        listFileOpts = "DT"
+        listDir = directory || fileSep"*"
+      end
+      else
+      do
+        listFileOpts = "FT"
+        listDir = directory || fileSep || ResolveVariable(optionValue("MACHINE")) || fileSep"*"ext
+      end
+      call SysFileTree listDir, stem, listFileOpts
+      if stem.0 = 0 then RETURN MakeSTAFResult(STAFError.!FileOpenError, ,
+        "No monitor data found")
+      rc = MakeSTAFResult(STAFError.!Ok)
+      do i = 1 to stem.0
+        parse var stem.i listDateTime listSize . listFile
+        listFirst = LASTPOS(fileSep,listfile) + 1
+        if optionTimes("MACHINES") > 0 then
+        do
+          listLength = LENGTH(listFile) - listFirst + 1
+          listRest = lineSep
+          listFile = SUBSTR(listFile, listFirst, listLength)
+        end
+        else
+        do
+          listLength = LASTPOS('.', listFile) - listFirst
+          listRest = MakeStandardDate(SUBSTR(listDateTime,4,2) || ,
+            SUBSTR(listDateTime, 7, 2) || SUBSTR(listDateTime, 1, 2)) || "-" || ,
+            SUBSTR(listDateTime, 10, 2) || ":" || SUBSTR(listDateTime, 13, 2) || ,
+            ":00  Size="listSize || lineSep
+          listFile = SUBSTR(SUBSTR(listFile, listFirst, listLength), 1, 25, '.')
+        end
+        rc = rc || listFile"  "listRest
+      end
+    end
+    when type = "HELP" then
+    do
+      rc = MakeSTAFResult(STAFError.!Ok, "STAF Monitor Help" || lineSep || lineSep || ,
+        "LOG     MESSAGE <Message> [RESOLVEMESSAGE NORESOLVEMESSAGE]" || lineSep || ,
+        "QUERY   MACHINE <Machine> HANDLE <Handle>" || lineSep || ,
+        "LIST    <MACHINES | [MACHINE <Machine>]" || lineSep || ,
+        "DELETE  [BEFORE <Date>] CONFIRM" || lineSep || ,
+        "REFRESH VAR" || lineSep || ,
+        "HELP")
+    end
+    when type = "REFRESH" then
+    do
+      if clientTrust < 3 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      rc = MakeSTAFResult(ProcessVars("SET"))
+    end
+    when type = "VERSION" then RETURN MakeSTAFResult(STAFError.!Ok, version)
+    when type = "DELETE" then
+    do
+      if clientTrust < 4 then RETURN MakeSTAFResult(STAFError.!AccessDenied, ,
+        STAFError.!AccessDenied.!text)
+      RETURN DeleteData(ResolveVariable(optionValue("BEFORE")))
+    end
+    otherwise RETURN MakeSTAFResult(STAFError.!InvalidRequestString, ,
+      STAFError.!InvalidRequestString.!text || lineSep || "Use HELP for syntax")
+  end
+
+RETURN rc
+/* End of STAFServiceAcceptRequest */
+
+/****************************************************************************/
+/* ProcessVars - Using the RxThread functions, determine the STAF           */
+/*               variables need for Monitor.                                */
+/*                                                                          */
+/* Accepts: action, serviceName                                             */
+/* Returns: 0                                                               */
+/****************************************************************************/
+ProcessVars: PROCEDURE EXPOSE lineSep fileSep directory maxRetry maxSize,
+                              resolveMessage STAFHandle STAFResult,
+                              serviceName STAFError.
+
+  parse arg action
+
+  me     = "STAF/Service/"serviceName"/"  /* New variable style >= 1.75  */
+  oldMe  = "STAFMonitor/"                 /* Old variable style < 1.75   */
+  rxPool = me"Pool"                       /* RxThread pool name          */
+
+  if translate(action) = "READ" then
+  do
+    lineSep        = RxThreadValue(rxPool, "lineSep")
+    fileSep        = RxThreadValue(rxPool, "fileSep")
+    directory      = RxThreadValue(rxPool, "directory")
+    maxRetry       = RxThreadValue(rxPool, "maxRetry")
+    maxSize        = RxThreadValue(rxPool, "maxSize")
+    resolveMessage = RxThreadValue(rxPool, "resolveMessage")
+  end
+  else
+  do
+    /* Determine Line Seperator */
+    STAFRC = STAFSubmit("LOCAL", "VAR", "GLOBAL RESOLVE {STAF/Config/Sep/Line}")
+    if STAFRC = 0 then lineSep = STAFResult
+    else lineSep = x2c("0D0A")
+    call RxThreadValue rxPool, "lineSep", lineSep
+
+    /* Determine File Seperator */
+    STAFRC = STAFSubmit("LOCAL", "VAR", "GLOBAL RESOLVE {STAF/Config/Sep/File}")
+    if STAFRC = 0 then fileSep = STAFResult
+    else fileSep = "\"
+    call RxThreadValue rxPool, "fileSep", fileSep
+
+    /* Determine directory */
+    STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"me"Directory}")
+    if STAFRC = 0 then directory = STAFResult
+    else
+    do
+      STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {STAF/Config/BootDrive}")
+      if STAFRC = 0 then
+        directory = STAFResult || fileSep || "STAF" || fileSep || serviceName
+      else EXIT MakeSTAFResult(STAFError.!VariableDoesNotExist, ,
+        STAFError.!VariableDoesNotExist.!text || ": STAF/Config/BootDrive")
+      STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"oldMe"Directory}")
+      if STAFRC = 0 then
+        call DisplayOldVarErrorMessage "Directory", directory
+    end
+    call RxThreadValue rxPool, "directory", directory
+
+    /* Determine maximum times to retry reading/writing a monitor record */
+    max = 5
+    STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"me"Retry}")
+    if STAFRC = 0 then maxRetry = STAFResult
+    else
+    do
+      maxRetry = max
+      STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"oldMe"Retry}")
+      if STAFRC = 0 then
+        call DisplayOldVarErrorMessage "Retry", maxRetry
+    end
+    if \datatype(maxRetry,'W') then maxRetry = max
+    call RxThreadValue rxPool, "maxRetry", maxRetry
+
+    /* Determine maximum record size for monitor data */
+    max = 1024
+    STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"me"MaxRecordSize}")
+    if STAFRC = 0  then maxSize = STAFResult
+    else
+    do
+      maxSize = max
+      STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"oldMe"MaxRecordSize}")
+      if STAFRC = 0 then
+        call DisplayOldVarErrorMessage "MaxRecordSize", maxSize
+    end
+    if \datatype(maxSize,'W') then maxSize = max
+    call RxThreadValue rxPool, "maxSize", maxSize
+
+    /* Determine message resolution option */
+    resolveMessage = 0
+    STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"me"ResolveMessage}")
+    if STAFRC = 0 then
+      if STAFResult = 1 then resolveMessage = 1
+      else resolveMessage = 0
+    else
+    do
+      STAFRC = STAFSubmit("LOCAL", "VAR", "RESOLVE {"oldMe"ResolveMessage}")
+      if STAFRC = 0 then
+        call DisplayOldVarErrorMessage "ResolveMessage", resolveMessage
+    end
+    call RxThreadValue rxPool, "resolveMessage", resolveMessage
+
+  end  /* if not READ */
+
+RETURN STAFError.!Ok
+
+/****************************************************************************/
+/* DeleteData - Purge monitor files and directories.                        */
+/*                                                                          */
+/* Accepts: nothing                                                         */
+/* Returns: 0                                                               */
+/****************************************************************************/
+DeleteData: PROCEDURE EXPOSE ext fileSep directory ,
+                            errorDate errorDate.!text STAFError.!Ok
+
+  parse arg beforeDate
+
+  if beforeDate > '' then
+  do
+    if TRANSLATE(beforeDate) = "TODAY" then beforeDate = date('S')
+    else
+    do
+      call EvalDate(beforeDate)
+      parse var result evalDate_rc evalDate_date
+      if evalDate_rc = 0 then beforeDate = evalDate_date
+      else EXIT MakeSTAFResult(errorDate, errorDate.!text || beforeDate || ,
+        " MM/DD/YY or YYYYMMDD")
+    end
+  end
+
+  call SysFileTree directory || fileSep || "*"ext, stem, "SF"
+  do i = 1 to stem.0
+    parse var stem.i listDate listTime listSize . listFile
+    if beforeDate > '' then
+    do
+      call EvalDate(listDate)
+      parse var result evalDate_rc evalDate_date
+      if evalDate_date < beforeDate then call SysFileDelete STRIP(listFile)
+    end
+    else call SysFileDelete STRIP(listFile)
+  end
+
+  call SysFileTree directory || fileSep || "*", stem, "SDO"
+  do i = 1 to stem.0
+    call SysRmDir stem.i
+  end
+
+RETURN MakeSTAFResult(STAFError.!Ok)
+
+/****************************************************************************/
+/* STAFServiceTerm - Terminates the service                                 */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceTerm:
+
+  parse arg serviceName
+
+RETURN MakeSTAFResult(STAFError.!Ok)
+
+/******************************************************************************/
+/* From here on are imported functions, DO NOT CHANGE ANYTHING BELOW HERE     */
+/******************************************************************************/
+#From STAFUtil Import MakeSTAFResult STAFErrorText STAFWrapData
+#From Misc     Import CreatePath
+#From LogMon   Import LogMonErrorText ResolveVariable FileStatus
+#From LogMon   Import DisplayOldVarErrorMessage
+#From STAFCPar Import All
+#From Date     Import All

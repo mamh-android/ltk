@@ -1,0 +1,172 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2012
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : ConfigSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Misc Service
+.*
+.*  Detail:
+.*
+.*     This file describes the STAF Config Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.config service
+:ih1.services
+:i2.config service
+:h2 id=configsrv.Config Service
+:h3.Description
+:p.The CONFIG service is one of the internal STAF services.  It provides
+a way to save the current STAF configuration to a file, reflecting any
+changes made since STAFProc was started.
+:ul compact.
+:li.SAVE - Saves the current STAF configuration
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SAVE
+:i3.config service
+:h3.SAVE
+:p.SAVE will display the current STAF configuration data or save it to a file,
+reflecting any changes made since STAFProc was started.  This includes any
+dynamic changes made by:
+:ul compact.
+:li.Adding/removing services dynamically via a :xph.SERVICE ADD:exph. request
+:li.Changing any operational settings via a :xph.MISC SET:exph.,
+:xph.PROCESS SET:exph., :xph.FS SET:exph., or :xph.DIAG ENABLE/DISABLE:exph.
+request.
+:li.Changing any trust settings via a :xph.TRUST SET:exph. request.
+:li.Changing any trace settings via the :xph.TRACE:exph. service.
+:li.Changing any shutdown notifications via the :xph.SHUTDOWN:exph. service's
+:xph.NOTIFY REGISTER/UNREGISTER:exph. requests.
+:li.Setting any system or shared variables via the :xph.VAR:exph. service.
+Note that you can choose instead to save the same system/shared variables that
+were set in the STAF configuration file used when starting STAFProc.
+:eul.
+:h4.Syntax
+:xmp.
+SAVE [FILE <Name>] [VARS <Current | Startup>]
+:exmp.
+:p.:xph.FILE:exph. specifies that name of a file where you want to save
+the current STAF configuration data.  This file cannot already exist.
+&varres.
+:p.:xph.VARS:exph. specifies which STAF system and shared variables to save.
+&varres.  Recognized values are the following: 
+:ul compact.
+:li.Current: This indicates to use the current STAF variables that exist in
+the system and shared variable pools
+:li.Startup: This indicates to use the STAF system and shared variables
+that were set via SET VAR staetments in the STAF configuration file used
+when starting STAFProc.
+:eul.
+
+:h4.Security
+:p.&seclvl. 3.
+:p.However, if the :xph.DEFAULTAUTHPASSWORD:exph. has been set for the
+:xph.PROCESS:exph. service, this command requires trust level 5.
+:h4.Return Codes
+:p.All return codes from SAVE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, if the :xph.FILE:exph. option is not specified,
+the result buffer will contain the current STAF configuration data.
+:p.On successful return, if the :xph.FILE:exph. option is specified,
+the result buffer will contain no data and the current STAF configuration data
+will be saved to the specified file name.
+:h4.Examples
+:p.
+:ul compact.
+:li.:hp2.Goal::ehp2. Save the current STAF configuration data to file
+/tmp/mySTAF.cfg.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.SAVE FILE /tmp/mySTAF.cfg:exph.
+:p.:hp2.Results::ehp2.
+:xmp.
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Save the current STAF configuration data to file
+/tmp/mySTAF.cfg using the STAF system/shared variables that were set
+at startup in the original STAF configuration file.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.SAVE FILE /tmp/mySTAF.cfg VARS Startup:exph.
+:p.:hp2.Results::ehp2.
+:xmp.
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Display the current STAF configuration data.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.SAVE:exph.
+:p.:hp2.Results::ehp2.
+:xmp.
+# ---------------------------------------------------------------------
+# STAF Configuration File
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# Tracing
+# ---------------------------------------------------------------------
+
+TRACE ENABLE ALL SERVICES
+
+TRACE ENABLE TRACEPOINTS "ERROR WARNING DEPRECATED DEBUG"
+
+# ---------------------------------------------------------------------
+# Variables
+# ---------------------------------------------------------------------
+
+SET SYSTEM VAR STAFDemo/JavaAppClassPath=C:\STAF\lib\JSTAF.zip;C:\STAF\samples\demo\STAFDemo.jar;
+SET SYSTEM VAR STAFDemo/JavaAppCommand=javaw.exe
+
+# ---------------------------------------------------------------------
+# Operational Parameters
+# ---------------------------------------------------------------------
+
+SET MAXQUEUESIZE 1000
+SET MAXRETURNFILESIZE 5120
+
+# ---------------------------------------------------------------------
+# Interfaces (Connection Providers)
+# ---------------------------------------------------------------------
+
+INTERFACE ssl LIBRARY STAFTCP OPTION ConnectTimeout=5000 OPTION Port=6550 \
+    OPTION Protocol=IPv4 OPTION Secure=Yes
+
+INTERFACE tcp LIBRARY STAFTCP OPTION ConnectTimeout=5000 OPTION Port=6500 \
+    OPTION Protocol=IPv4 OPTION Secure=No
+
+# ---------------------------------------------------------------------
+# Trust Levels
+# ---------------------------------------------------------------------
+
+TRUST LEVEL 5 MACHINE *://client1.mycompany.com
+TRUST LEVEL 5 MACHINE *://client2.mycompany.com
+TRUST LEVEL 5 MACHINE *://server1.mycompany.com
+TRUST LEVEL 5 MACHINE local://local
+
+# ---------------------------------------------------------------------
+# Service Loader Service Registrations
+# ---------------------------------------------------------------------
+
+SERVICELOADER LIBRARY STAFDSLS
+
+# ---------------------------------------------------------------------
+# Service Registrations
+# ---------------------------------------------------------------------
+
+SERVICE STAX LIBRARY JSTAF EXECUTE C:\STAF\services\STAX.jar \
+    OPTION JVMName=STAX OPTION J2=-Xmx512m \
+    PARMS "CLEARLOGS Enabled FILECACHEALGORITHM LFU"
+
+SERVICE EVENT LIBRARY JSTAF EXECUTE C:\STAF\services\STAFEvent.jar \
+    OPTION JVMName=STAX
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*

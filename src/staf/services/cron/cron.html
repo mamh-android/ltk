@@ -1,0 +1,1966 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002, 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+***************************************************************************
+-->
+
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <meta name="Author" content="David Bender">
+   <title>Cron Service User's Guide</title>
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1>
+Cron Service User's Guide</h1>
+<b>Version 3.4.0</b>
+<p><b>Last updated: May 26, 2011</b>
+<p>
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Overview" href="#Header_Overview"><b>Overview</b></a>
+<p>
+<a name="ToC_Installation" href="#Header_Installation"><b>Installation and Configuration</b></a>
+<p>
+<a name="ToC_RequestSyntax" href="#Header_RequestSyntax"><b>Request Syntax</b></a>
+  <menu>
+  <li><a name="ToC_Register" href="#Header_Register">REGISTER</a></li>
+  <li><a name="ToC_Unregister" href="#Header_Unregister">UNREGISTER</a></li>
+  <li><a name="ToC_List" href="#Header_List">LIST</a></li>
+  <li><a name="ToC_Trigger" href="#Header_Trigger">TRIGGER</a></li>
+  <li><a name="ToC_Enable" href="#Header_Enable">ENABLE</a></li>
+  <li><a name="ToC_Disable" href="#Header_Disable">DISABLE</a></li>
+  <li><a name="ToC_Version" href="#Header_Version">VERSION</a></li>
+  <li><a name="ToC_Help" href="#Header_Help">HELP</a></li>
+  </menu>
+<p>
+<a name="ToC_Persistent" href="#Persistent_Registration_Data"><b>Persistent Registration Data</b></a>
+<p>
+<a name="ToC_Logging" href="#Header_Logging"><b>Service Logging</b></a>
+<p>
+<a name="ToC_PythonVars" href="#PythonVars"><b>Using Python</b></a>
+<p>
+<a name="ToC_CronVariables" href="#Header_CronVariables"><b>Cron Python Variables</b></a>
+<p>
+<a name="ToC_CronUI" href="#Header_CronUI"><b>Cron User Interface (CronUI)</b></a>
+  <menu>
+  <li><a name="ToC_UIUsing" href="#Header_UIUsing">Using the CronUI</a>
+  <li><a name="ToC_UINewReg" href="#Header_UINewReg">Submit a New Registration</a>
+  <li><a name="ToC_UIRegExample" href="#Header_UIRegExample">Registration Example using Python and Prepare Script</a>
+  <li><a name="ToC_UIEditReg" href="#Header_UIEditReg">Edit a Registration</a>
+  <li><a name="ToC_UICopyReg" href="#Header_UICopyReg">Copy a Registration</a>
+  <li><a name="ToC_UITriggerReg" href="#Header_UITriggerReg">Trigger a Registration</a>
+  <li><a name="ToC_UIViewLog" href="#Header_UIViewLog">View the Service Log</a>
+  <li><a name="ToC_UIDeleteLog" href="#Header_UIDeleteLog">Delete the Service Log</a>
+  </menu>
+<p>
+<A name=ToC_Errors href="#Errors" ><b>Cron Error Codes</b></A>
+<p>
+<a name="ToC_References" href="#Header_References"><b>Appendix A: References</b></a>
+<p>
+<a name="ToC_CPythonDiffs" href="#Header_CPythonDiffs"><b>Appendix B: Jython and CPython Differences</b></a>
+<p>
+<a name="ToC_Licenses" href="#Header_Licenses"><b>Appendix C: Licenses and Acknowledgements</b></a>
+<p>
+
+<hr>
+<h1><b><a name="Header_Overview" href="#ToC_Overview">Overview</a></b></h1>
+
+The Cron service allows you to register STAF commands that will be executed
+at a specified time interval(s).  The Cron service also provides a User Interface
+to simplify interaction with the Cron service
+<p>
+Note that Cron registration information is persistent data. This means
+that if you register with the Cron Service, if you shutdown STAF and restart
+it (even if you reboot the machine), the prior registration information
+will still be active. When STAF starts, it reads in the previous Cron registration
+information, and will execute the registered STAF commands at the specified
+time interval(s).
+<p>
+Note that the Cron service uses its machine's Operating System date/time
+information to determine the current date/time in relation to the registered
+requests.&nbsp; Users of the Cron service must ensure that the machine
+on which the Cron service is running has the correct Operating System date/time
+(and that it correctly updates the current date/time relative to Daylight
+Savings Time).
+<p>
+<hr>
+
+<h1><b><a name="Header_Installation" href="#ToC_Installation">Installation and Configuration</a></b></h1>
+
+<ol>
+<li>Install Java 1.5 (aka 5.0) or later.
+<p>
+<li>Install STAF Version 3.3.3 or later by following the
+installation instructions in the STAF documentation.
+<p>
+<li>Install the Cron service by downloading the CronV340.zip/tar
+file from <a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+into a local directory (e.g. C:/STAF/services or /usr/local/staf/services) and extracting it.
+<p>
+<li>Configure the Cron service by adding the following statement to
+your STAF configuration file:
+<pre>
+SERVICE &lt;Name> LIBRARY JSTAF EXECUTE &lt;Cron Jar File Name>
+               [OPTION &lt;Name[=Value]>]... 
+               [PARMS OLDVARRESOLUTION]
+</pre>
+<p>where:
+<ul>
+<li><tt>SERVICE</tt> specifies the name by which the Cron service will be known on this machine.</li>
+<p>
+<li><tt>EXECUTE</tt> specifies the fully qualified name of the STAFCron.jar file.
+On Windows systems, this might be <tt>C:/STAF/services/cron/STAFCron.jar</tt>.
+On Unix systems, this might be <tt>/usr/local/staf/services/cron/STAFCron.jar</tt>.
+This option will resolve STAF variables, so you could use the <tt>STAF/Config/STAFRoot</tt>
+variable to specify the jar file name in a platform independent manner such as
+<tt>{STAF/Config/STAFRoot}/services/cron/STAFCron.jar</tt>.</li>
+<p>
+<li><tt>OPTION</tt> specifes a configuration option that will be passed on to the
+JSTAF Java service proxy library.  This is typically used by service proxy libraries
+to further control the interface to the actual service implementation.
+You may specify multiple <tt>OPTIONs</tt> for a given service.  See the STAF User's Guide
+for more information on options for the JSTAF Java service proxy library.</li>
+<p>
+<li><tt>OLDVARRESOLUTION</tt> specifies to perform the old way of variable resolution
+(e.g. the way variables resolution was done prior to Cron V3.3.1).
+This means that on a <tt>REGISTER</tt> request, options <tt>MACHINE</tt>,
+<tt>SERVICE</tt>, and <tt>REQUEST</tt> will resolve STAF variables when the
+<tt>REGISTER</tt> request is submitted (which means the variables are resolved on the
+Cron service machine).  Note that in Cron V3.3.1, these options were
+changed to not resolve STAF variables at the time when a <tt>REGISTER</tt> request is
+submitted so that STAF variables will be resolved when the STAF service request is
+submitted.</li>
+</ul>    
+<p>
+<b>Examples:</b>
+<p>
+<tt>SERVICE Cron LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/cron/STAFCron.jar</tt>
+<p>
+<tt>SERVICE Cron LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/cron/STAFCron.jar \</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OPTION JVMName=Cron OPTION JVM=C:\j2sdk1.5.0\bin\java</tt>
+<p>
+<tt>SERVICE Cron LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/cron/STAFCron.jar PARMS OLDVARRESOLUTION</tt>
+<p>
+</ol>
+
+<hr>
+<h1><b><a name="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></b></h1>
+
+The CRON service provides the following requests:
+<ul>
+<li>REGISTER - Registers a STAF command to be executed at a specified time
+interval</li>
+<li>UNREGISTER - Unregisters a STAF command</li>
+<li>LIST - Lists registered STAF commands</li>
+<li>TRIGGER - Triggers a registered STAF command to be executed immediately
+(without matching the registered time triggers)
+</li>
+<li>
+ENABLE - Enables a STAF command.
+</li>
+<li>
+DISABLE - Disables a STAF command.
+</li>
+<li>HELP - Displays a list of requests for the Cron service and how to use
+them.</li>
+</ul>
+
+<h2><b><a name="Header_Register" href="#ToC_Register">REGISTER</a></b></h2>
+
+REGISTER registers a STAF command to be executed at a specified time interval.
+
+<h4>Syntax</h4>
+
+<tt>REGISTER&nbsp;&nbsp; MACHINE &lt;machine> | PYTHONMACHINE &lt;machine></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SERVICE &lt;service> | PYTHONSERVICE &lt;service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+REQUEST &lt;request> | PYTHONREQUEST &lt;request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[DESCRIPTION &lt;description>]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[PREPARE &lt;script>]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[MINUTE &lt;minute>] [HOUR &lt;hour>]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[DAY &lt;day>] [MONTH &lt;month>]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[WEEKDAY &lt;weekday>]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[ONCE]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+[ENABLED | DISABLED]</tt>
+<p>
+<tt>MACHINE</tt> specifies the name of the machine where the command will be executed.
+This option will not resolve STAF variables (unless the <tt>OLDVARRESOLUTION</tt>
+parameter is specified when registering the Cron service).
+When the specified time interval occurs, the value of <tt>MACHINE</tt>
+will not be evaluated as a python string.
+<p>
+<tt>PYTHONMACHINE</tt> specifies the name of the machine where the command will be executed.&nbsp;
+This option will not resolve STAF variables (unless the <tt>OLDVARRESOLUTION</tt>
+parameter is specified when registering the Cron service).
+When the specified time interval occurs, the value of <tt>PYTHONMACHINE</tt>
+will be evaluated as a python string.
+<p>
+<tt>SERVICE</tt> specifies the name of the service to be executed.
+This option will not resolve STAF variables (unless the <tt>OLDVARRESOLUTION</tt>
+parameter is specified when registering the Cron service).
+When the specified time interval occurs, the value of <tt>SERVICE</tt>
+will not be evaluated as a python string.
+<p>
+<tt>PYTHONSERVICE</tt> specifies the name of the service to be executed.
+This option will
+not resolve STAF variables.&nbsp; When the specified time interval occurs,
+the value of <tt>PYTHONSERVICE</tt>
+will be evaluated as a python string.
+<p>
+<tt>REQUEST</tt> specifies the request to be executed.
+This option will not resolve STAF variables (unless the <tt>OLDVARRESOLUTION</tt>
+parameter is specified when registering the Cron service).
+When the specified time interval occurs, the value of <tt>REQUEST</tt>
+will not be evaluated as a python string.
+This option will handle private data.
+<p>
+<tt>PYTHONREQUEST</tt> specifies the request to be executed.
+This option will not resolve STAF variables.
+When the specified time interval occurs, the value of <tt>PYTHONREQUEST</tt>
+will be evaluated as a python string.
+This option will handle private data.
+<p>
+<tt>PREPARE</tt> specifies Python code which will be executed when the
+specified time interval occurs.  This code will be executed prior to the
+<tt>PYTHONMACHINE</tt>, <tt>PYTHONSERVICE</tt>, and <tt>PYTHONREQUEST</tt>
+options being evaluated as python strings.
+This option will not resolve STAF variables.
+If the Python code sets the variable <tt>STAFCronSubmit</tt> to any string
+other than 'true', then the request will not be submitted.
+<p>
+<tt>DESCRIPTION</tt> specifies a description of the registration.
+It is for informational purposes only.
+This option will resolve STAF variables.
+<p>
+<tt>MINUTE</tt> specifies the exact minute(s) that the request executes.
+The valid values are 0 - 59.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.
+An element is either a number or an inclusive range, indicated by two numbers
+separated by a minus sign (such as 1-15).
+<p>
+<tt>HOUR</tt> specifies the exact hour(s) that the request executes.
+The valid values are 0 - 23.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.  An element
+is either a number or an inclusive range, indicated by two numbers separated
+by a minus sign (such as 8-17).
+<p>
+<tt>DAY</tt> specifies the exact day(s) that the request executes.
+The valid values are 1 - 31.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.  An element
+is either a number or an inclusive range, indicated by two numbers separated
+by a minus sign (such as 1-2).
+<p>
+<tt>MONTH</tt> specifies the exact month(s) that the request executes.
+The valid values are 1 - 12.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.  An element
+is either a number or an inclusive range, indicated by two numbers separated
+by a minus sign (such as 5-6).
+<p>
+<tt>WEEKDAY</tt> specifies the exact weekday(s) that the request executes.
+The valid values are 0 - 6 (Sunday = 0, ....).  You can also specify the
+textual weekday ("Sunday", etc.).  You can specify either * (an asterisk)
+or ANY, meaning all valid values, or a list of elements separated by commas.
+An element is either a number or an inclusive range, indicated by two numbers
+separated by a minus sign (such as 1-15).
+<p>
+<p><tt>ONCE</tt> indicates that the STAF command should only be executed one time.
+After the specified time interval has occurred and the STAF command has been
+submitted, the ID for this request will be unregistered.
+<p>
+<tt>ENABLED</tt> specifies that the command will be enabled when it is registered.
+This means that the command will be submitted when the specified time triggers occur.
+This is the default if the <tt>ENABLED</tt> or <tt>DISABLED</tt> options are not
+specified.
+<p>
+<tt>DISABLED</tt> specifies that the command will be disabled when it is registered.
+This means that the command will not be submitted when the specified time triggers
+occur.
+<p>
+<b>Note:</b>  At least one of the time interval options
+(<tt>MINUTE</tt>, <tt>HOUR</tt>, <tt>DAY</tt>, <tt>MONTH</tt>, <tt>WEEKDAY</tt>)
+must be specified in a <tt>REGISTER</tt> request.
+
+<h4>Security</h4>
+
+This request requires at least trust level 5.
+
+<h4>Results</h4>
+
+Upon successful return, the result buffer contains the Cron ID.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Execute the command "start command notepad" at 1:00AM every day.
+<p><b>Syntax:</b>&nbsp; <tt>
+STAF local CRON REGISTER MACHINE local SERVICE PROCESS REQUEST "START COMMAND notepad" HOUR 1</tt>
+<p>
+<li><b>Goal:</b> Execute the command "start command notepad" at 1:00AM every Sunday.
+<p><b>Syntax:</b>&nbsp; <tt>
+STAF local CRON REGISTER MACHINE local SERVICE PROCESS REQUEST "START COMMAND notepad" HOUR 1 WEEKDAY Sunday</tt>
+<p>
+<li><b>Goal:</b> Execute a STAX job every December 1st.
+<p><b>Syntax:</b>&nbsp;
+<tt>
+STAF local CRON REGISTER MACHINE local SERVICE stax REQUEST "EXECUTE FILE c:/tests/startall.xml" MONTH 12 DESCRIPTION "Kick off all of the regression tests"</tt>
+<p>
+Note that the registration in this example would only result in the command
+being executed the next time the month changes to 12.  So, if you
+registered this command on Dec 5, 2003, it would not be executed until
+12AM Dec 1 2004.
+<p>
+<li><b>Goal:</b> Execute a STAX job every day in December.
+<p><b>Syntax:</b>&nbsp;
+<tt>
+STAF local CRON REGISTER MACHINE local SERVICE stax REQUEST "EXECUTE FILE c:/tests/startall.xml" MONTH 12 DAY "*"</tt>
+<p>
+<li><b>Goal:</b> Execute a STAX job in file C:/automate/updateStatus.xml via
+     the STAX service on machine server1 every week day (Monday through Friday) at the following times:  8:00AM, 12:00PM,
+    3:00PM, 4:00PM, 5:00PM, and midnight.
+<p><b>Syntax:</b>&nbsp;
+<tt>STAF local CRON REGISTER MACHINE server1 SERVICE stax REQUEST "EXECUTE FILE c:/automate/updateStatus.xml" WEEKDAY "Monday-Friday" HOUR "8, 12, 15-18, 0"</tt>
+<p>
+<li><b>Goal:</b> Execute a STAX job in file /tests/TestA.xml' via the STAX service on machine server1
+     every day at midnight.  This STAX job takes the following map of arguments as input:
+     <tt>{'machine': 'client1', 'testDir': '/tests'}</tt>
+    <p><b>Syntax:</b>&nbsp;
+  <p>
+  <ul>
+  <li>This example uses the <tt>REQUEST</tt> option which will resolves STAF variables.
+      A STAF variable reference is denoted by surrounding the variable in curly braces, e.g. {MyVar}.
+      It is important to understand this because the value being specified for REQUEST
+      contains a "{".  So, because of this special significance of "{", if you do not
+      want variable substitution performed, use a caret, "^", as an escape character for "{" and "^".
+      This is talked about in section
+      <a href="http://staf.sourceforge.net/current/STAFUG.htm#varResolve">8.19.5 RESOLVE</a>
+      in the STAF User's Guide when discussing the VAR service.
+      If you forget to escape the { used to denote the beginning of a map (aka dictionary)
+      in Python, this request will fail with RC 13 (Variable Does Not Exist) and
+      with an error message that says "Variable resolution failed" for the REQUEST value.
+      <p>
+      <tt>STAF local CRON REGISTER MACHINE server1 SERVICE STAX REQUEST
+        "EXECUTE FILE /tests/TestA.xml ARGS \"^{'machine': 'client1', 'testDir': '/tests'}\"" HOUR 0</tt>
+      <p>
+      On Windows, we need to also escape the "^" with another "^" if submitted from the Windows
+      command prompt (cmd.exe) because cmd.exe eats one of the carets when enclosed in double quotes:
+      <p>
+      <tt>STAF local CRON REGISTER MACHINE server1 SERVICE STAX REQUEST
+        "EXECUTE FILE /tests/TestA.xml ARGS \"^^{'machine': 'client1', 'testDir': '/tests'}\"" HOUR 0</tt>
+  <p>
+  <li>This example uses the <tt>PYTHONREQUEST</tt> option which does not resolve STAF variables.
+      It specifies the request using Python syntax.  Because the PYTHONREQUEST value is enclosed
+      in double quotes and single quotes, any quotes used within this value need to be escaped with a backslash.
+    <p>
+    <tt>STAF local CRON REGISTER MACHINE server1 SERVICE STAX PYTHONREQUEST
+        "'EXECUTE FILE /tests/TestA.xml ARGS \"{\'machine\': \'client1\', \'testDir\': \'/tests\'}\"'" HOUR 0</tt>
+  <p>
+  <li>This example uses the <tt>PREPARE</tt> option in addition to the <tt>PYTHONREQUEST</tt> option to help construct
+      the request in Python. 
+    <p>
+    <tt>STAF local CRON REGISTER MACHINE server1 SERVICE STAX PYTHONREQUEST
+        "'EXECUTE FILE /tests/TestA.xml ARGS \"%s\"' % (args)"
+        PREPARE "args = {'machine': 'client1', 'testDir': '/tests'}" HOUR 0</tt>
+  </ul>
+  <p>
+  Actually, it's usually easier to register a more complex request like this that uses Python code
+  via the CronUI instead of the command line because then you don't have to bother so much with
+  escaping quotes.
+  See the <a href="#Header_UIRegExample">Registration Example using Python and Prepare Script</a>
+  section for an example of how to register this STAF command via the Cron User Interface.
+</ul>
+
+<h2><b><a name="Header_Unregister" href="#ToC_Unregister">UNREGISTER</a></b></h2>
+
+UNREGISTER unregisters a STAF command with the Cron Service.
+
+<h4>Syntax</h4>
+
+<tt>UNREGISTER ID &lt;registrationID></tt>
+<p><tt>ID</tt> specifies
+the Cron ID which is to be unregistered.
+
+<h4>Security</h4>
+
+This request requires at least trust level 4.
+
+<h4>Results</h4>
+
+Upon successful return, the result buffer will be empty.
+
+<h2><b><a name="Header_List" href="#ToC_List">LIST</a></b></h2>
+
+LIST lists information about the commands registered with the Cron service.
+
+<h4>Syntax</h4>
+
+<tt>LIST [MACHINE &lt;machine>] [LONG | SHORT]</tt>
+<p><tt>MACHINE</tt>
+specifies the machine for which Cron requests should be listed.
+<p><tt>LONG</tt> specifies
+to list more detailed information about each Cron request.
+
+<h4>Security</h4>
+
+This request requires at least trust level 2.
+
+<h4>Results</h4>
+
+Upon successful return:
+<ul>
+<li>The result buffer for a
+<tt>LIST</tt> request will
+contain a marshalled <tt>
+&lt;List> of &lt;Map:STAF/Service/Cron/CronID></tt>
+which represents a list of the matching registered Cron requests.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Cron/CronID</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a registered
+Cron request.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cronID
+<td>ID
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>description
+<td>Description<br>(Desc)
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>machine
+<td>Machine
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>service
+<td>Service
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>request
+<td>Request
+<td><tt>&lt;String></tt>
+<td>Private data will be masked.
+<tr>
+<td>minute
+<td>Minute
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>hour
+<td>Hour
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>dayOfMonth
+<td>Day of Month<br>(Day)
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>month
+<td>Month
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>dayOfWeek
+<td>Day of Week<br>(Weekday)
+<td><tt>&lt;String> | &lt;None></tt>
+<tr>
+<td>once
+<td>Once<br>
+<td><tt>&lt;String></tt>
+<td><tt>'true' | 'false'</tt>
+</tbody>
+</table>
+<p>
+
+<p>
+<li>The result buffer for a
+<tt> LIST SHORT </tt> request will
+contain a marshalled <tt>
+&lt;List> of &lt;Map:STAF/Service/Cron/CronIDShort></tt>
+which represents a list of the matching registered Cron requests with
+general information.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Cron/CronIDShort</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a registered
+Cron request with general information.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cronID
+<td>ID
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>description
+<td>Description
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>machine
+<td>Machine
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>service
+<td>Service
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>request
+<td>Request
+<td><tt>&lt;String></tt>
+<td>Private data will be masked.
+</tbody>
+</table>
+
+<p>
+<li>The result buffer for a
+<tt> LIST LONG </tt> request will
+contain a marshalled <tt>
+&lt;List> of &lt;Map:STAF/Service/Cron/CronIDLong></tt>
+which represents a list of the matching registered Cron requests with
+details information.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Cron/CronIDLong</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a registered
+Cron request with detailed information.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cronID
+<td>ID
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>description
+<td>Description
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>machine
+<td>Machine
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>machineType
+<td>Machine Type
+<td><tt>&lt;String></tt>
+<td><tt>'Literal' | 'Python'</tt>
+<tr>
+<td>service
+<td>Service
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>serviceType
+<td>Service Type
+<td><tt>&lt;String></tt>
+<td><tt>'Literal' | 'Python'</tt>
+<tr>
+<td>request
+<td>Request
+<td><tt>&lt;String></tt>
+<td>Private data will be masked.
+<tr>
+<td>requestType
+<td>Request Type
+<td><tt>&lt;String></tt>
+<td><tt>'Literal' | 'Python'</tt>
+<tr>
+<td>prepareScript
+<td>Prepare Script
+<td><tt>&lt;String> | &lt;None></tt>
+<td>Private data will be masked.
+<tr>
+<td>minute
+<td>Minute
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>hour
+<td>Hour
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>dayOfMonth
+<td>Day of Month
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>month
+<td>Month
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>dayOfWeek
+<td>Day of Week
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>once
+<td>Once<br>
+<td><tt>&lt;String></tt>
+<td><tt>'true' | 'false'</tt>
+<tr>
+<td>enabled
+<td>Enabled<br>
+<td><tt>&lt;String></tt>
+<td><tt>'true' | 'false'</tt>
+</tbody>
+</table>
+</ul>
+
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> List information about all the commands registered with the
+Cron service.
+<p><b>Syntax:</b> <tt>
+STAF local CRON LIST</tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the verbose format, could look like:
+<pre>
+ID Desc   Machine Service Request     Minute Hour   Day    Month  Weekday Once
+-- ------ ------- ------- ----------- ------ ------ ------ ------ ------- -----
+1  &lt;None> client1 PROCESS START COMMA &lt;None> 1      &lt;None> &lt;None> &lt;None>  false
+          .austin         ND notepad
+          .ibm.co
+          m
+2  Run th server1 STAX    EXECUTE FIL &lt;None> 8,12,1 &lt;None> &lt;None> 1,2,3,4 false
+   e STAX                 E c:/automa        5,16,1               ,5
+    job t                 te/updateSt        7,18,0
+   o upda                 atus.xml
+   te sta
+   tus
+3  Run al server1 STAX    EXECUTE FIL &lt;None> 8      &lt;None> &lt;None> &lt;None>  false
+   l regr                 E c:/tests/
+   ession                 runAll.xml
+    tests
+4  &lt;None> local   PROCESS START COMMA &lt;None> 18     &lt;None> &lt;None> 5       true
+                          ND notepad
+</pre>
+
+<li><b>Goal:</b> List general information about all the commands registered with the
+Cron service.
+<p><b>Syntax:</b> <tt>
+STAF local CRON LIST SHORT </tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the verbose format, could look like:
+<pre>
+ID Description  Machine                Service Request
+-- ------------ ---------------------- ------- --------------------------------
+1  &lt;None>       client1.austin.ibm.com PROCESS START COMMAND notepad
+2  Run the STAX server1                STAX    EXECUTE FILE c:/automate/updateS
+    job to upda                                tatus.xml
+   te status
+3  Run all regr server1                STAX    EXECUTE FILE c:/tests/runAll.xml
+   ession tests
+4  &lt;None>       local                  PROCESS START COMMAND notepad
+</pre>
+
+<p>
+<li><b>Goal:</b> List detailed information about all the commands registered with the
+Cron service with machine server1.
+<p><b>Syntax:</b> <tt>
+STAF local CRON LIST LONG MACHINE server1</tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the verbose format, could look like:
+<pre>
+[
+  {
+    ID            : 2
+    Description   : Run the STAX job to update status
+    Machine       : server1
+    Machine Type  : Literal
+    Service       : STAX
+    Service Type  : Literal
+    Request       : EXECUTE FILE c:/automate/updateStatus.xml
+    Request Type  : Literal
+    Prepare Script: &lt;None>
+    Minute        : &lt;None>
+    Hour          : 8,12,15,16,17,18,0
+    Day of Month  : &lt;None>
+    Month         : &lt;None>
+    Day of Week   : 1,2,3,4,5
+    Once          : false
+    Enabled       : true
+  }
+  {
+    ID            : 3
+    Description   : Run all regression tests
+    Machine       : server1
+    Machine Type  : Literal
+    Service       : STAX
+    Service Type  : Literal
+    Request       : EXECUTE FILE c:/tests/runAll.xml
+    Request Type  : Literal
+    Prepare Script: &lt;None>
+    Minute        : &lt;None>
+    Hour          : 8
+    Day of Month  : &lt;None>
+    Month         : &lt;None>
+    Day of Week   : &lt;None>
+    Once          : false
+    Enabled       : true
+  }
+]
+</pre>
+</ul>
+
+<h2><b><a name="Header_Trigger" href="#ToC_Trigger">TRIGGER</a></b></h2>
+
+TRIGGER submits a registered STAF command.  It is useful for testing the STAF
+command at any given time (without matching the registered time triggers).
+
+<h4>Syntax</h4>
+
+<tt>TRIGGER ID &lt;registrationID> [SCRIPT <Python code>]...</tt>
+<p>
+<tt>ID</tt> specifies
+the Cron ID which is to be triggered.
+<p>
+<tt>SCRIPT</tt> defines Python code to be executed.  You may specify any
+number of SCRIPT options.  They will be executed in the order specified, and
+will be executed prior to the registration's PREPARE, PYTHONMACHINE,
+PYTHONSERVICE, AND PYTHONREQUEST values are evaluated.
+
+<h4>Security</h4>
+
+This request requires trust level 5.
+
+<h4>Results</h4>
+
+If the STAF command was successfully submitted, the return code will be zero.
+This does not mean that the STAF command was successful, however; it only
+indicates that the STAF command was successfully submitted.  You will need to
+check the Cron service log to determine the RC and result that the STAF command
+returned.
+<p>
+Upon successful return:
+<ul>
+<li>The result buffer for a <tt>TRIGGER</tt> request will contain
+a marshalled <tt>&lt;Map:STAF/Service/Cron/Trigger></tt> which
+represents the information about the submitted STAF command.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Cron/Trigger</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents information
+about the submitted STAF command.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<tr>
+<td>machine
+<td>Machine
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>requestNumber
+<td>Request Number
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+</table>
+<p>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Submit the STAF command for registration ID 6.
+<p><b>Syntax:</b>&nbsp; <tt>
+STAF local CRON TRIGGER ID 6</tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the verbose format, could look like:
+<pre>
+Machine       : dave2268.austin.ibm.com
+Request Number: 1583
+</pre>
+<li><b>Goal:</b> Query the Cron log for the previous TRIGGER request.
+<p><b>Syntax:</b>&nbsp; <tt>
+STAF local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME cron CONTAINS "[ID=6] [dave2268.austin.ibm.com:1583]"</tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the verbose format, could look like:
+<pre>
+20060809-14:18:52 Info  [ID=6] [dave2268.austin.ibm.com:1583] Submitted a STAF
+                        command. Triggered manually Submitted STAF command: STA
+                        F local var RESOLVE STRING {STAF/Config/MachineNickname}
+20060809-14:18:52 Info  [ID=6] [dave2268.austin.ibm.com:1583] Completed a STAF
+                        command. RC=0, Result=testmachine1
+</pre>
+<p>
+<li><b>Goal:</b> Submit the STAF command for registration ID 12 and set two
+Python variables to be used when evaluating the STAF command.
+<p><b>Syntax:</b>
+<p><tt>
+STAF local CRON TRIGGER ID 12 SCRIPT "platform = 'win32'" SCRIPT "version = '3.x'"
+</tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the verbose format, could look like:
+<pre>
+Machine       : dave2268.austin.ibm.com
+Request Number: 2021
+</pre>
+</ul>
+
+<h2><b><a name="Header_Enable" href="#ToC_Enable">ENABLE</a></b></h2>
+
+ENABLE enables a STAF command.  This means that the command will be submitted
+when the specified time triggers occur.
+
+<h4>Syntax</h4>
+
+<tt>ENABLE ID &lt;registrationID></tt>
+<p>
+<tt>ID</tt> specifies
+the Cron ID which is to be enabled.
+
+<h4>Security</h4>
+
+This request requires at least trust level 4.
+
+<h4>Results</h4>
+
+Upon successful return, the result buffer will be empty.  Note that an error
+will not be returned if the Cron ID is already enabled.
+
+<h2><b><a name="Header_Disable" href="#ToC_Disable">DISABLE</a></b></h2>
+
+DISABLE disables a STAF command.  This means that the command will not be
+submitted when the specified time triggers occur.
+
+<h4>Syntax</h4>
+
+<tt>DISABLE ID &lt;registrationID></tt>
+<p>
+<tt>ID</tt> specifies
+the Cron ID which is to be disabled.
+
+<h4>Security</h4>
+
+This request requires at least trust level 4.
+
+<h4>Results</h4>
+
+Upon successful return, the result buffer will be empty.  Note that an error
+will not be returned if the Cron ID is already disabled.
+
+<h2><b><a name="Header_Version" href="#ToC_Version">VERSION</a></b></h2>
+
+VERSION displays the version level of the Cron service or the version
+level of Jython packaged with the Cron service.
+
+<h4>Syntax</h4>
+
+<tt>VERSION [JYTHON]</tt>
+<p><tt>VERSION</tt> specifies to display the version level of the Cron service or the
+version level of Jython packaged with the Cron service.
+<p><tt>JYTHON</tt> specifies to display the version level of Jython packaged with the Cron service.
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the version level of the Cron service if
+option JYTHON is not specified.  If option JYTHON is specified,
+the result buffer contains the version level of Jython packaged with the
+Cron service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the version level of the Cron service.
+ <p><b>Syntax:</b>&nbsp; <tt>VERSION</tt>
+ <p><b>Result:</b>&nbsp; <tt>3.4.0</tt>
+<p>
+<li><b>Goal:</b> Display the version level of Jython packaged with the Cron service.
+ <p><b>Syntax:</b>&nbsp; <tt>VERSION JYTHON</tt>
+ <p><b>Result:</b>&nbsp; <tt>2.5.2-staf-v1</tt>
+</ul>
+
+<h2><b><a name="Header_Help" href="#ToC_Help">HELP</a></b></h2>
+
+HELP displays the request options and how to use them.
+
+<h4>Syntax</h4>
+
+<tt>HELP</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the Help messages for the request options for
+the Cron service.
+
+<p>
+<hr>
+
+<h1><b><a name="Persistent_Registration_Data" href="#ToC_Persistent">Persistent Registration Data</a></b></h1>
+<p>
+Note that Cron registration information is persistent data. This means
+that if you register with the Cron Service, if you shutdown STAF and restart
+it (even if you reboot the machine), the prior registration information
+will still be active. When STAF starts, it reads in the previous Cron registration
+information, and will execute the registered STAF commands at the specified
+time interval(s).
+<p>In Cron V3.2.0, the format of this data was modified.  Persistent
+registration data for versions prior to Cron V3.2.0 will automatically be
+migrated to the new format.  Note that the new format can not be used
+with versions of Cron prior to V3.2.0.
+
+<p>
+<hr>
+
+<h1><b><a name="Header_Logging" href="#ToC_Logging">Service Logging</a></b></h1>
+<p>
+The Cron service maintains a machine log where it writes information about the
+STAF commands that it has submitted. It is important to check the log to
+determine the results of STAF commands submitted by the Cron service.
+The Cron service will log an entry when the following occurs:
+<ul>
+<li>A REGISTER request is received.  This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>, &lt;handleName>]</pre>where <tt>&lt;xx></tt> is the ID that was
+registered, <tt>&lt;machine></tt> is the machine that originated the REGISTER request, and
+<tt>&lt;handleName></tt> is the name of the handle that originated the REGISTER request.
+The level of the log entry will be <tt>Info</tt>.
+<br><br>
+<li>A time trigger matches the options previously specified in a REGISTER request,
+and the STAF command has been submitted.  This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>]</pre>where <tt>&lt;xx></tt> is the ID for which the STAF command
+was submitted, <tt>&lt;machine></tt> is the machine on which the STAF command was submitted,
+and <tt>&lt;requestNumber></tt> is the request number for the STAF command.
+The level of the log entry will be <tt>Info</tt>.
+<br><br>
+<li>A time trigger matches the options previously specified in a REGISTER request,
+but a Python error was encountered when evaluating the registration options.  This log entry will begin with
+<pre>[ID=&lt;xx>] Python error</pre>where <tt>&lt;xx></tt> is the ID for which the Python interpreter
+encountered an error.
+The level of the log entry will be <tt>Error</tt>.
+<br><br>
+<li>A time trigger matches the options previously specified in a REGISTER request,
+but an error was encountered when submitting the STAF command.  This log entry will begin with
+<pre>[ID=&lt;xx>] Error submitting a STAF command.</pre>
+where <tt>&lt;xx></tt> is the registration ID of the STAF command that was submitted.
+The level of the log entry will be <tt>Error</tt>.
+<br><br>
+<li>A time trigger matches the options previously specified in a REGISTER request,
+but the ID is disabled.  This log entry will begin with
+<pre>[ID=&lt;xx>] ID is disabled. STAF command not submitted.
+</pre>where <tt>&lt;xx></tt> is the ID for which the time trigger matched.
+The level of the log entry will be <tt>Info</tt>..
+<br><br>
+<li>The service receives notification that a submitted STAF command has completed.
+This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>]</pre>where <tt>&lt;xx></tt> is the ID for which the STAF command
+was executed, <tt>&lt;machine></tt> is the machine on which the STAF command was executed,
+and <tt>&lt;requestNumber></tt> is the request number for the STAF command.  The log
+entry will include the RC and Result from the STAF command.
+If the RC is 0, the level of the log entry will be <tt>Pass</tt>; otherwise
+the level of the log entry will be <tt>Fail</tt>.
+<br><br>
+<li>The service receives notification that an asynchronous PROCESS START command
+has completed.  This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>]</pre>where <tt>&lt;xx></tt> is the ID for which the STAF command
+was executed, <tt>&lt;machine></tt> is the machine on which the STAF command was executed,
+and <tt>&lt;requestNumber></tt> is the request number for the STAF command.  The log
+entry will include the RC and Result from the STAF process.
+If the RC is 0, the level of the log entry will be <tt>Pass</tt>; otherwise
+the level of the log entry will be <tt>Fail</tt>.
+<br><br>
+<li>An UNREGISTER request is received.  This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>, &lt;handleName>]</pre>where <tt>&lt;xx></tt> is the ID that was
+unregistered, <tt>&lt;machine></tt> is the machine that originated the UNREGISTER request, and
+<tt>&lt;handleName></tt> is the name of the handle that originated the UNREGISTER request.
+The level of the log entry will be <tt>Info</tt>.
+<br><br>
+<li>An ENABLE request is received.  This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>, &lt;handleName>]</pre>where <tt>&lt;xx></tt> is the ID that was
+enabled, <tt>&lt;machine></tt> is the machine that originated the ENABLE request, and
+<tt>&lt;handleName></tt> is the name of the handle that originated the ENABLE request.
+The level of the log entry will be <tt>Info</tt>.
+<br><br>
+<li>A DISABLE request is received.  This log entry will begin with
+<pre>[ID=&lt;xx>] [&lt;machine>, &lt;handleName>]</pre>where <tt>&lt;xx></tt> is the ID that was
+disabled, <tt>&lt;machine></tt> is the machine that originated the DISABLE request, and
+<tt>&lt;handleName></tt> is the name of the handle that originated the DISABLE request.
+The level of the log entry will be <tt>Info</tt>.
+</ul>
+<p>
+The <tt>[ID=&lt;xx>]</tt> and <tt>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>]</tt> tags in
+the log entries can be useful when querying the log.  They can be used with
+the CONTAINS option of the log service's QUERY request.
+<p>
+The logname for the Cron service is the name under which the service is
+registered.
+<p>
+Here is an example of what a Cron service log on the local machine 
+could look like (shown via a request from the command line
+in the table format):
+<pre>
+C:\>STAF local log QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME cron
+Response
+--------
+Date-Time         Level Message
+----------------- ----- -------------------------------------------------------
+20060808-16:08:29 Info  [ID=1] [local://local, STAF/Client] Registered a STAF c
+                        ommand. Register request: REGISTER DESCRIPTION :20:Get
+                        the STAF version MACHINE local SERVICE misc REQUEST ver
+                        sion MINUTE 9 ONCE
+20060808-16:08:29 Info  [ID=2] [local://local, STAF/Client] Registered a STAF c
+                        ommand. Register request: REGISTER DESCRIPTION :17:Run
+                        java -version MACHINE local SERVICE process REQUEST :61
+                        :start command java parms -version returnstdout stderrt
+                        ostdout MINUTE 10
+20060808-16:08:29 Info  [ID=3] [local://local, STAF/Client] Registered a STAF c
+                        ommand. Register request: REGISTER DESCRIPTION :20:Pyth
+                        on runtime error MACHINE local SERVICE misc REQUEST ver
+                        sion PREPARE a=b MINUTE 11
+20060808-16:09:01 Info  [ID=1] [dave2268.austin.ibm.com:2664] Submitted a STAF
+                        command. Triggers: minute[9] Submitted STAF command: ST
+                        AF local misc version
+20060808-16:09:01 Info  [ID=1] [local://local, STAF/SERVICE/cron] Unregistered
+                        a STAF command.
+20060808-16:09:01 Pass  [ID=1] [dave2268.austin.ibm.com:2664] Completed a STAF
+                        command. RC=0, Result=3.1.4.1
+20060808-16:10:01 Info  [ID=2] [dave2268.austin.ibm.com:2681] Submitted a STAF
+                        command. Triggers: minute[10] Submitted STAF command: S
+                        TAF local process start command java parms -version ret
+                        urnstdout stderrtostdout
+20060808-16:10:01 Pass  [ID=2] [dave2268.austin.ibm.com:2681] Completed a STAF
+                        command. RC=0, Result=134
+20060808-16:10:01 Pass  [ID=2] [dave2268.austin.ibm.com:2681] Process completed
+                        . Process info: {key=, handle=134, rc=0, endTimestamp=2
+                        0060808-16:10:01, fileList=[{rc=0, data=java version "1
+                        .5.0"  Java(TM) 2 Runtime Environment, Standard Edition
+                         (build 1.5.0-b64)  Java HotSpot(TM) Client VM (build 1
+                        .5.0-b64, mixed mode)  }]}
+20060808-16:11:01 Error [ID=3] Python error in the PREPARE value.  PREPARE: a=b
+                          PyException: Traceback (innermost last):    File "&lt;st
+                        ring>", line 1, in ?  NameError: b   Processing registr
+                        ation:   ID: 3   machine: local   service: misc   reque
+                        st: version   prepare: a=b
+20060808-16:11:25 Info  [ID=2] [local://local, STAF/Client] Unregistered a STAF
+                         command.
+20060808-16:11:27 Info  [ID=3] [local://local, STAF/Client] Unregistered a STAF
+                         command.
+</pre>
+<p>
+<p>
+Here is an example of only displaying the log records for a particular registration
+ID:
+<pre>
+C:\>STAF local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME cron CONTAINS [ID=2]
+Response
+--------
+Date-Time         Level Message
+----------------- ----- -------------------------------------------------------
+20060808-16:08:29 Info  [ID=2] [local://local, STAF/Client] Registered a STAF c
+                        ommand. Register request: REGISTER DESCRIPTION :17:Run
+                        java -version MACHINE local SERVICE process REQUEST :61
+                        :start command java parms -version returnstdout stderrt
+                        ostdout MINUTE 10
+20060808-16:10:01 Info  [ID=2] [dave2268.austin.ibm.com:2681] Submitted a STAF
+                        command. Triggers: minute[10] Submitted STAF command: S
+                        TAF local process start command java parms -version ret
+                        urnstdout stderrtostdout
+20060808-16:10:01 Info  [ID=2] [dave2268.austin.ibm.com:2681] Completed a STAF
+                        command. RC=0, Result=134
+20060808-16:10:01 Info  [ID=2] [dave2268.austin.ibm.com:2681] Process completed
+                        . Process info: {key=, handle=134, rc=0, endTimestamp=2
+                        0060808-16:10:01, fileList=[{rc=0, data=java version "1
+                        .5.0"  Java(TM) 2 Runtime Environment, Standard Edition
+                         (build 1.5.0-b64)  Java HotSpot(TM) Client VM (build 1
+                        .5.0-b64, mixed mode)  }]}
+20060808-16:11:25 Info  [ID=2] [local://local, STAF/Client] Unregistered a STAF
+                         command.
+</pre>
+<p>
+Here is an example of only displaying the log records for a particular registration
+ID, machine, and STAF request number:
+<pre>
+C:\>STAF local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME cron CONTAINS "[ID=1] [dave2268.austin.ibm.com:2664]"
+Response
+--------
+Date-Time         Level Message
+----------------- ----- -------------------------------------------------------
+20060808-16:09:01 Info  [ID=1] [dave2268.austin.ibm.com:2664] Submitted a STAF
+                        command. Triggers: minute[9] Submitted STAF command: ST
+                        AF local misc version
+20060808-16:09:01 Info  [ID=1] [dave2268.austin.ibm.com:2664] Completed a STAF
+                        command. RC=0, Result=3.1.4.1
+</pre>
+<p>
+Here is an example of only displaying the error log records, and using the
+<tt>-verbose</tt> option so that the error output is more readable:
+<pre>
+C:\>STAF -verbose local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME cron LEVELMASK error
+Response
+--------
+[
+  {
+    Date-Time: 20060808-16:11:01
+    Level    : Error
+    Message  : [ID=3] Python error in the PREPARE value.
+
+PREPARE:
+a=b
+
+PyException:
+Traceback (innermost last):
+  File "&lt;string>", line 1, in ?
+NameError: b
+
+Processing registration:
+  ID: 3
+  machine: local
+  service: misc
+  request: version
+  prepare: a=b
+  }
+]
+</pre>
+
+
+<p>
+<hr>
+<h1><a name="PythonVars" href="#ToC_PythonVars"><b>Using Python</b></a></h1>
+<p>
+The Cron service lets uses the Python scripting language for variable and
+expression evaluation for the following REGISTER and TRIGGER request options:
+<ul>  
+    <li>PYTHONMACHINE</li>
+    <li>PYTHONSERVICE</li>
+    <li>PYTHONREQUEST</li>
+    <li>PREPARE</li>
+    <li>SCRIPT</li>
+</ul>
+<p>
+This allows the Cron service to take advantage of the powerful and
+easy-to-use features of Python.  The Cron service uses Jython 2.5.2 to
+execute Python code.  Jython is a version of Python written entirely in
+Java that runs under any compliant Java Virtual Machine (JVM).
+<p>
+Python variable names must follow the Python variable naming conventions.
+In Python, variable names come into existence when you assign values to them,
+but there are a few rules to follow when picking names for variables.
+<p>
+<ul>
+<li><i>Syntax: (underscore or letter) + (any number of letters, digits or underscores)</i></li>
+  <ul>
+      Variable names must start with an underscore or letter, and be followed
+      by any number of letters, digits, or underscores. _machine, machine, and
+      Mach_1 are legal names, but 1_Mach, mach$, and @#! are not.
+  </ul>
+<p>
+<li><i>Case matters: MACHNAME is not the same as machname</i></li>
+  <ul>
+      Python always pays attention to case, both in names you create and in
+      reserved words. For instance, X and x refer to two different variable names.
+  </ul>
+<p>
+<li><i>Python reserved words are off limits</i></li>
+  <ul>
+      You cannot define variable names to be the same as words that mean
+      special things in the Python language. Following are reserved words in
+      Python: and, assert, break, class, continue, def, del, elif, else, except,
+      exec, finally, for, from global, if, import, in, is, lambda, not, or, pass,
+      print, raise, return, try, while.
+      <p>
+      <b>Note:</b>  Python lets you use the names of Python built-in functions as
+      variable names.  However, we recommend that you don't use the name of a
+      Python built-in function as a variable name because you may want to use the
+      Python built-in function at some point when triggering your registration.
+      Following are names of Python built-in functions:  abs, basestring, bool,
+      callable, chr, classmethod, cmp, compile, complex, delattr, dict, dir,
+      divmod, enumerate, eval, execfile, file, filter, float, getattr, globals,
+      hasattr, hash, help, hex, id, input, int, isinstance, issubclass, iter,
+      len, locals, long, map, max, min, object, oct, open, ord, pow, property,
+      range, raw_input, reduce, reload, repr, round, setattr, slice, staticmethod,
+      str, sum, super, tuple, type, unichr, unicode, vars, xrange, zip.
+  </ul>
+</ul>
+<p>
+Python string constants can be enclosed in single or double quotes, which
+allows embedded quotes of the opposite flavor.
+<p>
+For example, the following two lines of Python code do exactly the same thing.
+They assign a string constant (literal) "CoolTest" to the value of a variable
+named testName.
+<pre>
+testName = "CoolTest1"
+testName = 'CoolTest1'
+</pre>
+However, the following line is not the same.  It assigns the value
+of a variable named CoolTest1 to the value of a variable named
+testName.  If this was not what you intended and a variable named
+CoolTest1 does not exist, a PythonException will be raised and logged
+in the service log.
+<pre>
+testName = CoolTest1
+</pre>
+<p>
+Say, you wanted to use a Python variable named machName in a STAF service
+request string.  Your Python code could look like:
+<pre>
+request = 'RELEASE POOL MachinePool ENTRY %s' % (machName)
+</pre>
+where the %s indicates a String format (and can also be used for decimal
+format, etc.), and where the value of the machName variable would replace
+the %s marker.
+<p>
+So, if the value of variable machName is 'client1.company.com', after being
+evaluated by Python, the request variable's value would be:
+<pre>
+'RELEASE POOL MachinePool ENTRY client1.company.com'
+</pre>
+<p>
+Here are a couple of examples of how you might use Python code in the
+PREPARE and PYTHONREQUEST options when submitting a REGISTER request
+to the Cron service:
+<ul>
+<li>This example registers a STAF command that submits a RELEASE request
+    to the ResPool service to release entry client1.company.com from
+    resource pool MachinePool every night at 10:00pm.  It sets Python
+    variable <b>machName</b> to 'client1.company.com' using Python code
+    in the PREPARE option.  In the PYTHONREQUEST option, it uses Python
+    code to construct the request to release the entry specified by Python
+    variable <b>machName</b> from the MachinePool.
+    <p>
+    <tt>STAF local CRON REGISTER MACHINE server1 SERVICE ResPool 
+        PYTHONREQUEST "'RELEASE POOL MachinePool ENTRY %s' % (machName)" 
+        PREPARE "machName = 'client1.company.com'" HOUR 22</tt></li>
+<p>
+<li>This example registers a STAF command that submits a START request
+    to the PROCESS service at midnight every Saturday to run command
+    C:/MyApp/myApp.exe passing it the registration ID of this cron job
+    as a parameter.  In the PREPARE option, it imports the
+    com.ibm.staf.STAFUtil Java class so it can use its wrapData() method
+    to "wrap" the value for the COMMAND option since it contains a space.
+    It also constructs the command to run (e.g. 'C:/MyApp/myApp.exe 1'
+    if its registration ID is 1) passing Python variable STAFCronID as
+    a parameter to myApp.exe.  Note that STAFCronID is set by the Cron
+    service to the registration ID of the request being triggered.
+    <p>
+    <tt>STAF local CRON REGISTER MACHINE local SERVICE PROCESS PYTHONREQUEST 
+        "'START SHELL COMMAND %s RETURNSTDOUT STDERRTOSTDOUT' % (STAFUtil.wrapData(command))" 
+        PREPARE "from com.ibm.staf import STAFUtil; command = 'C:/MyApp/myApp.exe %s' % (STAFCronID)" 
+        WEEKDAY Saturday HOUR 0</tt></li>
+</ul>
+<p>
+Actually, it's usually easier to register more complex requests like these
+that use Python code via the Cron User Interface (CronUI) instead of the
+command line because then you don't have to bother so much with escaping
+quotes and you can have multiple lines of Python code.  See the
+<a href="#Header_UIRegExample">Registration Example using Python and Prepare Script</a>
+section for an example of how to register a STAF command via the CronUI. 
+<p>
+Refer to the <a href="#Header_References">"References"</a> section for
+where to get more information about Jython and Python.
+<p>
+If you are already a CPython programmer, or are hoping to use CPython
+code under Jython, refer to the <a href="#Header_CPythonDiffs">
+"Jython and CPython Differences"</a> section for information about
+differences in the two implementations of Python.
+<br>&nbsp;
+<hr>
+<h1><a name="Header_CronVariables" href="#ToC_CronVariables">Cron Python Variables</a></h1>
+
+The following variables are set in Python by the Cron service when a registration
+is triggered.  These Python variables can be referenced by Python code in the
+PREPARE, PYTHONREQUEST, PYTHONMACHINE, and PYTHONSERVICE options for the REGISTER
+request and in the SCRIPT option for the TRIGGER request.
+<p>
+<ul>
+<li><b>STAFCronID</b>
+    <ul>
+        <li>Description:  The ID of the Cron registration being triggered</li>
+        <li>Assigned:  When a registration is triggered</li>
+        <li>Type:  numeric (PyInteger)</li>
+   </ul>
+<p>
+<li><b>STAFCronSubmit</b>
+    <ul>
+        <li>Description:  Indicates whether the Cron service should submit
+            the STAF service request when its registration is triggered. </li>
+        <li>Assigned:  When a registration is triggered, the Cron service
+            sets it to 'true' by default, but you can override its value
+            if desired by setting it to any other string value in the
+            PREPARE option on a REGISTER request</li>
+        <li>Type:  string</li>
+    </ul>
+</ul>
+
+<p>&nbsp;
+<hr>
+
+<h1><b><a name="Header_CronUI" href="#ToC_CronUI">Cron User Interface (CronUI)</a></b></h1>
+
+<p>The Cron service provides a User Interface (CronUI) to simplify interaction with
+the Cron service.  The CronUI is especially useful when registering complex STAF
+commands with Python code because it helps avoid some issues that you
+have when registering via the command line by reducing the need for escaping
+quotes and allows you to easily enter multiple lines of Python code via
+a text box for the PREPARE option,
+The CronUI also allows you to modify existing registrations (without having to unregister
+and the re-register the updated STAF command), and view the Cron service's log.
+<p>Note that when viewing the Cron service's log, the Cron User Inteface
+utilizes the STAFLogViewer class to display the logs.  For more information on
+how to use the STAFLogViewer, refer to section "3.11 Class STAFLogViewer" of the
+STAF Java User's Guide (<a href="http://staf.sourceforge.net/current/STAFJava.htm">
+http://staf.sourceforge.net/current/STAFJava.htm</a>).
+
+<h2><a name="Header_UIUsing" href="#ToC_UIUsing">Using the CronUI</a></h2>
+
+To use the Cron User Interface, after installing and configuring the Cron Service, from
+a command prompt enter one of the following commands:
+<ul>
+<li>
+<p><tt>java -jar STAFCron.jar</tt>
+<p>If the STAFCron.jar file is not in the current directory where you
+are executing this command, then you will need to specify the full path (or
+the path relative to the current directory) to the STAFCron.jar file.
+<p>Note that to run this command, the STAFCron.jar file does not need
+to be included in your CLASSPATH.
+</li>
+<li>
+<p><tt>java com.ibm.staf.service.cron.CronUI</tt>
+<p>Note that to run this command, the STAFCron.jar file must be
+included in your CLASSPATH.
+</li>
+</ul>
+<p>A User Interface will be displayed which allows you to interact with
+the Cron service.
+<br><br>
+<img src="cron1.gif" alt="CronUI">
+<br>
+<p>The main CronUI window displays a table of all of the currently registered
+STAF commands.  The screen capture above shows what the table would look like
+if there are no registrations.  The window is comprised of the following
+components (from to to bottom):
+<ol>
+<li>Menu bar
+<li>Service configuration options
+<li>Registration table
+<li>Status bar
+</ol>
+
+<h4>Menu bar</h4>
+<p>The File menu bar contains the following menu items:
+<ul>
+<li><b>New Registration...</b> - This opens a new registration dialog where you can
+input information about a new STAF command you wish to register.
+<br><br>
+<li><b>Exit</b> - This exits the CronUI application.
+</ul>
+<p>The View menu bar contains the following menu items:
+<ul>
+<li><b>Refresh</b> - This refreshes the registration table by querying the
+specified Cron service name on the specified machine name.
+<br><br>
+<li><b>Service Log for ID...</b> - This allows you to query the service log
+records for a particular ID.  A dialog will be displayed where you can enter the
+ID.  It will generate a QUERY request with the option CONTAINS
+<tt>[ID=&lt;xx>]</tt> where <tt>&lt;xx></tt> is the ID you specified.
+<br><br>
+<li><b>Service Log last 100 recrods</b> - This allows you to query the last
+100 records of the service log.
+<br><br>
+<li><b>Service Log for submitted STAF comamnds...</b> - This allows you to
+query the service log records for a particular submitted STAF command.  A new
+dialog will open that shows you a list of the submitted STAF commands in the
+service log.  The most recent entries in the service log will be at the top
+of the list, and the oldest entries in the service log will be at the bottom
+of the list.  The list entries will be in the format 
+<tt>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>] &lt;Submitted STAF command></tt>
+where <tt>&lt;xx></tt> is the ID for which the STAF command was submitted,
+<tt>&lt;machine></tt> is the machine where the STAF command was submitted,
+<tt>&lt;requestNumber></tt> is the request number for the submitted STAF
+command, and <tt>&lt;Submitted STAF command></tt> is the actual STAF command
+that was submitted (this is the STAF command after all Python code has been
+evaluated).  Select the entry in the list for which you wish to view the log
+records, and a QUERY request will be generated with the option CONTAINS
+<tt>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>]</tt> where <tt>&lt;xx></tt>
+is the ID for which the STAF command was submitted,
+<tt>&lt;machine></tt> is the machine where the STAF command was submitted, and
+<tt>&lt;requestNumber></tt> is the request number for the submitted STAF
+command.
+<br><br>
+<li><b>Entire Service Log</b> - This allows you to query the entire service log.
+<br><br>
+<li><b>Delete Service Log</b> - This allows you to delete the service log.  A
+confirmation popup will be displayed.
+</ul>
+
+<p>The Selected menu bar will only be enabled if there is a row currently
+selected in the registration table, and contains the following menu items:
+<ul>
+<li><b>Edit</b> - This allows you edit the data for the selected ID.  A new
+dialog will be displayed, similar to the dialog displayed when you click on
+"New Registration..." in the File menu bar, except the fields will be filled
+in with the data for the selected ID.
+<br><br>
+<li><b>Enable</b> - This allows you enable the selected ID.  This option will
+only be available if the selected ID is currently disabled.
+<br><br>
+<li><b>Disable</b> - This allows you disable the selected ID.  This option will
+only be available if the selected ID is currently enabled.
+<br><br>
+<li><b>Trigger</b> - This allows you trigger the STAF command for the
+selected ID.  This is useful when testing your registered STAF commands (where
+you don't want to wait for any of the time triggers to match).  Any Python code
+in the registration will be evaluated, and the STAF command will be submitted.
+After the STAF command has been submitted, the service log will be queried
+with the option CONTAINS
+<tt>[ID=&lt;xx>] [&lt;machine>:&lt;requestNumber>]</tt> where <tt>&lt;xx></tt>
+is the ID for which the STAF command was submitted,
+<tt>&lt;machine></tt> is the machine where the STAF command was submitted, and
+<tt>&lt;requestNumber></tt> is the request number for the submitted STAF
+command.  In the log viewer, you can click on "Refresh" in the View menu bar
+to refresh the log entries and determine if the STAF command has completed.
+Note that if the submitted STAF command was registered with the ONCE option,
+triggering the STAF command will not cause the registration to be unregistered.
+<br>
+<li><b>Trigger with script...</b> - This is similar to the <b>Trigger</b>
+menu item, except prior to submitting the command, a dialog will be displayed
+where you can enter any Python code that you want to have executed by the
+Python interpreter, prior to the evaluation of any PREPARE, PYTHONMACHINE,
+PYTHONSERVICE, or PYTHONREQUEST options.  This is useful if you need to
+simluate the setting of any variables that might be needed for these options.
+<br><br>
+<li><b>Copy to new registration</b> - This allows to you copy the registration
+data for an existing registration to a new registration.  A new dialog will be
+presented with all of the data from the selected registration.  You can change
+any of the data as needed, and then click on the "Register" button and a new
+ID will be registered.
+<br><br>
+<li><b>Unregister</b> - This allows you to unregister the selected registration.
+A confirmation popup will be displayed.
+</ul>
+
+<p>Note that all of the "Selected" menu items are also available in a pop-up menu
+when you right click on a row in the registration table, and they perform the
+exact same functions as the "Selected" menu bar items.
+
+<p>The Help menu bar contains the following menu items:
+<ul>
+<li><b>About</b> - This displays the version of the Cron service.
+</ul>
+
+<h4>Service configuration options</h4>
+<p>The "Service Machine" text field allows you to specify the hostname of the
+machine where the Cron service is running.  The default is "local".
+<p>The "Service Name" text field allows you to specify the service name for which
+the Cron service was configured.  The default is "Cron".
+<p>After changing either
+of these values, you can press the "Enter" key to refresh the table, or click
+on "View" in the menu bar, and then select "Refresh".
+<p>
+
+<h4>Registration table</h4>
+<p>The registration table displays the current registrations for the Cron
+service you specified in the service configuration fields (for Service Machine and
+Service Name).  It is refreshed every time you click on "View" in the menu bar
+and selecte "Refresh", as well as when you change the Service Machine or Service Name
+fields and press "Enter".
+<p>It is also refreshed whenever you add a new registration, unregister a
+registration, edit a registration, or copy an existing registration to a new
+registration.
+<p>The registration table has the following columns:
+<ul>
+<li><b>ID</b> - This is the registration ID.
+<li><b>Description</b> - This is the registration's description.
+<li><b>Machine</b> - This is the registration's machine.  Note that it may
+contain Python code.
+<li><b>Service</b> - This is the registration's service.  Note that it may
+contain Python code.
+<li><b>Request</b> - This is the registration's request.  Note that it may
+contain Python code.
+</ul>
+
+<h4>Status bar</h4>
+<p>The status bar shows informational messages.  Here are the possible
+messages:
+<ul>
+<li><b>Double click on an existing registration to edit</b> - Displayed when
+there is at least one registration in the table.
+<li><b>Click on File -> New Registration... in the menu bar to register a
+new STAF command</b> - Displayed when there are currently no registrations in
+the table.
+<li><b>Enter a valid Service Machine and Service Name</b> - Displayed if the
+machine entered in the "Service Machine" text field cannot be reached, or if
+the service name entered in the "Service Name" text field is not a valid
+service name on the machine.
+</ul>
+
+<h2><a name="Header_UINewReg" href="#ToC_UINewReg">Submit a New Registration</a></h2>
+
+<p>To submit a new registration, click on "File" in the menu bar and then
+select "New Registration...".  You will see the following window:
+<br><br>
+<img src="cron2.gif" alt="CronUI">
+<p>This window allows you to specify the data for the registration:
+<ul>
+<li><b>Registration ID</b> - The registration ID.  Since this is a new
+registration, the value is "N/A".
+<li><b>Description</b> - The description of the registration.  This field is
+optional.
+<li><b>Target Machine</b> - The machine where you wish to have the STAF
+command executed.  This field is required.  If the text contains Python code,
+then select "Python" next to the "Target Machine" label.
+<li><b>Target Service</b> - The service for the STAF command you wish to have executed.
+This field is required.  If the text contains Python code, then select
+"Python" next to the "Target Service" label.
+<li><b>Target Request</b> - The STAF request you wish to have executed.
+This field is required.  If the text contains Python code,
+then select "Python" next to the "Target Request" label.
+<li><b>Prepare Script</b> - Any Python code that you wish to have evaluated
+prior to the evaluation of any PYTHONMACHINE,
+PYTHONSERVICE, or PYTHONREQUEST options.  This field is optional.
+<li><b>Minute</b> - Specifies the exact minute(s) that the STAF command executes.
+The valid values are 0 - 59.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.  An
+element is either a number or an inclusive range, indicated by two numbers
+separated by a minus sign (such as 1-15).
+<li><b>Hour</b> - Specifies the exact hour(s) that the STAF command executes.
+The valid values are 0 - 23.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.  An element
+is either a number or an inclusive range, indicated by two numbers separated by
+a minus sign (such as 8-17).
+<li><b>Day</b> - Specifies the exact day(s) that the STAF command executes.  The
+valid values are 1 - 31.  You can specify either * (an asterisk) or ANY, meaning
+all valid values, or a list of elements separated by commas.  An element is
+either a number or an inclusive range, indicated by two numbers separated by a
+minus sign (such as 1-2).
+<li><b>Month</b> - Specifies the exact month(s) that the STAF command executes.
+The valid values are 1 - 12.  You can specify either * (an asterisk) or ANY,
+meaning all valid values, or a list of elements separated by commas.  An element
+is either a number or an inclusive range, indicated by two numbers separated by
+a minus sign (such as 5-6).
+<li><b>Weekday</b> - Specifies the exact weekday(s) that the STAF command executes.
+The valid values are 0 - 6  (Sunday = 0, ....).  You can also specify the
+textual weekday ("Sunday", etc.).  You can specify either * (an asterisk) or
+ANY, meaning all valid values, or a list of elements separated by commas.  An
+element is either a number or an inclusive range, indicated by two numbers
+separated by a minus sign (such as 1-5).
+<li><b>Once</b> - Indicates that the STAF command should only be executed one
+time. After the specified time interval has occurred and the STAF command has
+been submitted, the ID for this request will be unregistered.
+<li><b>Enabled</b> - Indicates that the STAF command will be enabled when it
+is registered. If the STAF command is disabled, it will not be submitted
+when its time triggers occur.
+</ul>
+<p>Note that at least one of the time interval options (Minute, Hour, Day,
+Month, Weekday) must be specified.
+<p>To get help on any of these options while using CronUI, mover the cursor
+over the text field or checkbox and a tool tip will be displayed.
+<p>Fill in the appropriate information for the STAF command you wish to have
+executed.  For example, to have a STAX job executed at 1:00AM every day:
+<br><br>
+<img src="cron3.gif" alt="CronUI">
+<p>Click on the "Register" button and you will see that the STAF command has
+been assigned a unique registration ID, and that it is listed in the
+registration table.
+<br><br>
+<img src="cron4.gif" alt="CronUI">
+
+<h2><a name="Header_UIRegExample" href="#ToC_UIRegExample">
+Registration Example using Python and Prepare Script</a></h2>
+
+<p>To register a more complex STAF command, you may find it easier to
+use the CronUI instead of submitting a <tt>REGISTER</tt> request to
+the Cron service via the command line.  This is especially true for
+STAF commands that use Python.  Also, if you select to specify the
+request using Python and use the "Prepare Script" field, you usually don't
+have to escape as many quotes.
+<p>
+This section shows an example of registering a more complex STAF command
+using the CronUI.  It will use the same example that was discussed
+in the <a href="#Header_Register">REGISTER</a> section that registered
+a STAF command via the command line to execute STAX job /tests/TestA.xml
+via the STAX service on machine server1 every day at midnight and passed
+the following argument map to the STAX job:
+<tt>{'machine': 'client1', 'testDir': '/tests'}</tt>
+<p>
+Remember that a STAF variable reference is denoted by surrounding the
+variable in curly braces, e.g. {MyVar}.  So, since the request contains
+a "{" which is not being used to denote a STAF variable reference, this
+example selects "Python" for the target request so that STAF variable resolution
+will not be performed.  If "Python" was not selected for the target
+request, then the "{" would need to be escaped with a caret, "^", so that
+no STAF variable resolution would be performed.
+This example also uses the "Prepare Script" field to construct
+the STAX EXECUTE request using Python.
+<p>
+The following is an example of how you could register the following STAX EXECUTE
+command to run every day at midnight:
+<p>
+<tt>STAF server1 STAX EXECUTE FILE "/tests/TestA.xml"
+ARGS "{'machine': 'client1', 'testDir': '/tests'}"</tt>
+<p>
+<img src="cronRegExample.gif" alt="Registration Example Using Python">
+
+<h2><a name="Header_UIEditReg" href="#ToC_UIEditReg">Edit a Registration</a></h2>
+
+<p>To edit a registration, double click on its row in the registration table,
+click on "Selected" in the menu bar and select "Edit", or right-click on
+its row in the registration table, and select "Edit" in the popup menu.
+<p>For example, if we wanted to change the registration ID 1 to only execute
+at 1:00AM Monday-Friday:
+<br><br>
+<img src="cron5.gif" alt="CronUI">
+<p>Click on the "Register" button to unregister the existing ID, and register
+the updated registration data:
+<br><br>
+<img src="cron6.gif" alt="CronUI">
+<p>Click on yes, and you will see that the updated registration data has been
+saved.  In this scenario, since we only had one existing registration, the ID
+for the updated registration is still 1.  If there are already existing
+registration IDs, then the assigned registration id would be the next
+sequential ID.
+
+<h2><a name="Header_UICopyReg" href="#ToC_UICopyReg">Copy a Registration</a></h2>
+
+<p>To copy the information from an existing registration to a new registration,
+click on "Selected" in the menu bar and select "Copy to new registration", or
+right-click on its row in the registration table, and select
+"Copy to new registration" in the popup menu.
+<p>Update the information for the new registration:
+<br><br>
+<img src="cron7.gif" alt="CronUI">
+<p>Click on the "Register" button to register.
+<br><br>
+<img src="cron8.gif" alt="CronUI">
+
+<h2><a name="Header_UIUnReg" href="#ToC_UIUnReg">Unregister a Registration</a></h2>
+
+<p>To unregister a registration, click on "Selected" in the menu bar and select
+"Unregister", or right-click on
+its row in the registration table, and select "Unregister" in the popup menu.
+You will get a confirmation popup:
+<br><br>
+<img src="cron9.gif" alt="CronUI">
+<p>Click on "Yes" and the ID will be unregistered.
+<p>Next, let's register to have the command "java -version" executed at the
+beginning of every month.  In the menu bar click on "File" and then "New 
+Registration..." and fill in the data:
+<br><br>
+<img src="cron10.gif" alt="CronUI">
+<p>Click on the "Register" button and we will see that it has been assigned
+a unique registration ID:
+<br><br>
+<img src="cron11.gif" alt="CronUI">
+
+<h2><a name="Header_UITriggerReg" href="#ToC_UITriggerReg">Trigger a Registration</a></h2>
+
+<p>Suppose we want to test the STAF command that we just registered, and we
+don't want to wait until the next time the month changes.  To do this,
+click on "Selected" in the menu bar and select "Trigger", or
+right-click on its row in the registration table, and select
+"Trigger" in the popup menu.
+<p>The STAF command will be submitted and a STAFLogViewer window will open to
+display the service log entries for that STAF command:
+<br><br>
+<img src="cron12.gif" alt="CronUI">
+<p>In this case, since the process returned the version immediately, the
+log query shows that the process has completed, and includes the information it
+returned.
+
+<h2><a name="Header_UIViewLog" href="#ToC_UIViewLog">View the Service Log</a></h2>
+
+<p>To view the service log's entries for a particular registration ID, click
+on "View" in the menu bar and then select "Service Log for ID...".  In the
+popup dialog, enter ID "3" and click on OK.  A STAFLogViewer window will open
+with all of the log entries for ID 3:
+<br><br>
+<img src="cron13.gif" alt="CronUI">
+<p>To view the last 100 entries in the service log, click on "View" in the
+menu bar and then select "Service Log last 100 records".  A STAFLogViewer window 
+will open with the last 100 entries:
+<br><br>
+<img src="cron14.gif" alt="CronUI">
+<p>To view the log entries for a particular submitted STAF command, click on
+"View" in the menu bar and then select "Service log for submitted STAF
+command...".  A new dialog will be displayed showing a list of all of the
+submitted STAF commands:
+<br><br>
+<img src="cron15.gif" alt="CronUI">
+<p>Select the submitted STAF command, and click on "OK".  A STAFLogViewer
+window will open with all of the log entries for that submitted STAF command:
+<br><br>
+<img src="cron16.gif" alt="CronUI">
+<p>To view the entire service log, click on "View" in the menu bar and then
+select "Entire Service Log".  A STAFLogViewer window 
+will open with all of the log entries:
+<br><br>
+<img src="cron17.gif" alt="CronUI">
+
+<h2><a name="Header_UIDeleteLog" href="#ToC_UIDeleteLog">Delete the Service Log</a></h2>
+
+<p>To delete the service log, click on "View" in the menu bar and then
+select "Delete Service Log".  You will receive a confirmation popup:
+<br><br>
+<img src="cron18.gif" alt="CronUI">
+
+<br><br>
+
+<HR>
+<H1><A name="Errors" href="#ToC_Errors">Cron Error Codes</A></H1>
+
+<P>In addition to the common STAF return codes, the following Cron
+return codes are defined:
+<BR>
+</P>
+<P><B>Table 1. Cron Service Return Codes</B><BR>
+</P>
+<TABLE border="1" height="200">
+  
+    <TR>
+      <TH ALIGN=middle VALIGN=top WIDTH="14%" height="19">Error Code</TH>
+      <TH ALIGN=left VALIGN=top WIDTH="29%" height="19">Meaning</TH>
+      <TH ALIGN=left VALIGN=top WIDTH="57%" height="19">Comment</TH>
+    </TR>
+    <tr>
+      <TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>4001</B></TD>
+      <TD ALIGN=left VALIGN=top WIDTH="29%" height="19">Python error</TD>
+      <TD ALIGN=left VALIGN=top WIDTH="57%" height="19">A Python error during a TRIGGER command occurred while evaluating the request to be submitted. The result buffer will include details about the Python error.</TD>
+    </TR>
+    <tr>
+      <TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>4002</B></TD>
+      <TD ALIGN=left VALIGN=top WIDTH="29%" height="19">Request not submitted</TD>
+      <TD ALIGN=left VALIGN=top WIDTH="57%" height="19">The request for a TRIGGER command was not submitted because the value of STAFCronSubmit was not set to true. The result buffer will include the value of STAFCronSubmit.</TD>
+    </TR>
+  
+</TABLE>
+
+<p>
+<hr>
+
+<h1><a name="Header_References" href="#ToC_References">
+Appendix A: References</a></h1>
+
+<ul>
+<li>
+See the <a href="http://www.jython.org">http://www.jython.org</a> website
+for more information about Jython.</li>
+<p>
+<li>
+See the <a href="http://www.python.org">http://www.python.org</a> website
+for more information about Python.</li>
+</ul>
+
+<p>
+<hr>
+
+<h1><a name="Header_CPythonDiffs" href="#ToC_CPythonDiffs">
+Appendix B: Jython and CPython Differences</a></h1>
+
+Although in most cases Jython behavior is identical to the C-language
+implementation of Python (CPython), there are still cases where the
+two implementations differ.  If you are already a CPython programmer,
+or are hoping to use CPython code under Jython, you need to be aware
+of these differences.  Also, there is a time lag between a new CPython
+release and the corresponding Jython release.  The Cron service uses
+Jython 2.5.2 which implements the same set of language features as CPython 2.5.
+Jython 2.5.2 cannot execute Python code that uses functions that were
+provided in later versions of Python, such as Python 2.6.
+<p>
+Most Python modules that are written in Python work fine in Jython.
+A few types of modules will not run under Jython such as:
+<p>
+<ul>
+<li>Modules that contain functionality not included in a JVM
+    <p>
+    Some standard CPython modules depend on operating system calls
+    that are not available under Java.  The most notable of these
+    is <i>os</i>, which actually does run in Jython, but is missing
+    much of its functionality.
+<p>
+<li>Modules that are implemented in C
+    <p>
+    A number of common CPython modules are implemented in C rather
+    than Python, either for a speed boost or because the module is
+    a C wrapper around an external C library.  The C modules, or
+    any modules that depend on them, will not run in Jython.
+</ul>
+<p>
+See the "Jython Essentials" book, written by Samuele Pedroni and
+Noel Rappin, for more information about the differences between
+Jython and CPython.
+<p>
+<hr>
+
+<h1><b><a name="Header_Licenses" href="#ToC_Licenses">
+Appendix C: Licenses and Acknowledgements</a></b></h1>
+
+<h2>Jython</h2>
+
+Jython is an implementation of the high-level, dynamic, object-oriented language Python
+written in 100% Pure Java, and seamlessly integrated with the Java platform. It thus
+allows you to run Python on any Java platform. 
+
+<h3>Acknowledgement</h3>
+
+This product includes software developed by the Jython Developers (http://www.jython.org/).
+
+<h3>Licence</h3>
+<pre>
+PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
+--------------------------------------------
+
+1. This LICENSE AGREEMENT is between the Python Software Foundation
+("PSF"), and the Individual or Organization ("Licensee") accessing and
+otherwise using this software ("Jython") in source or binary form and
+its associated documentation.
+
+2. Subject to the terms and conditions of this License Agreement, PSF
+hereby grants Licensee a nonexclusive, royalty-free, world-wide
+license to reproduce, analyze, test, perform and/or display publicly,
+prepare derivative works, distribute, and otherwise use Jython alone
+or in any derivative version, provided, however, that PSF's License
+Agreement and PSF's notice of copyright, i.e., "Copyright (c) 2007
+Python Software Foundation; All Rights Reserved" are retained in
+Jython alone or in any derivative version prepared by Licensee.
+
+3. In the event Licensee prepares a derivative work that is based on
+or incorporates Jython or any part thereof, and wants to make
+the derivative work available to others as provided herein, then
+Licensee hereby agrees to include in any such work a brief summary of
+the changes made to Jython.
+
+4. PSF is making Jython available to Licensee on an "AS IS"
+basis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND
+DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
+FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF JYTHON WILL NOT
+INFRINGE ANY THIRD PARTY RIGHTS.
+
+5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF JYTHON
+FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS
+A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING JYTHON,
+OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
+
+6. This License Agreement will automatically terminate upon a material
+breach of its terms and conditions.
+
+7. Nothing in this License Agreement shall be deemed to create any
+relationship of agency, partnership, or joint venture between PSF and
+Licensee.  This License Agreement does not grant permission to use PSF
+trademarks or trade name in a trademark sense to endorse or promote
+products or services of Licensee, or any third party.
+
+8. By copying, installing or otherwise using Jython, Licensee
+agrees to be bound by the terms and conditions of this License
+Agreement.
+ 
+Jython 2.0, 2.1 License
+================================
+
+Copyright (c) 2000-2009 Jython Developers.
+All rights reserved
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+ - Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+ - Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the distribution.
+
+ - Neither the name of the Jython Developers nor the names of
+   its contributors may be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</pre>
+
+</body>
+</html>

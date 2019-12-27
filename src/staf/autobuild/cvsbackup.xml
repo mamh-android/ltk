@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <!-- Beginning of job -->
+
+  <defaultcall function="Main"/>
+
+  <!-- Import necessary utilities -->
+
+  <script>
+    from com.ibm.staf import STAFUtil
+    from com.ibm.staf import STAFResult as STAFRetCode
+  </script>
+
+  <!-- Default variables -->
+
+  <script>
+    debug = 1
+  
+    cvsRoot = ':pserver:anonymous@cvs.staf.sourceforge.net:/cvsroot/staf'
+    extractMach = 'staf2f.austin.ibm.com'
+
+    extractRoot = 'c:/dev/autobuild'
+    extractPath = '%s/extract' % extractRoot 
+    extractLogPath = '%s/extract_logs' % extractRoot 
+
+    cygwinBashShell = 'c:\\cygwin\\bin\\bash'
+    cygwinPath = '/cygdrive/c/cygwin'
+    cygwinBinPath = 'c:\\cygwin\\bin' 
+
+    ftpMach = 'staf1b.austin.ibm.com'
+    ftpPath = '/home/build'
+  </script>
+  
+  <!-- ================================================================= -->
+  <!-- check-stafcmd - This function determines whether an arbitrary     -->
+  <!--                 staf command worked.  If not, it generates some   -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-stafcmd">
+    <if expr="RC != 0">
+      <sequence>
+      
+        <script>
+          from com.ibm.staf import STAFUtil
+          message = 'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+          message = STAFUtil.wrapData(message)
+          emailsubject = "STAF cvs backup failed"
+          emailsubject = STAFUtil.wrapData(emailsubject)
+        </script>
+      
+        <message>message</message>
+        
+        <log level="'error'">message</log>
+        
+        <stafcmd name="'Emailing failure notification'">
+          <location>'local'</location>
+          <service>'email'</service>
+          <request>'send to bdavid@us.ibm.com to lucass@us.ibm.com to rankinc@us.ibm.com subject %s message %s' %(emailsubject, message)</request>
+        </stafcmd>
+        
+        <!-- Logout of CVS via pserver -->
+
+        <message>"Logging out of CVS via pserver"</message>
+        <log>"Logging out of CVS via pserver"</log>
+
+        <process name="'CVS Logout'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'echo | cvs -d %s logout'" % cvsRoot</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/cvs_logout.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/cvs_logout.err' % extractLogPath</stderr>
+        </process>
+        
+        <terminate block="'main'"/>
+        
+      </sequence>
+    </if>
+  </function>
+  
+  <!-- ================================================================= -->
+  <!-- check-process - This function determines whether an arbitrary     -->
+  <!--                 process worked.  If not, it generates some        -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-process">
+    <if expr="RC != 0">
+      <sequence>
+      
+        <script>
+          from com.ibm.staf import STAFUtil
+          message = 'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+          message = STAFUtil.wrapData(message)
+          emailsubject = "STAF cvs backup failed"
+          emailsubject = STAFUtil.wrapData(emailsubject)
+        </script>
+      
+        <message>message</message>
+        
+        <log level="'error'">message</log>
+        
+        <stafcmd name="'Emailing failure notification'">
+          <location>'local'</location>
+          <service>'email'</service>
+          <request>'send to bdavid@us.ibm.com to lucass@us.ibm.com to rankinc@us.ibm.com subject %s message %s' %(emailsubject, message)</request>
+        </stafcmd>
+        
+        <!-- Logout of CVS via pserver -->
+
+        <message>"Logging out of CVS via pserver"</message>
+        <log>"Logging out of CVS via pserver"</log>
+
+        <process name="'CVS Logout'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'echo | cvs -d %s logout'" % cvsRoot</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/cvs_logout.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/cvs_logout.err' % extractLogPath</stderr>
+        </process>
+
+        <terminate block="'main'"/>
+
+        </sequence>
+    </if>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- check-win-bash-process - This function determines whether a bash  -->
+  <!--                          process running on win32 worked.         -->
+  <!-- ================================================================= -->
+
+  <function name="check-win-bash-process">
+    <sequence>
+      <script>
+        if (RC > 130000): RC = 131072 - RC
+      </script>
+
+      <call function="'check-process'"/>
+    </sequence>
+  </function>
+
+  <function name="Main">
+   <testcase name="'CVS-Repository-Backup'">   
+    <sequence>
+    
+      <script>
+        import time 
+        from time import strftime
+      </script>
+      
+      <stafcmd name="'Delete previous tar.bz2 file'">
+         <location>extractMach</location>
+         <service>'FS'</service>
+         <request>
+           'delete entry %s/staf-cvsroot.tar.bz2 confirm' % (extractPath)
+         </request>
+      </stafcmd>
+   
+      <!-- Login to CVS via pserver -->
+
+      <message>"Logging in to CVS via pserver"</message>
+      <log>"Logging in to CVS via pserver"</log>     
+
+      <process name="'CVS Login'">
+        <location>extractMach</location>
+        <command>cygwinBashShell</command>
+        <parms>"-c 'echo | cvs -d %s login'" % cvsRoot</parms>
+        <workdir>extractPath</workdir>
+        <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+        <stdout if="debug">'%s/cvs_login.out' % extractLogPath</stdout>
+        <stderr if="debug">'%s/cvs_login.err' % extractLogPath</stderr>
+      </process>
+        
+      <!-- Login RC can sometimes be 1, even though the login was successful,
+           so do not check RC -->    
+      
+      <message>"Backing up the cvs repository"</message>
+      <log>"Backing up the cvs repository"</log>
+    
+      <process name="'GetTarball'"> 
+        <location>extractMach</location> 
+        <command>cygwinBashShell</command>
+        <parms>
+          "-c '/usr/bin/wget http://cvs.sourceforge.net/cvstarballs/staf-cvsroot.tar.bz2'"
+        </parms>
+        <workdir>extractPath</workdir>
+        <stdout if="debug">'%s/cvs_backup.out' % extractLogPath</stdout>
+        <stderr if="debug">'%s/cvs_backup.err' % extractLogPath</stderr>
+        <returnstdout/>
+      </process>      
+      
+      <script>failMessage = 'Backing up CVS repository'</script>
+      <call function="'check-win-bash-process'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <stafcmd name="'Transfer cvs backup file'">
+         <location>extractMach</location>
+         <service>'FS'</service>
+         <request>
+           'copy file %s/staf-cvsroot.tar.bz2 tofile %s/backup/staf-cvsroot-%s.tar.bz2 tomachine %s' % (extractPath, ftpPath, time.strftime("%Y%m%d"), ftpMach)
+         </request>
+      </stafcmd>
+      
+      <script>failMessage = 'Transfer cvs backup file'</script>
+      <call function="'check-stafcmd'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <script>
+        from com.ibm.staf import STAFUtil
+        emailmessage = "STAF CVS Repository backup completed at %s\n%s/backup/staf-cvsroot-%s.tar.bz2 is available on %s" % ( time.strftime("%H:%M"), ftpPath, time.strftime("%Y%m%d"), ftpMach )
+        emailmessage = STAFUtil.wrapData(emailmessage)
+        emailsubject = "STAF CVS Repository backup completed successfully"
+        emailsubject = STAFUtil.wrapData(emailsubject)
+      </script>
+
+      <stafcmd name="'Sending email notification'">
+        <location>'local'</location>
+        <service>'email'</service>
+        <request>'send to bdavid@us.ibm.com to lucass@us.ibm.com to rankinc@us.ibm.com subject %s message %s' %(emailsubject, emailmessage)</request>
+      </stafcmd>
+      
+      <script>failMessage = 'Send email notifications'</script>
+      <call function="'check-stafcmd'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <!-- Logout of CVS via pserver -->
+
+      <message>"Logging out of CVS via pserver"</message>
+      <log>"Logging out of CVS via pserver"</log>
+
+      <process name="'CVS Logout'">
+        <location>extractMach</location>
+        <command>cygwinBashShell</command>
+        <parms>"-c 'echo | cvs -d %s logout'" % cvsRoot</parms>
+        <workdir>extractPath</workdir>
+        <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+        <stdout if="debug">'%s/cvs_logout.out' % extractLogPath</stdout>
+        <stderr if="debug">'%s/cvs_logout.err' % extractLogPath</stderr>
+      </process>
+      
+      <message>"CVS backup completed"</message>
+      <log>"CVS backup completed"</log>
+     
+    </sequence>
+   </testcase>
+ </function>
+
+</stax>

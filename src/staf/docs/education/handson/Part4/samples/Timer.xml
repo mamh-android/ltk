@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="begin_tests"/>
+
+  <script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+    test_process_times = ['30', '10', '25']
+  </script>
+
+  <function name="begin_tests">
+
+    <sequence>
+
+      <import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      <iterate var="parm1" in="test_process_times" indexvar="index">
+
+        <sequence>
+
+          <timer duration="'20s'">
+
+            <call function="'main'">{ 'parms' : '%s 1 0' % parm1 }</call>
+
+          </timer>
+
+          <if expr="RC == 1">
+            <message log="1">
+              'Test # %s still running after timer the expired' % index
+            </message>
+            <elseif expr="RC == 0">
+              <message log="1">
+                'Test # %s ended before the timer expired' % index
+              </message>
+            </elseif>
+          </if>
+
+        </sequence>
+
+      </iterate>
+
+    </sequence>
+
+  </function>
+
+</stax>

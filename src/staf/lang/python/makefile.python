@@ -1,0 +1,32 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+python_targets += $(REL)/lib/PySTAF.py\
+               $(REL)/lib/PySTAFv3.py
+Targets += $(python_targets)
+CleanupTargets += python_targets
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFIF PYTHON targets
+
+$(REL)/lib/PySTAF.py:      $(SRC)/lang/python/PySTAF.py       $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/lib/PySTAFv3.py:      $(SRC)/lang/python/PySTAFv3.py       $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_python:
+	-@$(DEL) $(O)/lang/python/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/PySTAF.py $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/PySTAFv3.py $(OUT_ERR_TO_DEV_NULL)
+

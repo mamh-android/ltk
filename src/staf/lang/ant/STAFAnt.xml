@@ -1,0 +1,793 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<article class="faq">
+<title>STAF Ant Task User's Guide</title> 
+<para>
+STAF Ant Task User's Guide
+</para>
+<para>
+Document Owner:  David Bender
+</para>
+<para>
+Last Updated:  July 25, 2008
+</para>  
+
+<qandaset> <!-- defaultlabel='qanda' -->>
+
+<qandadiv>
+<title>Introduction</title>
+<screen></screen>
+<qandaentry>
+<question>
+<para>Overview</para> 
+</question>
+<answer>
+<screen></screen>
+<para>The STAF Ant Task allows you call into the STAF framework from
+within an Ant build script.
+</para>
+<para>
+This allows you to take advantage of some of STAF's capabilities such as
+distributed synchronization via the SEM (Semaphore) service and resource pooling
+via the ResPool service.
+</para>
+<para>The STAFWrapData Ant Task allows you to create a length delimited
+representation of a string, which is useful when submitting STAF requests
+that contain embedded spaces and quotes.
+</para>
+
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Setup</title>
+<screen></screen>
+<qandaentry>
+<question>
+<para>Installation</para> 
+</question>
+<answer>
+<screen></screen>
+<para>The STAF and STAFWrapData Ant Task classes are located a file named
+STAFAnt.jar.  If you selected to
+install Java support during the installation of STAF, then the STAFAnt.jar
+file will be located in <command>{STAF/Config/STAFRoot}/bin</command>
+for Windows or in <command>{STAF/Config/STAFRoot}/lib</command> for Unix.
+</para>
+<screen></screen>
+
+</answer>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Configuration</para> 
+</question>
+<answer>
+<screen></screen>
+<para>To use the STAF and STAFWrapData Ant Tasks, you will need to add the
+STAFAnt.jar file to your CLASSPATH.
+</para>
+<para>
+For example, on Windows, if you installed STAF to the default directory, you
+would need to update your CLASSPATH with:
+<screen>
+set CLASSPATH=C:\STAF\bin\STAFAnt.jar;%CLASSPATH%
+</screen>
+</para>
+<para>
+On Unix, if you installed STAF to the default directory, you
+would need to update your CLASSPATH with:
+<screen>
+export CLASSPATH=/usr/local/staf/lib/STAFAnt.jar:$CLASSPATH
+</screen>
+</para>
+
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Using the STAF Ant Task Extension</title>
+<screen></screen>
+<qandaentry>
+<question>
+<para>Using the &lt;taskdef></para> 
+</question>
+<answer>
+<screen></screen>
+<para>To use the STAF Ant Task you must define a &lt;taskdef> with
+attributes <command>name="staf"</command> and
+<command>classname="com.ibm.staf.ant.taskdef.STAF"</command>.  If you would
+prefer to not set the CLASSPATH environment variable before running your Ant
+script, you can specify the optional attribute
+<command>classpath="C:\STAF\bin\STAFAnt.jar"</command>
+<screen></screen>
+</para>
+
+</answer>
+<screen></screen>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Properties</para> 
+</question>
+<answer>
+<screen></screen>
+<para>The STAF Ant Task accepts the following attributes:
+</para>
+<informaltable frame="all">
+<tgroup cols="3">
+<tbody>
+<row>
+<entry><command>Name</command></entry>
+<entry><command>Description</command></entry>
+<entry><command>Required</command></entry>
+</row>
+<row>
+<entry>
+location
+</entry>
+<entry>
+This is either LOCAL, if you wish to make a request of the local machine, or the
+name of the machine of which you wish to make a request.  When making a STAF
+request to a remote system, in addition to specifying the machine name, you may
+also specify the network interface over which communication will take place. The
+format for this is:
+<screen>
+  [&lt;Interface>://]&lt;System Identifier>[@&lt;Port>]
+</screen>
+where:
+<itemizedlist>
+<listitem>
+&lt;Interface> is the name of the network interface. If not specified, the
+default interface is used.
+</listitem>
+<listitem>
+&lt;System Identifier> is a valid network identifier for the interface in
+question. You may specify logical or physical identifiers. For example, for a
+TCP/IP interface, the physical identifier for a system is the IP address, while
+the logical identifier is the hostname.
+</listitem>
+<listitem>
+&lt;Port> is a valid port to use for a TCP/IP interface. If not specified, the
+port for the default interface is used. One of the things this allows you to do
+is communicate with an instance of STAF that is using a different TCP/IP port.
+Note that the port specified does not have to be configured on the machine
+submitting the request.
+</listitem>
+</itemizedlist>
+</entry>
+<entry>
+Yes
+</entry>
+</row>
+<row>
+<entry>
+service
+</entry>
+<entry>
+This is the name of the service to which you are submitting a request.
+</entry>
+<entry>
+Yes
+</entry>
+</row>
+<row>
+<entry>
+request
+</entry>
+<entry>
+This is the actual request string that you wish to submit to the service.
+</entry>
+<entry>
+Yes
+</entry>
+</row>
+<row>
+<entry>
+resultPrefix
+</entry>
+<entry>
+This is the prefix that will be used to set properties for the return code
+and the result from the STAF service request.  The properties that will be set
+are <command>resultPrefix</command>.rc and
+<command>resultPrefix</command>.result.  It is recommended that you check the
+return code every time the STAF Ant Task is used.
+</entry>
+<entry>
+No
+</entry>
+</row>
+<row>
+<entry>
+throwBuildException
+</entry>
+<entry>
+If this attribute is set to any string other than empty string (""), a
+BuildException will be thrown if the STAF request results in a non-zero
+return code.  If this attribute is not specified (or if it is set to an empty
+string), a BuildException will not be thrown.
+</entry>
+<entry>
+No
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<para>
+Note that since Ant properties are immutable, meaning that they cannot be
+changed after being set, to get the correct return code and result value from
+the STAF Ant Task, you need to use a unique <command>resultPrefix</command>
+every time the STAF Ant Task is used.
+</para>
+
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Using the STAFWrapData Ant Task Extension</title>
+<screen></screen>
+<qandaentry>
+<question>
+<para>Using the &lt;taskdef></para> 
+</question>
+<answer>
+<screen></screen>
+<para>To use the STAFWrapData Ant Task you must define a &lt;taskdef> with
+attributes <command>name="stafWrapData"</command> and
+<command>classname="com.ibm.staf.ant.taskdef.STAFWrapData"</command>.  If you
+would prefer to not set the CLASSPATH environment variable before running your
+Ant script, you can specify the optional attribute
+<command>classpath="C:\STAF\bin\STAFAnt.jar"</command>
+<screen></screen>
+</para>
+
+</answer>
+<screen></screen>
+</qandaentry>
+
+<qandaentry>
+<question>
+<para>Properties</para> 
+</question>
+<answer>
+<screen></screen>
+<para>The STAFWrapData Ant Task accepts the following attributes:
+</para>
+<informaltable frame="all">
+<tgroup cols="3">
+<tbody>
+<row>
+<entry><command>Name</command></entry>
+<entry><command>Description</command></entry>
+<entry><command>Required</command></entry>
+</row>
+<row>
+<entry>
+data
+</entry>
+<entry>
+The input string.
+</entry>
+<entry>
+Yes
+</entry>
+</row>
+<row>
+<entry>
+result
+</entry>
+<entry>
+The result property that will be set with the wrapped data.  This property
+can then be referenced in the STAF Ant Task "request" attribute.
+</entry>
+<entry>
+Yes
+</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<para>
+Note that since Ant properties are immutable, meaning that they cannot be
+changed after being set, to get the correct wrapped data result from
+the STAFWrapData Ant Task, you need to use a unique <command>result</command>
+every time the STAFWrapData Ant Task is used.
+</para>
+
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+<qandadiv>
+<title>Examples</title>
+<screen></screen>
+<qandaentry>
+<question>
+<para>Example 1</para> 
+</question>
+<answer>
+<screen></screen>
+<para>Here is an example of an Ant build script that uses the STAF Ant Task:
+</para>
+<screen>
+&lt;project name="TestSTAFAntExtension" default="main" basedir=".">
+
+    &lt;description>
+        Build file to test the STAF Ant Extension
+    &lt;/description>
+
+    &lt;taskdef name="staf"
+              classname="com.ibm.staf.ant.taskdef.STAF"/>
+
+    &lt;target name="main">
+      &lt;staf location="local"
+            service="PING"
+            request="PING"
+            throwBuildException="1"/>
+      &lt;staf location="local"
+            service="MISC"
+            request="VERSION"
+            resultPrefix="version"/>
+      &lt;echo>RC: ${version.rc}, Result: ${version.result}&lt;/echo>
+      &lt;staf location="local"
+            service="MISC"
+            request="WHOAMI"
+            resultPrefix="whoami"/>
+      &lt;echo>RC: ${whoami.rc}, Result: ${whoami.result}&lt;/echo>
+      &lt;staf location="local"
+            service="TEST"
+            request="HELP"
+            resultPrefix="testhelp"/>
+      &lt;echo>RC: ${testhelp.rc}, Result: ${testhelp.result}&lt;/echo>
+      &lt;staf location="local"
+            service="TRUST"
+            request="LIST"
+            resultPrefix="trustlist"/>
+      &lt;echo>RC: ${trustlist.rc}, Result: ${trustlist.result}&lt;/echo>
+    &lt;/target>
+
+&lt;/project>
+</screen>
+<para>
+Here is the output from this sample script:
+</para>
+<screen>
+Buildfile: build.xml
+
+main:
+     [staf] local PING PING
+     [staf] RC=0, Result=PONG
+     [staf] local MISC VERSION
+     [staf] RC=0, Result=3.1.0 Beta 1
+     [echo] RC: 0, Result: 3.1.0 Beta 1
+     [staf] local MISC WHOAMI
+     [staf] RC=0, Result=
+     [staf] {
+     [staf]   Instance Name   : STAF
+     [staf]   Instance UUID   : 70742C435C0500000935359732323638
+     [staf]   Request Number  : 91
+     [staf]   Interface       : local
+     [staf]   Logical ID      : local
+     [staf]   Physical ID     : local
+     [staf]   Endpoint        : local://local
+     [staf]   Machine         : machineA.austin.ibm.com
+     [staf]   Machine Nickname: testmachine1
+     [staf]   Local Request   : Yes
+     [staf]   Handle          : 18
+     [staf]   Handle Name     : STAF_Ant_Extension
+     [staf]   User            : none://anonymous
+     [staf]   Trust Level     : 5
+     [staf] }
+     [echo] RC: 0, Result:
+     [echo] {
+     [echo]   Instance Name   : STAF
+     [echo]   Instance UUID   : 70742C435C0500000935359732323638
+     [echo]   Request Number  : 91
+     [echo]   Interface       : local
+     [echo]   Logical ID      : local
+     [echo]   Physical ID     : local
+     [echo]   Endpoint        : local://local
+     [echo]   Machine         : machineA.austin.ibm.com
+     [echo]   Machine Nickname: testmachine1
+     [echo]   Local Request   : Yes
+     [echo]   Handle          : 18
+     [echo]   Handle Name     : STAF_Ant_Extension
+     [echo]   User            : none://anonymous
+     [echo]   Trust Level     : 5
+     [echo] }
+     [staf] local TEST HELP
+     [staf] RC=2, Result=TEST
+     [echo] RC: 2, Result: TEST
+     [staf] local TRUST LIST
+     [staf] RC=0, Result=
+     [staf] [
+     [staf]   {
+     [staf]     Type       : Default
+     [staf]     Entry      : &lt;None>
+     [staf]     Trust Level: 3
+     [staf]   }
+     [staf]   {
+     [staf]     Type       : Machine
+     [staf]     Entry      : local://local
+     [staf]     Trust Level: 5
+     [staf]   }
+     [staf]   {
+     [staf]     Type       : Machine
+     [staf]     Entry      : tcp://machineB.austin.ibm.com
+     [staf]     Trust Level: 5
+     [staf]   }
+     [staf]   {
+     [staf]     Type       : Machine
+     [staf]     Entry      : tcp://machineC.austin.ibm.com
+     [staf]     Trust Level: 5
+     [staf]   }
+     [staf] ]
+     [echo] RC: 0, Result:
+     [echo] [
+     [echo]   {
+     [echo]     Type       : Default
+     [echo]     Entry      : &lt;None>
+     [echo]     Trust Level: 3
+     [echo]   }
+     [echo]   {
+     [echo]     Type       : Machine
+     [echo]     Entry      : local://local
+     [echo]     Trust Level: 5
+     [echo]   }
+     [echo]   {
+     [echo]     Type       : Machine
+     [echo]     Entry      : tcp://machineB.austin.ibm.com
+     [echo]     Trust Level: 5
+     [echo]   }
+     [echo]   {
+     [echo]     Type       : Machine
+     [echo]     Entry      : tcp://machineC.austin.ibm.com
+     [echo]     Trust Level: 5
+     [echo]   }
+     [echo] ]
+
+BUILD SUCCESSFUL
+Total time: 1 second
+</screen>
+<screen></screen>
+</answer>
+
+</qandaentry>
+<screen></screen>
+<qandaentry>
+<question>
+<para>Example 2</para> 
+</question>
+<answer>
+<screen></screen>
+<para>Here is an example that demonstates how you might use STAF services
+as part of your build.  This example does the following steps:
+</para>
+<itemizedlist>
+<listitem>
+Uses the SEM service to request the build semaphore to ensure that only one
+build occurs at a time.
+</listitem>
+<listitem>
+Uses the RESPOOL service to request a machine from the buildMachines resource
+pool.
+</listitem>
+<listitem>
+Next you would add the tasks to build Product XYZ.
+</listitem>
+<listitem>
+Uses the RESPOOL service to release the machine from the buildMachines resource
+pool.
+</listitem>
+<listitem>
+Uses the EVENT service to generate a build event to kick off BVT (Build
+Verification Test).
+</listitem>
+<listitem>
+Uses the EMAIL service to send an email indicating that the build is complete.
+</listitem>
+<listitem>
+Uses the SEM service to release the build semaphore.
+</listitem>
+
+</itemizedlist>
+<screen>
+&lt;project name="BuildProductXYZ" default="main" basedir=".">
+
+    &lt;description>
+        Build file to build product XYZ.
+    &lt;/description>
+
+    &lt;taskdef name="staf"
+              classname="com.ibm.staf.ant.taskdef.STAF"/>
+
+    &lt;target name="main">
+
+        &lt;!-- Request the build semaphore to ensure that only one build
+             occurs at a time. -->
+      &lt;staf location="local"
+            service="SEM"
+            request="REQUEST MUTEX ProductXYZBuild"
+            throwBuildException="1"/>
+
+      &lt;!-- Request a machine from the buildMachines resource pool. -->
+      &lt;staf location="local"
+            service="RESPOOL"
+            request="REQUEST POOL buildMachines"
+            throwBuildException="1"
+            resultPrefix="resourceEntry"/>
+      &lt;echo>Using build machine: ${resourceEntry.result}&lt;/echo>
+
+      &lt;!-- Next you would add the tasks to build Product XYZ. -->
+
+      &lt;!-- Release the machine from the buildMachines resource pool. -->
+      &lt;staf location="local"
+            service="RESPOOL"
+            request="RELEASE POOL buildMachines ENTRY ${resourceEntry.result} FORCE"
+            throwBuildException="1"/>
+
+      &lt;!-- Generate a build event to kick off BVT. -->
+      &lt;staf location="local"
+            service="EVENT"
+            request="GENERATE TYPE productXYZ SUBTYPE start-bvt"
+            throwBuildException="1"/>
+
+      &lt;!-- Send an email indicating that the build is complete. -->
+      &lt;staf location="local"
+            service="EMAIL"
+            request="SEND TO user@company.com MESSAGE ProductXYZ-BuildComplete"
+            throwBuildException="1"/>
+
+      &lt;!-- Release the build semaphore. -->
+      &lt;staf location="local"
+            service="SEM"
+            request="RELEASE MUTEX ProductXYZBuild FORCE"
+            throwBuildException="1"/>
+
+    &lt;/target>
+
+&lt;/project>
+</screen>
+<para>
+Here is the output from this sample script:
+</para>
+<screen>
+Buildfile: build.xml
+
+main:
+     [staf] local SEM REQUEST MUTEX ProductXYZBuild
+     [staf] RC=0, Result=
+     [staf] local RESPOOL REQUEST POOL buildMachines
+     [staf] RC=0, Result=machineA
+     [echo] Using build machine: machineA
+     [staf] local RESPOOL RELEASE POOL buildMachines ENTRY machineA FORCE
+     [staf] RC=0, Result=
+     [staf] local EVENT GENERATE TYPE productXYZ SUBTYPE start-bvt
+     [staf] RC=0, Result=10
+     [staf] local EMAIL SEND TO bdavid@us.ibm.com MESSAGE ProductXYZ-BuildComplete
+     [staf] RC=0, Result=
+     [staf] local SEM RELEASE MUTEX ProductXYZBuild FORCE
+     [staf] RC=0, Result=
+
+BUILD SUCCESSFUL
+Total time: 11 seconds
+</screen>
+<screen></screen>
+</answer>
+
+</qandaentry>
+
+
+<screen></screen>
+<qandaentry>
+<question>
+<para>Example 3</para> 
+</question>
+<answer>
+<screen></screen>
+<para>Here is an example that shows how to embed quotes in the STAF service
+request (using &amp;quot;).  The service request is a STAX EXECUTE request
+including the ARGS option; the ARGS option value needs to be enclosed with
+double quotes, and includes single quotes.
+</para>
+<screen>
+&lt;project name="args5" default="main" basedir=".">
+
+    &lt;description>
+        Build file to execute STAX job args5.xml
+    &lt;/description>
+
+    &lt;taskdef name="staf"
+              classname="com.ibm.staf.ant.taskdef.STAF"/>
+
+    &lt;target name="main">
+      &lt;staf location="local"
+             service="STAX"
+             request="EXECUTE FILE C:/staxtest/args5.xml ARGS &amp;quot;{ 'ArchiveIDs': [\'B1\',\'B2\',\'B3\',\'B4\'] }&amp;quot; WAIT RETURNRESULT"
+             resultPrefix="staxexecute"/>
+      &lt;echo>RC: ${staxexecute.rc}, Result: ${staxexecute.result}&lt;/echo>
+    &lt;/target>
+
+&lt;/project>
+</screen>
+<para>
+The args5.xml STAX job simply returns the argument passed to it:
+</para>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+  
+    &lt;function-map-args>
+
+      &lt;function-optional-arg name="ArchiveIDs" default="['B1','B3']"/>
+
+    &lt;/function-map-args>
+
+    &lt;sequence>
+
+      &lt;message log="1">
+        '%s' % (ArchiveIDs)
+      &lt;/message>
+
+      &lt;return>ArchiveIDs&lt;/return>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+<para>
+Here is the output from this sample script:
+</para>
+<screen>
+Buildfile: build.xml
+
+main:
+     [staf] local STAX EXECUTE FILE C:/staxtest/args5.xml ARGS "{ 'ArchiveIDs':
+[\'B1\',\'B2\',\'B3\',\'B4\'] }" WAIT RETURNRESULT
+     [staf] RC=0, Result=
+     [staf] {
+     [staf]   Job ID: 2
+     [staf]   Result: ['B1', 'B2', 'B3', 'B4']
+     [staf]   Status: Normal
+     [staf] }
+     [echo] RC: 0, Result:
+     [echo] {
+     [echo]   Job ID: 2
+     [echo]   Result: ['B1', 'B2', 'B3', 'B4']
+     [echo]   Status: Normal
+     [echo] }
+
+BUILD SUCCESSFUL
+Total time: 1 second
+</screen>
+<screen></screen>
+</answer>
+</qandaentry>
+
+<screen></screen>
+<qandaentry>
+<question>
+<para>Example 4</para> 
+</question>
+<answer>
+<screen></screen>
+<para>Here is an example that shows how to use the STAFWrapData Ant Task to
+create a length delimited representation of a string, which will then be
+used as part of the "request" attribute for a STAF Ant Task.  In this example
+we are executing a PROCESS START request, where the COMMAND includes embedded
+quotes and spaces.
+</para>
+<screen>
+&lt;project name="TestSTAFWrapDataAntExtension" default="main" basedir=".">
+
+    &lt;description>
+        Build file to test the STAFWrapData Ant Extension
+    &lt;/description>
+
+    &lt;taskdef name="staf"
+             classname="com.ibm.staf.ant.taskdef.STAF"/>
+    &lt;taskdef name="stafWrapData"
+             classname="com.ibm.staf.ant.taskdef.STAFWrapData"/>
+
+    &lt;target name="main">
+      &lt;stafWrapData data="dir &amp;quot;C:\Program Files\Java&amp;quot;"
+                    result="dirCommand"/>
+      &lt;staf location="local"
+            service="PROCESS"
+            request="START SHELL COMMAND ${dirCommand} RETURNSTDOUT STDERRTOSTDOUT WAIT"
+            resultPrefix="process"/>
+      &lt;echo>RC: ${process.rc}, Result: ${process.result}&lt;/echo>
+    &lt;/target>
+
+&lt;/project>
+</screen>
+
+<para>
+Here is the output from this sample script:
+</para>
+<screen>
+Buildfile: build.xml
+
+main:
+     [staf] local PROCESS START SHELL COMMAND :27:dir "C:\Program Files\Java" RE
+TURNSTDOUT STDERRTOSTDOUT WAIT
+     [staf] RC=0, Result=
+     [staf] {
+     [staf]   Return Code: 0
+     [staf]   Key        : &lt;None>
+     [staf]   Files      : [
+     [staf]     {
+     [staf]       Return Code: 0
+     [staf]       Data       :  Volume in drive C is C_Drive
+     [staf]  Volume Serial Number is 46B9-A0E8
+
+     [staf]  Directory of C:\Program Files\Java
+
+     [staf] 01/08/2008  03:03 PM    &lt;DIR>          .
+     [staf] 01/08/2008  03:03 PM    &lt;DIR>          ..
+     [staf] 10/17/2007  11:01 AM    &lt;DIR>          jdk1.5.0_13
+     [staf] 10/17/2007  11:01 AM    &lt;DIR>          jre1.5.0_13
+     [staf] 01/08/2008  03:03 PM    &lt;DIR>          jre1.6.0_03
+     [staf]                0 File(s)              0 bytes
+     [staf]                5 Dir(s)  39,176,253,440 bytes free
+
+     [staf]     }
+     [staf]   ]
+     [staf] }
+     [echo] RC: 0, Result:
+     [echo] {
+     [echo]   Return Code: 0
+     [echo]   Key        : &lt;None>
+     [echo]   Files      : [
+     [echo]     {
+     [echo]       Return Code: 0
+     [echo]       Data       :  Volume in drive C is C_Drive
+     [echo]  Volume Serial Number is 46B9-A0E8
+     [echo]
+     [echo]  Directory of C:\Program Files\Java
+     [echo]
+     [echo] 01/08/2008  03:03 PM    &lt;DIR>          .
+     [echo] 01/08/2008  03:03 PM    &lt;DIR>          ..
+     [echo] 10/17/2007  11:01 AM    &lt;DIR>          jdk1.5.0_13
+     [echo] 10/17/2007  11:01 AM    &lt;DIR>          jre1.5.0_13
+     [echo] 01/08/2008  03:03 PM    &lt;DIR>          jre1.6.0_03
+     [echo]                0 File(s)              0 bytes
+     [echo]                5 Dir(s)  39,176,253,440 bytes free
+     [echo]
+     [echo]     }
+     [echo]   ]
+     [echo] }
+
+BUILD SUCCESSFUL
+Total time: 0 seconds
+</screen>
+<screen></screen>
+<para>
+*** End of Document ***
+</para>
+</answer>
+</qandaentry>
+
+</qandadiv>
+
+</qandaset>
+
+</article>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="begin_tests"/>
+
+  <script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  </script>
+
+  <function name="begin_tests">
+
+    <block name="'SVT_Regression'">
+
+      <sequence>
+
+        <import machine="ImportMachine"
+          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+        <call function="'main'">{ 'parms' : '30 1 0' }</call>
+
+        <call function="'main'">{ 'parms' : '15 2 0' }</call>
+
+      </sequence>
+
+    </block>
+
+  </function>
+
+</stax>

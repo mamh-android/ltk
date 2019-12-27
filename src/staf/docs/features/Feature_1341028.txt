@@ -1,0 +1,1147 @@
+Feature ID  : 1341028
+Last Updated: 11/02/2005
+Title       : Perform interface cycling when connecting to a machine
+
+
+Description
+-----------
+
+Currently, in STAF V3, if an endpoint for a remote machine is 
+specified without an interface, STAF attempts to connect to the
+endpoint using only the default interface.  To connect to the
+endpoint using a different interface, you must specify it.
+This feature would add the ability to perform automatic interface
+cycling so that if you have an interface configured on the
+requesting machine that can be used to connect to the remote machine,
+STAF will find it automatically for you.
+
+Since this could significantly lengthen the time it takes to connect
+to a remote machine, caching will be added.  That is, if an interface
+has been found for an endpoint that works, it will be added to the
+interface cycling cache so that next time it will try to connect
+using the cached interface first.
+
+This feature will also provide the ability to turn interface cycling
+on or off (it will be on by default) and to be able to list the
+interface cycling cache and to purge the contents of the cache.
+
+
+Problem(s) Solved
+-----------------
+
+You may not know (or don't care) what interfaces/ports are 
+configured for STAF on a remote machine.  You just want to submit
+a STAF request to a remote machine and have it connect successfully
+(and not get an RC 16).  This feature helps remove the amount of
+information you need to have to connect to another STAF machine by
+determining the interface to use automatically for you. 
+
+
+Related Features
+----------------
+
+None
+
+
+External Changes
+----------------
+
+1) New Operational Parameters:
+
+SET INTERFACECYCLING <Enabled | Disabled>
+
+INTERFACECYCLING specifies to whether to enable or disable automatic
+interface cycling.  The default is to enable interface cycling so
+that when an interface is not specified, all of the interfaces will
+be used to try to connect to a remote machine instead of just trying
+the default interface.  You may also enable or disable automatic
+interface cycling dynamically using the MISC service.
+
+2) Changes to the MISC Service:
+
+a) Update the SET request to allow you to dynamically enable or
+disable automatic interface cycling.
+
+SET INTERFACECYCLING <Enabled | Disabled>
+
+Requires trust level 5.
+
+b) Update the LIST SETTINGS request to show whether automatic
+interface cycling is enabled or disabled.
+
+Add key "interfaceCycling" with description "Interface Cycling"
+with possible values "Enabled" or "Disabled" to the
+STAF/Service/Misc/Settings map.
+
+c) Add the ability to list the cached endpoints and their
+interfaces used for automatic interface cycling.
+
+LIST  ENDPOINTCACHE 
+
+Requires trust level 2 or higher.
+
+The result buffer will contain a marshalled
+<Map:/STAF/Service/Misc/EndpointCache> representing the
+contents of the endpoint cache used when automatic interface
+cycling is enabled.  The map is defined as follows:
+
+Key Name         Display Name Type     Format/Value
+---------------- ------------ -------- -------------------
+endpoint         Endpoint     <String>
+interface        Interface    <String>
+createdTimestamp Date-Time    <String> <YYYYMMDD-HH:MM:SS>
+
+Note:  The "Date-Time" value contains the timestamp for when
+the entry was added to the endpoint cache.
+
+For example:
+
+Machine                 Interface Date-Time
+----------------------- --------- -----------------
+client1                 tcp       20051029-09:23:25
+client1.austin.ibm.com  tcp       20051028-14:57:15
+client2.austin.ibm.com  tcp2      20051028-14:14:32
+client3.raleigh.ibm.com tcp       20051027-08:30:21
+
+d) Add the ability to purge one or more (or all) of the endpoints
+from the cache used for automatic interface cycling.
+
+PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>
+
+Requires trust level 5.
+
+If successful, the result buffer will contain a marshalled
+<Map:STAF/Service/Misc/PurgeStats>, representing the number
+of endpoints that were purged and the number of endpoints
+remaining in the endpoint cache. The map is defined as follows: 
+
+Key Name     Display Name        Type     Format/Value
+------------ ------------------- -------- ------------
+numPurged    Purged Endpoints    <String>
+numRemaining Remaining Endpoints <String>
+
+For example:
+
+Purged Endpoints   : 2
+Remaining Endpoints: 8
+
+
+Design Considerations
+---------------------
+
+1) Would be better to attempt to connect to an interface once and then
+   try the other interfaces, and then repeat this loop if still fails
+   to connect up to ther maximum number of connection attempts.
+   
+   Loop up to maxmimum connection attempts with delay between attempts
+   {
+       Loop through the additional interfaces
+       {
+           Try to connect...
+           return 0 if works
+       }
+   }
+
+   Currently, the design does it the other way, e.g.:
+
+   Loop through the additional interfaces
+   {
+       Loop up to maxmimum connection attempts with delay between attempts
+       {
+           Try to connect...
+           return 0 if works
+       }
+    }
+
+2) Automatic interface cycling can only connect to a remote machine
+   if the requesting machine has an interface with a port that is
+   configured on the remote machine.  In the future, we could add the
+   ability to try connecting to the remote machine via a configurable
+   set of ports (by default, port 6500 and 6501) event if interfaces
+   for these ports are not configured on the requesting machine.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+- Since automatic interface cycling is enabled by default, a connection
+  may now succeed that failed before.  In general this should be a
+  "good" thing, but it's possible that it's not in some cases.
+
+
+Internal Changes
+----------------
+
+1) STAFConnectionManager.cpp/h:
+
+   a) Add new methods to enable and disable automatic interface cycling
+      and to see if it's enabled or disabled.
+   b) Update makeConnection method when the endpoint doesn't not
+      specify an interface so that if automatic interface cycling
+      is enabled, it will first check if the endpoint is already in
+      the endpoint cache and, if so, first try to connect using the
+      interface in the cache.  If the endpoint is not in the endpoint
+      cache, first try to connect using the default interface.
+      Call the new attemptConnection method to make the connection.
+      If the connection attempt failed when using a cached interface,
+      remove the entry for the endpoint from the cache.
+      Return the rc if the connenction attempt worked or if an interface
+      was specified in the endpoint, or if automatic interface cycling
+      is disabled, since won't try additional interfaces in these cases.
+      Otherwise, iterate through any other interfaces (using a list of
+      the interfaces in the order they were configured in the STAF.cfg
+      file), skipping the interface that was first unsuccessfully 
+      attempted and skipping the local interface.  Call the
+      attemptConnection method to make the connection.  If the
+      connection attempt works, add the endpoint (and the interface
+      that worked and the current timestamp) to the endpoint cache and
+      return 0. 
+   c) Add a new attemptConnection method that attempts to make
+      a connection using the specified interface.  This method is
+      just like the current makeConnection method except it doesn't
+      verify that the connection provider exists (because that now
+      being done in the updated makeConnection method.
+
+   Here's a CVS DIFF of the changes:
+
+Index: STAFConnectionManager.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFConnectionManager.cpp,v
+retrieving revision 1.13
+diff -r1.13 STAFConnectionManager.cpp
+19c19
+<     /* Do Nothing */
+---
+>     fAutoInterfaceCycling = true;   // Enable by default
+118a119,141
+> STAFRC_t STAFConnectionManager::enableAutoInterfaceCycling()
+> {
+>     STAFMutexSemLock lock(fAutoInterfaceCyclingSem);
+>     fAutoInterfaceCycling = true;
+>     return kSTAFOk;
+> }
+> 
+> 
+> STAFRC_t STAFConnectionManager::disableAutoInterfaceCycling()
+> {
+>     STAFMutexSemLock lock(fAutoInterfaceCyclingSem);
+>     fAutoInterfaceCycling = false;
+>     return kSTAFOk;
+> }
+> 
+> 
+> bool STAFConnectionManager::getAutoInterfaceCycling()
+> {
+>     STAFMutexSemLock lock(fAutoInterfaceCyclingSem);
+>     return fAutoInterfaceCycling;
+> }
+> 
+> 
+143a167,171
+>     bool interfaceSpecified = true;
+>     bool useCachedEndpoint = false;
+> 
+>     // Check if an interface was specified in the 'where' value
+> 
+154a183,275
+>     else if (fAutoInterfaceCycling)
+>     {
+>         interfaceSpecified = false;
+> 
+>         // If the endpoint is found in the Endpoint Cache Map, assign the
+>         // connection provider (aka interface) name cached for the endpoint
+> 
+>         STAFString interface;
+> 
+>         if (getCachedInterface(endpoint, connProvName) == kSTAFOk)
+>         {
+>             useCachedEndpoint = true;
+>         }
+>     }
+> 
+>     // Make sure connection provider exists and get the connection provider
+> 
+>     ConnectionProviderMap::iterator cpIter = fConnProvMap.find(
+>         connProvName.toLowerCase());
+> 
+>     if (cpIter == fConnProvMap.end())
+>     {
+>         errorBuffer = "No such interface: " + connProvName +
+>             ", Endpoint: " + where;
+>         return kSTAFNoPathToMachine;
+>     }
+> 
+>     provider = cpIter->second;
+> 
+>     // Attempt to connect to the endpoint using this connection provider
+> 
+>     rc = attemptConnection(connProvName, endpoint, provider, connection,
+>                            errorBuffer);
+> 
+>     if (rc == kSTAFOk && !interfaceSpecified && !useCachedEndpoint)
+>     {
+>         addToEndpointCache(endpoint, connProvName);
+>     }
+>     else if ((rc != kSTAFOk) && useCachedEndpoint)
+>     {
+>         removeFromEndpointCache(endpoint);
+>     }
+> 
+>     if (rc == kSTAFOk || interfaceSpecified || !fAutoInterfaceCycling)
+>     {
+>         // Return because the connection worked or because the connection
+>         // failed and an explicit interface was specified or automatic
+>         // interface cycling is not enabled
+> 
+>         return rc;
+>     }
+> 
+>     // Don't overwrite the error message from the first attempt, so that the
+>     // rc and error message from the 1st connect attempt are returned if still
+>     // can't connect using other connection providers.
+> 
+>     STAFString errorBuffer2 = "";
+>     
+>     // Iterate through the remaining connection providers and try to connect
+>     // to the endpoint using another connection provider
+> 
+>     for (STAFConnectionManager::ConnectionProviderList::iterator
+>          iter = fConnProvList.begin(); iter != fConnProvList.end(); ++iter)
+>     {
+>         STAFString interface = (*iter)->getName();
+> 
+>         if ((interface == connProvName) || (interface == sLocal))
+>         {
+>             // Skip the connProvName that already we tried and skip the local
+>             // connection provider
+>             continue;
+>         }
+>         
+>         if (attemptConnection(interface, endpoint, *iter, connection, 
+>                               errorBuffer2) == kSTAFOk)
+>         {
+>             // Connection worked - Add to the endpoint cache and exit
+> 
+>             addToEndpointCache(endpoint, interface);
+>             return kSTAFOk;
+>         }
+>     }
+> 
+>     return rc;
+> }
+> 
+> 
+> STAFRC_t STAFConnectionManager::attemptConnection(
+>     const STAFString &interface, const STAFString &endpoint,
+>     STAFConnectionProviderPtr &provider, STAFConnectionPtr &connection,
+>     STAFString &errorBuffer)
+> {
+>     STAFRC_t rc = kSTAFOk;
+165,176c286
+<             ConnectionProviderMap::iterator iter =
+<                 fConnProvMap.find(connProvName.toLowerCase());
+< 
+<             if (iter == fConnProvMap.end())
+<             {
+<                 errorBuffer = "No such interface: " + connProvName +
+<                     ", Endpoint: " + where;
+<                 return kSTAFNoPathToMachine;
+<             }
+< 
+<             provider = iter->second;
+<             connection = iter->second->connect(endpoint);
+---
+>             connection = provider->connect(endpoint);
+182c292,293
+<                 STAFString(e.getErrorCode()) + ", Endpoint: " + where;
+---
+>                 STAFString(e.getErrorCode()) + ", Endpoint: " +
+>                 interface + gSpecSeparator + endpoint;
+216a328,419
+> STAFRC_t STAFConnectionManager::addToEndpointCache(const STAFString &endpoint,
+>                                                    const STAFString &interface)
+> {
+>     // Don't add to cache if using the default connection provider since that
+>     // will be the first one tried anyway
+> 
+>     if (interface == fDefaultConnProv) return kSTAFOk;
+> 
+>     // Add the endpoint to the endpoint cache map
+> 
+>     STAFMutexSemLock cacheLock(fEndpointCacheMapSem);
+> 
+>     EndpointCacheData endpointData(interface);
+>     fEndpointCacheMap[endpoint] = endpointData;
+> 
+>     return kSTAFOk;
+> }
+> 
+> 
+> STAFRC_t STAFConnectionManager::removeFromEndpointCache(
+>     const STAFString &endpoint)
+> {
+>     // Remove endpoint from the endpoint cache map
+> 
+>     STAFMutexSemLock cacheLock(fEndpointCacheMapSem);
+> 
+>     if (fEndpointCacheMap.find(endpoint) != fEndpointCacheMap.end())
+>     {
+>         fEndpointCacheMap.erase(endpoint);
+>         return kSTAFOk;
+>     }
+>     else
+>     {
+>         return kSTAFDoesNotExist;
+>     }
+> }
+> 
+> 
+> STAFRC_t STAFConnectionManager::purgeEndpointCache()
+> {
+>     // Remove all entries from the endponit cache map
+> 
+>     STAFMutexSemLock cacheLock(fEndpointCacheMapSem);
+> 
+>     fEndpointCacheMap = EndpointCacheMap();
+> 
+>     return kSTAFOk;
+> }
+> 
+> // STAFConnectionManager::getEndpointCacheData
+> //
+> // Description:
+> //   Get the cached information for an endpoint
+> //
+> // Parameters:
+> //   endpoint  - endpoint (Input)
+> //   interface - the interface (aka connection provider name) cached for the
+> //               specified endpoint (Output)
+> //
+> // Returns:
+> //   rc 0 if the endpoint was cached
+> //   Non-zero rc if the specified endpoint did not exist in the cache
+> 
+> STAFRC_t STAFConnectionManager::getCachedInterface(
+>     const STAFString &endpoint, STAFString &interface)
+> {
+>     STAFRC_t rc = kSTAFOk;
+> 
+>     STAFMutexSemLock cacheLock(fEndpointCacheMapSem);
+> 
+>     if (fEndpointCacheMap.find(endpoint) != fEndpointCacheMap.end())
+>     {
+>         EndpointCacheData endpointData = fEndpointCacheMap[endpoint];
+>         interface = endpointData.interface;
+>     }
+>     else
+>     {
+>         rc = kSTAFDoesNotExist;
+>     }
+> 
+>     return rc;
+> }
+>
+>
+>
+>unsigned int STAFConnectionManager::getEndpointCacheSize()
+>{
+>    STAFMutexSemLock cacheLock(fEndpointCacheMapSem);
+>
+>    return fEndpointCacheMap.size();
+>}
+>
+> STAFConnectionManager::EndpointCacheMap STAFConnectionManager::
+>     getEndpointCacheMapCopy()
+> {
+>     STAFMutexSemLock cacheLock(fEndpointCacheMapSem);
+> 
+>     return fEndpointCacheMap;
+> }
+> 
+> 
+Index: STAFConnectionManager.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFConnectionManager.h,v
+retrieving revision 1.4
+diff -r1.4 STAFConnectionManager.h
+13a14
+> #include "STAFTimestamp.h"
+25a27,42
+>     struct EndpointCacheData
+>     {
+>         EndpointCacheData()
+>         { /* Do Nothing */ }
+>         
+>         EndpointCacheData(const STAFString &aInterface)
+>             : interface(aInterface),
+>               createdTimestamp(STAFTimestamp::now())
+>         { /* Do Nothing */ }
+> 
+>         STAFString interface;
+>         STAFTimestamp createdTimestamp;
+>     };
+> 
+>     typedef std::map<STAFString, EndpointCacheData> EndpointCacheMap;
+> 
+34c51,54
+< 
+---
+>     STAFRC_t enableAutoInterfaceCycling();
+>     STAFRC_t disableAutoInterfaceCycling();
+>     bool getAutoInterfaceCycling();
+>     
+45a66,83
+>     STAFRC_t attemptConnection(const STAFString &interface,
+>                                const STAFString &endpoint,
+>                                STAFConnectionProviderPtr &provider,
+>                                STAFConnectionPtr &connection,
+>                                STAFString &errorBuffer);
+> 
+>     STAFRC_t addToEndpointCache(const STAFString &endpoint,
+>                                 const STAFString &interface);
+> 
+>     STAFRC_t removeFromEndpointCache(const STAFString &endpoint);
+> 
+>     STAFRC_t purgeEndpointCache();
+> 
+>     STAFRC_t getCachedInterface(const STAFString &endpoint,
+>                                 STAFString &interface);
+>
+>     unsigned int getEndpointCacheSize(); 
+>
+>     EndpointCacheMap getEndpointCacheMapCopy();
+> 
+51a90
+>     EndpointCacheMap fEndpointCacheMap;
+52a92,94
+>     STAFMutexSem fEndpointCacheMapSem;
+>     STAFMutexSem fAutoInterfaceCyclingSem;
+>     bool fAutoInterfaceCycling;
+
+2) STAFConfig.cpp:
+
+   Update to handle the new INTERFACECYCLING operating parameter.
+
+   Here's a CVS DIFF of the changes:
+
+Index: STAFConfig.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFConfig.cpp,v
+retrieving revision 1.40
+diff -r1.40 STAFConfig.cpp
+1180a1181,1182
+>     fSetParser.addOption("INTERFACECYCLING",      1,
+>         STAFCommandParser::kValueRequired);
+1389a1392,1411
+>     
+>     if (parsedResult->optionTimes("INTERFACECYCLING") != 0)
+>     {
+>         // Handle INTERFACECYCLING
+> 
+>         STAFString unresInterfaceCycling = parsedResult->optionValue(
+>             "INTERFACECYCLING");
+> 
+>         STAFString interfaceCycling;
+> 
+>         rc = RESOLVE_STRING_OPTION("INTERFACECYCLING", interfaceCycling);
+> 
+>         if (rc != kSTAFOk)
+>         {
+>             cout << "Error on INTERFACECYCLING setting, " << line << endl
+>                  << "Error resolving " 
+>                  << parsedResult->optionValue("INTERFACECYCLING") << ", RC: "
+>                  << rc << endl;
+>             return 1;
+>         }
+1390a1413,1429
+>         if (interfaceCycling.toUpperCase() == "ENABLED")
+>         {
+>             gConnectionManagerPtr->enableAutoInterfaceCycling();
+>         }
+>         else if (interfaceCycling.toUpperCase() == "DISABLED")
+>         {
+>             gConnectionManagerPtr->disableAutoInterfaceCycling();
+>         }
+>         else
+>         {
+>             cout << "Error on INTERFACECYCLING setting, " << line << endl
+>                  << "INTERFACECYCLING must be set to Enabled or Disabled"
+>                  << endl;
+>             return 1;
+>         }
+>     }
+>     
+
+3) STAFMiscService.cpp/h:
+
+   Update to handle the following new or updated requests:
+     SET   INTERFACECYCLING <Enabled | Disabled>
+     LIST  ENDPOINTCACHE
+     PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>
+
+   Here's a CVS DIFF of the changes:
+
+Index: STAFMiscService.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFMiscService.cpp,v
+retrieving revision 1.35
+diff -r1.35 STAFMiscService.cpp
+21c21
+< // LIST INTERFACES | SETTINGS
+---
+> // LIST INTERFACES | SETTINGS | ENDPOINTCACHE
+62a63,64
+>     fListParser.addOption("ENDPOINTCACHE", 1,
+>                           STAFCommandParser::kValueNotAllowed);
+66c68,69
+<     fListParser.addOptionGroup("INTERFACES SETTINGS", 1, 1);
+---
+>     fListParser.addOptionGroup(
+>         "INTERFACES SETTINGS ENDPOINTCACHE", 1, 1);
+77a81,97
+>     // purge options
+>
+>     fPurgeParser.addOption("PURGE", 1,
+>                            STAFCommandParser::kValueNotAllowed);
+>     fPurgeParser.addOption("ENDPOINTCACHE", 1,
+>                            STAFCommandParser::kValueNotAllowed);
+>     fPurgeParser.addOption("ENDPOINT", 0,
+>                            STAFCommandParser::kValueRequired);
+>     fPurgeParser.addOption("CONFIRM", 1,
+>                            STAFCommandParser::kValueNotAllowed);
+>
+>     // purge groups/needs
+>
+>     fPurgeParser.addOptionNeed("ENDPOINTCACHE", "PURGE");
+>     fPurgeParser.addOptionGroup("ENDPOINTCACHE", 1, 1);
+>     fPurgeParser.addOptionGroup("ENDPOINT CONFIRM", 1, 1);
+>
+85a106,107
+>     fSetParser.addOption("INTERFACECYCLING", 1,
+>                          STAFCommandParser::kValueRequired);
+234a257
+>     fSettingsClass->addKey("interfaceCycling", "Interface Cycling");
+243a267,275
+>     // Construct map class for listing the endpoint cache
+>
+>     fListCacheClass = STAFMapClassDefinition::create(
+>         "STAF/Service/Misc/EndpointCache");
+>
+>     fListCacheClass->addKey("endpoint", "Endpoint");
+>     fListCacheClass->addKey("interface", "Interface");
+>     fListCacheClass->addKey("createdTimestamp", "Date-Time");
+>
+>     // Construct map class for purging the endpoint cache
+>
+>     fPurgeCacheClass = STAFMapClassDefinition::create(
+>         "STAF/Service/Misc/PurgeStats");
+>
+>     fPurgeCacheClass->addKey("numPurged",    "Purged Endpoints");
+>     fPurgeCacheClass->addKey("numRemaining", "Remaining Endpoints");
+>
+265a298
+>     else if (action == "purge")     return handlePurge(requestInfo);
+434a468,499
+>     else if (parsedResult->optionTimes("ENDPOINTCACHE") > 0)
+>     {
+>         // LIST ENDPOINTCACHE
+>
+>         // Create a marshalled list of maps representing the entries in the
+>         // endpoint cache map.
+>
+>         mc->setMapClassDefinition(fListCacheClass->reference());
+>         STAFObjectPtr outputList = STAFObject::createList();
+>
+>         STAFConnectionManager::EndpointCacheMap cacheMap =
+>             gConnectionManagerPtr->getEndpointCacheMapCopy();
+>
+>         for (STAFConnectionManager::EndpointCacheMap::iterator
+>              iter = cacheMap.begin(); iter != cacheMap.end(); ++ iter)
+>         {
+>             STAFObjectPtr outputMap = fListCacheClass->createInstance();
+>
+>             outputMap->put("endpoint", (*iter).first);
+>             outputMap->put("interface", (*iter).second.interface);
+>             outputMap->put("createdTimestamp",
+>                            (*iter).second.createdTimestamp.asString());
+>
+>             outputList->append(outputMap);
+>         }
+>
+>         mc->setRootObject(outputList);
+>
+>         // Get rid of cache map references
+>
+>         cacheMap = STAFConnectionManager::EndpointCacheMap();
+>     }
+446a512,517
+>
+>         if (gConnectionManagerPtr->getAutoInterfaceCycling())
+>             settingsMap->put("interfaceCycling", "Enabled");
+>         else
+>             settingsMap->put("interfaceCycling", "Disabled");
+>
+468a540,603
+> STAFServiceResult STAFMiscService::handlePurge(
+>     const STAFServiceRequest &requestInfo)
+> {
+>     // Verify that the requesting machine/user has at least trust level 5
+>
+>     IVALIDATE_TRUST(5, "PURGE");
+>
+>     // Parse the request
+>
+>     STAFCommandParseResultPtr parsedResult =
+>         fPurgeParser.parse(requestInfo.fRequest);
+>
+>     if (parsedResult->rc != kSTAFOk)
+>     {
+>         return STAFServiceResult(kSTAFInvalidRequestString,
+>                                  parsedResult->errorBuffer, 0);
+>     }
+>
+>     DEFINE_VAR_POOL_LIST(varPoolList, varPoolListSize, requestInfo);
+>     STAFString errorBuffer;
+>     STAFRC_t rc = 0;
+>     unsigned int numPurged = 0;
+>     unsigned int numTotal = gConnectionManagerPtr->getEndpointCacheSize();
+>
+>     if (parsedResult->optionTimes("CONFIRM"))
+>     {
+>         // Purge all entries from the Endpoint Cache
+>
+>         rc = gConnectionManagerPtr->purgeEndpointCache();
+>
+>         if (rc == kSTAFOk)
+>             numPurged = numTotal;
+>     }
+>     else
+>     {
+>         // Remove each specified endpoint from the Endpoint Cache
+>
+>         // Create a list of the resolved endpoints to be purged
+>
+>         unsigned int numEndpoints = parsedResult->optionTimes("ENDPOINT");
+>         std::vector<STAFString> endpointList;
+>         unsigned int i = 0;
+>
+>         for (i = 1; i <= numEndpoints; ++i)
+>         {
+>             STAFString endpoint;
+>             rc = RESOLVE_INDEXED_STRING_OPTION("ENDPOINT", i, endpoint);
+>
+>             if (rc) return STAFServiceResult(rc, errorBuffer);
+>
+>             endpointList.push_back(endpoint);
+>         }
+>
+>         // Iterate through endpoint list and remove each endpoint from
+>         // the cache
+>
+>         for (i = 0; i < endpointList.size(); ++i)
+>         {
+>             rc = gConnectionManagerPtr->removeFromEndpointCache(
+>                 endpointList[i]);
+>
+>             if (rc == kSTAFOk)
+>                 numPurged++;
+>         }
+>     }
+>
+>     // Create a marshalling context to represent the result
+>
+>     STAFObjectPtr mc = STAFObject::createMarshallingContext();
+>     mc->setMapClassDefinition(fPurgeCacheClass->reference());
+>     STAFObjectPtr resultMap = fPurgeCacheClass->createInstance();
+>     resultMap->put("numPurged",   STAFString(numPurged));
+>     resultMap->put("numRemaining", STAFString(numTotal - numPurged));
+>     mc->setRootObject(resultMap);
+>
+>     return STAFServiceResult(kSTAFOk, mc->marshall());
+> }
+>
+>
+535a671,695
+>     if (parsedResult->optionTimes("INTERFACECYCLING") > 0)
+>     {
+>         // SET INTERFACECYCLING
+>
+>         STAFString interfaceCycling;
+>         rc = RESOLVE_STRING_OPTION("INTERFACECYCLING", interfaceCycling);
+>
+>         if (rc) return STAFServiceResult(rc, errorBuffer);
+>
+>         if (interfaceCycling.toUpperCase() == "ENABLED")
+>         {
+>             gConnectionManagerPtr->enableAutoInterfaceCycling();
+>         }
+>         else if (interfaceCycling.toUpperCase() == "DISABLED")
+>         {
+>             gConnectionManagerPtr->disableAutoInterfaceCycling();
+>         }
+>         else
+>         {
+>             return STAFServiceResult(
+>                 kSTAFInvalidValue,
+>                 "INTERFACECYCLING must be set to Enabled or Disabled");
+>         }
+>     }
+>
+1062,1065c1222,1227
+<     result += "LIST  INTERFACES | SETTINGS" + *gLineSeparatorPtr +
+<               *gLineSeparatorPtr;
+<     result += "QUERY INTERFACE <Name>" + *gLineSeparatorPtr +
+<               *gLineSeparatorPtr;
+---
+>     result += "LIST  INTERFACES | SETTINGS | ENDPOINTCACHE" +
+>               *gLineSeparatorPtr + *gLineSeparatorPtr;
+>     result += "QUERY INTERFACE <Name>" +
+>               *gLineSeparatorPtr + *gLineSeparatorPtr;
+>     result += "PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>" +
+>               *gLineSeparatorPtr + *gLineSeparatorPtr;
+1069,1071c1231,1234
+<               "[DEFAULTINTERFACE <Name>]" + *gLineSeparatorPtr;
+<     result += "      [DEFAULTAUTHENTICATOR <Name>] "
+<               "[RESULTCOMPATIBILITYMODE <Verbose | None>]" +
+---
+>               "[INTERFACECYCLING <Enabled | Disabled>]" + *gLineSeparatorPtr;
+>     result += "      [DEFAULTINTERFACE <Name>] "
+>               "[DEFAULTAUTHENTICATOR <Name>] " + *gLineSeparatorPtr;
+>     result += "      [RESULTCOMPATIBILITYMODE <Verbose | None>]" +
+Index: STAFMiscService.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFMiscService.h,v
+retrieving revision 1.14
+diff -r1.14 STAFMiscService.h
+42a43
+>     STAFServiceResult handlePurge(const STAFServiceRequest &requestInfo);
+50a52
+>     STAFCommandParser fPurgeParser;
+59a62
+>     STAFMapClassDefinitionPtr fListCacheClass;
+>     STAFMapClassDefinitionPtr fPurgeCacheClass;
+
+
+Here's a CVS DIFF of the documentation updates:
+
+Index: CmdRef.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/CmdRef.script,v
+retrieving revision 1.57
+diff -r1.57 CmdRef.script
+198c198,201
+< information, and allows for listing and querying enabled interfaces.
+---
+> information, allows for listing and querying enabled interfaces, allows
+> you to set operational parameters for STAF and show their settings,
+> and allows you to list and purge the endpoint cache used by automatic
+> interface cycling.
+207c210
+< LIST  INTERFACES | SETTINGS
+---
+> LIST  INTERFACES | SETTINGS | ENDPOINTCACHE
+212,213c215,219
+<       &lbrk.MAXQUEUESIZE <Number>&rbrk. &lbrk.DEFAULTINTERFACE <Name>&rbrk.
+<       &lbrk.DEFAULTAUTHENTICATOR <Name>&rbrk. &lbrk.RESULTCOMPATIBILITYMODE <V
+erbose | None>&rbrk.
+---
+>       &lbrk.MAXQUEUESIZE <Number>&rbrk.    &lbrk.INTERFACECYCLING <Enabled | D
+isabled>&rbrk.
+>       &lbrk.DEFAULTINTERFACE <Name>&rbrk.  &lbrk.DEFAULTAUTHENTICATOR <Name>&r
+brk.
+>       &lbrk.RESULTCOMPATIBILITYMODE <Verbose | None>&rbrk.
+>
+> PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>
+
+Index: Config.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/Config.script,v
+retrieving revision 1.67
+diff -r1.67 Config.script
+503a504
+>     &lbrk.INTERFACECYCLING <Enabled | Disabled>&rbrk.
+545a547,574
+> :p.:xph.INTERFACECYCLING:exph. specifies whether to enable or disable automati
+c
+> interface cycling.  The default is to enable automatic interface cycling.
+> You may also change this setting dynamically using the MISC service's SET comm
+and.
+> Recognized values are the following:
+> :ul compact.
+> :li.:xph.ENABLED:exph. - Enables automatic interface cycling which means that
+> if you do not specify an interface in the endpoint when submitting a STAF
+> request, STAF will attempt to connect to the endpoint using all of the
+> interfaces (aka connection providers) that are configured (instead of just the
+
+> default interface).  STAF will first try to connect via the cached interface
+> (if one exists for this endpoint).  If this endpoint is not cached, STAF will
+> first attempt to connect via the default interface.  If the connect attempt
+> fails, STAF will start attempting to connect using other configured interfaces
+
+> until one works or there are no more interfaces left to try.  If a connect
+> attempt succeeds, STAF will cache the interface that worked for this endpoint
+> so that the next STAF request that specifies this endpoint will try to connect
+
+> first using the cached interface.
+> :p.Note that automatic interface cycling only has an effect if there are
+> multiple interfaces configured in the STAF configuration file on the
+> machine that is submitting a STAF request.
+> Also, note that the MISC service provides a LIST ENDPOINTCACHE request to
+> show the cached endpoints and a PURGE ENDPOINTCACHE request to purge one
+> or more cached endpoints.
+> :p.
+> :li.:xph.DISABLED:exph. - Disables automatic interface cycling which means tha
+t
+> if you do not specify an interface in the endpoint when submitting a STAF requ
+est,
+> STAF will only try to connect to the endpoint using the default interface.
+> :eul.
+Index: MiscSrv.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/MiscSrv.script,v
+retrieving revision 1.20
+diff -r1.20 MiscSrv.script
+30c30,31
+< are enabled or lists the current operational settings for STAF
+---
+> are enabled or lists the current operational settings for STAF or lists
+> the cached endpoints used by automatic interface cycling.
+33a35,36
+> :li.PURGE - Purges one or more (or all) of the endpoints from the
+> cache used for automatic interface cycling.
+338,339c341,343
+< providers) that are enabled for a system or you can list the current
+< operational settings for STAF.
+---
+> providers) that are enabled for a system, or you can list the current
+> operational settings for STAF, or you can show the cached endpoints
+> used by automatic interface cycling.
+343c347
+< LIST INTERFACES | SETTINGS
+---
+> LIST INTERFACES | SETTINGS | ENDPOINTCACHE
+347c351,353
+< settings for STAF.
+---
+> settings for STAF.
+> :p.:xph.ENDPOINTCACHE:exph. specifies that you want to show the cached
+> endpoints used by automatic interface cycling.
+421a428,432
+> :c.interfaceCycling
+> :c.Interface Cycling
+> :c.&stringObj.
+> :c.:xph.'Enabled' | 'Disabled':exph.
+> :row.
+456a468,505
+> :p.
+> :li.On successful return from a :xph.LIST ENDPOINTCACHE:exph. request, the
+> result buffer will contain a marshalled
+> :xph.<List> of <Map&colon.STAF/Service/Misc/EndpointCache>:exph.
+> representing the contents of the endpoint cache used by automatic
+> interface cycling.
+> The map is defined as follows:
+> :table cols='* * * *'.
+> :tcap.Definition of map class STAF/Service/Misc/EndpointCache
+> :tnote text='Description'.This map class represents an cached endpoint.
+> :thd.
+> :c.Key Name
+> :c.Display Name
+> :c.Type
+> :c.Format / Value
+> :ethd.
+> :row.
+> :c.endpoint
+> :c.Endpoint
+> :c.&stringObj.
+> :c.
+> :row.
+> :c.interface
+> :c.Interface
+> :c.&stringObj.
+> :c.
+> :row.
+> :c.createdTimestamp
+> :c.Date-Time
+> :c.&stringObj.
+> :c.&timestampFormat.
+> :tnote text='Notes'.
+> :ol compact.
+> :li.The "Date-Time" value contains the timestamp for when the
+> entry was added to the endpoint cache.
+> :eol.
+> :etnote.
+> :etable.
+490c539
+<       Port          : 6600
+---
+>       Port          : 6502
+504a554
+> Interface Cycling        : Enabled
+512a563,577
+> :p.
+> :li.:hp2.Goal::ehp2. Show the cached endpoints used by automatic
+> interface cycling, if it is enabled.
+> :p.:hp2.Syntax::ehp2.
+> :p.:xph.LIST ENDPOINTCACHE:exph.
+> :p.:hp2.Results::ehp2.  If the request is issued from the command line,
+> the result, in tabular format, could look like:
+> :xmp.
+> Endpoint             Interface Date-Time
+> -------------------- --------- -----------------
+> machine1             tcp2      20051101-16:42:41
+> machine1.company.com tcp2      20051102-11:11:37
+> machine2.company.com tcp3      20051101-15:23:59
+> machine3             tcp2      20051102-09:05:34
+> :exmp.
+630,631c695,697
+<      &lbrk.MAXQUEUESIZE <Number>&rbrk. &lbrk.DEFAULTINTERFACE <Name>&rbrk.
+<      &lbrk.DEFAULTAUTHENTICATOR <Name>&rbrk. &lbrk.RESULTCOMPATIBILITYMODE <Ve
+rbose | None>&rbrk.
+---
+>      &lbrk.MAXQUEUESIZE <Number>&rbrk.    &lbrk.INTERFACECYCLING <Enabled | Di
+sabled>&rbrk.
+>      &lbrk.DEFAULTINTERFACE <Name>&rbrk.  &lbrk.DEFAULTAUTHENTICATOR <Name>&rb
+rk.
+>      &lbrk.RESULTCOMPATIBILITYMODE <Verbose | None>&rbrk.
+649a716,797
+> :p.
+> :li.:hp2.Goal::ehp2. Disabled automatic interface cycling.
+> :p.:hp2.Syntax::ehp2.&nbsp; :xph.SET INTERFACECYCLING Disabled:exph.
+> :p.
+> :li.:hp2.Goal::ehp2.  Set the default interface to be 'tcp'.
+> :p.:hp2.Syntax::ehp2.&nbsp; :xph.SET DEFAULTINTERFACE tcp:exph.
+> :eul.
+>
+> .*---------------------------------------------------------------------
+> .*
+> :ih1.service commands
+> :ih2.PURGE
+> :i3.misc service
+> :h3 id=miscpurge.PURGE
+> The PURGE command allows you to purge one or more (or all) of the endpoints
+> from the endpoint cache used by automatic interface cycling.
+>
+> :h4.Syntax
+> :xmp.
+> PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>
+> :exmp.
+> :p.:xph.ENDPOINTCACHE:exph. indicates that you want to purge one or
+> more endpoints from the endpoint cache.
+> :p.:xph.ENDPOINT:exph. specifies the endpoint that you want to purge.
+> &varres.
+> :p.:xph.CONFIRM:exph. indicates that you really want to purge the entire
+> contents of the endpoint cache.
+>
+> :h4.Security
+> :p.&seclvl. 5.
+>
+> :h4.Return Codes
+> :p.All return codes from :xph.PURGE:exph. are documented in :hdref refid=retco
+de..
+>
+> :h4.Results
+> :p.
+> If successful, the result buffer will contain a marshalled
+> :xph.<Map&colon.STAF/Service/Misc/PurgeStats>:exph., representing the number
+> of endpoints that were purged and the number of endpoints remaining in the
+> endpoint cache. The map is defined as follows:
+> :table cols='* * * *'.
+> :tcap.Definition of map class STAF/Service/Misc/PurgeStats
+> :tnote text='Description'.This map class represents the purge statistics
+> for the endpoint cache.
+> :thd.
+> :c.Key Name
+> :c.Display Name
+> :c.Type
+> :c.Format / Value
+> :ethd.
+> :row.
+> :c.numPurged
+> :c.Purged Endpoints
+> :c.&stringObj.
+> :c.
+> :row.
+> :c.numRemaining
+> :c.Remaining Endpoints
+> :c.&stringObj.
+> :c.
+> :etable.
+>
+> :h4.Examples
+> :ul.
+> :li.:hp2.Goal::ehp2. Remove endpoints 'client1' and 'client1.company.com' from
+
+> the endpoint cache..
+> :p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE ENDPOINTCACHE ENDPOINT client1 ENDPOINT
+ client1.company.com:exph.
+> :p.:hp2.Results::ehp2.  If the request is issued from the command line,
+> the result, in tabular format, could look like:
+> :xmp.
+> Purged Endpoints   : 2
+> Remaining Endpoints: 8
+> :exmp.
+> :p.
+> :li.:hp2.Goal::ehp2. Purge all entries from the endpoint cache.
+> :p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE ENDPOINTCACHE CONFIRM:exph.
+> :p.:hp2.Results::ehp2.  If the request is issued from the command line,
+> the result, in tabular format, could look like:
+> :xmp.
+> Purged Endpoints   : 8
+> Remaining Endpoints: 0
+> :exmp.
+
+
+CVS DIFF of changes to STAFTest.xml:
+
+Index: STAFTest.xml
+===================================================================
+RCS file: /cvsroot/staf/src/staf/test/STAFTest.xml,v
+retrieving revision 1.133
+diff -r1.133 STAFTest.xml
+1273a1274,1283
+>
+>         [ 'STD:MISC', 'MISC', 'SET INTERFACECYCLING Invalid',
+>           [ STAFRC.InvalidValue], r'^.'
+>         ],
+>
+>         [ 'STD:MISC', 'VAR',  'SET VAR STAFTest/InterfaceCycling=Enabled', [ S
+TAFRC.Ok ], r'^$' ],
+>
+>         [ 'STD:MISC', 'MISC', 'SET INTERFACECYCLING {STAFTest/InterfaceCycling
+}',
+>           [ STAFRC.Ok ], r'^$'
+>         ],
+1286c1296,1297
+<           "STAFResult['resultCompatibilityMode'] == 'Verbose'"
+---
+>           "STAFResult['resultCompatibilityMode'] == 'Verbose' and " +
+>           "STAFResult['interfaceCycling'] == 'Enabled'"
+1289c1300
+<         [ 'STD:MISC', 'VAR',  'DELETE VAR STAFTest/ResultCompatibilityMode', [
+ STAFRC.Ok ], r'^$' ],
+---
+>         [ 'STD:MISC', 'VAR',  'DELETE VAR STAFTest/ResultCompatibilityMode VAR
+ STAFTest/InterfaceCycling', [ STAFRC.Ok ], r'^$' ],
+1307a1319,1339
+>         ['STD:MISC', 'MISC', 'LIST ENDPOINTCACHE',
+>           [ STAFRC.Ok ], None,
+>           "len(STAFResult) == 0 or " +
+>           "(len(STAFResult) > 0 and " +
+>           "STAFResult[0]['endpoint'] and " +
+>           "STAFResult[0]['interface'] and " +
+>           "STAFResult[0]['createdTimestamp'])"
+>         ],
+>
+>         ['STD:MISC', 'MISC', 'PURGE ENDPOINTCACHE ENDPOINT Invalid1 ENDPOINT I
+nvalid2',
+>           [ STAFRC.Ok ], None,
+>           "string.atoi(STAFResult['numPurged']) == 0 and " +
+>           "string.atoi(STAFResult['numRemaining']) >= 0"
+>         ],
+>
+>         ['STD:MISC', 'MISC', 'PURGE ENDPOINTCACHE CONFIRM',
+>           [ STAFRC.Ok ], None,
+>           "string.atoi(STAFResult['numPurged']) >= 0 and " +
+>           "string.atoi(STAFResult['numRemaining']) == 0"
+>         ],
+>

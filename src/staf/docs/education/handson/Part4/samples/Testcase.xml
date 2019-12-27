@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="begin_tests"/>
+
+  <script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+    from random import randint
+  </script>
+
+  <function name="begin_tests">
+
+    <sequence>
+
+      <import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      <loop from="1" to="10">
+
+        <testcase name="'Test Process'">
+
+          <sequence>
+
+            <script>r = randint(1, 100)</script>
+
+            <call function="'main'">{ 'parms' : '1 1 %s' % r }</call>
+
+            <if expr="STAXResult &lt;= 50">
+              <tcstatus result="'pass'"/>
+              <else>
+                <tcstatus result="'fail'"/>
+              </else>
+            </if>
+
+          </sequence>
+
+        </testcase>
+
+      </loop>
+
+    </sequence>
+
+  </function>
+
+</stax>

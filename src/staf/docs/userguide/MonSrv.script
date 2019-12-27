@@ -1,0 +1,515 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name       : MonSrv SCRIPT
+.*  Descriptive Name: Software Testing Automation Framework
+.*  Detail          : This file describes the STAF Monitor Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.monitor service
+:ih1.services
+:i2.monitor service
+:h2 id=monsrv.Monitor Service
+:h3.Description
+The Monitor service is an external STAF service that provides the following
+functions:
+:ul compact.
+:li.LOG - Write monitor data
+:li.QUERY - Query monitor data
+:li.LIST - List the Monitor settings or machines/handles that have logged data
+:li.DELETE - Delete monitor data
+:li.SET - Set the monitor parameters
+:li.&help.
+:eul.
+The purpose of the Monitor service is to give a test case the ability
+to write status messages.  This allows someone to query a process or
+workload and easily get the current status.  The status messages are stored
+based on a combination of the originating machine and the process handle
+(where only the process can update the status message), or on a combination
+of the originating machine and a specified monitor name (where any process on
+the originating machine can update the named monitor).  The Monitor service
+only keeps the last monitor message it receives from a particular machine and
+process/name.  A "centralized network clipboard" is a term that could be
+used to describe the Monitor service.  All Monitor service status messages are
+lost when STAFProc is shutdown or the Monitor service is dynamically removed.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.monitor service
+:h3.Registration
+The Monitor service is written in C and since it is an external service,
+it must be registered with the SERVICE configuration statement. The
+syntax is:
+:xmp.
+SERVICE <Name> LIBRARY STAFMon PARMS <Parms>
+:exmp.
+:p.:xph.<Name>:exph. is the name by which the Monitor service will be known on this machine.
+:p.:xph.<Parms>:exph. is any parameters that are accepted at initialization time.  The same
+parameters for the Monitor SET command can be specified during initialization time.  See the
+Monitor SET command for details on the available parameters.
+:h4.Example
+:xmp.
+service Monitor library STAFMon PARMS "RESOLVEMESSAGE MAXRECORDSIZE 512"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.variables
+:i2.monitor service
+:h3.Variables
+The following variables are defined in the STAF configuration file
+and Monitor will query their values:
+:sl compact.
+:li.:xph.STAF/Service/<Name>/ResolveMessage::exph. Whether to resolve variables in the message
+:esl.
+:h4.STAF/Service/<Name>/ResolveMessage
+This flag determines if messages should be resolved before writing them.
+If message resolution is desired, then a call to the STAF variable
+service is made and all variables are resolved.  If for any reason the
+resolution is unsuccessful (i.e. unbalanced braces {}, infinite recursion, etc.)
+then an error code will be returned.
+:note.Note that this variable will only be examined if the ENABLERESOLVEMESSAGEVAR option
+is set either during the Monitor registration (via the PARMS options) or by use of the
+SET ENABLERESOLVEMESSAGEVAR Monitor command.
+:note.The default if STAF/Service/:xph.<Name>:exph./ResolveMessage is not specified, is
+not to resolve messages.  This is due to the fact that you can resolve variables
+yourself before logging messages and the fact that the messages could be quite
+large.  This can be overridden on a per message basis by using the
+RESOLVEMESSAGE or NORESOLVEMESSAGE option.:enote.
+:sl compact.
+:li.:hp2.Example::ehp2. var STAF/Service/:xph.<Name>:exph./ResolveMessage=1
+:li.:hp2.Default::ehp2. 0 
+:esl.
+An example would be a monitor message of "Machine booted from {STAF/Config/BootDrive}",
+if STAF/Service/<Name>/ResolveMessage was set to 1 then what would actually
+be logged would look like: "Machine booted from C:".  If
+STAF/Service/Monitor/ResolveMessage was set to 0 then the original text
+of the message would be logged: "Machine booted from {STAF/Config/BootDrive}".
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LOG
+:i3.monitor service
+:h3.LOG
+Writes monitor data.
+:h4.Syntax
+:xmp.
+LOG MESSAGE <Message> [NAME <Name>] &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+:exmp.
+:p.:xph.MESSAGE:exph. contains the message (data) that you want to write to
+the monitor. This option will not resolve messages by default but can be
+configured to do so in the STAF configuration file or by using RESOLVEMESSAGE.
+Any private data in the message will be masked before writing to the monitor.
+:p.:xph.NAME:exph. indicates that the status message should be written to the
+specified named monitor.  This option will be resolved for variables.  If this
+option is not specified, the status message will be written to the originating
+handle's monitor.
+:p.:xph.RESOLVEMESSAGE:exph. causes the MONITOR service to call the STAF
+variable service to resolve any variables in the message before being written.
+:p.:xph.NORESOLVEMESSAGE:exph. causes the MONITOR service to not call the STAF
+variable service to resolve any variables in the message.
+:h4.Security
+:p.&seclvl. 3.
+:h4.Return Codes
+:p.All return codes from LOG are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a LOG command.
+:h4.Examples
+:sl compact.
+:li.LOG MESSAGE &colon.33&colon.Testcase aborted with error "255"
+:li.LOG MESSAGE "Step1 in Test1 initiated on bootdrive {STAF/Config/BootDrive}"
+:li.LOG MESSAGE "TestW: Step 32 of 109" NAME ActiveXYZRequests
+:li.LOG MESSAGE Recovered
+:esl.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.monitor service
+:h3.QUERY
+Allows you to query a message from a monitor based on the 
+machine nickname and process handle that generated the monitor message.
+:h4.Syntax
+:xmp.
+QUERY MACHINE <Machine Nickname> < HANDLE <Handle> | NAME <Name> >
+:exmp.
+:p.:xph.MACHINE:exph. determines what machine the monitor message originated
+from. &varres.
+:p.:xph.HANDLE:exph. determines the process handle that originated the
+message. &varres.
+:p.:xph.NAME:exph. determines the name of the
+message. &varres.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from QUERY are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Monitor/MonitorInfo>:exph., representing
+the last monitor message generated by the specified machine/handle or
+for the specified machine/name..
+The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Monitor/MonitorInfo
+:tnote text='Description'.This map class represents a monitor message.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.message
+:c.Message
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+The "Date-Time" is the date/time at which the last monitor
+message was logged.
+:etnote.
+
+:etable.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Show me the monitor message from machine automate.austin.ibm.com and
+process handle 32
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY MACHINE automate.austin.ibm.com HANDLE 32:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Date-Time: 20040911-16:00:32
+Message  : Testcase aborted with error "255"
+:exmp.
+:li.:hp2.Goal::ehp2. Show me the monitor message from machine testmachine1.company.com and
+process handle 85 (assuming its machine nickname is testmachine1)
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY MACHINE testmachine1 HANDLE 85:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Date-Time: 20041022-17:58:01
+Message  : TestC: Step 2 of 5
+:exmp.
+:li.:hp2.Goal::ehp2. Show me the monitor message from machine automate.austin.ibm.com and
+monitor name ActiveXYZRequests
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY MACHINE automate.austin.ibm.com NAME ActiveXYZRequests:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Date-Time: 20061205-08:24:01
+Message  : TestW: Step 32 of 109
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.monitor service
+:h3.LIST
+Allows you to list Monitor settings, the names of the machines that have 
+logged monitor data, or the monitor information for a given machine.
+:h4.Syntax
+:xmp.
+LIST <MACHINES | MACHINE <Machine> [NAMES] | SETTINGS>
+:exmp.
+:p.:xph.MACHINES:exph. indicates you want list all the machine nicknames that
+have created monitor data.
+:p.:xph.MACHINE:exph. indicates you want to list the monitor data for the
+specified machine nickname. &varres.  If the :xph.NAMES:exph. option is
+specified, only the monitor data for named monitors will be displayed;
+otherwise, the monitor data for (un-named) process handles will be displayed.
+:p.:xph.NAMES:exph. indicates you want to list the named monitors for the
+specified machine nickname. &varres.
+:p.:xph.SETTINGS:exph. returns the Monitor settings.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain data based on the LIST command:
+:p.
+:ul.
+:li.If the :xph.MACHINES:exph. option is specified, the result buffer will
+contain a marshalled :xph.<List>:exph. of &stringObj., which represents 
+the machine nicknames for which monitor messages have been logged.
+:p.
+:li.If the :xph.MACHINE:exph. option is specified (and the :xph.NAMES:exph.
+option is not specified), the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Monitor/HandleInfo>:exph., which
+represents the handles for the specified machine that have logged monitor
+messages.  The map is defined as follows:  
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Monitor/HandleInfo
+:tnote text='Description'.This map class represents the handle that generated
+the monitor message on the specified machine.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+The "Date-Time" is the date/time at which the last monitor
+message was logged.
+The "Size" is the size of the last monitor message logged.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.MACHINE:exph. option is specified with the :xph.NAMES:exph.
+option, the result buffer will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/Monitor/NameInfo>:exph., which
+represents the named monitors for the specified machine.  The map is defined
+as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Monitor/NameInfo
+:tnote text='Description'.This map class represents the named monitors
+on the specified machine.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+The "Date-Time" is the date/time at which the last monitor
+message was logged.
+The "Size" is the size of the last monitor message logged.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.SETTINGS:exph. option is specified, the result buffer will
+contain a marshalled :xph.<Map&colon.STAF/Service/Monitor/Settings>:exph. defined
+as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Monitor/Settings
+:tnote text='Description'.This map class represents the settings for
+the Monitor service.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Value
+:ethd.
+:row.
+:c.maxRecordSize
+:c.Max Record Size
+:c.&stringObj.
+:c.
+:row.
+:c.resolveMessage
+:c.Resolve Message
+:c.&stringObj.
+:c.:xph.Enabled | Disabled:exph.
+:row.
+:c.resolveMessageVar
+:c.Resolve Message Var
+:c.&stringObj.
+:c.:xph.Enabled | Disabled:exph.
+:etable.
+:eul.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Show me all the machines that have written monitor data.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINES:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+automate.austin.ibm.com
+testmachine1
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the monitor information (Handle) for machine automate.austin.ibm.com.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINE automate.austin.ibm.com:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Handle Date-Time         Size
+------ ----------------- ----
+34     20040910-16:29:03 30
+36     20040910-16:29:13 148
+37     20040910-16:29:19 97
+68     20040911-16:00:32 43
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the monitor information (Handle) for machine testmachine1.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINE testmachine1:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Handle Date-Time         Size
+------ ----------------- ----
+20     20041022-17:43:05 25
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the named monitors for machine automate.austin.ibm.com.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINE automate.austin.ibm.com NAMES:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Name              Date-Time         Size
+----------------- ----------------- ----
+ActiveXYZRequests 20061205-13:50:06 39
+test1             20061205-13:54:14 25
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the Monitor settings.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Max Record Size    : 512
+Resolve Message    : Enabled
+Resolve Message Var: Disabled
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.monitor service
+:h3.DELETE
+The DELETE command will delete handle/named monitor files and directories.  You
+can specify whether to delete all monitor data, all monitor data recorded prior
+to a specified timestamp, or a specific named monitor.
+:h4.Syntax
+:xmp.
+DELETE &lbrk.BEFORE <Timestamp> | MACHINE <Machine> NAME <Name>&rbrk. CONFIRM
+:exmp.
+:p.:xph.BEFORE:exph. specifies that you only want to delete monitor data
+recorded prior to the specified timestamp.  If :xph.BEFORE:exph. is not
+specified, all handle/name monitor data will be removed. The keyword :hp3.TODAY:ehp3.
+can be used for :xph.<Timestamp>:exph. to delete all data prior to the
+current system date.
+:p.:xph.MACHINE:exph. is the machine nickname for the named monitor to be
+deleted.
+:p.:xph.NAME:exph. is the named monitor to be deleted.
+:p.:xph.CONFIRM:exph. confirms you really want to delete the monitor
+data.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from DELETE are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a DELETE command.
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Delete all monitor data prior to today.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE BEFORE TODAY CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Delete all monitor data prior to January 1, 2007.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE BEFORE 20070101 CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Delete all monitor data.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Delete the data for named monitor ActiveXYZRequests.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MACHINE automate.austin.ibm.com NAME ActiveXYZRequests CONFIRM:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.monitor service
+:h3.SET
+Sets monitor service options.
+:h4.Syntax
+:xmp.
+SET  &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+     &lbrk.MAXRECORDSIZE <Size>&rbrk.
+     &lbrk.ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&rbrk.
+:exmp.
+:p.:xph.RESOLVEMESSAGE:exph. causes the MONITOR service to call the STAF
+variable service to resolve any variables in Monitor Log messages before being 
+written.
+:p.:xph.NORESOLVEMESSAGE:exph. causes the MONITOR service to not call the STAF
+variable service to resolve any variables in Monitor Log messages before being
+written.  This is the default.
+:p.:xph.MAXRECORDSIZE <Size>:exph. sets the Maximum record size for Monitor
+data.  The default is 1024 bytes.
+:p.:xph.ENABLERESOLVEMESSAGEVAR:exph. causes STAF/Service/<Name>/ResolveMessage
+variable to be queried for every Monitor Log command, to determine if variables
+in the Monitor Log command should be resolved.
+:p.:xph.DISABLERESOLVEMESSAGEVAR:exph. causes STAF/Service/<Name>/ResolveMessage
+variable to not be queried for every Monitor Log command.  This is the default.
+:p.The highest priority in defining whether variables in a Monitor Log command
+are to be resolved will be the
+:xph.RESOLVEMESSAGE/NORESOLVEMESSAGE:exph. specified directly in the
+Log command.  If the Monitor Log command contains neither option, then if 
+:xph.ENABLERESOLVEMESSAGEVAR:exph. is set, the variable
+STAF/Service/<Name>/ResolveMessage will be examined to determine whether to
+resolve the message.  If :xph.DISABLERESOLVEMESSAGEVAR:exph. is set, then the
+:xph.RESOLVEMESSAGE/NORESOLVEMESSAGE:exph. option (set via the PARMS options or
+by use of the :xph.SET RESOLVEMESSAGE/NORESOLVEMESSAGE:exph. Monitor command)
+will be honored.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from SET are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a successul :xph.SET:exph.
+command.
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Enable the resolve message setting for the Monitor service.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET RESOLVEMESSAGE:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Set two operational settings for the Monitor service.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MAXRECORDSIZE 512 ENABLERESOLVEMESSAGEVAR:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.error codes
+:i2.monitor service
+:h3 id=monerr.Monitor Error Code Reference
+:p.No additional return codes are defined for the Monitor service.
+The Monitor service uses only the STAF return codes (see :hdref refid=retcode. for
+additional information).

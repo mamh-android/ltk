@@ -1,0 +1,58 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFMON = $(subst Name,STAFMon,$(DLL))
+
+stafmonservice_targets += $(REL)/lib/$(LIB_STAFMON)\
+                          $(REL)/include/STAFMonitorService.h
+Targets += $(stafmonservice_targets)
+CleanupTargets += cleanup_stafmonservice
+
+$(stafmonservice_targets): SUBSYS_REL := services/monitor
+SUBSYS_REL := services/monitor
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafmonservice_targets): OBJS = $(stafmonservice_objs)
+$(stafmonservice_targets): LIBS = STAF
+$(stafmonservice_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafmonservice_objs :=\
+  STAFMonitorService
+
+stafmonservice_objs        := $(foreach obj,$(stafmonservice_objs),$(O)/services/monitor/$(obj)$(OS_OE))
+stafmonservice_dependents  := $(stafmonservice_objs:$(OS_OE)=.d)
+$(stafmonservice_dependents): SUBSYS_REL := services/monitor
+
+ifeq ($(OS_NAME),win32)
+    stafmonservice_objs += $(SR_SRC)/STAFMon.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafmonservice_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFMon targets
+
+$(REL)/lib/$(LIB_STAFMON): $(stafmonservice_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+$(REL)/include/STAFMonitorService.h: $(SRC)/services/monitor/STAFMonitorService.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafmonservice:
+	-@$(DEL) $(O)/services/monitor/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAFMON) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFMonitorService.h $(OUT_ERR_TO_DEV_NULL)
+
+
+

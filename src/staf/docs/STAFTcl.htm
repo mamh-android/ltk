@@ -1,0 +1,2353 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Charles Rankin">
+   <meta name="GENERATOR" content="Mozilla/4.61 [en] (X11; I; Linux 2.2.13-7mdk i686) [Netscape]">
+   <title>STAF Tcl User's Guide</title>
+</head>
+<body>
+
+<h1>Tcl User's Guide for STAF Version 3</h1>
+<p>
+Last Updated:  May 25, 2011
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Intro" href="#Header_Intro"><b>1.0 Introduction</b></a>
+<p><a name="ToC_PlatformsVersions" href="#Header_PlatformsVersions"><b>2.0 Supported Platforms and Tcl Versions</b></a>
+  <menu compact>
+  <a name="ToC_Win32" href="#Header_Win32">2.1 Windows (Intel 32-bit)</a>
+  <br><a name="ToC_WinAMD64" href="#Header_WinAMD64">2.2 Windows (AMD64, aka x64)</a>
+  <br><a name="ToC_Linux32" href="#Header_Linux32">2.3 Linux (Intel 32-bit, aka i386 or x86-32)</a>
+  <br><a name="ToC_LinuxAMD64" href="#Header_LinuxAMD64">2.4 Linux (AMD64, aka x86-64)</a>
+  </menu>
+<p><a name="ToC_Install" href="#Header_Install"><b>3.0 Installation</b></a>
+<p><a name="ToC_Example" href="#Header_Example"><b>4.0 Tcl Script Example</b></a>
+<p><a name="ToC_STAFPackage" href="#Header_STAFPackage"><b>5.0 Package STAF</b></a>
+  <menu compact>
+  <a name="ToC_Primary" href="#Header_Primary">5.1 Primary STAF APIs</a>
+    <menu compact>
+    <a name="ToC_Register" href="#Header_Register">5.1.1 STAF::Register</a>
+    <br><a name="ToC_Submit" href="#Header_Submit">5.1.2 STAF::Submit</a>
+    <br><a name="ToC_Unregister" href="#Header_Unregister">5.1.3 STAF::UnRegister</a>
+    <br><a name="ToC_WrapData" href="#Header_WrapData">5.1.4 STAF::WrapData</a>
+    </menu>
+  <br><a name="ToC_Marshalling" href="#Header_Marshalling">5.2 Data Structure and Marshalling APIs</a>
+    <menu compact>
+    <a name="Toc_datatype" href="#Header_datatype">5.2.1 STAF::datatype</a>
+    <br><a name="Toc_mapclassdef" href="#Header_mapclassdef">5.2.2 STAF::mapclassdef</a>
+    <br><a name="Toc_mcontext" href="#Header_mcontext">5.2.3 STAF::mcontext</a>
+    <br><a name="Toc_isMarshalledData" href="#Header_isMarshalledData">5.2.4 STAF::isMarshalledData</a>
+    <br><a name="Toc_marshall" href="#Header_marshall">5.2.5 STAF::marshall</a>
+    <br><a name="Toc_unmarshall" href="#Header_unmarshall">5.2.6 STAF::unmarshall</a>
+    <br><a name="Toc_formatObject" href="#Header_formatObject">5.2.7 STAF::formatObject</a>
+    </menu>
+  <br><a name="ToC_PrivateData" href="#Header_PrivateData">5.3 Private Data Manipulation APIs</a>
+</a>
+  <menu compact>
+  <a name="Toc_AddPrivacyDelimiters" href="#Header_AddPrivacyDelimiters">5.3.1 STAF::AddPrivacyDelimiters</a>
+  <br><a name="Toc_EscapePrivacyDelimiters" href="#Header_EscapePrivacyDelimiters">5.3.2 STAF::EscapePrivacyDelimiters</a>
+  <br><a name="Toc_RemovePrivacyDelimiters" href="#Header_RemovePrivacyDelimiters">5.3.3 STAF::RemovePrivacyDelimiters</a>
+  <br><a name="Toc_MaskPrivateData" href="#Header_MaskPrivateData">5.3.4 STAF::MaskPrivateData</a>
+  </menu>
+  <br><a name="Toc_ReturnCodes" href="#Header_ReturnCodes">5.4 STAF Return Codes</a>
+  <br><a name="Toc_Constants" href="#Header_Constants">5.5 STAF Constants</a>
+  </menu>
+<a name="ToC_STAFMon" href="#Header_STAFMon"><b>6.0 Package STAFMon</b></a>
+  <menu compact>
+  <a name="ToC_MonVars" href="#Header_MonVars">6.1 Monitor Service Variables</a>
+  <br><a name="ToC_MonitorLog" href="#Header_MonitorLog">6.2 STAF::Monitor::Log</a>
+  </menu>
+<a name="ToC_STAFLog" href="#Header_STAFLog"><b>7.0 Package STAFLog</b></a>
+  <menu compact>
+  <a name="ToC_LogRCs" href="#Header_LogRCs">7.1 Log Service Return Codes and Variables</a>
+  <br><a name="ToC_LogInit" href="#Header_LogInit">7.2 STAF::Log::Init</a>
+  <br><a name="ToC_LogLog" href="#Header_LogLog">7.3 STAF::Log::Log</a>
+  </menu>
+<p>
+<hr>
+<p>
+<h1><a name="Header_Intro" href="#ToC_Intro">1.0 Introduction</a></h1>
+                                                  
+This document describes STAF's V3 support for the Tcl language.&nbsp; It
+includes information on the core STAF Tcl APIs as well as the wrappers
+provided for the Monitor and Log services.
+<p>
+STAF Tcl support must be installed in order to submit requests to STAF
+via a Tcl program.
+<p>
+<b>Note:</b> All of STAF's Tcl APIs are provided in the STAF namespace.
+<p>
+STAF Tcl support is only provided in the STAF installer files for
+the platforms listed below.
+STAF Tcl support is not provided in the STAF installer files
+for other operating systems.
+<p>
+The version of Tcl used to build the STAF Tcl libraries is usually
+the only Tcl version that will work with those STAF Tcl libraries.  STAF
+currently provides STAF Tcl support on the following platforms:
+<ul compact>
+<li>Windows (Intel 32-bit)
+<li>Windows (AMD64, aka x64)
+<li>Linux (Intel 32-bit, aka i386 or x86-32)
+<li>Linux (AMD64, aka x86-64)
+</ul>
+<p>
+Section 2.0 provides details about the STAF Tcl support by platform.
+<p></p>
+If you want to use higher version of Tcl, or if you want
+STAF Tcl support for a different operating system, you can either: 
+<p>
+<ul>
+<li>Build STAF Tcl support yourself.  See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm">STAF Developer's Guide</a>
+for more information on how to build the STAF tcl project.
+<p>
+If you build STAF Tcl support for a different operating system
+and/or different Tcl version, please contribute it to the STAF project.
+To contribute it, browse the STAF Support Requests to see if someone else
+has already provided STAF Tcl support for this operating system and
+Tcl version combination.  If not, open a STAF Support Request with
+the "Summary" containing "STAF V3 Support for Tcl x.x.x (Platform)",
+replacing x.x.x with the Tcl version and replacing Platform with the
+operating system on which you built the support.  Attach the necessary
+files to the Support Request.
+<p>
+<li>Or, you can submit a 
+<a href="http://sourceforge.net/tracker/?func=browse&group_id=33142&atid=407382">
+Support Request</a> for us to build it for you (but it may take a while until we get a
+chance to implement your request).
+Be sure to check the existing STAF Support Requests as we may have already
+provided STAF Tcl support for the Tcl version and operating system
+that you want and attached it to an existing STAF Support Request.
+</ul>
+</ol>
+
+<p>
+<hr>
+<p>
+<h1><a name="Header_PlatformsVersions" href="#ToC_PlatformsVersions">2.0 Supported Platforms and Tcl Versions</a></h1>
+<p>
+This section provides more information about the Tcl Versions supported by STAF by operating system.
+<p>
+
+<a name="Header_Win32" href="#ToC_Win32"><b>2.1 Windows (Intel 32-bit)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported TCL Version
+<th width=25%>Built with
+<th width=50%>TCLSTAF library
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8.3
+<td>8.3 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/bin/tcl83/TCLSTAF.dll
+<tr>
+<td>8.4
+<td>8.4.19 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/bin/tcl84/TCLSTAF.dll
+<tr>
+<td>8.5
+<td>8.5.9 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/bin/tcl85/TCLSTAF.dll
+<tr>
+<td>8.6
+<td>8.6.0 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/bin/tcl86/TCLSTAF.dll
+</tbody>
+<tfoot>
+<tr><td colspan="3">
+<b>Note: </b>Support for Tcl Version 8.3 is installed by default to {STAF/Config/STAFRoot}/bin/TCLSTAF.dll
+during a "Typical" install of STAF for Windows 32-bit (unless another version of Tcl
+was selected as the default during the install).
+</td></tr>
+</tfoot>
+</table>
+<br>
+
+<a name="Header_WinAMD64" href="#ToC_WinAMD64"><b>2.2 Windows (AMD64, aka x64)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported TCL Version
+<th width=25%>Built with
+<th width=50%>TCLSTAF library
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8.5
+<td>8.5.9 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/bin/tcl85/TCLSTAF.dll
+<tr>
+<td>8.6
+<td>8.6.0 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/bin/tcl86/TCLSTAF.dll
+</tbody>
+<tfoot>
+<tr><td colspan="3">
+<b>Note: </b>Support for Tcl Version 8.5 is installed by default to {STAF/Config/STAFRoot}/bin/TCLSTAF.dll
+during a "Typical" install of STAF for Windows x64 (unless another version of Tcl
+was selected as the default during the install).
+</td></tr>
+</tfoot>
+</table>
+<br>
+
+<a name="Header_Linux32" href="#ToC_Linux32"><b>2.3 Linux (Intel 32-bit, aka i386 or x86-32)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported TCL Version
+<th width=25%>Built with
+<th width=50%>TCLSTAF library
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8.4
+<td>8.5.4.19 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/lib/tcl84/libTCLSTAF.so
+<tr>
+<td>8.5
+<td>8.5.9 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/lib/tcl85/libTCLSTAF.so
+<tr>
+<td>8.6
+<td>8.6.0 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/lib/tcl86/libTCLSTAF.so
+</tbody>
+<tfoot>
+<tr><td colspan="3">
+<b>Note: </b>Support for Tcl Version 8.4 is installed by default to {STAF/Config/STAFRoot}/lib/libTCLSTAF.so
+during a "Typical" install of STAF for Linux 32-bit (unless another version of Tcl
+was selected as the default during the install).
+</td></tr>
+</tfoot>
+</table>
+<br>
+
+<a name="Header_LinuxAMD64" href="#ToC_LinuxAMD64"><b>2.4 Linux (AMD64, aka x86-64)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported TCL Version
+<th width=25%>Built with
+<th width=50%>TCLSTAF library
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8.4
+<td>8.5.4.19 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/lib/tcl84/libTCLSTAF.so
+<tr>
+<td>8.5
+<td>8.5.9 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/lib/tcl85/libTCLSTAF.so
+<tr>
+<td>8.6
+<td>8.6.0 (ActiveTcl)
+<td>{STAF/Config/STAFRoot}/lib/tcl86/libTCLSTAF.so
+</tbody>
+<tfoot>
+<tr><td colspan="3">
+<b>Note: </b>Support for Tcl Version 8.4 is installed by default to {STAF/Config/STAFRoot}/lib/libTCLSTAF.so
+during a "Typical" install of STAF for Linux x86-64 (unless another version of Tcl
+was selected as the default during the install).
+</td></tr>>
+</tfoot>
+</table>
+<br>
+
+<h1><a name="Header_Install" href="#ToC_Install">3.0 Installation</a></h1>
+
+To install and configure STAF Tcl support, perform the following steps:
+<p>
+<ol>
+<li>Install STAF's Tcl support by selecting to install "Tcl support" during
+    the install.  STAF Tcl support is installed by default for a "typical" install of STAF
+    if using a STAF installer for Windows 32-bit or AMD64, or for Linux 32-bit
+    or AMD64.  During the STAF install, you can specify what version of Tcl you
+    will be using as there is a different STAF Tcl library file for each version
+    of Tcl supported by STAF.
+    <p>  
+    Currently, STAF Tcl support is not provided in the STAF installer files
+    for operating systems other than Windows 32-bit/AMD64 and Linux 32-bit/AMD64
+    (though you can build STAF Tcl support yourself).  See section
+    <a href="#Header_Intro">1.0 Introduction</a> above for more information on how
+    to build STAF Tcl support yourself.
+    <p>
+    Once STAF Tcl support is installed, verify that the STAF Tcl library file exists:
+    <ul>
+    <li>On Windows, verify that file <tt>TCLSTAF.dll</tt> exists in directory
+        <tt>C:\STAF\bin</tt>, assuming you installed STAF to directory
+        <tt>C:\STAF</tt>.
+    <li>On Linux, verify that file <tt>libTCLSTAF.so</tt> exists in directory
+        <tt>/usr/local/staf/lib</tt>, assuming you installed STAF to directory
+        <tt>/usr/local/staf</tt>
+    </ul>
+<p>
+<li>To configure Tcl to find the STAF Tcl support files, you need to set or update
+    your <tt>TCLLIBPATH</tt> environment variable so that it includes the
+    STAF directory containing the Tcl support files for the version of Tcl that
+    you are using.
+    <p>
+    <ul>
+    <li>On Unix, add the &lt;STAF Root>/lib directory to your <tt>TCLLIBPATH</tt>.
+    For example:
+    <pre>  export TCLLIBPATH=/usr/local/staf/lib</pre>
+    Or, if you already have set <tt>TCLLIBPATH</tt> to contain another directory
+    (e.g. /usr/lib), then you would add the STAF lib directory and use a space to
+    separate multiple directories.  For example:
+    <pre>  export TCLLIBPATH="/usr/local/staf/lib /usr/lib"</pre>
+    <p>
+    <li>On Windows, add the &lt;STAF Root>/bin directory to your <tt>TCLLIBPATH</tt>.&nbsp;
+    Note that UNIX style slashes ("/") must be used as the file separator on
+    Windows as well.  For example:
+    <pre>  set TCLLIBPATH=C:/STAF/bin</pre>
+    Or, if you already have set <tt>TCLLIBPATH</tt> to contain another directory
+    (e.g. C:/Tcl/bin), then you would add the STAF bin directory and use a space
+    to separate multiple directories.  For example:
+    <pre>  set TCLLIBPATH="C:/STAF/bin C:/Tcl/bin"</pre>
+    </ul>
+    <p>
+    Note that TCLLIBPATH must contain a Tcl list of directories, using a space
+    to separate multiple directories (unlike the PATH environment variable
+    which uses colons on Unix or semi-colons on Windows to separate multiple
+    directories).
+<p>
+<li>Verify that the version of Tcl you have installed matches the STAF
+    Tcl version supported by the TCLSTAF library you specified for the
+    TCLLIBPATH environment variable as there is a different TCLSTAF library for
+    each version of Tcl supported by STAF.  See section <a href="#Header_PlatformsVersions">
+    2.0 Supported Platforms and Tcl Versions</a> for a list of the Tcl versions
+    supported by STAF by operating system.
+<p>
+<li>Finally, you simply need to add a "package require" statement in your Tcl
+scripts for any of the STAF packages (STAF, STAFLog, STAFMon) that you use
+in your Tcl script.  For example:
+<pre>
+  package require STAF
+</pre>
+</ol>
+  
+<h1><a name="Header_Example" href="#ToC_Example">4.0 Tcl Script Example</a></h1>
+
+Here's a simple Tcl script that registers with STAF, submits a couple of
+STAF requests, and unregisters:
+<ul>
+<font color="darkblue">
+<pre>
+package require STAF
+
+# First, must register with STAF
+
+if {[STAF::Register "Tcl Test"] != $STAF::kOk} {
+    puts "Error registering with STAF, RC: $STAF::RC"
+    exit $STAF::RC
+}
+
+puts "Using handle $STAF::Handle"
+
+# Submit some STAF requests
+
+puts "Testing basic functionality"
+
+STAF::Submit local PING PING
+
+if {$STAF::Result != "PONG"} {
+    puts "Wrong output for ping request"
+    exit 1
+}
+
+if {[STAF::Submit local VAR "RESOLVE STRING {STAF/Config/MachineNickname}"] != $STAF::kOk} {
+    puts "Error resolving machine nickname, RC: $STAF::RC, Result: $STAF::Result"
+    exit $STAF::RC
+}
+
+puts "Machine Nickname: $STAF::Result"
+
+# Unregister with STAF to remove the handle
+
+if {[STAF::UnRegister] != $STAF::kOk} {
+    puts "Error unregistering with STAF, RC: $STAF::RC"
+    exit $STAF::RC
+}
+
+puts "All tests successful"
+
+exit 0
+</pre>
+</font>
+</ul>
+Here's an example of what the output from running this simple Tcl program could be:
+<ul>
+<font color="darkblue">
+<pre>
+# tcl testTcl.tcl
+Using handle 3
+Testing basic functionality
+Machine Nickname: client1.company.com
+All tests successful
+#
+</pre>
+</font>
+</ul>
+
+<h1><a name="Header_STAFPackage" href="#ToC_STAFPackage">5.0 Package STAF</a></h1>
+
+The STAF package provides support for Tcl scripts to call into STAF.&nbsp;
+This package externalizes the following APIs:
+<ul>
+<li>Primary STAF APIs</li>
+<ul>
+<li><tt><b>STAF::Register</b></tt> - Allows you to register with STAF</li>
+<li><tt><b>STAF::Submit</b></tt> - Allows you to submit requests to STAF</li>
+<li><tt><b>STAF::UnRegister</b></tt> - Allows you to unregister with STAF</li>
+<li><tt><b>STAF::WrapData</b></tt> - Generates the colon-length-colon delimited version of
+a string</li>
+</ul>
+<p>
+<li>Data Structure and Marshalling APIs</li>
+<ul>
+<li><tt><b>STAF::datatype</b></tt> - A procedure that provides subcommands for
+manipulating various structured data types (i.e. scalar, list, map, marshalling context, None)
+<li><tt><b>STAF::mapclassdef</b></tt> - A procedure that provides map class definition
+subcommands that can be used by STAF marshalling contexts
+<li><tt><b>STAF::mcontext</b></tt> - A procedure that provides STAF marshalling
+context subcommands used to define structured data
+<li><tt><b>STAF::marshall</b></tt> - A procedure that converts a data structure into
+a string-based representation
+<li><tt><b>STAF::unmarshall</b></tt> - A procedure that converts a string-based
+marshalled representation back into a data structure.
+It returns a marshalling context</li>
+<li><tt><b>STAF::formatObject</b></tt> - A procedure used to convert a data
+structure into a verbose formatted hierarchical string that can be used when
+you want a "pretty print" representation of an object</li>
+</ul>
+<p>
+<li>Private Data Manipulation APIs
+<ul>
+<li><tt><b>STAF::AddPrivacyDelimiters</b></tt> - 
+A utility function for adding privacy delimiters to a string for use in
+protecting private data specified in a STAF command option that supports
+handling private data</li>
+<li><tt><b>STAF::EscapePrivacyDelimiters</b></tt> - 
+A utility function for escaping privacy delimiters in a string</li>
+<li><tt><b>STAF::RemovePrivacyDelimiters</b></tt> - 
+A utility function for removing privacy delimiters from a string</li>
+<li><tt><b>STAF::MaskPrivateData</b></tt> - 
+A utility function for masking private data</li>
+</ul>
+</ul>
+This package also provides variables for the various STAF return codes and some
+constants.
+
+<h2><a name="Header_Primary" href="#ToC_Primary">5.1 Primary STAF APIs</a></h2>
+<p>
+These APIs allow you to register/unregister with STAF, submit STAF service requests,
+and to wrap the values of options used in STAF service requests.
+
+<h3><a name="Header_Register" href="#ToC_Register">5.1.1 STAF::Register</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><tt><b>STAF::Register</b> <i>processName</i></tt>
+<dd><p>
+    This function allows you to register with STAF.
+    You must register with STAF before you can use any of the
+    other STAF related APIs.
+    <p>
+    Required argument <tt><i> processName </i></tt> is a <tt>String</tt> that
+    contains the name by which your Tcl program will be known.
+</dl>    
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+This function returns a numeric return code.  Zero indicates that
+you registered successfully.  Non-zero return codes are documented
+in the STAF User's Guide.
+<p>The variable <tt>STAF::RC</tt> will also contain the return code
+   from this function.
+<p>The variable <tt>STAF::Handle</tt> will contain this program's
+   STAF handle on a successful return.  This variable should not be altered.
+</ul>
+
+<h4>Example</h4>
+<ul>
+<font color="darkblue">
+<pre>
+if {[STAF::Register "My program"] != $STAF::kOk} {
+    puts "Error registering with STAF, RC: $STAF::RC"
+    exit $STAF::RC
+}
+puts "My STAF handle: $STAF::Handle"
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_Submit" href="#ToC_Submit">5.1.2 STAF::Submit</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><tt><b>STAF::Submit</b> <i>location service request</i></tt>
+<dd><p>
+    This function allows you to submit requests to STAF.
+    This is the primary API that you will use when working with STAF.
+    <p>
+    Required argument <tt><i> location </i></tt> is a <tt>String</tt> that
+    contains the endpoint for the system to which the request should be
+    submitted.  "Local" may be used to represent the local system,
+    i.e., the system on which the Tcl program is running.
+    <p>
+    Required argument <tt><i> service </i></tt> is a <tt>String</tt> that
+    contains the name of the service to which the request should be
+    submitted.
+    <p>
+    Required argument <tt><i> request </i></tt> is a <tt>String</tt> that
+    contains the actual request string itself.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+This function returns a numeric return code.  Return codes are documented
+in the STAF User's Guide.
+<p>The variable <tt>STAF::RC</tt> will also contain the return code 
+   from this function.
+<p>The variable <tt>STAF::Result</tt> will contain the textual result
+   buffer from this request.  See the individual service documentation
+   for information on the contents of this buffer.
+</ul>
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+if {[STAF::Submit local ping ping] != $STAF::kOk} {
+    puts "Error submitting ping request, RC: $STAF::RC"
+    if {[string length $STAF::Result] != 0} {
+        puts "Additional info: $STAF::Result"
+    }
+    exit $STAF::RC
+}
+
+puts "STAF Ping result: $STAF::Result"
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_Unregister" href="#ToC_Unregister">5.1.3 STAF::UnRegister</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::UnRegister</tt></b>
+<dd><p>
+    This function allows you to unregister with STAF.&nbsp;
+    This allows STAF to free up the information associated with your
+    handle.&nbsp; This should be the last STAF related API that you
+    call in your program.
+    <p>
+    This function has no arguments.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+This function returns a numeric return code.&nbsp; Zero indicates that
+you unregistered successfully.&nbsp; Non-zero return codes are documented
+in the STAF User's Guide.
+<p>The variable <tt>STAF::RC</tt> will also contain the return
+    code from this function.
+<p>The variable <tt>STAF::Handle</tt> will be deleted when this
+   function returns.
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+if {[STAF::UnRegister] != $STAF::kOk} {
+    puts "Error unregistering with STAF, RC: $STAF::RC"
+    exit $STAF::RC
+}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_WrapData" href="#ToC_WrapData">5.1.4 STAF::WrapData</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::WrapData</b> <i>inputString</i></tt>
+<dd><p>
+    Returns a colon-length-colon delimited version of the input string.
+    This function is widely used to pass the values of options in STAF requests.
+    <p>
+    Required argument <tt><i> inputString </i></tt> is a <tt>String</tt>
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+This procedure returns a string in colon-length-colon delimited format.
+</ul>
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+set semName {My Synch Sem}</tt>
+STAF::Submit local sem "event [STAF::WrapData $semName] post"
+</pre>
+</font>
+</ul>
+
+<h2><a name="Header_Marshalling" href="#ToC_Marshalling">5.2 Data Structure and Marshalling APIs</a></h2>
+<p>
+These APIs allow you to define, manipulate, and (un)marshall data structures, and
+print marshalled data in human-readable ("pretty" print) format.
+<p>
+STAF supports the automatic marshalling and unmarshalling of structured data. 
+The act of marshalling takes a data structure and converts it into a
+string-based representation. The act of unmarshalling reverses this and
+converts the string-based representation back into a data structure. 
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRMARSHALL">
+Section 6.1, "Marshalling Structured Data"</a> in the STAF User's Guide for
+more information.
+
+<h3><a name="Header_datatype" href="#ToC_datatype">5.2.1 STAF::datatype</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt>
+<tt><b>STAF::datatype</b> <i>subcommand</i> ?<i>arg ...</i>?</tt>
+<dd>This procedure is used to create structured data type objects (e.g. List,
+Map, Scalar, Context, None) and to set values for data type objects and to
+get the value or type for a data type object.
+Data types are used by STAF to help in marshalling and unmarshalling data.
+<p>
+<b>Since:</b> STAF V3.1.0
+</dt>
+</dl>
+</ul>
+<p>
+The <tt>STAF::datatype</tt> procedure supports the following subcommands
+and their arguments:
+<p>
+<ul>
+<dl>
+<dt><tt><b>createNone</b></tt>
+<dd>Creates a None data type which serves as an empty placeholder.
+<p>
+<dt><tt><b>createScalar</b> ?<i>value</i>?</tt>
+<dd>Creates a Scalar data type which holds a single data item such as a
+    string or number.
+  <p>The optional argument <i>value</i> specifies the value to assign.
+<p>
+<dt><tt><b>createList</b> ?<i>value</i>?</tt>
+<dd>Creates a List data type which holds a ordered collection of arbitrary
+    objects.  Each object in a list can be of data type None, Scalar,
+    List, Map, or a Marshalling Context.
+  <p>The optional argument <i>value</i> specifies the value to assign.
+<p>
+<dt><tt><b>createMap</b> ?<i>value</i>?</tt>
+<dd>Creates a Map data type which holds a unordered collection of arbitrary
+    objects.  Each object in a dictionary is stored and fetched by key.
+  <p>The optional argument <i>value</i> specifies the value to assign.
+<p>
+<dt><tt><b>createContext</b> ?<i>value</i>?</tt>
+<dd>Creates a Context data type which represents a STAF Marshalling Context
+    which is a container for map class definitions and a root object which
+    is a data structure that may use map class definitions.
+  <p>The optional argument <i>value</i> specifies the root object to assign
+    to the context.
+  <p>Generally, you should use the
+     <tt><b>STAF::mcontext create</b> ?<i>rootobject</i>?</tt> procedure
+     instead of this one to create a STAF marshalling context.
+<p>
+<dt><tt><b>getType</b> <i>object</i></tt>
+<dd>Returns the type of the specified object which could be one of the
+    following:
+    <tt>
+    <ul>
+    <li>STAF::NoneType</li>
+    <li>STAF::ScalarType</li>
+    <li>STAF::ListType</li>
+    <li>STAF::MapType</li>
+    <li>STAF::ContextType</li>
+    </ul>
+    </tt>
+  <p>The required argument <i>object</i> specifies the object.
+<p>
+<dt><tt><b>getValue</b> <i>object</i></tt>
+<dd>Returns the value of the specified object.
+  <p>The required argument <i>object</i> specifies the object.
+<p>
+<dt><tt><b>setValue</b> <i>objectVar</i> <i>newValue</i></tt>
+<dd>Sets the value for the specified object variable name.
+  <p>The required argument <i>objectVar</i> specifies the variable name
+    of the object to set.
+  <p>The required argument <i>newValue</i> specified the value to
+    assign to the object.
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+The following is an example of how to use the datatype procedures
+subcommands to create objects with the various data types (None, Context,
+Scalar, List, and Map) and to set and get values for a data type object
+and to get the type of a data type object.
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+# Using data type None
+
+puts "\nUsing data type: None"
+
+set dtNone [<b>STAF::datatype createNone</b>]
+puts "dtNone value: [<b>STAF::datatype getValue $dtNone</b>]"
+
+# Check if an object is a None data type
+if {[<b>STAF::datatype getType $dtNone</b>] == $STAF::NoneType} {
+    puts "Data Type: [STAF::datatype getType $dtNone]"
+}
+
+# Using data type Context
+
+puts "\nUsing data type: Context"
+
+# Create a Context data type with None as the root object
+set dtContext [<b>STAF::datatype createContext</b>]
+puts "dtContext value: [<b>STAF::datatype getValue $dtContext</b>]"
+
+# Create a Context data type with a List data type as the root object
+set dtList [<b>STAF::datatype createList [list "List" "Test" "Value"]</b>]
+set dtContext [STAF::mcontext create $dtList]
+puts "dtContext value: [<b>STAF::datatype getValue $dtContext</b>]"
+
+# Check if an object is a Context data type
+if {[<b>STAF::datatype getType $dtContext</b>] == $STAF::ContextType} {
+    puts "Data Type: [STAF::datatype getType $dtContext]"
+}
+
+# Using data type Scalar
+
+puts "\nUsing data type: Scalar"
+
+# Create a Scalar data type with an empty string value
+set dtScalar [<b>STAF::datatype createScalar</b>]
+puts "dtScalar value: [<b>STAF::datatype getValue $dtScalar</b>]"
+
+# Set the value for a Scalar data type to a string
+set myString  "Testing 123..."
+<b>STAF::datatype setValue dtScalar $myString</b>
+puts "dtScalar value: [<b>STAF::datatype getValue $dtScalar</b>]"
+
+# Set the value for a Scalar data type to a number
+set myRC 99
+set dtScalar [<b>STAF::datatype createScalar $myRC</b>]
+puts "dtScalar value: [<b>STAF::datatype getValue $dtScalar</b>]"
+
+# Check if an object is a Scalar data type
+if {[<b>STAF::datatype getType $dtScalar</b>] == "$STAF::ScalarType"} {
+    puts "Data Type: [STAF::datatype getType $dtScalar]"
+}
+
+# Using data type List
+
+puts "\nUsing data type: List"
+
+# Create an empty List data type
+set dtList [<b>STAF::datatype createList</b>]
+puts "dtList value: [<b>STAF::datatype getValue $dtList</b>]"
+
+# Set the value for a List data type
+set listTestValue [list "List" "Test" "Value"]
+<b>STAF::datatype setValue dtList $listTestValue</b>
+puts "dtList value: [<b>STAF::datatype getValue $dtList</b>]"
+
+# Create a List data type assigning an initial value
+set listInitValue [list "List" "Init" "Value"]
+set dtList [<b>STAF::datatype createList $listInitValue</b>]
+puts "dtList value: [<b>STAF::datatype getValue $dtList</b>]"
+
+# Change the value for a List data type
+lappend listTestValue "And"
+lappend listTestValue "More"
+<b>STAF::datatype setValue dtList $listTestValue</b>
+puts "dtList value: <b>STAF::datatype getValue $dtList</b>]"
+
+# Append entries to a List data type
+lappend dtList "And"
+lappend dtList "More"
+puts "dtList value: [<b>STAF::datatype getValue $dtList</b>]"
+
+# Check if an object is a List data type
+if {[<b>STAF::datatype getType $dtList</b>] == "$STAF::ListType"} {
+    puts "Data Type: [STAF::datatype getType $dtList]"
+}
+
+# Using data type Map
+
+puts "\nUsing data type: Map"
+
+# Create an empty Map data type
+set dtMap [<b>STAF::datatype createMap</b>]
+puts "dtMap value: [<b>STAF::datatype getValue $dtMap</b>]"
+
+# Set the value for a Map data type
+set mapTest(key1) value1
+set mapTest(key2) value2
+set mapTestValue [array get mapTest]
+<b>STAF::datatype setValue dtMap $mapTestValue</b>
+puts "dtMap value: [<b>STAF::datatype getValue $dtMap</b>]"
+
+# Create a Map data type assigning an initial value
+set mapInit(key3) value3
+set mapInit(key4) value4
+set mapInitValue [array get mapInit]
+set dtMap [<b>STAF::datatype createMap $mapInitValue</b>]
+puts "dtMap value: [<b>STAF::datatype getValue $dtMap</b>]"
+
+# Change the value for a Map data type
+<b>STAF::datatype setValue dtMap $mapTestValue</b>
+puts "dtMap value: [<b>STAF::datatype getValue $dtMap</b>]"
+
+# Add an additional key/value to a Map data type
+set mapAdditionalValue(key5) value5
+append mapTestValue " " [array get mapAdditionalValue]
+append dtMap        " " [array get mapAdditionalValue]
+puts "dtMap value: [<b>STAF::datatype getValue $dtMap</b>]"
+
+# Check if an object is a Map data type 
+if {[<b>STAF::datatype getType $dtMap</b>] == "$STAF::MapType"} {
+    puts "Data Type: [STAF::datatype getType $dtMap]"
+}
+
+# Using data types List and Map to create a list of maps
+
+puts "\nUsing data types List and Map to create a list of maps"
+set map1(key1) value1
+set map1(key2) value2
+set map1Value [array get map1]
+set dtMap1 [<b>STAF::datatype createMap $map1Value</b>]
+
+set map2(test1) C:/tests/test1.cmd
+set map2(test2) C:/tests/test2.sh
+set map2Value [array get map2]
+set dtMap2 [<b>STAF::datatype createMap $map2Value</b>]
+
+set listValue [list $dtMap1 $dtMap2]
+set dtList [<b>STAF::datatype createList $listValue</b>]
+puts "dtList: $dtList"
+puts "dtList value: [<b>STAF::datatype getValue $dtList</b>]"
+</pre>
+</font>
+</ul>
+<p>
+This example prints the following:
+<ul>
+<font color="darkblue">
+<pre>
+Using data type: None
+dtNone value: None
+Data Type: STAF_DT_NONE
+
+Using data type: Context
+dtContext value:
+dtContext value: mapClassMap STAF_DT_MAP rootObj {STAF_DT_LIST List Test Value}
+Data Type: STAF_DT_CONTEXT
+
+Using data type: Scalar
+dtScalar value:
+dtScalar value: Testing 123...
+dtScalar value: 99
+Data Type: STAF_DT_SCALAR
+
+Using data type: List
+dtList value:
+dtList value: List Test Value
+dtList value: List Init Value
+dtList value: List Test Value And More
+dtList value: List Test Value And More And More
+Data Type: STAF_DT_LIST
+
+Using data type: Map
+dtMap value:
+dtMap value: key1 value1 key2 value2
+dtMap value: key3 value3 key4 value4
+dtMap value: key1 value1 key2 value2
+dtMap value: key1 value1 key2 value2 key5 value5
+Data Type: STAF_DT_MAP
+
+Using data types List and Map to create a list of maps
+dtList: STAF_DT_LIST {STAF_DT_MAP key1 value1 key2 value2} {STAF_DT_MAP test1 C:
+/tests/test1.cmd test2 C:/tests/test2.sh}
+dtList value: {STAF_DT_MAP key1 value1 key2 value2} {STAF_DT_MAP test1 C:/tests/
+test1.cmd test2 C:/tests/test2.sh}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_mapclassdef" href="#ToC_mapclassdef">5.2.2 STAF::mapclassdef</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt>
+<tt><b>STAF::mapclassdef</b> <i>subcommand</i> ?<i>arg ...</i>?</tt>
+<dd>This procedure is used to create and/or to set/get metadata associated with a
+STAF map class.  A STAF map class definition can be useful if you want to generate
+a STAF marshalling context with map classes.  In particular, a map class definition
+defines the keys associated with the map class.  The map class definition is used to
+reduce the size of a marshalling map class in comparison to a map containing the
+same data.  It also contains information about how to display instances of the map
+class, such as the order in which to display the keys and the display names to
+use for the keys.  You get and set map class definitions using the
+<tt>STAF::mcontext</tt> procedure's <tt>setMapClassDefinition</tt> and
+<tt>getMapClassDefinition</tt> subcommands.
+<p>
+<b>Since:</b> STAF V3.1.0
+</dt>
+</dl>
+</ul>
+<p>
+The <tt>STAF::mapclassdef</tt> procedure supports the following subcommands
+and their arguments:
+<p>
+<ul>
+<dl>
+<dt><tt><b>create</b> <i>mapclassname</i></tt>
+<dd>Creates a map class definition (with no keys defined) and returns it.
+<p>The required argument <i>mapclassname</i> specifies the name of the STAF
+map class definition.
+<p>
+<dt><tt><b>createInstance</b> <i>mapclassdef</i></tt>
+<dd>Returns a map containing one entry with a key name of <tt>'staf-map-class-name'</tt>
+with a value set to the name of the map class definition.
+<p>The required argument <i>mapclassdef</i> specifies the map class
+definition.
+<p>
+<dt><tt><b>addKey</b> <i>mapclassdefVar</i> <i>keyName</i> ?<i>displayName</i>?</tt>
+<dd>Adds a key to the map class definition.
+<p>The required argument <i>mapclassdefVar</i> specifies the variable name of
+the map class definition.
+<p>The required argument <i>keyName</i> specifies the name of a key.
+<p>The optional argument <i>displayName</i> specifies a string to
+use when displaying the key.  The default is <tt>None</tt> which indicates to
+use the actual key name when displaying the key.
+<p>
+<dt><tt><b>setKeyProperty</b> <i>mapclassdefVar</i> <i>keyName</i> <i>property</i> <i>value</i></tt>
+<dd>Sets a property such as a short display name ("display-short-name")
+for a key in the map class definition.
+<p>The required argument <i>mapclassdefVar</i> specifies the variable name of
+the map class definition.
+<p>The required argument <i>keyName</i> specifies the name of
+a key for which this property is being set.
+<p>The required argument <i>property</i> specifies the name of
+the property being set.  The only property name currently recognized is
+<tt>'display-short-name'</tt> which is used by the STAF executable when
+displaying a result in a tabular format when the length of the values
+for the fields is less than the length of the <tt>'display-name'</tt>.
+<p>The required argument <i>value</i> specifies the value for
+the property being set.
+<p>
+<dt><tt><b>getKeys</b> <i>mapclassdef</i></tt>
+<dd>Returns a list of all of the keys.  Each entry in the list is a
+map containing a key named <tt>'key'</tt>, and optionally, a key named
+<tt>'display-name'</tt>, and optionally, any key property names such as 
+<tt>'display-short-name'</tt>.
+<p>The required argument <i>mapclassdef</i> specifies the map class definition.
+<p>
+<dt><tt><b>getName</b> <i>mapclassdef</i></tt>
+<dd>Returns the name for the map class definition.
+<p>The required argument <i>mapclassdef</i> specifies the map class definition.
+<!-- The getMapClassDefniitionObject subcommand is for internal use only
+     so don't document
+<p>
+<dt><tt><b>getMapClassDefinitionObject</b> <i>mapclassdef</i></tt>
+<dd>Returns the map class definition map which consists of a map containing 
+two entries:  <tt>'name'</tt> and <tt>'keys'</tt>.
+<p>The required argument <i>mapclassdef</i> specifies the map class definition.
+-->
+</dl>
+</ul>
+
+<h4>Example</h4>
+
+The following is an example of how to create a map class definition
+named 'Test/MyMap' containing four keys, each with a display name,
+and one with a short display name.
+<ul>
+<font color="darkblue">
+<pre>
+# Create a map class definition
+
+set myMapClassDef [<b>STAF::mapclassdef create "Test/MyMap"</b>]
+<b>STAF::mapclassdef addKey myMapClassDef "name" "Name"</b>
+<b>STAF::mapclassdef addKey myMapClassDef "exec" "Executable"</b>
+<b>STAF::mapclassdef addKey myMapClassDef "testType" "Test Type"</b>
+<b>STAF::mapclassdef setKeyProperty myMapClassDef "testType" "display-short-name" "Test"</b>
+<b>STAF::mapclassdef addKey myMapClassDef "outputList" "Outputs"</b>
+
+set mapClassDefName [<b>STAF::mapclassdef getName $myMapClassDef</b>]
+puts "The keys for map class definition '$mapClassDefName' are:"
+puts "[STAF::formatObject [STAF::mapclassdef getKeys $myMapClassDef]]"
+</pre>
+</font>
+</ul>
+
+This example prints the following:
+<ul>
+<font color="darkblue">
+<pre>
+The keys for map class definition 'Test/MyMap' are:
+[
+  {
+    display-name: Name
+    key         : name
+  }
+  {
+    display-name: Executable
+    key         : exec
+  }
+  {
+    display-name      : Test Type
+    key               : testType
+    display-short-name: Test
+  }
+  {
+    display-name: Outputs
+    key         : outputList
+  }
+]
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_mcontext" href="#ToC_mcontext">5.2.3 STAF::mcontext</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt>
+<tt><b>STAF::mcontext</b> <i>subcommand</i> ?<i>arg ...</i>?</tt>
+<dd>This procedure is used to create and/or access a STAF marshalling context
+which is used by STAF to help in marshalling and unmarshalling data.
+A marshalling context is simply a container for map class definitions
+and a data structure that uses (or is defined in terms of) them.
+<p>
+In order to use a map class when marshalling data, you must add the
+map class definition to the marshalling context, set the root object
+of the marshalling context to the object you want to marshall,
+and then marshall the marshalling context itself.
+When you unmarshall a data structure, you will always receive a
+marshalling context. Any map class definitions referenced by map
+classes within the data structure will be present in the marshalling context. 
+<p>
+The primary use of a STAF marshalling context is to represent multi-valued
+results that consist of a data structure (e.g. results from a QUERY/LIST
+service request, etc.) as a string that can also
+be converted back into the data structure.  This string can be
+assigned to the string result buffer returned from the service request.
+<p>
+<b>Since:</b> STAF V3.1.0
+</dt>
+</dl>
+</ul>
+<p>
+The <tt>STAF::mcontext</tt> procedure supports the following subcommands and
+their arguments:
+<p>
+<ul>
+<dl>
+<dt><tt><b>create</b> ?<i>rootObject</i>?</tt>
+<dd>Creates a STAF marshalling context.
+  <p>The optional argument <i>rootObject</i> specifies the root object to be
+     marshalled.  The default is <tt>None</tt>.
+<p>
+<dt><tt><b>setMapClassDefinition</b> <i>mcVar</i> <i>mapClassDef</i></tt>
+<dd>Called to add a map class definition to the marshalling context.
+  <p>The required argument <i>mcVar</i> specifies the variable name of
+     the marshalling context.
+  <p>The required argument <i>mapClassDef</i> specifies a map class
+     definition object that can be used when marshalling the object.
+     You may call this method any number of times to set multiple
+     map class definition objects for the marshalling context.
+<p>
+<dt><tt><b>getMapClassDefinition</b> <i>mc</i> <i>mapClassName</i></tt>
+<dd>Returns the map class definition for the specified map class name.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+  <p>The required argument <i>mapClassName</i> specifies a string
+     containing the name of the map class definition object
+     that you want to return.
+<p>
+<dt><tt><b>hasMapClassDefinition</b> <i>mc</i> <i>mapClassName</i></tt>
+<dd>Called to determine whether the marshalling context contains
+the specified map class definition.  Returns a true value if it exists.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+  <p>The required argument <i>mapClassName</i> specifies a string
+     containing the name of the map class definition.  This
+     subcommand will check if it exists in the marshalling context's
+     list of map class definitions.
+<p>
+<dt><tt><b>getMapClassMap</b> <i>mc</i></tt>
+<dd>Returns a map of the map class definitions for the marshalling context
+    where each key in the map is the name of a map class definition and
+    each value is a map class definition object.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+<p>
+<dt><tt><b>getMapClassDefinitionNames</b> <i>mc</i></tt>
+<dd>Returns a map of the names of the map class definitions in the marshalling context.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+<p>
+<dt><tt><b>setRootObject</b> <i>mcVar</i> <i>rootObject</i></tt>
+<dd>Sets the root object for the marshalling context.
+  <p>The required argument <i>mcVar</i> specifies the variable name of
+     the marshalling context.
+  <p>The required argument <i>rootObject</i> can specify any object.
+<p>
+<dt><tt><b>getRootObject</b> <i>mc</i></tt>
+<dd>Returns the root object for the marshalling context.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+<p>
+<dt><tt><b>getPrimaryObject</b> <i>mc</i></tt>
+<dd>Returns the primary object for the marshalling context which is
+    the marshalling context object itself if the marshalling context contains
+    one or more map class definitions.  Otherwise, it returns the
+    root object.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+<p>
+<dt><tt><b>marshall</b> <i>mc</i></tt>
+<dd>This is the marshalling function that creates marshalled data for
+the marshalling context.  Returns a string containing the
+marshalled data.
+  <p>The required argument <i>mc</i> specifies the marshalling context.
+  <p>Note that this is basically shorthand for a <tt><b>STAF::marshall</b></tt>
+     procedure call when specifying a marshalling context as the object
+     to be marshalled.
+<p>
+<dt><tt><b>formatObject</b> <i>mc</i></tt>
+<dd>Converts a marshalling context's root object into a verbose formatted
+hierarchical string that can be used when you want a "pretty print"
+representation of a marshalling context's root object.  Returns a string
+containing the formatted output.
+  <p>The required argument <i>mc</i> specifies the marshalling context
+    whose root object will be formatted in a verbose, more readable format.
+  <p>Note that this is basically shorthand for a <tt><b>STAF::formatObject</b></tt>
+    procedure call when specifying a marshalling context as the object
+    to be "pretty printed".
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+The following is an example of how to create a marshalling context
+containing one map class definition named 'Test/MyMap' and a root object
+which is a list datatype of map class datatypes defined by the map class
+definition.  Then it shows how to marshall and unmarshall the marshalling
+context.
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+# Create a map class definition
+
+set myMapClassDef [STAF::mapclassdef create "Test/MyMap"]
+STAF::mapclassdef addKey myMapClassDef "name" "Name"
+STAF::mapclassdef addKey myMapClassDef "exec" "Executable"
+
+# Create a marshalling context and set the map class definition
+# and assign myTestList as the root object
+
+set mc [<b>STAF::mcontext create</b>]
+<b>STAF::mcontext setMapClassDefinition mc $myMapClassDef</b>
+
+# From a list of maps, create a list datatype of map class datatypes
+# and marshall that data and assign to a message
+
+set testList [list {exec /tests/TestA.py name TestA} \
+                   {exec /tests/TestB.sh name TestB} \
+                   {exec /tests/TestC.cmd name TestC}]
+
+set myTestList [STAF::datatype createList]
+
+foreach testObj $testList {
+   array set test $testObj
+   set testMapObj [STAF::mapclassdef createInstance $myMapClassDef]
+   array set testMap [STAF::datatype getValue $testMapObj]
+   set testMap(name) $test(name)
+   set testMap(exec) $test(exec)
+   lappend myTestList [STAF::datatype createMap [array get testMap]]
+}
+
+<b>STAF::mcontext setRootObject mc $myTestList</b>
+
+puts "\nTest List:\n[<b>STAF::mcontext formatObject $mc</b>]"
+
+# Create a string from the marshalling context
+# This string could be a message that you log or send to a queue, etc.
+
+set stringResult [<b>STAF::mcontext marshall $mc</b>]
+
+# Convert the marshalled string representation back into a list
+
+set mc2 [STAF::unmarshall $stringResult]
+set theTestList [<b>STAF::mcontext getRootObject $mc2</b>]
+
+puts "\nTest List:\n[<b>STAF::mcontext formatObject $mc2</b>]"
+</pre>
+</font>
+</ul>
+<p>
+This example prints the following:
+<ul>
+<font color="darkblue">
+<pre>
+Test List:
+[
+  {
+    Name      : TestA
+    Executable: /tests/TestA.py
+  }
+  {
+    Name      : TestB
+    Executable: /tests/TestB.sh
+  }
+  {
+    Name      : TestC
+    Executable: /tests/TestC.cmd
+  }
+]
+
+Test List:
+[
+  {
+    Name      : TestA
+    Executable: /tests/TestA.py
+  }
+  {
+    Name      : TestB
+    Executable: /tests/TestB.sh
+  }
+  {
+    Name      : TestC
+    Executable: /tests/TestC.cmd
+  }
+]</pre>
+</font>
+</ul>
+
+<h3><a name="Header_isMarshalledData" href="#ToC_isMarshalledData">5.2.4 STAF::isMarshalledData</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><tt><b>STAF::isMarshalledData</b> <i>someData</i></tt>
+<dd>A procedure used to test if the data specified by argument <tt><i>someData</i></tt>
+is a string-based marhalled representation.
+<p>
+The required argument <tt><i>someData</i></tt> is the string to be tested.
+<p>
+<b>Since:</b> STAF V3.2.1
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+Returns a true value (1) if the data a marshalled string or a false value (0) if
+the data is not a marshalled string.
+</ul>
+
+<h4>Examples</h4>
+
+This example checks if a string contains marshalled data and, if so,
+unmarshalls it.
+<ul>
+<font color="darkblue">
+<pre>
+if {[<b>STAF::isMarshalledData $message</b>]} {
+    # Unmarshall the data
+    set mc [STAF::unmarshall $message]
+}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_marshall" href="#ToC_marshall">5.2.5 STAF::marshall</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::marshall</tt></b> <tt>?-context <i>context</i>? <i>object</i></tt>
+<dd>A procedure used to create a string-based marshalled representation
+of the object specified by the argument <i>object</i>.
+Returns a marshalled string.
+<p>
+The optional <tt>-context <i>context</i></tt> option specifies a marshalling
+context to use.  The default is <tt>None</tt>.
+<p>
+The required argument <i>object</i> is the object to be marshalled.
+<p>
+<b>Since:</b> STAF V3.1.0
+<p>
+Note, that the <tt>STAF::mcontext</tt> procedure also provides a <tt>marshall</tt>
+subcommand to marshall a marshalling context's root object.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a string containing the marshalled data.
+</ul>
+
+<h4>Examples</h4>
+
+This example converts a Tcl array (aka map) into a string-based marshalled
+representation.  It also shows how to convert this marshalled string back
+into the original Tcl array.
+<ul>
+<font color="darkblue">
+<pre>
+set myTestArray(name) "TestA"
+set myTestArray(exec) "/tests/TestA.py"
+set myTestArray(testType) "FVT"
+set myTestArray(outputs) {"TestA.out" "TestA.err"}
+set myTestArrayString [array get myTestArray]
+set myArrayObject [STAF::datatype createMap $myTestArrayString]
+
+set message [<b>STAF::marshall $myArrayObject</b>]</b>
+
+set request "QUEUE MESSAGE [STAF::WrapData $message]"
+
+if {[STAF::Submit local QUEUE $request] != $STAF::kOk} {
+    puts "Error on STAF local QUEUE $request"
+    puts "RC=$STAF::RC, Result: $STAF::Result"
+    exit $STAF::RC
+}
+
+# Another process could obtain the message from the queue and unmarshall
+# it to get the original dictionary (map) object
+
+if {[STAF::Submit local QUEUE GET] != $STAF::kOk} {
+    puts "Error on STAF local QUEUE GET"
+    puts "RC=$STAF::RC, Result: $STAF::Result"
+    exit $STAF::RC
+}
+
+set mc [STAF::unmarshall $STAF::Result]
+set messageMapObj [STAF::mcontext getRootObject $mc]
+array set messageMap [STAF::datatype getValue $messageMapObj]
+array set yourTestArray [STAF::datatype getValue $messageMap(message)]
+
+puts "Name     : $yourTestArray(name)"
+puts "Exec     : $yourTestArray(exec)"
+puts "Test Type: $yourTestArray(testType)"
+puts "Outputs  : $yourTestArray(outputs)"
+</pre>
+</font>
+</ul>
+<p>
+This example prints the following:
+<ul>
+<font color="darkblue">
+<pre>
+Name     : TestA
+Exec     : /tests/TestA.py
+Test Type: FVT
+Outputs  : "TestA.out" "TestA.err"
+</pre>
+</font>
+</ul>
+<p>
+This example creates a marshalling context with one map class definition
+and a list where each entry is a map.  It then creates a
+string-based marshalled representation of it.  Finally, it prints the
+marshalled data using the <tt>STAF::formatObject</tt> procedure.
+<ul>
+<font color="darkblue">
+<pre>
+# Create a map class definition
+
+set myMapClassDef [STAF::mapclassdef create "Test/MyMap"]
+STAF::mapclassdef addKey myMapClassDef "name" "Name"
+STAF::mapclassdef addKey myMapClassDef "exec" "Executable"
+
+# Create a marshalling context and set the map class definition
+
+set mc [STAF::mcontext create]
+STAF::mcontext setMapClassDefinition mc $myMapClassDef
+
+# From a list of maps, create a list datatype of map class datatypes
+# and marshall that data and assign to a message
+
+set testList [list {exec /tests/TestA.py name TestA} \
+                   {exec /tests/TestB.sh name TestB} \
+                   {exec /tests/TestC.cmd name TestC}]
+
+set myTestList [STAF::datatype createList]
+
+foreach testObj $testList {
+   array set test $testObj
+   set testMapObj [STAF::mapclassdef createInstance $myMapClassDef]
+   array set testMap [STAF::datatype getValue $testMapObj]
+   set testMap(name) $test(name)
+   set testMap(exec) $test(exec)
+   lappend myTestList [STAF::datatype createMap [array get testMap]]
+}
+
+set message [<b>STAF::marshall -context $mc $myTestList</b>]
+puts "Formatted Data:\n$[STAF::formatObject -context $mc $myTestList]"
+</pre>
+</font>
+</ul>
+<p>
+This example prints the folowing:
+<ul>
+<font color="darkblue">
+<pre>
+[
+  {
+    Name      : TestA
+    Executable: /tests/TestA.py
+  }
+  {
+    Name      : TestB
+    Executable: /tests/TestB.sh
+  }
+  {
+    Name      : TestC
+    Executable: /tests/TestC.cmd
+  }
+]
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_unmarshall" href="#ToC_unmarshall">5.2.6 STAF::unmarshall</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::unmarshall</tt></b> <tt>?-context <i>context</i>? ?-ignoreIndirectObjects? <i>data</i></tt>
+<dd><p>A procedure used to convert a string-based marshalled representation
+specified by argument <i>data</i> back into a data structure.
+It returns a marshalling context from which you can get the data structure
+via the <tt>STAF::mcontext</tt> procedure's subcommand <tt>getRootObject</tt>.
+<p>
+The optional <tt>-context <i>context</i></tt> option specifies the STAF
+marshalling Context datatype object that should be used when unmarshalling
+the string. The default is <tt>None</tt>.
+Note that a new marshalling context will be returned even if an existing
+marshalling context is specified for this option.
+<p>
+The optional <tt>-ignoreIndirectObjects</tt> option can be used to control
+how to unmarshall the string.
+When a string is unmarshalled into a data structure, it is possible
+that one of the string objects that is unmarshalled is itself the
+string form of another marshalled data structure.
+The default is to recursively unmarshall these nested objects.
+Use the <tt>-ignoreIndirectObjects</tt> option to disable this additional processing.
+<p>
+The required argument <i>data</i> is a string to be unmarshalled.
+<p>
+<b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a marshalling context from which you can get the data structure
+    via the <tt>STAF::mcontext</tt> procedure's subcommand
+    <tt>getRootObject</tt>.
+    <p>
+    Note that STAF service requests that return multiple values in their
+    result buffer return marshalled data.  Refer to the service request's
+    documentation for details on the data structure (e.g. list, map, etc)
+    resulting from unmarshalling the result from a service request that
+    returns marshalled data.
+</ul>
+
+<h4>Examples</h4>
+
+This example submits a request to the FS service to query information
+about a file.  The request returns marshalled data whose root object
+is a map that contains keys like 'type', 'lowerSize', and
+'lastModifiedTimestamp'.  (Note that the STAF User's Guide defines
+the results for each request submitted to an internal STAF service.)
+<ul>
+<font color="darkblue">
+<pre>
+# Submit a query request to the FS Service to query info about a file
+
+set fileName "{STAF/Config/ConfigFile}"
+set request "QUERY ENTRY $fileName"
+puts "STAF local FS $request\n"
+
+if {[STAF::Submit local FS $request] != $STAF::kOk} {
+    puts "Error on STAF local FS $request"
+    puts "RC=$STAF::RC, Result: $STAF::Result"
+    exit $STAF::RC
+}
+
+set mc [<b>STAF::unmarshall $STAF::Result</b>]
+set entryMapObj [STAF::mcontext getRootObject $mc]
+array set entryMap [STAF::datatype getValue $entryMapObj]
+
+# Submit a resolve requset to the VAR service to resolve the STAF variable
+STAF::Submit local VAR "RESOLVE STRING $fileName"
+set resolvedFileName $STAF::Result
+
+if {$entryMap(type) == "F"} {
+    puts "File Name    : $resolvedFileName"
+    puts "File Size    : $entryMap(lowerSize)"
+    puts "Last Modified: $entryMap(lastModifiedTimestamp)"
+} else {
+    puts "$resolvedFileName is not a file.  Type=$entryMap(type)"
+}
+</pre>
+</font>
+</ul>
+<p>
+This example could print something like the following:
+<ul>
+<font color="darkblue">
+<pre>
+STAF local FS QUERY ENTRY {STAF/Config/ConfigFile}
+
+File Name    : C:\STAF\bin\staf.cfg
+File Size    : 7333
+Last Modified: 20060913-16:36:48
+</pre>
+</font>
+</ul>
+<p>
+This example submits a request to the PROCESS service to run a command
+on a machine and to wait for the command to complete.  The request
+returns marshalled data whose root object
+is a map that contains keys like 'rc' and 'fileList'.  
+The value for 'fileList' is a list of the returned files.
+Each entry in the list consists of a map that contains keys 'rc' and
+'data'.  In our PROCESS START request, we returned one file, stdout
+(and returned stderr to this same file).
+(Note that the STAF User's Guide defines the results for each
+request submitted to an internal STAF service.)
+<ul>
+<font color="darkblue">
+<pre>
+# Submit a PROCESS START request and wait for it to complete
+
+set command "dir {STAF/Config/STAFRoot}"
+set request "START SHELL COMMAND [STAF::WrapData $command] RETURNSTDOUT STDERRTOSTDOUT WAIT"
+puts "\nSTAF local PROCESS $request"
+
+if {[STAF::Submit local PROCESS $request] != $STAF::kOk} {
+    puts "Error on STAF local PROCESS $request"
+    puts "Expected RC: 0"
+    puts "Received RC: $STAF::RC, Result: $STAF::Result"
+    exit $STAF::RC
+}
+
+# Unmarshall the result which is a marshalling context whose 
+# root object is a map containing keys 'rc', and 'fileList'.
+# The value for 'fileList' is a list of the returned files.
+# Each entry in the list consists of a map that contains keys
+# 'rc' and 'data'.  In our PROCESS START request, we returned
+# one file, stdout (and returned stderr to this same file).
+
+set mc [<b>STAF::unmarshall $STAF::Result</b>]
+set processMapObj [STAF::mcontext getRootObject $mc]
+array set processMap [STAF::datatype getValue $processMapObj]
+
+puts "Process RC: $processMap(rc)"
+
+# Verify that the rc is 0 for returning data for the Stdout file
+
+set fileListObj [STAF::datatype getValue $processMap(fileList)]
+set stdoutFileObj [STAF::datatype getValue [lindex $fileListObj 0]]
+array set stdoutFileMap [STAF::datatype getValue $stdoutFileObj]
+
+if {$stdoutFileMap(rc) != $STAF::kOk} {
+    puts "Error on retrieving process's stdout data."
+    puts "Expected RC: 0"
+    puts "Received RC: $stdoutFileMap(rc)"
+    exit $stdoutFileMap(rc)
+}
+
+# Print the data in the stdout file created by the process
+
+puts "\nProcess Stdout file contains:\n$stdoutFileMap(data)"
+
+# Verify that the process rc is 0
+
+if {$processMap(rc) != $STAF::kOk} {
+    puts "Process RC: $processMap(rc)"
+    puts "Expected Process RC: 0"
+    exit $processMap(rc)
+}
+</pre>
+</font>
+</ul>
+<p>
+This example could print something like the following:
+<p>
+<ul>
+<font color="darkblue">
+<tt>STAF local PROCESS START SHELL COMMAND :26:dir {STAF/Config/STAFRoot} RETURNSTDOUT STDERRTOSTDOUT WAIT</tt>
+<pre>
+Process Stdout file contains:
+ Volume in drive C has no label.
+ Volume Serial Number is B0B7-F95A
+
+ Directory of C:\STAF
+
+01/26/2006  02:56p      <DIR>          .
+01/26/2006  02:56p      <DIR>          ..
+01/26/2006  02:56p      <DIR>          lib
+01/26/2006  02:56p      <DIR>          codepage
+01/26/2006  02:56p      <DIR>          samples
+01/26/2006  02:57p      <DIR>          include
+01/26/2006  02:57p      <DIR>          bin
+02/25/2008  01:30p              17,029 LICENSE.htm
+01/26/2006  03:04p      <DIR>          docs
+01/26/2006  03:11p      <DIR>          data
+02/12/2008  05:05p                  25 STAFReg.inf
+06/05/2008  10:17a               8,729 NOTICES.htm
+06/24/2008  04:34p                  77 install.properties
+               4 File(s)         72,601 bytes
+               9 Dir(s)   8,199,012,352 bytes free
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_formatObject" href="#ToC_formatObject">5.2.7 STAF::formatObject</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::formatObject</tt></b> <tt>?-context <i>context</i>? <i>object</i></tt>
+<dd>A procedure used to convert a data structure (specified by argument
+<i>object</i>) into a verbose formatted hierarchical string that can be
+used when you want a "pretty print" representation of an object.
+Returns a string containing the formatted output.
+<p>
+The optional <tt>-context <i>context</i></tt> option specifies the STAF
+marshalling Context datatype object that should be used when generating the
+"pretty print" output.  The default is <tt>None</tt>.
+<p>
+The required argument <i>object</i> specifies the object to be formatted
+in a verbose, more readable format.
+<p>
+<b>Since:</b> STAF V3.2.1
+<p>
+Note, that the <tt>STAF::mcontext</tt> procedure also provides a
+<tt>formatObject</tt> subcommand to "pretty print" a marshalling context's
+root object.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a string representing the object in a verbose, more readable format.
+</ul>
+
+<h4>Examples</h4>
+
+This example creates a Map datatype object and prints it in a "pretty"
+verbose format.
+<ul>
+<font color="darkblue">
+<pre>
+set myTestMap(name) TestA
+set myTestMap(exec) "/tests/TestA.tcl"
+set myTestMap(testType) FVT
+
+set listValue [list TestA.out TestA.err]
+set dtList [STAF::datatype createList $listValue]
+
+set myTestMap(outputs) $dtList
+set dtTestMap [STAF::datatype createMap [array get myTestMap]]
+
+puts [<b>STAF::formatObject $dtTestMap</b>]
+</pre>
+</font>
+</ul>
+<p>
+This example could print the following output:
+<ul>
+<font color="darkblue">
+<pre>
+{
+  outputs : [
+    TestA.out
+    TestA.err
+  ]
+  name    : TestA
+  exec    : /tests/TestA.tcl
+  testType: FVT
+}</pre>
+</font>
+</ul>
+<p>
+This example prints the result from a <tt>FS QUERY ENTRY</tt> request in
+a "pretty" verbose format.
+<ul>
+<font color="darkblue">
+<pre>
+set fileName "{STAF/Config/ConfigFile}"
+set request "QUERY ENTRY $fileName"
+puts "STAF local FS $request\n"
+
+if {[STAF::Submit local FS $request] != $STAF::kOk} {
+    puts "Error on STAF local FS $request"
+    puts "RC=$STAF::RC, Result: $STAF::Result"
+    exit $STAF::RC
+}
+
+set mc [STAF::unmarshall $STAF::Result]
+puts "Formatted output:\n[<b>STAF::formatObject $mc</b>]"
+</pre>
+</font>
+</ul>
+<p>
+If successful, this example could print something like the following output:
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+STAF local FS QUERY ENTRY {STAF/Config/ConfigFile}
+
+Formatted output:
+{
+  Name              : c:\staf\bin\STAF.cfg
+  Type              : F
+  Upper 32-bit Size : 0
+  Lower 32-bit Size : 5902
+  Modified Date-Time: 20061122-11:07:02
+}
+</pre>
+</font>
+</ul>
+
+<h2><a name="Header_PrivateData" href="#ToC_PrivateData">5.3 Private Data Manipulation APIs</a></h2>
+<p>
+These APIs allow you to handle private data.
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+information about handling private data.
+
+<h3><a name="Header_AddPrivacyDelimiters" href="#ToC_AddPrivacyDelimiters">5.3.1 STAF::AddPrivacyDelimiters</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::AddPrivacyDelimiters</b> <i>data</i></tt>
+<dd><p>
+    Adds privacy delimiters to a string and returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    This method should be used by anyone who wants to protect private
+    data specified in a STAF command option that supports handling
+    private data.
+    <p>
+    Required argument <tt><i> data </i></tt> is a <tt>String</tt> that contains
+    data you want to protect. 
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a <tt>String</tt> object containing the string with opening and
+    closing privacy delimiters added and escapes any privacy delimiters
+    already contained in the string with a caret (^).
+    If the string has length 0 or already has an unescaped opening privacy
+    delimiter at the beginning and an unescaped closing privacy delimiter
+    at the end, privacy delimiters are not added.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <tt><i>data</i></tt> is <tt>"passw0rd"</tt>, this method
+        would return string <tt>"!!@passw0rd@!!"</tt>.
+    <li>If the <tt><i>data</i></tt> is <tt>"Password: !!@secret@!!"</tt>, this
+        method would return <tt>"!!@Password: ^!!@secret^@!!@!!"</tt>.
+    </ul>
+</ul>
+
+<h4>Examples</h4>
+
+This example adds privacy delimiters to "passw0rd" used in the
+<tt>PASSWORD</tt> option when starting a process as another user.
+<ul>
+<font color="darkblue">
+<pre>
+set password "passw0rd"
+set protectedPw [STAF::AddPrivacyDelimiters $password]
+set request "START COMMAND C:/tests/TestA USERNAME Test1 PASSWORD $protectedPw"
+
+if {[STAF::Submit local PROCESS $request] != $STAF::kOk} {
+    puts "Error submitting process, RC: $STAF::RC, Result: $STAF::Result"
+}
+</pre>
+</font>
+</ul>
+
+This example adds privacy delimiters to password "secret" used in the
+<tt>COMMAND</tt> option when starting a process.
+<ul>
+<font color="darkblue">
+<pre>
+set password "secret"
+set command "C:/tests/admin -password [STAF::AddPrivacyDelimiters $password]"
+set request "START COMMAND [STAF::WrapData $command]"
+
+if {[STAF::Submit local PROCESS $request] != $STAF::kOk} {
+    puts "Error submitting process, RC: $STAF::RC, Result: $STAF::Result"
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_EscapePrivacyDelimiters" href="#ToC_EscapePrivacyDelimiters">5.3.2 STAF::EscapePrivacyDelimiters</a></h3>
+
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::EscapePrivacyDelimiters</b> <i>data</i></tt>
+<dd><p>
+    Escapes all privacy delimiters (<tt>!!@</tt> and <tt>@!!</tt>)
+    found in the data with a caret (<tt>^</tt>) and returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    This method should be used before calling the <tt>addPrivacyDelimiters</tt>
+    method for data that needs to be protected but may contain
+    substrings <tt>!!@</tt> and/or <tt>@!!</tt> that should not be
+    mistaken for privacy delimiters .
+    <p>
+    Required argument <tt><i> data </i></tt> is a <tt>String</tt>. 
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a <tt>String</tt> object containing the string with privacy
+    delimiters, if any, escaped.
+    <p>
+    For example, if the <tt><i> data </i></tt> is <tt>"passw@!!d"</tt>,
+    this method would return <tt>"passw^@!!d"</tt>.
+</ul>
+
+<h4>Examples</h4>
+
+This example escapes privacy delimiters in password <tt>"passw@!!d"</tt>
+before adding privacy delimiters to it and then uses the password
+in the <tt>PASSWORD</tt> option when starting a process as another user.
+<ul>
+<font color="darkblue">
+<pre>
+set password "passw@!!d"
+set protectedPw [STAF::AddPrivacyDelimiters [STAF::EscapePrivacyDelimiters $password]]
+set request "START COMMAND C:/tests/TestA USERNAME Test1 PASSWORD $protectedPw"
+
+if {[STAF::Submit local PROCESS $request] != $STAF::kOk} {
+    puts "Error submitting process, RC: $STAF::RC, Result: $STAF::Result"
+}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_RemovePrivacyDelimiters" href="#ToC_RemovePrivacyDelimiters">5.3.3 STAF::RemovePrivacyDelimiters</a></h3>
+
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::RemovePrivacyDelimiters</b> <i>data</i> <i>?numLevels?</i></tt>
+<dd><p>
+    Removes privacy delimiters found in the data and returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    Required argument <tt><i> data </i></tt> is a <tt>String</tt> that may contain
+    privacy delimiters (e.g. <tt>!!@</tt>, <tt>@!!</tt>). 
+    <p>
+    Optional argument <tt><i> numLevels </i></tt> in an <tt>int</tt> that specifies
+    the number of levels of privacy data to remove.  The default is 0
+    which indicates to remove all levels of privacy data.
+    Note that, generally, you'll want to remove all levels of privacy
+    delimiters.
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a <tt>String</tt> containing the string with privacy
+    delimiters, if any, removed.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <tt><i> data </i></tt> is <tt>"!!@passw0rd@!!"</tt>, this method
+        would return <tt>"passw0rd"</tt>.
+    <li>If the <tt><i> data </i></tt> is <tt>"!!@passw^@!!d@!!"</tt>, this method
+        would return <tt>"passw@!!d"</tt>.
+    <li>If the <tt><i> data </i></tt> is <tt>"!!@Password=^!!@secret^@!!.@!!"</tt> and
+        the <tt><i> numLevels </i></tt> is 0, this method would return
+        <tt>"Password=secret"</tt>.
+    <li>If the <tt><i> data </i></tt> is <tt>"!!@Password=^!!@secret^@!!.@!!"</tt> and
+        the <tt><i> numLevels </i></tt> is 1, this method would return
+        <tt>"Password=!!@secret@!!"</tt>.
+    </ul>
+</ul>
+
+<h4>Examples</h4>
+
+This example removes privacy delimiters from protected password
+<tt>"!!@secret@!!"</tt> and assigns <tt>"secret"</tt> as the password.
+<ul>
+<font color="darkblue">
+<pre>
+set protectedPw "!!@secret@!!"
+set password [STAF::RemovePrivacyDelimiters $protectedPw]
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_MaskPrivateData" href="#ToC_MaskPrivateData">5.3.4 STAF::MaskPrivateData</a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::MaskPrivateData</b> <i>data</i></tt>
+<dd><p>
+    Masks any private data (enclosed between opening, <tt>!!@</tt>,
+    and closing, <tt>@!!</tt>, privacy delimiters) by replacing the
+    private data with asterisks.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    Required argument <tt><i> data </i></tt> is a <tt>String</tt> that
+    may contain privacy delimiters (e.g. <tt>!!@</tt>, <tt>@!!</tt>). 
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a String containing the string with any private
+    data masked.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <tt><i> data </i></tt> is <tt>"!!@passw0rd@!!"</tt>, this method
+        would return <tt>"**************"</tt>.
+    <li>If the <tt><i> data </i></tt> is <tt>"testA -password !!@secret@!!"</tt>,
+        this method would return <tt>"testA -password ************"</tt>.
+    </ul>
+</ul>
+
+<h4>Examples</h4>
+
+This example masks any private data indicated by privacy delimiters
+in a request string before displaying it.
+This example prints:
+<br><tt> START COMMAND C:/tests/TestA.exe USERNAME Test1 PASSWORD **************</tt>
+<ul>
+<font color="darkblue">
+<pre>
+set password "passw0rd"
+set protectedPw [STAF::AddPrivacyDelimiters $password]
+set request "START COMMAND C:/tests/TestA.exe USERNAME Test1 PASSWORD $protectedPw"
+puts "[STAF::MaskPrivateData $request]"
+</pre>
+</font>
+</ul>
+
+<h2><a name="Header_ReturnCodes" href="#ToC_ReturnCodes">5.4 STAF Return Codes</a></h2>
+
+The following variables are defined, which represent the numeric return
+codes generated by STAF.
+<tt>
+<ul>
+<li>STAF::kOk</li>
+<li>STAF::kInvalidAPI</li>
+<li>STAF::kUnknownService</li>
+<li>STAF::kInvalidHandle</li>
+<li>STAF::kHandleAlreadyExists</li>
+<li>STAF::kHandleDoesNotExist</li>
+<li>STAF::kUnknownError</li>
+<li>STAF::kInvalidRequestString</li>
+<li>STAF::kInvalidServiceResult</li>
+<li>STAF::kREXXError</li>
+<li>STAF::kBaseOSError</li>
+<li>STAF::kProcessAlreadyComplete</li>
+<li>STAF::kProcessNotComplete</li>
+<li>STAF::kVariableDoesNotExist</li>
+<li>STAF::kUnResolvableString</li>
+<li>STAF::kInvalidResolveString</li>
+<li>STAF::kNoPathToMachine</li>
+<li>STAF::kFileOpenError</li>
+<li>STAF::kFileReadError</li>
+<li>STAF::kFileWriteError</li>
+<li>STAF::kFileDeleteError</li>
+<li>STAF::kSTAFNotRunning</li>
+<li>STAF::kCommunicationError</li>
+<li>STAF::kTrusteeDoesNotExist</li>
+<li>STAF::kInvalidTrustLevel</li>
+<li>STAF::kAccessDenied</li>
+<li>STAF::kSTAFRegistrationError</li>
+<li>STAF::kServiceConfigurationError</li>
+<li>STAF::kQueueFull</li>
+<li>STAF::kNoQueueElement</li>
+<li>STAF::kNotifieeDoesNotExist</li>
+<li>STAF::kInvalidAPILevel</li>
+<li>STAF::kServiceNotUnregisterable</li>
+<li>STAF::kServiceNotAvailable</li>
+<li>STAF::kSemaphoreDoesNotExist</li>
+<li>STAF::kNotSemaphoreOwner</li>
+<li>STAF::kSemaphoreHasPendingRequests</li>
+<li>STAF::kTimeout</li>
+<li>STAF::kJavaError</li>
+<li>STAF::kConverterError</li>
+<li>STAF::kInvalidObject</li>
+<li>STAF::kInvalidParm</li>
+<li>STAF::kRequestNumberNotFound</li>
+<li>STAF::kInvalidAsynchOption</li>
+<li>STAF::kRequestNotComplete</li>
+<li>STAF::kProcessAuthenticationDenied</li>
+<li>STAF::kInvalidValue</li>
+<li>STAF::kDoesNotExist</li>
+<li>STAF::kAlreadyExists</li>
+<li>STAF::kDirectoryNotEmpty</li>
+<li>STAF::kDirectoryCopyError</li>
+<li>STAF::kDiagnosticsNotEnabled</li>
+<li>STAF::kHandleAuthenticationDenied</li>
+<li>STAF::kHandleAlreadyAuthenticated</li>
+<li>STAF::kInvalidSTAFVersion</li>
+<li>STAF::kRequestCancelled</li>
+<li>STAF::kCreateThreadError</li>
+<li>STAF::kMaximumSizeExceeded</li>
+</ul>
+</tt>
+For a complete description of these return codes and their meaning, please
+see the STAF User's Guide.
+
+<h2><a name="Header_Constants" href="#ToC_Constants">5.5 STAF Constants</a></h2>
+
+Constants defined in the STAF namespace include: 
+<p>
+<ul>
+<dl>
+<dt><b><tt>STAF::NoneType</tt></b>
+<dd>Set to <tt>"STAF_DT_NONE"</tt>.
+<p>
+<dt><b><tt>STAF::ScalarType</tt></b>
+<dd>Set to <tt>"STAF_DT_SCALAR"</tt>.
+<p>
+<dt><b><tt>STAF::ListType</tt></b>
+<dd>Set to <tt>"STAF_DT_LIST"</tt>.
+<p>
+<dt><b><tt>STAF::MapType</tt></b>
+<dd>Set to <tt>"STAF_DT_MAP"</tt>.
+<p>
+<dt><b><tt>STAF::ContextType</tt></b>
+<dd>Set to <tt>"STAF_DT_CONTEXT"</tt>.
+<p>
+<dt><b><tt>STAF::CompleteTypeList</tt></b>
+<dd>Set to a list containing <tt>$STAF::NoneType</tt>,
+<tt>$STAF::ScalarType</tt>, <tt>$STAF::ListType</tt>, <tt>$STAF::MapType</tt>,
+and <tt>$STAF::ContextType</tt>.
+<!-- For internal use only - don't want their values changed
+<p>
+<dt><b><tt>MARSHALLED_DATA_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/"</tt>.
+<p>
+<dt><b><tt>STAF::MARSHALLED_DATA_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/"</tt>.
+<p>
+<dt><b><tt>STAF::NONE_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/$0:0:"</tt>.
+<p>
+<dt><b><tt>STAF::SCALAR_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/$"</tt>.
+<p>
+<dt><b><tt>STAF::SCALAR_STRING_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/$S"</tt>.
+<p>
+<dt><b><tt>STAF::LIST_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/["</tt>.
+<p>
+<dt><b><tt>STAF::MAP_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/{"</tt>.
+<p>
+<dt><b><tt>STAF::MC_INSTANCE_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/%"</tt>.
+<p>
+<dt><b><tt>STAF::CONTEXT_MARKER</tt></b>
+<dd>Set to <tt>"@SDT/*"</tt>.
+<p>
+<dt><b><tt>STAF::NONE_STRING</tt></b>
+<dd>Set to <tt>"<None>"</tt>.
+<p>
+<dt><b><tt>STAF::DISPLAY_NAME_KEY</tt></b>
+<dd>Set to <tt>"display-name"</tt>.
+<p>
+<dt><b><tt>STAF::MAP_CLASS_MAP_KEY</tt></b>
+<dd>Set to <tt>"map-class-map"</tt>.
+<p>
+<dt><b><tt>STAF::MAP_CLASS_NAME_KEY</tt></b>
+<dd>Set to <tt>"staf-map-class-name"</tt>.
+<p>
+<dt><b><tt>STAF::ENTRY_SEPARATOR</tt></b>
+<dd>Set to <tt>""</tt>.
+<p>
+<dt><b><tt>STAF::INDENT_DELTA</tt></b>
+<dd>Set to <tt>2</tt>.
+<p>
+<dt><b><tt>STAF::SPACES</tt></b>
+<dd>Set to a string containing 80 spaces.
+-->
+</dl>
+</ul>
+
+<h1><a name="Header_STAFMon" href="#ToC_STAFMon">6.0 Package STAFMon</a></h1>
+
+The STAFMon package provides a function to ease the use of the Monitor
+service, as well as, variables which define the return codes from the Monitor
+service and variables which affect the operation of the utility function
+provided.
+
+<h2><a name="Header_MonVars" href="#ToC_MonVars">6.1 Monitor Service Variables</a></h2>
+
+<p>The following variables affect the behavior of the STAFMon package.&nbsp;
+These variables values may be changed to alter the behavior of the STAFMon
+package.
+<ul>
+<li><tt>STAF::Monitor::SystemName</tt> - The system name to which
+     Monitor service requests should be sent (default = local)</li>
+
+<li><tt>STAF::Monitor::ServiceName</tt> - The service name to which
+     Monitor service requests should be sent (default = monitor)</li>
+</ul>
+
+<h2><a name="Header_MonitorLog" href="#ToC_MonitorLog">6.2 STAF::Monitor::Log</a></h2>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::Monitor::Log</b> <i>message ?options?</i></tt>
+<dd><p>
+    This function logs a message to the Monitor service.
+    <p>
+    Required argument <tt><i> message </i></tt> is a <tt>String</tt> that
+    contains the message to log. 
+    <p>
+    Optional argument <tt><i> options </i></tt> is a <tt>String</tt> that
+    contains any additional option(s) that should be passed on to the
+    LOG request, e.g. <tt>RESOLVEMESSAGE</tt>.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    This function returns a numeric return code.  Return codes are
+    documented in the STAF User's Guide.
+    <p>
+    The variables <tt>STAF::RC</tt> and <tt>STAF::Result</tt> will also
+    be set based on the underlying <tt>STAF::Submit</tt> call.
+</ul>
+
+<h4>Examples</h4>
+
+This example logs message "Hello World" to the Monitor service.
+<ul>
+<font color="darkblue">
+<pre>
+if {[STAF::Monitor::Log "Hello World"] != $STAF::kOk} {
+    puts "Error logging message to Monitor, RC: $STAF::RC"
+    return $STAF::RC
+}
+</pre>
+</font>
+</ul>
+
+<h1><a name="Header_STAFLog" href="#ToC_STAFLog">7.0 Package STAFLog</a></h1>
+
+The STAFLog package provides a set of functions to ease the use of the
+Log service, as well as, variables which define the return codes from the
+Log service and variables which affect the operation of the utility functions
+provided.  These functions also interface with the Monitor service
+to allow messages which are logged to also be monitored.
+
+<h2><a name="Header_LogRCs" href="#ToC_LogRCs">7.1 Log Service Variables and Return Codes</a></h2>
+
+The following variables are defined, which represent the numeric return
+codes generated by the STAF Log service.
+<ul>
+<li><tt>STAF::Log::kInvalidLevel</tt></li>
+<li><tt>STAF::Log::kInvalidLogFileFormat</tt></li>
+<li><tt>STAF::Log::kPurgeFailure</tt></li>
+</ul>
+For a complete description of these return codes and their meaning, please
+see the STAF User's Guide.
+<p>The following variables affect the behavior of the STAFLog package.
+These variables values may be changed to alter the behavior of the STAFLog
+package.
+<ul>
+<li><tt>STAF::Log::SystemName</tt> - The system name to which Log
+     service requests should be sent (default = local)</li>
+
+<li><tt>STAF::Log::ServiceName</tt> - The service name to which Log
+     service requests should be sent (default = log)</li>
+</ul>
+
+<h2><a name="Header_LogInit" href="#ToC_LogInit">7.2 STAF::Log::Init</a></h2>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::Log::Init</b> <i>logName ?logType? ?monitorMask?</i></tt>
+<dd><p>
+    This function initializes the utility functions for a specific log file.
+    <p>
+    Required argument <tt><i> logName </i></tt> is a <tt>String</tt> that
+    contains the name of the log. 
+    <p>
+    Optional argument <tt><i> logType </i></tt> is a <tt>String</tt> that
+    contains the type of log to be created: <tt>"GLOBAL"</tt>,
+    </tt>"MACHINE"</tt>, or <tt>"HANDLE"</tt>.
+    The default is <tt>"MACHINE"</tt>.
+    <p>
+    Optional argument <tt><i> monitorMask </i></tt> is a <tt>String</tt>
+    that contains the logging level(s) which will also be sent to the
+    Monitor service.
+    The default is <tt>"FATAL ERROR WARNING INFO STATUS"</tt>.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    This function returns a numeric return code.  Return codes are
+    documented in the STAF User's Guide.
+</ul>
+
+<h4>Examples</h4>
+
+This example initializes the utility functions for global log file
+"Testcase1", setting the monitor mask to logging levels "FATAL ERROR".
+<ul>
+<font color="darkblue">
+<pre>
+STAF::Log::Init Testcase1 GLOBAL "FATAL ERROR"
+</pre>
+</font>
+</ul>
+
+<h2><a name="Header_LogLog" href="#ToC_LogLog">7.3 STAF::Log::Log</a></h2>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::Log::Log</b> <i>level message ?options?</i></tt>
+<dd><p>
+    This function logs a message to the Log service.
+    This function will also log the message to the Monitor service if
+    the specified logging level is one of the levels defined in the
+    Monitor Mask (set in <tt>STAF::Log::Init</tt>, above).
+    <p>
+    Required argument <tt><i> level </i></tt> is a <tt>String</tt> that
+    contains the level of the message to log, e.g., <tt>WARNING</tt> or
+    <tt>DEBUG</tt>.
+    <p>
+    Required argument <tt><i> message </i></tt> is a <tt>String</tt> that
+    contains the message to log. 
+    <p>
+    Optional argument <tt><i> options </i></tt> is a <tt>String</tt> that
+    contains any additional options that should be passed on the the LOG
+    request, e.g., <tt>RESOLVEMESSAGE</tt>.
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+This function returns a numeric return code.  Return codes are documented
+in the STAF User's Guide.
+<p>The variables <tt>STAF::RC</tt> and <tt>STAF::Result</tt> will also
+be set based on the underlying <tt>STAF::Submit</tt> call.
+
+<h4>Example</h4>
+
+This example logs warning mesage "Unable to find specified file".
+<ul>
+<font color="darkblue">
+<pre>
+if {[STAF::Log::Log WARNING "Unable to find specified file"] != $STAF::kOk} {
+    puts "Error logging message to Log, RC: $STAF::RC"
+    return $STAF::RC
+}
+</pre>
+</font>
+</ul>
+
+</body>
+</html>

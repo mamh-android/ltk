@@ -1,0 +1,55 @@
+<project name="BuildProductXYZ" default="main" basedir=".">
+
+    <description>
+        Build file to build product XYZ.
+    </description>
+
+    <taskdef name="staf"
+              classname="com.ibm.staf.ant.taskdef.STAF"/>
+
+    <target name="main">
+
+        <!-- Request the build semaphore to ensure that only one build
+             occurs at a time. -->
+      <staf location="local"
+             service="SEM"
+             request="REQUEST MUTEX ProductXYZBuild"
+             throwBuildException="1"/>
+
+      <!-- Request a machine from the buildMachines resource pool. -->
+      <staf location="local"
+             service="RESPOOL"
+             request="REQUEST POOL buildMachines"
+             throwBuildException="1"
+             resultPrefix="resourceEntry"/>
+      <echo>Using build machine: ${resourceEntry.result}</echo>
+
+      <!-- Next you would add the tasks to build Product XYZ. -->
+
+      <!-- Release the machine from the buildMachines resource pool. -->
+      <staf location="local"
+             service="RESPOOL"
+             request="RELEASE POOL buildMachines ENTRY ${resourceEntry.result} FORCE"
+             throwBuildException="1"/>
+
+      <!-- Generate a build event to kick off BVT. -->
+      <staf location="local"
+             service="EVENT"
+             request="GENERATE TYPE productXYZ SUBTYPE start-bvt"
+             throwBuildException="1"/>
+
+      <!-- Send an email indicating that the build is complete. -->
+      <staf location="local"
+             service="EMAIL"
+             request="SEND TO user@company.com MESSAGE ProductXYZ-BuildComplete"
+             throwBuildException="1"/>
+
+      <!-- Release the build semaphore. -->
+      <staf location="local"
+             service="SEM"
+             request="RELEASE MUTEX ProductXYZBuild FORCE"
+             throwBuildException="1"/>
+
+    </target>
+
+</project>

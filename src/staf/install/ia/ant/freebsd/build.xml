@@ -1,0 +1,28 @@
+<project name="STAF-InstallAnywhere-freebsd">
+
+    <description>
+        Build file to build STAF InstallAnywhere for freebsd
+    </description>
+
+    <taskdef name="buildinstaller"
+      classname="com.zerog.ia.integration.ant.InstallAnywhereAntTask"
+      classpath="C:\IA2010\resource\build\iaant.jar"
+    />
+
+    <buildinstaller
+      IALocation="C:\IA2010"
+      IAProjectFile="C:\IA2010\projects\STAF\STAF.iap_xml"
+      BuildLinuxWithVM="false"
+      BuildLinuxWithoutVM="true"
+      BuildWindowsWithVM="false"
+      BuildWindowsWithoutVM="false"
+      BuildAIXWithVM="false"
+      BuildAIXWithoutVM="false"
+      BuildSolarisWithVM="false"
+      BuildSolarisWithoutVM="false"
+      BuildHPUXWithVM="false"
+      BuildHPUXWithoutVM="false"
+      BuildMacOSX="false"
+    />
+
+</project>

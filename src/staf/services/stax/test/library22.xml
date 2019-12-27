@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+    Function Library
+-->
+
+<stax>
+
+  <defaultcall function="FunctionA22"/>
+  
+  <function name="FunctionA22" requires="FunctionB22">
+  
+    <sequence>
+        
+      <message>"FunctionA22 is executing from file library22.xml"</message>
+      
+      <message>"FunctionA22 requires FunctionB22"</message>
+      
+      <call function="'FunctionB22'"/>
+     
+    </sequence>
+  
+  </function>
+  
+  <function name="FunctionB22" requires="FunctionC22">
+  
+    <sequence>
+        
+      <message>"FunctionB22 is executing from file library22.xml"</message>
+      
+      <message>"FunctionB22 requires FunctionC22"</message>
+      
+      <call function="'FunctionC22'"/>
+     
+    </sequence>
+  
+  </function>
+
+  <function name="FunctionC22" requires="FunctionD22">
+  
+    <sequence>
+        
+      <message>"FunctionC22 is executing from file library22.xml"</message>
+      
+      <message>"FunctionC22 requires FunctionD22"</message>
+      
+      <call function="'FunctionD22'"/>
+     
+    </sequence>
+  
+  </function>
+  
+  <function name="FunctionD22">
+  
+    <sequence>
+        
+      <message>"FunctionD22 is executing from file library22.xml"</message>    
+      
+      <script>currentFunction = "FunctionD22"</script>
+     
+    </sequence>
+  
+  </function>
+  
+</stax>

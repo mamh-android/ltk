@@ -1,0 +1,635 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : TraceSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Trace Service
+.*
+.*  Detail:
+.*
+.*     This file describes the STAF Trace Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.trace service
+:ih1.services
+:i2.trace service
+:h2 id=tracesrv.Trace Service
+:h3.Description
+:p.The TRACE service is one of the internal STAF services.  It provides the following
+trace commands.
+:ul compact.
+:li.ENABLE - Allows you to specify trace points and STAF service(s) to be enabled for tracing.
+:li.DISABLE - Allows you to specify trace points and STAF service(s) to be disabled for tracing.
+:li.LIST - Returns the current settings for the trace service
+:li.PURGE - Allows you to remove tracing information for services that are not registered
+:li.SET - Allows you to set the destination for the tracing
+information, the default tracing state for new services, or the maximum size
+(in characters) of the service result string to write to the trace output when
+the ServiceResult tracepoint is enabled.
+:li.&help.
+:eul.
+:p.The purpose of the Trace service is to allow you to control the trace messages
+recorded for STAF services. For example, if you are experiencing a problem with a
+STAF service or a request to a STAF service, you can specify various STAF trace
+points and/or STAF service(s) to be enabled for tracing to record additional trace
+messages which can help you resolve the problem.
+:note.If you enable one or more of the "service" tracepoints (e.g. ServiceRequest,
+ServiceResult, ServiceError, ServiceAccessDenied, or RemoteRequests), these trace
+messages will only be reported for the services you have enabled for tracing.
+:h4.Format of Trace Messages 
+:p.The format of each trace message is the following
+:xmp.
+<Timestamp>;<Thread>;<Trace Point>;<Message>
+:exmp.
+:p.where&colon.
+:p.:xph.<Timestamp>:exph. is the date/time of the message.
+:p.:xph.<Thread>:exph. is the thread on which the message originated.
+:p.:xph.<Trace Point>:exph. is the hexadecimal representation of the message's
+trace point.  See table :hdref refid=tracepointref. for a list of trace points.
+:p.:xph.<Message>:exph. is the actual trace message. &maskPrivate.
+:h4.Examples of Trace Messages
+:p.Here's an example of a :xph.ServiceManagement:exph. trace message:
+:xmp.
+20050811-16&colon.20&colon.50;1;00000010;Service HELP: Initializing
+:exmp.
+:p.Here's an example of a :xph.Warning:exph. trace message:
+:xmp.
+20050811-10&colon.10&colon.50;4836;00000400;STAFConnectionManager&colon.&colon.makeConnection - Attempt 
+#1 of 2 (Delay 41 milliseconds), RC: 16, Result: STAFConnectionProviderConnect: 
+Timed out connecting to endpoint: select() timeout: 22, Endpoint: client1
+:exmp.
+:p.Here's an example of :xph.ServiceRequest:exph. and :xph.ServiceResult:exph. trace messages:
+:xmp.
+20050811-10&colon.33&colon.54;4836;00000001;PROCESS Service Request - Client: local://local,
+ Handle: 30, Process: STAF/Client, Request: start command date returnstdout wait
+
+20050811-10&colon.33&colon.54;4836;00000002;PROCESS Service Result (0) - Client: local://loc
+al, Handle: 30, Process: STAF/Client, Request: start command date returnstdout w
+ait, Result: {
+  Return Code: 0
+  Key        : <None>
+  Files      : [
+    {
+      Return Code: 0
+      Data       : Thu Aug 11 10:33:54 CDT 2005
+
+    }
+  ]
+}
+:exmp.
+
+:ih1.tracing
+:h3 id=tracepointref.Trace Points Reference
+:p.The following are the valid trace points along with their hexadecimal representation
+and their descriptions.
+The hexadecimal representation of a trace point is logged in each trace message.
+Trace points are not case sensitive.
+:i2.hexadecimal trace points
+:table id     = trchex
+       headhi = 3
+       frame  = box
+       split  = yes
+       cols   = '* * 6*'
+       align  = 'c l l'.
+:tcap.Trace point hexadecimal representation
+
+.*-----------------------------
+:thd.
+:c.Hex
+:c.Trace point
+:c.Description
+:ethd.
+.*-----------------------------
+:row.
+:c.00000001
+:c.:xph.ServiceRequest:exph.
+:c.The trace point which causes a trace message to be generated for every
+incoming service request before it is processed by the service.
+.*-----------------------------
+:row.
+:c.00000002
+:c.:xph.ServiceResult:exph.
+:c.The trace point which causes a trace message to be generated for every
+incoming service request after it is processed by the service.
+Note that the trace message will include the return code and result for the
+service request. 
+This tracepoint overrides the :xph.ServiceComplete:exph.,
+:xph.ServiceError:exph. and :xph.ServiceAccessDenied:exph. tracepoints.
+.*-----------------------------
+:row.
+:c.00000004
+:c.:xph.ServiceError:exph.
+:c.The trace point which causes a trace message to
+be generated for every incoming service request which results in a non-zero
+error code.  Note that the trace message will include the return code and
+result for the service request.
+This tracepoint overrides the :xph.ServiceAccessDenied:exph. tracepoint.
+.*-----------------------------
+:row.
+:c.00000008
+:c.:xph.ServiceAccessDenied:exph.
+:c.The trace point which causes a trace
+message to be generated for every incoming service request which results in an
+"Insufficient Trust Level" (aka "Access Denied") error code.
+.*-----------------------------
+:row.
+:c.00000010
+:c.:xph.ServiceManagement:exph.
+:c.The trace point which causes a trace message to be generated for
+service management operations such as service initialization and termination.
+.*-----------------------------
+:row.
+:c.00000020
+:c.:xph.RemoteRequests:exph.
+:c.The trace point which enables trace message to be generated for
+requests destined for other machines.
+.*-----------------------------
+:row.
+:c.00000100
+:c.:xph.Error:exph.
+:c.The trace point which causes a trace message to be generated for error
+conditions that STAF detects, such as broken communication connections and
+fatal STAF Service errors.  The :xph.Error:exph. trace point is turned on
+by default.
+.*-----------------------------
+:row.
+:c.00000200
+:c.:xph.Registration:exph.
+:c.The trace point which causes a trace message to be generated for
+every registration or unregistration done by a process.
+.*-----------------------------
+:row.
+:c.00000400
+:c.:xph.Warning:exph.
+:c.The trace point which causes a trace message to be generated for
+warning conditions that STAF detects.
+.*-----------------------------
+:row.
+:c.00000800
+:c.:xph.Info:exph.
+:c.The trace point which causes a trace message to be generated for
+information conditions that STAF detects.
+.*-----------------------------
+:row.
+:c.00001000
+:c.:xph.Deprecated:exph.
+:c.The trace point which causes a trace message to be generated for
+deprecated options that STAF detects.
+A deprecated option is not recommended for use, generally due to improvements,
+and a replacement option is usually given. Deprecated options may be removed in
+future implementations. The :xph.Deprecated:exph. trace point is turned on by default.
+.*-----------------------------
+:row.
+:c.00002000
+:c.:xph.Debug:exph.
+:c.The trace point which causes a trace message to be generated for
+debug conditions that STAF detects.
+.*-----------------------------
+:row.
+:c.00004000
+:c.:xph.ServiceComplete:exph.
+:c.The trace point which causes a trace message to be generated for every
+incoming service request after it is processed by the service.
+Note that the trace message will include the return code and result length
+for the service request, but not the result data. 
+This tracepoint overrides the :xph.ServiceError:exph. and
+:xph.ServiceAccessDenied:exph. tracepoints.
+.*-----------------------------
+:etable.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.ENABLE
+:i3.TRACE service
+:ih1.tracing
+:i2.trace service
+:h3 id=tracesrvEnable.Enable
+:p.ENABLE allows you to enable trace points and STAF services for tracing.
+See table :hdref refid=tracepointref. for a list of valid trace points.
+:note.You can enable services that aren't currently registered and they will begin
+tracing when they are registered with STAF.
+
+:h4.Syntax
+:xmp.
+ENABLE ALL  [ TRACEPOINTS | SERVICES ]
+ENABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+ENABLE TRACEPOINT <Trace point> [ TRACEPOINT <Trace point> ]...
+ENABLE SERVICE <Service> [ SERVICE <Service> ]...
+:exmp.
+:p.:xph.ALL:exph. indicates to enable tracing for all trace points and/or services
+:p.:xph.TRACEPOINTS:exph. indicates a list of trace points to be enabled for tracing.
+The trace points in the list should be separated by spaces.  &varres.
+:p.:xph.SERVICES:exph. indicates a list of services to be enabled for tracing.
+The services in the list should be separated by spaces.  &varres.
+:p.:xph.TRACEPOINT:exph. indicates which trace point should be enabled for tracing. &varres.
+:p.:xph.SERVICE:exph. indicates which service should be enabled for tracing. &varres.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from ENABLE are documented in :hdref refid=retcode..
+:h4.Results
+:p.For :xph.ENABLE:exph. the result buffer will be empty if there are no errors
+:h4.Examples
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Enable the service request, service result, and service management trace points
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE TRACEPOINTS "ServiceRequest ServiceResult ServiceManagement":exph.
+:li.:hp2.Goal&colon.:ehp2. Enable the error and warning trace points
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE TRACEPOINTS "Error Warning":exph.
+:li.:hp2.Goal&colon.:ehp2. Enable all trace points
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE ALL TRACEPOINTS:exph.
+:li.:hp2.Goal&colon.:ehp2. Enable tracing for remote requests
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE TRACEPOINT RemoteRequests:exph.
+:li.:hp2.Goal&colon.:ehp2. Enable tracing only for the PROCESS and QUEUE services
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE SERVICES "PROCESS QUEUE":exph.
+:li.:hp2.Goal&colon.:ehp2. Enable tracing for all services
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE ALL SERVICES:exph.
+:li.:hp2.Goal&colon.:ehp2. Enable tracing for all services and tracepoints
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE ALL:exph.
+:li.:hp2.Goal&colon.:ehp2. Enable tracing for the VAR service
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE SERVICE VAR:exph.
+:li.:hp2.Goal&colon.:ehp2. Enable tracing for the SERVICE service
+:p.:hp2.Syntax&colon.:ehp2. :xph.ENABLE SERVICE &colon.7&colon.SERVICE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DISABLE
+:i3.TRACE service
+:ih1.tracing
+:i2.trace service
+:h3 id=tracesrvDisable.Disable
+:p.DISABLE allows you to disable trace points and STAF services for tracing.
+See table :hdref refid=tracepointref. for a list of valid trace points.
+:h4.Syntax
+:xmp.
+DISABLE ALL  [ TRACEPOINTS | SERVICES ]
+DISABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+DISABLE TRACEPOINT <Trace point> [ TRACEPOINT <Trace point> ]...
+DISABLE SERVICE <Service> [ SERVICE <Service> ]...
+:exmp.
+:p.:xph.ALL:exph. indicates to disable tracing for all trace points and/or services
+:p.:xph.TRACEPOINTS:exph. indicates a list of trace points to be disabled for tracing.
+The trace points in the list should be separated by spaces.  &varres.
+:p.:xph.SERVICES:exph. indicates a list of services to be disabled for tracing.
+The services in the list should be separated by spaces.  &varres.
+:p.:xph.TRACEPOINT:exph. indicates which trace point should be disabled for tracing. &varres.
+:p.:xph.SERVICE:exph. indicates which service should be disabled for tracing. &varres.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from DISABLE are documented in :hdref refid=retcode..
+:h4.Results
+:p.For :xph.DISABLE:exph. the result buffer will be empty if there are no errors
+:h4.Examples
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Disable the service access denied and error trace points
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE TRACEPOINTS "ServiceAccessDenied Error":exph.
+:li.:hp2.Goal&colon.:ehp2. Disable the service result and error trace points
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE TRACEPOINTS "ServiceResult Error":exph.
+:li.:hp2.Goal&colon.:ehp2. Disable all trace points
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE ALL TRACEPOINTS:exph.
+:li.:hp2.Goal&colon.:ehp2. Disable tracing for remote requests
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE TRACEPOINT RemoteRequests:exph.
+:li.:hp2.Goal&colon.:ehp2. Disable tracing only for the PROCESS and QUEUE services
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE SERVICES "PROCESS QUEUE":exph.
+:li.:hp2.Goal&colon.:ehp2. DISABLE tracing for all services
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE ALL SERVICES:exph.
+:li.:hp2.Goal&colon.:ehp2. Disable tracing for all services and tracepoints
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE ALL:exph.
+:li.:hp2.Goal&colon.:ehp2. Disable tracing for the VAR service
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE SERVICE VAR:exph.
+:li.:hp2.Goal&colon.:ehp2. Disable tracing for the SERVICE service
+:p.:hp2.Syntax&colon.:ehp2. :xph.DISABLE SERVICE &colon.7&colon.SERVICE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.PURGE
+:i3.TRACE service
+:ih1.tracing
+:i2.trace service
+:h3 id=tracesrvPurge.Purge
+:p.:xph.PURGE:exph. removes all unregistered services from the service list
+:h4.Syntax
+:xmp.
+PURGE
+:exmp.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from PURGE are documented in :hdref refid=retcode..
+:h4.Results
+:p.For :xph.PURGE:exph. the result buffer will be empty if there are no errors.
+:h4.Examples
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Remove extra services from the trace list
+:p.:hp2.Syntax&colon.:ehp2. :xph.PURGE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.TRACE service
+:ih1.tracing
+:i2.trace service
+:h3 id=tracesrvList.List
+:p.:xph.LIST:exph. Returns a list of current settings including trace
+destination and default service state, and a list of the current tracing
+statuses for all tracepoints and services
+:h4.Syntax
+:xmp.
+LIST &lbrk.SETTINGS&rbrk.
+:exmp.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+On successful return, the result buffer for a :xph.LIST:exph.
+request will contain a marshalled
+:xph.<Map&colon.STAF/Service/Trace/TraceInfo>:exph.
+representing the current trace settings.
+The maps are defined as follows:
+:table cols='* * 3* 2*'.
+:tcap.Definition of map class STAF/Service/Trace/TraceInfo
+:tnote text='Description'.This map class represents the current trace settings.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.tracingTo
+:c.Tracing To
+:c.&stringObj. | :xph.<List> of <String>:exph.
+:c.
+:row.
+:c.fileMode
+:c.File Mode
+:c.&stringObj. | &noneObj.
+:c.:xph.'Replace' | 'Append':exph.
+:row.
+:c.defaultServiceState
+:c.Default Service State
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.maxServiceResultSize
+:c.Maximum Service Result Size
+:c.&stringObj.
+:c.
+:row.
+:c.tracePoints
+:c.Trace Points
+:c.:xph.<Map&colon.STAF/Service/Trace/Tracepoint>:exph.
+:c.
+:row.
+:c.services
+:c.Services
+:c.:xph.<Map&colon.STAF/Service/Trace/Service>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."Tracing To" indicates the current trace output destination.
+If there is only one trace output destination, it will be set to either
+:xph.'Stdout':exph., :xph.'Stderr':exph., or the file name.
+If there is more than one trace output destination, it will be set to
+a marshalled :xph.<List> of <String>:exph. with the first entry containing
+:xph.'Stdout':exph. or :xph.'Stderr':exph. and the second entry containing
+the file name.
+:li.
+If the current trace output destination is set to a file, "File Mode"
+indicates whether the file will be replaced or appended to.  "File Mode"
+will be set to <None> if the trace output destination is Stdout or Stderr.
+:eol.
+:etnote.
+:etable.
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Trace/Tracepoint
+:tnote text='Description'.This map class represents the tracepoints and their
+trace states.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.INFO
+:c.Info
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.WARNING
+:c.Warning
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.ERROR
+:c.Error
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.SERVICEREQUEST
+:c.ServiceRequest
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.SERVICERESULT
+:c.ServiceResult
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.SERVICEERROR
+:c.ServiceError
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.SERVICEACCESSDENIED
+:c.ServiceAccessDenied
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.REMOTEREQUESTS
+:c.RemoteRequests
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.REGISTRATION
+:c.Registration
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.DEPRECATED
+:c.Deprecated
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.DEBUG
+:c.Debug
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:etable.
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Trace/Service
+:tnote text='Description'.This map class represents the services and their
+trace states.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.:xph.<ServiceName>:exph.
+:c.:xph.<ServiceName>:exph.
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:tnote text='Notes'.
+This map is dynamically generated at the time of the :xph.LIST:exph. request
+based on the services in the trace status list at that time.  It's keys
+will be the names of the internal services plus any external services that
+have been registered and any other services for which tracing has been
+explicitly set.
+:etnote.
+:etable.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Display the current tracing information
+:p.:hp2.Syntax&colon.:ehp2. :xph.LIST:exph. &nbsp;or&nbsp; :xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like:
+
+:xmp.
+{
+  Tracing To                 : Stdout
+  File Mode                  : <None>
+  Default Service State      : Enabled
+  Maximum Service Result Size: 0
+  Trace Points               : {
+    Info               : Disabled
+    Warning            : Enabled
+    Error              : Enabled
+    ServiceRequest     : Disabled
+    ServiceResult      : Disabled
+    ServiceError       : Disabled
+    ServiceAccessDenied: Disabled
+    RemoteRequests     : Disabled
+    Registration       : Disabled
+    Deprecated         : Enabled
+    Debug              : Disabled
+  }
+  Services                   : {
+    DELAY   : Enabled
+    DIAG    : Disabled
+    ECHO    : Enabled
+    EMAIL   : Enabled
+    EVENT   : Enabled
+    FS      : Enabled
+    HANDLE  : Enabled
+    HELP    : Disabled
+    LOG     : Enabled
+    MONITOR : Enabled
+    MISC    : Enabled
+    PING    : Enabled
+    PROCESS : Enabled
+    QUEUE   : Enabled
+    SEM     : Enabled
+    SERVICE : Enabled
+    SHUTDOWN: Enabled
+    STAX    : Enabled
+    TRACE   : Enabled
+    TRUST   : Enabled
+    VAR     : Enabled
+  }
+}
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.TRACE service
+:ih1.tracing
+:i2.trace service
+:h3 id=tracesrvSet.Set
+:p. Allows you to set the destination for the tracing
+information, the default tracing state for new services, or the maximum size
+(in characters) of the service result string to write to the trace output when
+the ServiceResult tracepoint is enabled.
+:h4.Syntax
+:xmp.
+SET DESTINATION TO < [STDOUT | STDERR] [FILE <File name> [APPEND]] >
+SET DEFAULTSERVICESTATE < Enabled | Disabled >
+SET MAXSERVICERESULTSIZE <Number>[k|m]
+:exmp.
+:p.:xph.DESTINATION TO:exph. indicates to set the destination for the tracing
+information.  Note that you must specify at least one of :xph.STDOUT:exph.,
+:xph.STDERR:exph., or :xph.FILE:exph..  You can specify both
+:xph.STDOUT:exph. and :xph.FILE:exph. or both :xph.STDERR:exph. and
+:xph.FILE:exph..
+:p.:xph.STDOUT:exph. indicates that trace messages should be sent to the
+standard output device (Stdout).  Note that you can specify that trace
+messages should be sent to both Stdout and a file.
+:p.:xph.STDERR:exph. indicates that trace messages should be sent to the
+standard error device (Stderr).  Note that you can specify that trace
+messages should be sent to both Stderr and a file.
+:p.:xph.FILE:exph. indicates that trace messages should be sent to the
+indicated file.  Note that the path to the file must already exist. &varres.
+:p.:xph.APPEND:exph. indicates that destination trace file will be appended
+to if it exists.  If this option is not specified, the destination trace file
+will be replaced if it exists.  This option can only be specified if the
+:xph.FILE:exph. option was specified.
+:p.:xph.DEFAULTSERVICESTATE:exph. sets the default tracing state for services that have not yet
+registered with STAF.  The default tracing state for services is enabled.  &varres.
+:p.:xph.MAXSERVICERESULTSIZE:exph. specifies the maximum size (in characters)
+ of the service result string to write to the trace output when
+ the ServiceResult tracepoint is enabled.  If not specified, the
+ default is 0 (which indicates to write the entire service result
+ string to the trace output).  This value may be expressed in bytes, kilobytes,
+ or megabytes. Its format is <Number>[k|m] where <Number> is an integer >= 0 and
+ indicates bytes unless one of the following case-insensitive suffixes is
+ specified: k (for kilobytes) or m (for megabytes). The calculated value cannot
+ exceed 4294967295 bytes. Examples of valid values include 100000, 500k, or 5m. 
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from SET are documented in :hdref refid=retcode..
+:h4.Results
+:p.For :xph.SET:exph. the result buffer will be empty
+:h4.Examples
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Send trace output to the standard error device
+:p.:hp2.Syntax&colon.:ehp2. :xph.SET DESTINATION TO STDERR:exph.
+:li.:hp2.Goal&colon.:ehp2. Send trace output to the file STAF.trc (which will
+be replaced if it already exists) in the bin directory
+under {STAF/Config/STAFRoot}
+:p.:hp2.Syntax&colon:ehp2. :xph.SET DESTINATION TO FILE {STAF/Config/STAFRoot}/bin/STAF.trc:exph.
+:li.:hp2.Goal&colon.:ehp2. Send trace output to the file STAF.trc (which will
+be appended to if it already exists) in the bin directory
+under {STAF/Config/STAFRoot}
+:p.:hp2.Syntax&colon:ehp2. :xph.SET DESTINATION TO FILE {STAF/Config/STAFRoot}/bin/STAF.trc APPEND:exph.
+:li.:hp2.Goal&colon.:ehp2. Send trace output to the standard output device and to file STAF.trc (which will
+be replaced if it already exists) in the bin directory
+under {STAF/Config/STAFRoot}
+:p.:hp2.Syntax&colon:ehp2. :xph.SET DESTINATION TO STDOUT FILE {STAF/Config/STAFRoot}/bin/STAF.trc:exph.
+:li.:hp2.Goal&colon.:ehp2. Set default tracing state to 'Enabled' for new services;
+:p.:hp2.Syntax&colon.:ehp2. :xph.SET DEFAULTSERVICESTATE Enabled:exph.
+:li.:hp2.Goal&colon.:ehp2. Set the maximum size of the service result string to
+write to the trace output when the ServiceResult tracepoint is enabled
+to 5k characaters:
+:p.:hp2.Syntax&colon.:ehp2. :xph.SET MAXSERVICERESULTSIZE 5k:exph.
+:eul.

@@ -1,0 +1,1132 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : SemSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Semaphore Service
+.*  Detail:
+.*
+.*     This file describes the STAF Semaphore Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.semaphore service
+:ih1.services
+:i2.semaphore service
+:h2 id=semsrv.Semaphore (SEM) Service
+:h3.Description
+:p.The SEM service is one of the internal STAF services that allows you
+to manipulate and manage two kinds of semaphores:
+:ul.
+:li.A :hp2.mutex:ehp2. semaphore allows you to synchronize access to a
+particular resource.  You may request exclusive access of the semaphore,
+release exclusive access of the semaphore, cancel a pending request for
+the semaphore, query the semaphore, and delete the semaphore.
+:p.
+:li.An :hp2.event:ehp2. semaphore is a signaling mechanism used to
+synchronize two or more tasks.  You may post an event semaphore to
+signal that the event has happened, reset an event semaphore in
+preparation for the next event, pulse the event semaphore (which
+performs an atomic post and reset on the semaphore), wait on an event
+semaphore, delete an event semaphore, and query an event semaphore.
+:eul.
+:p.
+The SEM service provides the following commands:
+:ul compact.
+:li.REQUEST - Request exclusive access of a mutex semaphore
+:li.RELEASE - Release exclusive access of a mutex semaphore
+:li.CANCEL - Cancel a pending request for a mutex semaphore
+:li.POST - Post an event semaphore to signal that the event has happened
+:li.RESET - Reset an event semaphore in preparation for the next event
+:li.PULSE - Pulse an event semaphore which performs an atomic post and reset
+on the semaphore
+:li.WAIT - Wait on an event semaphore
+:li.DELETE - Delete a mutex or event semaphore
+:li.QUERY - Query a mutex or event semaphore
+:li.LIST - Display a list of mutex or event semaphores
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.REQUEST
+:i3.semaphore service
+:h3.REQUEST
+:p.REQUEST allows you to request exclusive access of a mutex semaphore.
+Your request is blocked until all prior pending :xph.REQUEST:exph.s
+have been :xph.RELEASE:exph.d.  You may specify a timeout, in milliseconds,
+indicating the longest you are willing to wait to gain access to the semaphore.
+If no timeout is specified, the request will block indefinitely. The semaphore
+is created if it does not exist.
+:p.
+:h4.Understanding how Garbage Collection effects Mutex Semaphores
+:p.
+The STAF handle on the machine that submitted the REQUEST MUTEX
+request to the SEM service will be the "owner" of the mutex semaphore.
+Note that when a STAF handle that requested a mutex semaphore is deleted,
+STAF performs garbage collection for the handle by default, unless you
+specified not to perform garbage collection when requesting a mutex semaphore.
+Performing garbage collection means when a handle that requested a
+mutex semaphore is deleted, the SEM service will be notified, and it will
+release any mutex semaphores that handle owns and will remove any
+pending requests for mutex semaphores submitted by the handle. 
+:p.
+If you submit a REQUEST MUTEX request to the SEM service
+using the STAF command executable (e.g. from a command prompt or from
+a shell script), it's important to understand that a STAF command
+does the following:
+:ul compact.
+:li.Creates a STAF handle (if not using a static handle)
+:li.Submits the request
+:li.Deletes the STAF handle when the request completes (if not using
+a static handle)
+:eul.
+So, when using the STAF command executable to submit a REQUEST MUTEX
+request to the SEM service, in order to retain ownership of the
+mutex semaphore (due to garbage collection), you either need to
+specify not to perform garbage collection or you need to use a static
+handle when submitting the request.
+See :hdref refid=semsrvCmdEx. for examples of how to do this. 
+
+:h4.Syntax
+:xmp.
+REQUEST MUTEX <Name> &lbrk.TIMEOUT <Number>[s|m|h|d|w]&rbrk. &lbrk.GARBAGECOLLECT <Yes | No>&rbrk.
+:exmp.
+:p.:xph.MUTEX:exph. specifies the name of the mutex semaphore which you
+want to request.  The semaphore is created if it does not exist.  &varres.
+:p.:xph.TIMEOUT:exph. specifies a timeout duration indicating the longest
+you are willing to wait to gain access to the semaphore.
+If this option is not specified, the request will wait indefinitely until
+the semaphore is available.  &varres.
+The time duration may be expressed in milliseconds, seconds, minutes,
+hours, days, weeks, or years.  Its format is <Number>[s|m|h|d|w],
+where <Number> is an integer >= 0 and indicates milliseconds unless one
+of the following case-insensitive suffixes is specified:
+:ul compact.
+:li.s (for seconds)
+:li.m (for minutes)
+:li.h (for hours)
+:li.d (for days)
+:li.w (for weeks).
+:eul.
+Note that the calculated timeout cannot exceed 4294967294 milliseconds.
+So, the maximum values in each time category that can be specified are:
+:ul compact.
+:li.4294967294 (4294967294 milliseconds)
+:li.4294967s (4294967 seconds)
+:li.71582m (71582 minutes)
+:li.1193h (1193 hours)
+:li.49d (49 days)
+:li.7w (7 weeks)
+:eul.
+:p.:xph.GARBAGECOLLECT:exph. specifies whether to perform garbage collection
+when the STAF handle that requested a mutex semaphore is deleted.
+Valid values are :xph.Yes:exph. and :xph.No:exph., not case-sensitive.
+The default is :xph.Yes:exph. which means that garbage collection will be
+performed for the handle that requested the mutex semaphore.  &varres.
+:p.
+For example, if you need a mutex semaphore to be owned for a long period of time
+and the STAF handle that you're going to use to submit the request may not exist
+for that period of time, then you must specify not to perform garbage collection
+when requesting a mutex semaphore.  This ensures that the mutex semaphore will
+not be released until a RELEASE MUTEX request for that semaphore is submitted.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+REQUEST command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Request exclusive access to mutex semaphore
+Printers/Printer1.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST MUTEX Printers/Printer1:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Request exclusive access to mutex semaphore
+DataSource1, but only wait for up to 30 seconds.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST MUTEX DataSource1 TIMEOUT 30s:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request exclusive access to mutex semaphore
+Tests/LongLivedSem and specify not to perform garbage collection because
+you need the mutex semaphore to be owned for a long period of time and
+the STAF handle you're using to submit the request is short-lived.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST MUTEX Tests/LongLivedSem GARBAGECOLLECT No:exph.
+:eul.
+
+:h4 id=semsrvCmdEx.Command Line Example
+
+:p.Say you submitted a REQUEST MUTEX request to the SEM service
+using the STAF command (instead of submitting the request via a Java program,
+etc).  If you didn't specify not to perform garbage collection and if you
+didn't use a static handle, the mutex semaphore would show up
+as available (Unowned) when submitting a QUERY MUTEX request to the
+SEM service because when the STAF command deleted the handle it created to
+submit the REQUEST MUTEX request, that triggered garbage collection to be
+performed.
+
+:xmp.
+C:\>STAF local SEM REQUEST MUTEX Mutex1
+Response
+--------
+
+
+C:\>STAF local SEM QUERY MUTEX Mutex1
+Response
+--------
+{
+  State           : Unowned
+  Owner           : <None>
+  Pending Requests: []
+}
+:exmp.
+:p.
+Instead, you need to specify not to perform garbage collection when submitting
+the REQUEST MUTEX request to the SEM service using the STAF command.
+Here's an example shown using the STAF command from a Windows
+command prompt:
+
+:xmp.
+C:\>STAF local SEM REQUEST MUTEX Mutex1 GARBAGECOLLECT No
+Response
+--------
+
+C:\>STAF local SEM QUERY MUTEX Mutex1
+Response
+--------
+{
+  State           : Owned
+  Owner           : {
+    Machine                   : client1.company.com
+    Handle Name               : STAF/Client
+    Handle                    : 80
+    User                      : none://anonymous
+    Endpoint                  : local://local
+    Date-Time Requested       : 20070430-15:31:24
+    Date-Time Acquired        : 20070430-15:31:24
+    Perform Garbage Collection: No
+  }
+  Pending Requests: []
+}
+:exmp.
+:p.
+Or, you need to first create a static handle and set environment
+variable STAF_STATIC_HANDLE to the static handle's number before 
+submitting a REQUEST MUTEX request to the SEM service using the
+STAF command so that the static handle can retain ownership of the
+mutex semaphore until it releases the mutex semaphore (or until you
+delete the static handle).  See :hdref refid=stafshs. for more
+information on special environment variable STAF_STATIC_HANDLE.
+Here's an example shown using the STAF command from a Windows
+command prompt:
+:xmp.
+C:\>STAF local HANDLE CREATE HANDLE NAME MyHandle
+Response
+--------
+82
+
+C:\>set STAF_STATIC_HANDLE=82
+
+C:\>STAF local SEM REQUEST MUTEX Mutex1
+Response
+--------
+
+
+C:\>STAF local SEM QUERY MUTEX Mutex1
+Response
+--------
+{
+  State           : Owned
+  Owner           : {
+    Machine                   : client1.company.com
+    Handle Name               : MyHandle
+    Handle                    : 82
+    User                      : none://anonymous
+    Endpoint                  : local://local
+    Date-Time Requested       : 20070430-15:32:34
+    Date-Time Acquired        : 20070430-15:32:34
+    Perform Garbage Collection: Yes
+  }
+  Pending Requests: []
+}:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.RELEASE
+:i3.semaphore service
+:h3.RELEASE
+:p.RELEASE allows you to release exclusive access to a mutex semaphore.
+Normally, only the owning handle may release the mutex semaphore.
+Specifying :xph.FORCE:exph. allows you to force the release of the semaphore.
+:note.Any thread in the owning handle's process may :xph.RELEASE:exph. the semaphore.
+This is in contrast to other semaphore systems, where only the
+:xph.REQUEST:exph.ing thread may release the semaphore.
+
+:h4.Syntax
+:xmp.
+RELEASE MUTEX <Name> &lbrk.FORCE&rbrk.
+:exmp.
+:p.:xph.MUTEX:exph. specifies the name of the mutex semaphore which you
+want to release.  &varres.
+:p.:xph.FORCE:exph. allows you to force the release of the semaphore even
+if you are not the owner.
+
+:h4.Security
+:p.&seclvl. 3.
+:note.If the :xph.FORCE:exph. option is specified, trust level 4 is required.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+RELEASE command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Release exclusive access to mutex semaphore
+Printers/Printer1.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.RELEASE MUTEX Printers/Printer1:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Force the release of exclusive access to
+mutex semaphore TestABC.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.RELEASE MUTEX TestABC FORCE:exph.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.CANCEL
+:i3.semaphore service
+:h3.CANCEL
+:p.CANCEL allows you to cancel a pending request for a mutex semaphore.
+By default, it cancels the last pending request in the Pending Requests
+list (which is sorted in ascending order by the request timestamp) that
+was submitted by the same handle/machine submitting the CANCEL request.
+You may specify additional selection criteria (such as machine, handle
+number or name, or first) to specify to cancel a different pending request.
+
+:h4.Syntax
+:xmp.
+CANCEL MUTEX <Name>
+       &lbrk.FORCE &lbrk.MACHINE <Machine>&rbrk. &lbrk.HANDLE <Handle #> | NAME <Handle Name>&rbrk.&rbrk.
+       &lbrk.FIRST | LAST&rbrk.
+:exmp.
+:p.
+:xph.MUTEX:exph. specifies the name of the mutex semaphore for which you
+want to cancel a request in its Pending Requests list.  &varres.
+:p.
+:xph.FORCE:exph. allows you to force canceling the pending request for
+the semaphore.  By default, only the requester (e.g. the handle on the
+machine that submitted the REQUEST MUTEX request) may CANCEL the pending
+request unless the :xph.FORCE:exph. option is specified, along with the
+:xph.MACHINE:exph. and/or :xph.HANDLE:exph./:xph.NAME:exph. options.
+:p.
+:xph.MACHINE:exph. specifies the machine that submitted a
+request in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the machine submitting the
+CANCEL request.  &varres.
+:p.
+:xph.HANDLE:exph. specifies the handle number that submitted
+a request in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the number of the handle
+submitting the CANCEL request.  &varres.
+:p.
+:xph.NAME:exph. specifies the name of a handle that submitted
+a request in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the name of the handle
+submitting the CANCEL request.  &varres.
+:p.
+:xph.FIRST:exph. specifies to cancel the first entry in the Pending
+Requests list (which is sorted in ascending order by the request
+timestamp) that matches the selection criteria.
+:p.
+:xph.LAST:exph. specifies to cancel the last entry in the Pending
+Requests list (which is sorted in ascending order by the request
+timestamp) that matches the selection criteria. This is the default.
+
+:h4.Security
+:p.Command CANCEL requires trust level 3.
+:p.Command CANCEL FORCE requires trust level 4 if you are not
+the requester (e.g. the handle on the machine that submitted
+the REQUEST MUTEX request that you are trying to cancel).
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.On successful return, the result buffer will contain no data.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Cancel the last pending request in the
+Pending Requests list for mutex semaphore "Printers/Printer1" that
+was submitted by my handle.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.CANCEL MUTEX Printers/Printer1:exph.
+.br
+or
+.br
+:xph.CANCEL MUTEX Printers/Printer1 LAST:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Force canceling the first pending request
+in the Pending Requests list for mutex semaphore "Mutex1" that was
+submitted by a handle named "STAX/Job/3" on my machine.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.CANCEL MUTEX Mutex1 FORCE NAME STAX/Job/3 FIRST:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Force canceling the last pending request
+in the Pending Requests list for mutex semaphore "Mutex1" that was
+submitted by handle number 43 on machine client1.company.com.
+:p.:hp2.Syntax::ehp2.&nbsp;
+ :xph.CANCEL MUTEX Mutex1 FORCE MACHINE client1.company.com HANDLE 43:exph.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.POST
+:i3.semaphore service
+:h3.POST
+:p.POST allows you to post an event semaphore to signal that an event
+has happened.  It is valid to post an event semaphore that is already
+posted.
+ 
+:h4.Syntax
+:xmp.
+POST EVENT <Name>
+:exmp.
+:p.:xph.EVENT:exph. specifies the name of the event semaphore which you
+want to post.  The semaphore is created if it does not exist.  &varres.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+POST command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Post event semaphore Server1/LAN_Started.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.POST EVENT Server1/LAN_Started:exph.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.RESET
+:i3.semaphore service
+:h3.RESET
+:p.RESET allows you to reset an event semaphore in preparation for the
+next event.  It is valid to reset an event semaphore that is already
+reset.
+ 
+:h4.Syntax
+:xmp.
+RESET EVENT <Name>
+:exmp.
+:p.:xph.EVENT:exph. specifies the name of the event semaphore which you
+want to post.  The semaphore is created if it does not exist.  &varres.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+RESET command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Reset event semaphore Coffee/Ready.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.RESET EVENT Coffee/Ready:exph.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.PULSE
+:i3.semaphore service
+:h3.PULSE
+
+:p.PULSE allows you to post and then reset an event semaphore as a
+single atomic action.  It is valid to pulse a semaphore regardless
+of whether it is currently posted or reset.  The semaphore will be
+in the reset state after the pulse.
+ 
+:h4.Syntax
+:xmp.
+PULSE EVENT <Name>
+:exmp.
+:p.:xph.EVENT:exph. specifies the name of the event semaphore which you
+want to pulse.  The semaphore is created if it does not exist.  &varres.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+PULSE command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Pulse event semaphore Race/StartLap.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PULSE EVENT Race/StartLap:exph.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.WAIT
+:i3.semaphore service
+:h3.WAIT
+
+:p.WAIT allows you to wait for an event semaphore.  You may specify a
+timeout, in milliseconds, indicating the longest you are willing to
+wait for an event semaphore.  If no timeout is specified, the
+request will block indefinitely.
+ 
+:h4.Syntax
+:xmp.
+WAIT EVENT <Name> &lbrk.TIMEOUT <Number>[s|m|h|d|w]&rbrk.
+:exmp.
+:p.:xph.EVENT:exph. specifies the name of the event semaphore which you
+want to wait for.  The semaphore is created if it does not exist.  &varres.
+:p.:xph.TIMEOUT:exph. specifies a timeout duration indicating the longest
+you are willing to wait for the semaphore.
+If this option is not specified, the request will wait indefinitely for
+the semaphore.  &varres.
+The time duration may be expressed in milliseconds, seconds, minutes,
+hours, days, weeks, or years.  Its format is <Number>[s|m|h|d|w],
+where <Number> is an integer >= 0 and indicates milliseconds unless one
+of the following case-insensitive suffixes is specified:
+:ul compact.
+:li.s (for seconds)
+:li.m (for minutes)
+:li.h (for hours)
+:li.d (for days)
+:li.w (for weeks).
+:eul.
+Note that the calculated timeout cannot exceed 4294967294 milliseconds.
+So, the maximum values in each time category that can be specified are:
+:ul compact.
+:li.4294967294 (4294967294 milliseconds)
+:li.4294967s (4294967 seconds)
+:li.71582m (71582 minutes)
+:li.1193h (1193 hours)
+:li.49d (49 days)
+:li.7w (7 weeks)
+:eul.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+WAIT command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Wait for event semaphore Server1/LAN_Started.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.WAIT EVENT Server1/LAN_Started:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Wait a maximum of 20 seconds for event
+semaphore Coffee/Ready.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.WAIT EVENT Coffee/Ready TIMEOUT 20s:exph.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.semaphore service
+:h3.DELETE
+:p.
+DELETE allows you to delete a mutex or event semaphore.
+
+:h4.Syntax
+:xmp.
+DELETE MUTEX <Name> | EVENT <Name>
+:exmp.
+:p.:xph.MUTEX:exph. specifies the name of the mutex semaphore which you
+want to delete.  A mutex semaphore may only be deleted if there are no pending
+:xph.REQUEST:exph.s.  &varres.
+:p.:xph.EVENT:exph. specifies the name of the event semaphore which you
+want to delete.  An event semaphore may only be deleted if there are no processes
+:xph.WAIT:exph.ing for it.  &varres.
+
+:h4.Security
+:p.&seclvl. 4.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+DELETE command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Delete the Printers/Printer1 mutex semaphore.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MUTEX Printers/Printer1:exph.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Delete the event semaphore Shutdown_The_Lab
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE EVENT Shutdown_The_Lab:exph.
+:eul.
+
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.semaphore service
+:h3.QUERY
+:p.QUERY allows you to get information on a mutex or event semaphore,
+such as the current owner and pending :xph.REQUESTS:exph.s. if it is
+a mutex semaphore or whether the semaphore is posted or reset if it is
+an event semaphore. 
+
+:h4.Syntax
+:xmp.
+QUERY MUTEX <Name> | EVENT <Name>
+:exmp.
+:p.:xph.MUTEX:exph. specifies the name of the mutex semaphore which you
+want to query.  &varres.
+:p.:xph.EVENT:exph. specifies the name of the event semaphore which you
+want to query.  &varres.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+On successful return, the result buffer will contain information about
+the specified mutex or event semaphore:
+:p.
+:ul.
+:li.The result buffer for a :xph."QUERY MUTEX <Name>":exph. request will
+contain a marshalled :xph.<Map&colon.STAF/Service/Sem/QueryMutex>:exph.
+representing a mutex semaphore.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Sem/QueryMutex
+:tnote text='Description'.This map class represents a mutex semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.:xph.'Unowned' | 'Owned':exph.
+:row.
+:c.owner
+:c.Owner
+:c.&noneObj. | :xph.<Map&colon.STAF/Service/Sem/MutexOwner>:exph.
+:c.
+:row.
+:c.requestList
+:c.Pending Requests
+:c.:xph.<List> of <Map&colon.STAF/Service/Sem/PendingRequest>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.If the mutex semaphore is currently unowned, "Owner" will be &noneObj..
+:li.If the mutex semaphore is currently owned, "Owner" will contain information
+about the owner of the semaphore and "Pending Requests" will contain a list
+of requests waiting to acquire the mutex, if any.
+:eol.
+:etnote.
+:etable.
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Sem/MutexOwner
+:tnote text='Description'.This map class represents the owner of a mutex semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.handle
+:c.&stringObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.:xph.<Authenticator>://<User ID>:exph.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.:xph.<Interface>://<System Identifier>[@<Port>]:exph.
+:row.
+:c.requestTimestamp
+:c.Date-Time Requested
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.acquireTimestamp
+:c.Date-Time Acquired
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.gc
+:c.Perform Garbage Collection
+:c.&stringObj.
+:c.:xph.'Yes' | 'No':exph.
+:etable.
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Sem/PendingRequest
+:tnote text='Description'.This map class represents a pending request which is
+waiting to acquire a mutex semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.handle
+:c.&stringObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.:xph.<Authenticator>://<User ID>:exph.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.:xph.<Interface>://<System Identifier>[@<Port>]:exph.
+:row.
+:c.requestTimestamp
+:c.Date-Time Requested
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.gc
+:c.Perform Garbage Collection
+:c.&stringObj.
+:c.:xph.'Yes' | 'No':exph.
+:etable.
+:p.
+:li.The result buffer for a :xph."QUERY EVENT <Name>":exph. request will
+contain a marshalled :xph.<Map&colon.STAF/Service/Sem/QueryEvent>:exph.
+representing an event semaphore.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Sem/QueryEvent
+:tnote text='Description'.This map class represents an event semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.:xph.'Posted' | 'Reset':exph.
+:row.
+:c.lastPosted
+:c.Last Posted
+:c.:xph.<Map&colon.STAF/Service/Sem/EventRequester>:exph.
+:c.
+:row.
+:c.lastReset
+:c.Last Reset
+:c.:xph.<Map&colon.STAF/Service/Sem/EventRequester>:exph.
+:c.
+:row.
+:c.waiterList
+:c.Waiters
+:c.:xph.<List> of <Map&colon.STAF/Service/Sem/EventRequester>:exph.
+:c.
+:tnote text='Notes'.
+If the event semaphore is currently in a reset state, 
+"Waiters" will contain a list of requests waiting for the semaphore, if any.
+:etnote.
+:etable.
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Sem/EventRequester
+:tnote text='Description'.This map class represents a request for a event semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.handle
+:c.&stringObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.:xph.<Authenticator>://<User ID>:exph.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.:xph.<Interface>://<System Identifier>[@<Port>]:exph.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Query information about mutex semaphore
+DataSource1.  Assume the semaphore is currently unowned.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY MUTEX DataSource1:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+State           : Unowned
+Owner           : <None>
+Pending Requests: []
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Query information about mutex semaphore
+DataSource1.  Assume the semaphore is currently owned and there are
+no pending requests for it.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY MUTEX DataSource1:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like:
+:xmp.
+{
+  State           : Owned
+  Owner           : {
+    Machine                   : machine1.austin.ibm.com
+    Handle Name               : STAX/Job/1
+    Handle                    : 17
+    User                      : none://anonymous
+    Endpoint                  : tcp://machine1.austin.ibm.com@6500
+    Date-Time Requested       : 20070430-23:54:41
+    Date-Time Acquired        : 20070430-23:54:41
+    Perform Garbage Collection: Yes
+  }
+  Pending Requests: []
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Query information about mutex semaphore
+DataSource1.  Assume the semaphore is currently owned and there are
+2 pending requests for it.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY MUTEX DataSource1:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like:
+:xmp.
+{
+  State           : Owned
+  Owner           : {
+    Machine                   : machine1.austin.ibm.com
+    Handle Name               : STAX/Job/1
+    Handle                    : 17
+    User                      : none://anonymous
+    Endpoint                  : tcp://machine1.austin.ibm.com@6500
+    Date-Time Requested       : 20070430-23:54:41
+    Date-Time Acquired        : 20070430-23:54:41
+    Perform Garbage Collection: Yes
+  }
+  Pending Requests: [
+    {
+      Machine                   : machine2.austin.ibm.com
+      Handle Name               : STAF/Client
+      Handle                    : 32
+      User                      : none://anonymous
+      Endpoint                  : tcp://machine2.austin.ibm.com@6500
+      Date-Time Requested       : 20070430-23:56:16
+      Perform Garbage Collection: No
+    }
+    {
+      Machine                   : server1.austin.ibm.com
+      Handle Name               : semTest
+      Handle                    : 49
+      User                      : IBM://Tester1@us.ibm.com
+      Endpoint                  : tcp://server1.austin.ibm.com@6500
+      Date-Time Requested       : 20070430-23:56:31
+      Perform Garbage Collection: Yes
+    }
+  ]
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Query information about event semaphore
+Server1/LAN_Started.  Assume the semaphore is currently in a posted state.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY EVENT Server1/LAN_Started:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like:
+:xmp.
+{
+  State      : Posted
+  Last Posted: {
+    Machine    : machine1.austin.ibm.com
+    Handle Name: STAF/Client
+    Handle     : 20
+    User       : none://anonymous
+    Endpoint   : tcp://machine1.austin.ibm.com@6500
+    Date-Time  : 20041026-23:59:51
+  }
+  Last Reset : {
+    Machine    : server2.austin.ibm.com
+    Handle Name: myHandle
+    Handle     : 17
+    User       : IBM://Tester1@us.ibm.com
+    Endpoint   : tcp://server2.austin.ibm.com@6500
+    Date-Time  : 20041026-23:59:15
+  }
+  Waiters    : []
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Query information about event semaphore
+Server1/LAN_Started.  Assume the semaphore is currently in a reset state
+with 2 waiters.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY EVENT Server1/LAN_Started:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like:
+:xmp.
+{
+  State      : Reset
+  Last Posted: {
+    Machine    : machine1.austin.ibm.com
+    Handle Name: STAF/Client
+    Handle     : 20
+    User       : none://anonymous
+    Endpoint   : tcp://machine1.austin.ibm.com@6500
+    Date-Time  : 20041026-23:59:51
+  }
+  Last Reset : {
+    Machine    : server2.austin.ibm.com
+    Handle Name: myHandle
+    Handle     : 17
+    User       : IBM://Test1@us.ibm.com
+    Endpoint   : tcp://server2.austin.ibm.com@6500
+    Date-Time  : 20041027-00:02:12
+  }
+  Waiters    : [
+    {
+      Machine    : server2.austin.ibm.com
+      Handle Name: myHandle
+      Handle     : 17
+      User       : IBM://Tester1@us.ibm.com
+      Endpoint   : tcp://server2.austin.ibm.com@6500
+      Date-Time  : 20041027-00:02:18
+    }
+    {
+      Machine    : machine1.austin.ibm.com
+      Handle Name: STAF/Client
+      Handle     : 22
+      User       : none://anonymous
+      Endpoint   : tcp://machine1.austin.ibm.com@6500
+      Date-Time  : 20041027-00:02:15
+    }
+  ]
+}
+:exmp.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.semaphore service
+:h3.LIST
+:p.LIST allows you to obtain a list of the mutex or event semaphores.
+
+:h4.Syntax
+:xmp.
+LIST <MUTEX | EVENT>
+:exmp.
+:p.:xph.MUTEX:exph. specifies that you want a list of the mutex semaphores.
+:p.:xph.EVENT:exph. specifies that you want a list of the event semaphores.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.On successful return, the result buffer will contain a list of the desired
+mutex or event semaphores:
+:p.
+:ul.
+:li.The result buffer for a :xph.LIST MUTEX:exph. request will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Sem/MutexInfo>:exph.
+representing the mutex semaphores.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Sem/MutexInfo
+:tnote text='Description'.This map class represents a mutex semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.:xph.'Unowned' | 'Owned':exph.
+:row.
+:c.pendingRequests
+:c.Pending Requests
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+"Pending Requests" is the number of requests waiting to acquire the mutex.
+:etnote.
+:etable.
+:p.
+:li.The result buffer for a :xph.LIST EVENT:exph. request will contain
+a marshalled :xph.<List> of <Map&colon.STAF/Service/Sem/EventInfo>:exph.
+representing the event semaphores.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Sem/EventInfo
+:tnote text='Description'.This map class represents an event semaphore.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.:xph.'Posted' | 'Reset':exph.
+:row.
+:c.waiters
+:c.Waiters
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+"Waiters" is the number of waiters waiting on the event semaphore.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Obtain a list of the of mutex semaphores.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MUTEX:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Name              State   Pending Requests
+----------------- ------- ----------------
+DataSource1       Unowned 0
+Printers/Printer1 Owned   2
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2.&nbsp; Obtain a list of the of event semaphores.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST EVENT:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Name                State  Waiters
+------------------- ------ -------
+Coffee/Ready        Posted 0
+Server1/LAN_Started Reset  5
+Shutdown_The_Lab    Reset  0
+:exmp.
+:eul.

@@ -1,0 +1,286 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+#########################
+# Setup C/C++ variables #
+#########################
+
+# WARNING: These makefiles have only been tested with MS VC++ 98 (also
+#          known as MS Studio 6.0), MS VC++ V7 (also known as
+#          MS Visual Studio.NET 2003), and the IA64 compiler which is part of
+#          the February 2003 MS Platform SDK).  Other versions may require
+#          significant changes.
+
+# WARNING: STAF will not build on Win9x/Me.
+
+# To define the compiler that you are using, set the CC_TYPE variable.  Valid
+# values are MVC6, MVC7, MVC8-X64, and MVC-SDK-IA64.  The default specified in
+# the win32 platform makefile is MVC6.
+
+# These variables define the locations where MS VC++ files are installed.
+# Typically you only need to define one variable
+#
+#   MSVCDIR      = where MS VC++ is installed
+#
+# For example,
+#
+#   export VSCOMMONDIR=d:/MVStudio/Common
+#   export MSVCDIR=d:/MVStudio
+#
+# Note: If the directory names have spaces in them, you should use the ~
+#       format.  For example, use d:/MICROS~1 not "d:/Microsoft Visual Studio".
+#
+# If you have a non-typcial installation you might also need to specify one
+# other variable
+#
+#   VSCOMMONDIR  = where the common visual studio components are installed
+#
+# For example,
+#
+#   export VSCOMMONDIR=d:/MVStudio/Common
+#
+# Alternatively you can specify VSCOMMONDIR_cyg in place of VSCOMMONDIR and/or
+# MSVCDIR_cyg in place of MSVCDIR.  The _cyg versions of these variables
+# should be defined in cygwin style syntax.  For example
+#
+#   export MSVCDIR_cyg=/cygdrive/d/MVStudio
+#   export VSCOMMONDIR_cyg=/cygdrive/d/MVStudio/Common
+#
+# If you are using the IA-64 compiler, then you don't need to set the MSVCDIR.
+# Instead, you should set the MSSDKDIR, which points to the location in which
+# you installed the MS Platform SDK
+#
+# For example,
+#
+#   export MSSDKDIR=d:/MicrosoftSDK
+
+ifeq ($(filter MVC6 MVC7 MVC8-X64 MVC-SDK-IA64,$(CC_TYPE)),)
+  $(error Invalid CC_TYPE specified: $(CC_TYPE))
+endif
+
+ifndef MSVCDIR_cyg
+  ifdef MSVCDIR_CYG
+    MSVCDIR_cyg := $(MSVCDIR_CYG)
+  else
+    ifdef MSVCDIR
+      MSVCDIR_cyg := $(shell cygpath -u '$(MSVCDIR)')
+    endif
+  endif
+endif
+
+ifndef VSCOMMONDIR_cyg
+  ifdef VSCOMMONDIR_CYG
+    VSCOMMONDIR_cyg := $(VSCOMMONDIR_CYG)
+  else
+    ifdef VSCOMMONDIR
+      VSCOMMONDIR_cyg := $(shell cygpath -u '$(VSCOMMONDIR)')
+    endif
+  endif
+endif
+
+ifndef MSSDKDIR_cyg
+  ifdef MSSDKDIR_CYG
+    MSSDKDIR_cyg := $(MSSDKDIR_CYG)
+  else
+    ifdef MSSDKDIR
+      MSSDKDIR_cyg := $(shell cygpath -u '$(MSSDKDIR)')
+    endif
+  endif
+endif
+
+# Now, we setup the various compilers and flags
+
+CC_CC             := cl -nologo
+CC_C              := cl -nologo
+CC_MK_SHARED_LIB  := cl -nologo
+
+ifeq ($(BUILD_TYPE),retail)
+  CC_BUILD_TYPE_FLAGS = $(CC_OPTIMIZE) -MT
+  CC_MK_SHARED_LIB += -LD
+else
+  CC_BUILD_TYPE_FLAGS = $(CC_DEBUG) -MTd
+  CC_MK_SHARED_LIB += -LDd
+endif
+
+# WARNING: -DSTAF_NATIVE_COMPILER should NOT be specified on windows
+#          due to heap-managment issues
+# XXX: Update for appropriate optimization flags
+
+#CC_DEBUG        := -Zi -Od -D_DEBUG -D_CRTDBG_MAP_ALLOC
+CC_DEBUG        := -Zi -Od -D_DEBUG
+CC_OPTIMIZE     := -Ob1 -Og -Oi -Ot
+#CC_OPTIMIZE     := -Ob1 -Og -Oi -Ot -Oy -Oa
+#CC_OPTIMIZE     := -Ob1 -Og -Oi -Ot -Oy -Ow
+CC_COMMONDEFINES = -D_CONSOLE -D_MBCS $(CC_CCTYPE_COMMONDEFINES)
+CC_SHAREDLIBNAMEFLAGS = -DSTAF_SHARED_LIB_PREFIX=$(OS_SHARED_LIB_PREFIX) \
+                        -DSTAF_SHARED_LIB_SUFFIX=$(OS_SHARED_LIB_SUFFIX)
+CC_COMMONFLAGS   = $(OS_COMMONFLAGS) $(COMMONFLAGS) -W3 $(CC_CCTYPE_FLAGS)\
+                   $(CC_COMMONDEFINES) $(CC_BUILD_TYPE_FLAGS)\
+                   $(CC_SHAREDLIBNAMEFLAGS)
+
+CC_CFLAGS          = $(CC_COMMONFLAGS) $(CFLAGS)
+CC_LINKFLAGS       = $(CC_COMMONFLAGS) $(LINKFLAGS) $(CC_CCTYPE_LINKFLAGS)
+CC_ATEND_LINKFLAGS = $(ATEND_LINKFLAGS) $(CC_CCTYPE_ATEND_LINKFLAGS)
+CC_INCLUDEDIRS     = $(MVC_WINAPI_INCLUDEDIRS) $(MVC_CRT_INCLUDEDIRS)
+CC_LIBDIRS         = $(MVC_WINAPI_LIBDIRS) $(MVC_CRT_LIBDIRS)
+
+ifeq ($(CC_TYPE),MVC6)
+  ##################
+  # MSVC 6 -- MVC6 #
+  ##################
+
+  ifndef MSVCDIR_cyg
+    $(error You must set either MSVCDIR or MSVCDIR_cyg)
+  endif
+
+  ifndef VSCOMMONDIR_cyg
+    VSCOMMONDIR_cyg := $(MSVCDIR_cyg)/Common
+  endif
+
+  MSVCDIR_cyg := $(MSVCDIR_cyg)/VC98
+  MSVCDIR := $(shell cygpath -w '$(MSVCDIR_cyg)')
+
+  MVC_PATHS ?= $(VSCOMMONDIR_cyg)/MSDev98/BIN $(MSVCDIR_cyg)/BIN
+
+  # The WINAPI locations contain the CRT contents
+
+  MVC_WINAPI_INCLUDEDIRS ?= $(MSVCDIR)\INCLUDE
+  MVC_WINAPI_LIBDIRS ?= $(MSVCDIR)\LIB
+
+  CC_CCTYPE_FLAGS = -GX
+  CC_CCTYPE_COMMONDEFINES = -DWIN32
+else
+ifeq ($(CC_TYPE),MVC7)
+  ##################
+  # MSVC 7 -- MVC7 #
+  ##################
+
+  ifndef MSVCDIR_cyg
+    $(error You must set either MSVCDIR or MSVCDIR_cyg)
+  endif
+
+  ifndef VSCOMMONDIR_cyg
+    VSCOMMONDIR_cyg := $(MSVCDIR_cyg)/Common7
+  endif
+
+  MSVCDIR_cyg := $(MSVCDIR_cyg)/vc7
+  MSVCDIR := $(shell cygpath -w '$(MSVCDIR_cyg)')
+
+  MVC_PATHS ?= $(VSCOMMONDIR_cyg)/IDE \
+               $(MSVCDIR_cyg)/BIN
+
+  MVC_WINAPI_INCLUDEDIRS ?= $(MSVCDIR)\PlatformSDK\Include
+  MVC_CRT_INCLUDEDIRS ?= $(MSVCDIR)\Include
+
+  MVC_WINAPI_LIBDIRS ?= $(MSVCDIR)\PlatformSDK\Lib
+  MVC_CRT_LIBDIRS ?= $(MSVCDIR)\Lib
+
+  CC_CCTYPE_FLAGS = -GX
+  CC_CCTYPE_COMMONDEFINES = -DWIN32
+else
+ifeq ($(CC_TYPE),MVC8-X64)
+  #####################################
+  # MSVC 8 with X64 setup -- MVC8-X64 #
+  #####################################
+
+  ifndef MSVCDIR_cyg
+    $(error You must set either MSVCDIR or MSVCDIR_cyg)
+  endif
+
+  BUILD_ARCH := X64
+
+  ifndef VSCOMMONDIR_cyg
+    VSCOMMONDIR_cyg := $(MSVCDIR_cyg)/Common7
+  endif
+
+  MSVCDIR_cyg := $(MSVCDIR_cyg)/vc
+  MSVCDIR := $(shell cygpath -w '$(MSVCDIR_cyg)')
+
+  MVC_PATHS ?= $(MSVCDIR_cyg)/bin/x86_amd64 \
+               $(MSVCDIR_cyg)/bin \
+               $(VSCOMMONDIR_cyg)/IDE
+
+  MVC_WINAPI_INCLUDEDIRS ?= $(MSVCDIR)\PlatformSDK\Include
+  MVC_CRT_INCLUDEDIRS ?= $(MSVCDIR)\Include
+
+  MVC_WINAPI_LIBDIRS ?= $(MSVCDIR)\PlatformSDK\Lib\amd64
+  MVC_CRT_LIBDIRS ?= $(MSVCDIR)\Lib\amd64
+
+  CC_CCTYPE_FLAGS = -EHsc -Wp64 -wd4996
+  CC_CCTYPE_ATEND_LINKFLAGS = /link /MACHINE:X64
+  #CC_CCTYPE_COMMONDEFINES = -DWIN64
+  CC_CCTYPE_COMMONDEFINES = -D_AMD64_=1 -DWIN64 -D_WIN64 -DWIN32 -D_WIN32
+else
+ifeq ($(CC_TYPE),MVC-SDK-IA64)
+  ##########################################
+  # MSVC SDK IA64 Compiler -- MVC-SDK-IA64 #
+  ##########################################
+
+  ifndef MSSDKDIR_cyg
+    $(error You must set either MSSDKDIR or MSSDKDIR_cyg)
+  endif
+
+  BUILD_ARCH := IA64
+
+  MVC_PATHS ?= $(MSSDKDIR_cyg)/bin/Win64
+
+  MVC_WINAPI_INCLUDEDIRS ?= $(MSSDKDIR)\Include
+  MVC_CRT_INCLUDEDIRS ?=  $(MSSDKDIR)\Include\Win64\crt
+
+  MVC_WINAPI_LIBDIRS ?= $(MSSDKDIR)\Lib\IA64
+  MVC_CRT_LIBDIRS ?= $(MSSDKDIR)\Lib\IA64
+
+  CC_CCTYPE_FLAGS = -GX -Wp64
+  # This is odd, but is what this what set to for IA-64 before adding X64
+  CC_CCTYPE_COMMONDEFINES = -DWIN32
+endif
+endif
+endif
+endif
+
+# Setup the PATH
+
+PATH := $(subst $(SPACE),:,$(MVC_PATHS)):$(PATH)
+export PATH
+
+##########################################
+# Set commands needed by master makefile #
+##########################################
+
+# These four are functions used to convert from cgywin paths to win32 paths
+make_drive  = $(word 2,$(1)): $(wordlist 3,$(words $(1)),$(1))
+convert     = $(subst $(SPACE),/,$(call make_drive,$(subst /,$(SPACE),$(1))))
+to_pc_style = $(if $(findstring cygdrive,$(1)),$(call convert,$(1)),$(1))
+make_list   = $(subst $(SPACE),,$(foreach path,$(1),$(call to_pc_style,$(path))$(OS_PS)))
+
+# We need to override ALL_LIB_LIST as MVC doesn't use the '-l<name>' convention
+ALL_LIB_LIST = $(foreach lib,$(ALL_LIB_LIST_RAW),$(lib).lib)
+
+# These define the environment variables needed for MVC
+MVC_INCLUDE  = $(subst /,\,$(call make_list,$(ALL_INCLUDEDIR_LIST_RAW)))
+MVC_LIB      = $(call make_list,$(ALL_LIBDIR_LIST_RAW))
+
+
+CC_DEPEND_IT     = build/makedep.sh $< $@ obj \
+                   $(foreach item,$(ALL_INCLUDEDIR_LIST_RAW),'$(item)')
+
+CC_DEPEND_IT_C   = build/makedep.sh $< $@ obj \
+                   $(foreach item,$(ALL_INCLUDEDIR_LIST_RAW),'$(item)')
+
+CC_COMPILE_IT    = PATH='$(PATH)' INCLUDE='$(MVC_INCLUDE)' $(CC_CC) -c \
+                   '-Fo$(OS_@)' $(CC_CFLAGS) '$(OS_<)'
+
+CC_COMPILE_IT_C  = PATH='$(PATH)' INCLUDE='$(MVC_INCLUDE)' $(CC_C) -c \
+                   '-Fo$(OS_@)' $(CC_CFLAGS) '$(OS_<)'
+
+CC_LINK_IT       = PATH='$(PATH)' INCLUDE='$(MVC_INCLUDE)' LIB='$(MVC_LIB)' \
+                   $(CC_CC) '-Fe$(OS_@)' $(CC_LINKFLAGS) \
+                   $(ALL_LIB_LIST) $(OS_OBJS) $(CC_ATEND_LINKFLAGS)
+
+CC_SHARED_LIB_IT = PATH='$(PATH)' INCLUDE='$(MVC_INCLUDE)' LIB='$(MVC_LIB)' \
+                   $(CC_MK_SHARED_LIB) '-Fe$(OS_@)' $(CC_LINKFLAGS) \
+                   $(ALL_LIB_LIST) $(OS_OBJS) $(CC_ATEND_LINKFLAGS)

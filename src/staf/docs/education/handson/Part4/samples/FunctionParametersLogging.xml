@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="main"/>
+
+  <function name="main">
+
+    <function-prolog>
+      This function is used as an example in the "Getting Started with STAX"
+      document.  It starts the TestProcess, and allows the parms, machine,
+      java_command, java_class, processName, and classpath to be passed as
+      arguments to the function.
+    </function-prolog>
+
+    <function-map-args>
+
+      <function-arg-def name="parms" type="required">
+        <function-arg-description>
+          The three parameters to pass to the process.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="machine" type="optional" default="'local'">
+        <function-arg-description>
+          The name of machine where the test process should run.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="java_command" type="optional" default="'java'">
+        <function-arg-description>
+          The name of java executable that should be used to execute the test
+          process.
+        </function-arg-description>
+      </function-arg-def>
+      
+      <function-arg-def name="java_class" type="optional"
+          default="'com.ibm.staf.service.stax.TestProcess'">
+        <function-arg-description>
+          The name of java class for the test process.
+        </function-arg-description>
+      </function-arg-def>
+      
+      <function-arg-def name="processName" type="optional" default="'My Test Process'">
+        <function-arg-description>
+          The name of the process.
+        </function-arg-description>
+      </function-arg-def>
+      
+      <function-arg-def name="classpath" type="optional"
+          default="'{STAF/Config/STAFRoot}/bin/JSTAF.jar;{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'">
+        <function-arg-description>
+          The CLASSPATH that should be used when the test process is started..
+        </function-arg-description>
+      </function-arg-def>
+      
+    </function-map-args>
+
+    <sequence>
+
+      <process name="'%s with parms %s' % (processName, parms)">
+        <location>machine</location>
+        <command>java_command</command>
+        <parms>'%s %s' % (java_class, parms)</parms>
+        <env>'CLASSPATH=%s' % classpath</env>
+        <stderr mode="'stdout'"/>
+        <returnstdout/>
+      </process>
+
+      <if expr="RC != 0">
+        <message log="1" level="'Error'">
+          '%s with parms %s Error: RC=%s, STAXResult=%s' % \
+            (processName, parms, RC, STAXResult)
+        </message>
+        <else>
+          <message log="1">
+            'SUCCESS: %s with parms %s\nSTAXResult=%s' % \
+              (processName, parms, STAXResult)
+          </message>
+        </else>
+      </if>
+
+      <return>RC</return>
+
+    </sequence>
+
+  </function>
+
+</stax>

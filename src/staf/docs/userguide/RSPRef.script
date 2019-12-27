@@ -1,0 +1,368 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : RSPRef SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Response File
+.*                       Reference
+.*  Detail:
+.*
+.*     This file contains the STAF Response File Documentation.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.installation
+:ih2.OS/2
+:i3.response file
+:h1 id=instrsp.STAF Response File Reference
+:p.This appendix is only relevent to OS/2
+:h2.STAF Response File Syntax
+:xmp.
+  SOURCE    &lbrk.=&rbrk.  <SourceDir>
+  TARGET    &lbrk.=&rbrk.  <TargetDir>
+  BOOTDRIVE &lbrk.=&rbrk.  <ControlDir>
+  INSTALL   &lbrk.=&rbrk.  <ALL> | <Component> &lbrk.Y/N | 1/0&rbrk.
+  REMOVE    &lbrk.=&rbrk.  <ALL> | <Component> &lbrk.Y/N | 1/0&rbrk.
+  CODEPAGE  &lbrk.=&rbrk.  <CodePage> | <CONFIG>
+  MAP       &lbrk.=&rbrk.  <CodePage> TO <CodePage>
+  CFGUPDATE &lbrk.=&rbrk.  AUTO | MANUAL
+  AUTOSTART &lbrk.=&rbrk.  &lbrk.Y/N | 1/0&rbrk.
+  REPMOD    &lbrk.=&rbrk.  &lbrk.Y/N | 1/0&rbrk.
+  ICONS     &lbrk.=&rbrk.  &lbrk.Y/N | 1/0&rbrk.
+  STAFCFG   &lbrk.=&rbrk.  &lbrk.Y/N | 1/0&rbrk.
+    STAF configuration statements ...
+  ENDSTAFCFG
+:exmp.
+:note.:xph.INSTALL:exph. statements are processed first, then :xph.REMOVE:exph. statements.:enote.
+:note.Comment lines are lines that contain only white space characters or
+that have an asterisk (*) or pound (#) as the first non-white space
+character on the line.:enote.
+:h3.SOURCE
+:p.SOURCE specifies the drive and path of the STAF image files,
+(e.g. SOURCE S:\STAF\LATEST).  No default.
+:h3.TARGET
+:p.TARGET specifies the target drive and root path for the STAF
+installation and configuration, (e.g. TARGET = C&colon.\STAF).  No default.
+:h3.BOOTDRIVE
+:p.BOOTDRIVE indicates the bootdrive, (e.g. BOOTDRIVE = D&colon.).  Default is
+determined from statements in the CONFIG.SYS, if all else fails then use
+"C&colon.".
+:h3.INSTALL
+:p.INSTALL specifies the components that you want to install or ignore,
+(e.g. INSTALL base Y). A Y/1 specifies install, N/0 specifies ignore,
+default is Y.  The default is to install STAF BASE, SERVICES, and
+UTILS components. The example below would install all of STAF except
+the DEV (Developers Toolkit) components:
+:xmp.
+INSTALL ALL Y
+INSTALL dev N
+:exmp.
+:h3.REMOVE
+:p.REMOVE specifies the components that you want to remove or ignore,
+(e.g. REMOVE samples Y)
+A Y/1 specifies remove, N/0 specifies ignore, default is Y.
+No default.
+:p.STAF Component List for use with INSTALL/REMOVE:
+:ul compact.
+:li.ALL - All of STAF
+:li.base - Base, including docs and samples
+:li.base&colon.standard - Minimum required to run STAF
+:li.base&colon.java - Java enablement
+:li.base&colon.doc - Base docs
+:li.base&colon.samples - Base samples
+:li.services - Additional services: Log, Monitor, etc.
+:li.utils - Utilities, Format Log, etc.
+:li.dev - Developers Toolkit
+:li.samples - Samples
+:eul.
+:ih1.codepage
+:i2.OS/2 install response file
+:h3.CODEPAGE
+:p.CODEPAGE specifies additional codepages to include,
+(e.g. CODEPAGE = 437). The default is to use the codepages specified
+in the CONFIG.SYS.  This will be sufficient for most uses.
+:h3.MAP
+:p.MAP specifies a codepage that you want to map to another codepage.
+For example, specifying "MAP 932 TO 943" will cause STAF to use the
+943 codepage in place of the 932 codepage.  This is relevant on some
+versions of the OS.  For example, on OS/2 WARP 4 Japan, codepage 932
+may actually refer to either 942 or 943 and you would need to use
+the MAP keyword to specify the appropriate mapping codepage.  No default.
+:h3.CFGUPDATE
+:p.Use the "CFGUPDATE" field to specify to the installation program
+whether it should automatically make necessary changes to your
+CONFIG.SYS. (e.g. CFGUPDATE = AUTO).
+:ul compact.
+:li.AUTO - Automatically update CONFIG.SYS, this is the default
+:li.MANUAL - Make a copy of the user's CONFIG.SYS file called CONFIG.STF
+that includes the changes you must make to the file.
+:eul.
+The following lines may be updated:
+:ul compact.
+:li.LIBPATH will include the STAF DLL directory at the end
+:li.SET PATH will include the STAF binary directory at the end
+:li.SET LOCPATH will include the STAF locale/translation directory
+at the beginning
+:li.SET CLASSPATH will include the STAF Java ZIP file location
+at the beginning
+:eul.
+:h3.AUTOSTART
+:p.Use the "AUTOSTART" field to specify how to handle changes that may
+be applied in your STARTUP.CMD file.
+:ul compact.
+:li.Y/1 - Add/Remove whether STAF is auto-started
+:li.N/0 - Ignore
+:eul.
+:h3.REPMOD
+:p.Use the "REPMOD"  field to specify the use of the REPMOD (replace module)
+tool to replace STAF EXE/DLL files that are in use.  Note that a standard
+copy will be attempted first and if that fails then REPMOD will be tried.
+REPMOD must be present and in the path to work correctly.  REPMOD is
+available on IBM OS/2 Tools repository.  The default is to not use REPMOD.
+:ul compact.
+:li.Y/1 - Use REPMOD to replace in-use STAF EXE/DLL files
+:li.N/0 - Ignore
+:eul.
+:h3.ICONS
+:p.Use the "ICONS" field to specify the creation of a STAF folder and
+icons.  A STAFProc icon is created along with a shutdown icon and web document
+icon links. The default is to create a folder and icons.
+:ul compact.
+:li.Y/1 - Create/Delete the folder and icons
+:li.N/0 - Ignore
+:eul.
+:h3.STAFCFG
+:p.The STAFCFG and ENDSTAFCFG allows the configuration of the STAF
+configuration file STAF.CFG.  If STAFCFG is specified all lines
+up to ENDSTAFCFG will be used to create a <TargetPath>\BIN\STAF.CFG
+configuration file.  Use "STAFCFG N" if you want to ignore the
+STAFCFG/ENDSTAFCFG statements.  If STAFCFG is not used and a
+STAF configuration file already exists, it will not be replaced.  If STAFCFG
+is not used and a STAF configuration does not exist, a default STAF
+configuration file will be created.
+:xmp.
+STAFCFG
+  # STAF Configuration File
+  interface tcpip
+
+  # Rexx Services
+  service MONITOR rexx {STAF/Config/STAFRoot}\BIN\STAFMON.CMD
+  service LOG     rexx {STAF/Config/STAFRoot}\BIN\STAFLOG.CMD
+  service HELP    rexx {STAF/Config/STAFRoot}\BIN\STAFHELP.CMD
+
+  # Variables
+  # STAF Monitor
+  set system var STAF/Service/Monitor/Directory={STAF/Config/BootDrive}\STAF\Monitor
+  # STAF Log
+  set system var STAF/Service/Log/Directory={STAF/Config/BootDrive}\STAF\Log
+ENDSTAFCFG
+:exmp.
+:ih1.examples
+:ih2.OS/2 install
+:i3.response file
+:ih1.installation
+:ih2.OS/2
+:i3.response file example
+:h2 id=samprsp.STAF Response File Sample
+The following is a sample of a STAF Response File and can be located
+in the STAF installation directory (install\STAFInst.rsp).
+:xmp keep=11.
+# ---------------------------------------------------------------------
+# Software Testing Automation Framework (STAF) Install Response File
+#
+# Automated install is a feature that allows users to run the STAF
+# install program without a user interface. This feature is
+# particularly useful for system administrators who manage installs and
+# upgrades for large groups of STAF users.
+#
+# Note that the response file and any response file commands are
+# optional.
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# Response File Syntax:
+#   SOURCE    [=] <SourceDir>
+#   TARGET    [=] <TargetDir>
+#   BOOTDRIVE [=] <ControlDir>
+#   INSTALL   [=] <ALL> | <Component> [Y/N | 1/0]
+#   REMOVE    [=] <ALL> | <Component> [Y/N | 1/0]
+#   CODEPAGE  [=] <CodePage> | <CONFIG>
+#   MAP       [=] <CodePage> TO <CodePage>
+#   CFGUPDATE [=] AUTO | MANUAL
+#   AUTOSTART [=] [Y/N | 1/0]
+#   REPMOD    [=] [Y/N | 1/0]
+#   ICONS     [=] [Y/N | 1/0]
+#   STAFSFG   [=] [Y/N | 1/0]
+#     STAF configuration statements ...
+#   ENDSTAFCFG
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# Comment lines are lines that contain only white space characters or
+# that have a pound (#) or asteric (*) as the first non-white space
+# character on the line.
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# SOURCE specifies the drive and path of the STAF image files.
+# ---------------------------------------------------------------------
+# SOURCE S:\STAF\LATEST
+
+# ---------------------------------------------------------------------
+# TARGET specifies the target drive and root path for the STAF
+# installation and configuration.
+# ---------------------------------------------------------------------
+# TARGET C:\STAF
+
+# ---------------------------------------------------------------------
+# BOOTDRIVE indicates the drive of the target CONFIG.SYS.
+# The default will be determined by the CONFIG.SYS.
+# ---------------------------------------------------------------------
+# BOOTDRIVE C:
+
+# ---------------------------------------------------------------------
+# STAF Component List:
+#   all                     - All of STAF
+#   base                    - Base, including docs and samples
+#   base&colon.standard           - Minimum required to run STAF
+#   base&colon.doc                - Base docs
+#   base&colon.samples            - Base samples
+#   services                - Additional services: Log, Monitor, etc.
+#   utils                   - Utilities, Format Log, etc.
+#   dev                     - Developers Toolkit
+#   samples                 - Samples
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# INSTALL specifies the components that you want to install or ignore.
+# A Y/1 specifies install, N/0 specifies ignore, default is install.
+# Default install is base&colon.standard.
+# ---------------------------------------------------------------------
+INSTALL base
+INSTALL services
+INSTALL utils
+
+# ---------------------------------------------------------------------
+# REMOVE specifies the components that you want to remove.
+# A Y/1 specifies remove, N/0 specifies ignore, default is remove.
+# Default is NO removal.
+# ---------------------------------------------------------------------
+# REMOVE all
+
+# ---------------------------------------------------------------------
+# CODEPAGE specifies additional codepages to include.  The default
+# is to use the codepages specified in the CONFIG.SYS.  This will be
+# sufficient for most uses.
+# ---------------------------------------------------------------------
+# CODEPAGE = 850
+
+# ---------------------------------------------------------------------
+# MAP specifies a codepage that you want to map to another codepage.
+# For example, specifying "MAP 932 TO 943" will cause STAF to use the
+# 943 codepage in place of the 932 codepage.  This is relevant on some
+# versions of the OS.  For example, on OS/2 WARP 4 Japan, codepage 932
+# may actually refer to either 942 or 943 and you would need to use
+# the MAP keyword to specify the appropriate mapping codepage.
+# ---------------------------------------------------------------------
+# MAP 932 TO 943
+
+# ---------------------------------------------------------------------
+# Use the "CFGUPDATE" field to specify how to handle changes that may
+# be required in your CONFIG.SYS.  The default is to update the file.
+#   AUTO   Automatically update
+#   MANUAL Make a copy of the user's CONFIG.SYS file called CONFIG.STF
+#          that includes the changes you must make to the file
+#
+# The following lines may be updated:
+#   SET PATH
+#   SET LIBPATH
+#   SET LOCPATH
+#   SET CLASSPATH
+# ---------------------------------------------------------------------
+# CFGUPDATE = AUTO
+
+# ---------------------------------------------------------------------
+# Use the "AUTOSTART" field to specify how to handle changes that may
+# be applied in your STARTUP.CMD file.  The default is to NOT
+# automatically start STAF.
+#   Y/1   Automatically start STAF at bootup
+#   N/0   Ignore
+# ---------------------------------------------------------------------
+# AUTOSTART = Y
+
+# ---------------------------------------------------------------------
+# Use the "REPMOD" field to specify if you want to use REPMOD for
+# EXE/DLL replacement.  REPMOD will replace in-use STAF EXE/DLL files.
+# REPMOD must be already be present and in your path.  The deafult
+# is to NOT use REPMOD.
+#   Y/1   Use REPMOD to replace in-use STAF EXE/DLL files
+#   N/0   Ignore
+# ---------------------------------------------------------------------
+# REPMOD = Y
+
+# ---------------------------------------------------------------------
+# Use ICONS to specify whether to create a STAF folder with icons
+# for STAFProc, local web documents, and a link to the STAF web site.
+# The default is to create the folder and icons.
+#   Y/1   Create folder and icons
+#   N/0   Ignore
+# ---------------------------------------------------------------------
+# ICONS = N
+
+# ---------------------------------------------------------------------
+# The STAFCFG and ENDSTAFCFG allows the configuration of the STAF
+# configuration file STAF.CFG.  If STAFCFG is specified all lines
+# up to ENDSTAFCFG will be used to create a <TargetPath>\BIN\STAF.CFG
+# configuration file.  Use "STAFCFG N (or 0)" if you want to ignore the
+# STAFCFG/ENDSTAFCFG statements.  If STAFCFG is not used and a
+# STAF configuration file already exists, it will not be replaced.
+# ---------------------------------------------------------------------
+STAFCFG Y
+  # STAF Configuration File
+  interface tcpip
+
+  # Rexx Services
+  service MONITOR rexx {STAF/Config/STAFRoot}\BIN\STAFMON.CMD
+  service LOG     rexx {STAF/Config/STAFRoot}\BIN\STAFLOG.CMD
+  service HELP    rexx {STAF/Config/STAFRoot}\BIN\STAFHELP.CMD
+
+  # Variables
+  # STAF Monitor
+  set var STAF/Service/Monitor/Directory={STAF/Config/BootDrive}\STAF\Monitor
+  # STAF Log
+  set var STAF/Service/Log/Directory={STAF/Config/BootDrive}\STAF\Log
+ENDSTAFCFG
+
+* End of response file ************************************************
+:exmp.
+.*---------------------------------------------------------------------
+:ih1.examples
+:ih2.OS/2
+:i3.NVDM/2 profile
+:ih1.installation
+:ih2.OS/2
+:i3.NVDM/2 profile example
+:h2 id=sampprf.STAF Profile Sample for NVDM/2
+:xmp keep=7.
+TargetDir = C:
+Section Catalog
+Begin
+     ObjectType=Software
+     GlobalName=IBM.STAF.INSTITL.REF.1.00
+     Description="Install STAF 1.00"
+End
+
+Section Install
+Begin
+      Program= SA:\IMG\STAF\INSTALL\STAFINST.CMD
+      Parms =  /R:$(ResponseFile) /S:$(SourceDir) /L1:$(LogFile1) /L2:$(LogFile2)
+      ResponseFile= SA:\RSP\STAF\STAFINST.RSP
+      SourceDir = SA:\IMG\STAF
+      Logfile1= SB:\LOG\STAF\$(WorkStatName).LOG
+      Logfile2= SB:\LOG\STAF\$(WorkStatName).L2
+End
+:exmp.

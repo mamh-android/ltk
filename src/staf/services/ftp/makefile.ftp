@@ -1,0 +1,53 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2008                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+ftp_class_targets =\
+  $(O)/services/ftp/STAF-INF/classes/com/ibm/staf/service/ftp/FTPClientConnection.class \
+  $(O)/services/ftp/STAF-INF/classes/com/ibm/staf/service/ftp/FTPDir.class \
+  $(O)/services/ftp/STAF-INF/classes/com/ibm/staf/service/ftp/FTPGet.class \
+  $(O)/services/ftp/STAF-INF/classes/com/ibm/staf/service/ftp/FTPPut.class \
+  $(O)/services/ftp/STAF-INF/classes/com/ibm/staf/service/ftp/FTPService.class \
+  $(O)/services/ftp/MANIFEST.MF
+  
+ftp_targets += $(ftp_class_targets) \
+               $(REL)/lib/STAFFTP.jar
+                
+Targets += $(ftp_targets)
+CleanupTargets += cleanup_ftp
+
+$(ftp_targets): SUBSYS_REL := services/ftp
+SUBSYS_REL := services/ftp
+
+# Include inference rules
+include $(InferenceRules)
+
+$(ftp_targets): $(REL)/lib/JSTAF.jar
+
+FTP_CLASSPATH = $(OS_O)/services/ftp$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define FTP_JAVA_COMPILE_IT
+   @echo "*** Compiling Ftp Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/ftp/STAF-INF/classes -classpath '$(FTP_CLASSPATH)' $(OS_SRC)/services/ftp/*.java
+endef
+
+$(O)/services/ftp/STAF-INF/classes/com/ibm/staf/service/ftp/%.class: $(SRC)/services/ftp/%.java
+	$(FTP_JAVA_COMPILE_IT)
+
+# Copy Ftp service objects
+
+$(O)/services/ftp/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+# Create STAFFTP.jar
+        
+$(REL)/lib/STAFFTP.jar: $(ftp_class_targets) $(ftp_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/ftp; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF
+
+cleanup_ftp:
+	-@$(DEL) $(O)/services/ftp/* $(OUT_ERR_TO_DEV_NULL)

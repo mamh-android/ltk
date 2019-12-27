@@ -1,0 +1,1318 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+
+  File Name:    NamespaceTest.xml
+  Description:  This STAX xml job tests Namespace Service V1.0
+-->
+
+<stax>
+
+  <!-- Beginning of job -->
+
+  <defaultcall function="DoAll"/>
+
+  <!-- Default variables -->
+
+  <script>
+
+    # Whether we should debug things
+    debug = 0
+
+    # TestMachines should be set to a list of machines to test
+
+    TestMachines = ['local']
+
+    # TestScopes should be set to None if All tests should be run, otherwise
+    # it should be set to a list of test scopes (e.g. ['NAMESPACE']
+    # Here's a list of all of the valid test scopes:
+    # [ 'NAMESPACE' ]
+    TestScopes = None
+
+    # ImportMachine should be set to the machine where STAXUtil.xml resides
+    # (e.g. 'local' if the file resides on the STAX service machine).
+    # ImportDirectory should be set to the directory which contains STAXUtil.xml.
+
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax/libraries'
+
+    # Set the registered names for the external services being tested
+    NamespaceService = 'NS'
+    NamespaceServiceJarFile = '{STAF/Config/STAFRoot}/services/namespace/Namespace.jar'
+    #NamespaceServiceJarFile = '{STAF/Config/STAFRoot}/lib/Namespace.jar'
+
+    # Set these to some default values, just in case
+
+    STAFResult = ''
+    RC = 0
+
+  </script>
+
+  <!-- Import necessary utilities -->
+
+  <script>
+    import re
+    import string
+
+    from com.ibm.staf import STAFUtil
+  </script>
+
+  <!-- Start function definitions -->
+
+
+  <!-- ================================================================= -->
+  <!-- InitTests - This function initializes all the test information    -->
+  <!-- ================================================================= -->
+
+  <function name="InitTests">
+    <sequence>
+
+      <script>
+
+        allTests = []
+
+        # Whenever you add a new Test Scope, need to add a Init Function and then
+        # add it to the following map, using the Test Scope as the key, e.g. 'VAR',
+        # and the name of the Init Function as its value.
+
+        # An Init Function should assign a list of tests to run.  The format of
+        # each test entry is the list is a list of the following:
+        #
+        #   1) 'STD:' + the service being tested (capitalized)
+        #      This is a required entry in the list.
+        #
+        #   2) Service to which the request will be submitted to
+        #      This is a required entry in the list.
+        #
+        #   3) Request to be submitted
+        #      This is a required entry in the list.
+        #
+        #   4) A list of the STAF return codes that indicate a success
+        #      This is a required entry in the list.
+        #
+        #   5) A regular expression (re) string to be compared with the STAFResult
+        #      if the STAF return indicates a success or None if no compare should
+        #      be performed on the STAFResult using re.
+        #      This is a required entry in the list.
+        #
+        #   6) A string containing Python expression to be evaluated.
+        #      If it evaluates to true, this indicates a test success.
+        #      This is especially useful if the STAFResult is a marshalled object
+        #      so that you can specify what determines a successful STAFResult.
+        #      This is an optional entry in the list.
+        #
+        #   7) Python code to be executed.
+        #      This is especially useful if you want to assign one or more
+        #      variables from the STAFResult to be used in a following test.
+        #      This is an optional entry in the list.
+        #
+        # Examples:
+        #
+        # [ 'STD:LOG', 'LOG', 'DELETE GLOBAL LOGNAME staftest CONFIRM',
+        #   [ STAFRC.Ok, STAFRC.DoesNotExist ], None
+        # ],
+        #
+        # [ 'STD:LOG', 'LOG', 'QUERY GLOBAL LOGNAME {STAFTest/LogName} NAME {STAFTest/HName} total',
+        #   [ STAFRC.Ok ],
+        #   r"""(?mx)
+        #       ^3\s*"""
+        # ],
+        # [ 'STD:LOG', 'LOG', 'QUERY GLOBAL LOGNAME staftest CONTAINS {STAFTest/LogContains} CONTAINS TUESDAY FIRST 2 LEVELBITSTRING',
+        #   [ STAFRC.Ok ], None,
+        #   "len(STAFResult) == 2 and " +
+        #   "STAFResult[0]['message'] == 'On Monday, testing should begin' and " +
+        #   "STAFResult[1]['message'] == 'Testing should end by Tuesday'"
+        # ],
+        #
+        # Also, the first test should request a mutex semaphore specifying a unique
+        # name to identify the set of tests, e.g. 'STAFTest/' + service being tested.
+        # And, the last test should release the mutex semaphore.  Be sure to add name
+        # of the mutex semaphore to the SemMutexList defined in function
+        # 'InitTestMachine' so that any mutex semaphores are left over from a previous
+        # run are deleted.
+
+        InitTestMap = {
+                               'NAMESPACE':        'InitNamespaceTests'
+                             }
+      </script>
+
+      <if expr="TestScopes">
+        <script>TestsToRun = TestScopes</script>
+        <else>
+          <script>TestsToRun = InitTestMap.keys()</script>
+        </else>
+      </if>
+
+      <iterate var="TestScope" in="TestsToRun">
+        <sequence>
+
+          <message>
+            'Initializing %s tests on machine %s via function %s...' % \
+            (TestScope, TestMach, InitTestMap[TestScope])
+          </message>
+
+          <call function="InitTestMap[TestScope]"/>
+
+          <script>
+            allTests = allTests + STAXResult
+          </script>
+
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+
+  <!--  Start of Test List Definitions for the different Test Scopes -->
+  
+  <!-- ============================================================================== -->
+  <!-- InitNamespaceTests - This function initializes all the NAMESPACE test information  -->
+  <!-- ============================================================================== -->
+
+  <function name="InitNamespaceTests" scope="local">
+    <sequence>
+
+      <script>
+
+      NAMESPACETests = [
+
+        #
+        #NAMESPACE tests
+        #
+
+        [ 'STD:NAMESPACE', 'SEM',     'REQUEST MUTEX STAFTest/NAMESPACE',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        # Add Namespace service as NS.  If already exists, ignore that error so that this test works
+        # no matter if the Namespace service is already registered as NS or not.
+        ['STD:NAMESPACE', 'SERVICE', 'ADD SERVICE %s LIBRARY JSTAF EXECUTE %s' % (NamespaceService, NamespaceServiceJarFile),
+          [ STAFRC.Ok, STAFRC.AlreadyExists ], None
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'HELP',
+          [ STAFRC.Ok ], r'^.'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'VERSION',
+          [ STAFRC.Ok ], r'^.'
+        ],
+
+        [ 'STD:NAMESPACE', 'VAR',     'SET VAR STAFTest/NSName=AIS VAR STAFTest/Var1=GlobalVar1 VAR STAFTest/Var3=GlobalVar3',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE {STAFTest/NSName} DESCRIPTION "Global AIS Namespace"',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE {StafTest/NSName}',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'AIS' and " +
+          "STAFResult['description'] == 'Global AIS Namespace' and " +
+          "STAFResult['parent'] == None and "
+          "len(STAFResult['children']) == 0"
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE {StafTest/NSName} TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'AIS' and " +
+          "len(STAFResult['children']) == 0"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'SET NAMESPACE {STAFTest/NSName} VAR GlobalVar1=GlobalVALUE1 VAR GlobalVar2=GlobalValue2',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE {StafTest/NSName}',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0]['key'] == 'GlobalVar1' and " +
+          "STAFResult[0]['value'] == 'GlobalVALUE1' and " +
+          "STAFResult[1]['key'] == 'GlobalVar2' and " +
+          "STAFResult[1]['value'] == 'GlobalValue2'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE AiS DESCRIPTION "Global WebSphere Namespace"',
+          [ STAFRC.AlreadyExists ], r'.*'
+        ],
+
+        # Modify the description for the namespace
+        [ 'STD:NAMESPACE', NamespaceService, 'MODIFY NAMESPACE {STAFTest/NSName} DESCRIPTION "GLOBAL AIS Namespace"',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE {StafTest/NSName}',
+          [ STAFRC.Ok ], None,
+          "STAFResult['description'] == 'GLOBAL AIS Namespace'"
+        ],
+       
+       # Modify the description and the parent (with a non-valid parent name) of a namespace
+        [ 'STD:NAMESPACE', NamespaceService, 'MODIFY NAMESPACE {STAFTest/NSName} DESCRIPTION "Global AIS Namespace" PARENT NoExist',
+          [ STAFRC.DoesNotExist ], r'.*'
+        ],
+
+       # Verify that the description did not change when the above MODIFY request failed
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE {StafTest/NSName}',
+          [ STAFRC.Ok ], None,
+          "STAFResult['description'] == 'GLOBAL AIS Namespace' and " +
+          "STAFResult['parent'] == None"
+        ],
+        
+       # Modify the description and the parent of a namespace
+        [ 'STD:NAMESPACE', NamespaceService, 'MODIFY NAMESPACE {STAFTest/NSName} DESCRIPTION "Global AIS Namespace" PARENT NONE',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+       # Verify that the description for the namespace changed
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE {StafTest/NSName}',
+          [ STAFRC.Ok ], None,
+          "STAFResult['description'] == 'Global AIS Namespace' and " +
+          "STAFResult['parent'] == None"
+        ],
+
+        # Modify value for a variable
+        [ 'STD:NAMESPACE', NamespaceService, 'SET VAR GlobalVar1=GlobalValue1 NAMESPACE {STAFTest/NSName}',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        # Add a variable
+        [ 'STD:NAMESPACE', NamespaceService, 'SET VAR GlobalVar3=GlobalValue3 NAMESPACE {STAFTest/NSName}',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        # Remove a variable
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE {STAFTest/NSName} VAR {STAFTest/Var3}',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE {StafTest/NSName}',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0]['key'] == 'GlobalVar1' and " +
+          "STAFResult[0]['value'] == 'GlobalValue1' and " +
+          "STAFResult[1]['key'] == 'GlobalVar2' and " +
+          "STAFResult[1]['value'] == 'GlobalValue2'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE {StafTest/NSName} VAR {STAFTest/Var1}',
+          [ STAFRC.Ok ], 'GlobalValue1',
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE {StafTest/NSName} VAR GlobalVar2',
+          [ STAFRC.Ok ], 'GlobalValue2',
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE {StafTest/NSName} VAR NoExist',
+          [ STAFRC.DoesNotExist], r'.*',
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE NoExist VAR GlobalVar1',
+          [ STAFRC.DoesNotExist], r'.*',
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE {StafTest/NSName} ONLY',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0]['key'] == 'GlobalVar1' and " +
+          "STAFResult[0]['value'] == 'GlobalValue1' and " +
+          "STAFResult[1]['key'] == 'GlobalVar2' and " +
+          "STAFResult[1]['value'] == 'GlobalValue2'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE {STAFTest/NSName} VAR GlobalVar3',
+          [ STAFRC.DoesNotExist ], r'.*'
+        ],
+
+        # Verify that cannot create a namespace with a parent that does not exist
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE Test1 DESCRIPTION "Global WebSphere Namespace" PARENT NoExist',
+          [ STAFRC.DoesNotExist ], r'.*'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE WAS DESCRIPTION "Global WebSphere Namespace" PARENT AiS',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'SET NAMESPACE WAS VAR WASVar1=WASValue1 VAR WASVar2=WASValue2',
+          [ STAFRC.Ok ], r'^$'
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE WebSphereSVT DESCRIPTION "WebSphere SVT Namespace" PARENT WAS',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'SET NAMESPACE WebSphereSVT VAR WASSVTVar1=WASSVTValue1 VAR WASSVTVar2=WASSVTValue2 VAR WASVar2=OverrideWASValue2 VAR GlobalVar2=OverrideGlobalValue2',
+          [ STAFRC.Ok ], r'^$'
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE DB2 DESCRIPTION "Global DB2 Namespace" PARENT AIS',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'SET NAMESPACE Db2 VAR DB2Var1=DB2Value1 VAR DB2Var2=DB2Value2',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE MyIndependentNS DESCRIPTION "User Independent Namespace" PARENT None',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'SET NAMESPACE MyIndependentNS VAR MyVar1=MyValue1 VAR MyVar2=MyValue2',
+          [ STAFRC.Ok ], r'^$'
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'SET NAMESPACE AIS VAR GlobalVar3=GlobalValue3',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        # Remove and re-add the Namespace service so can verify that saving the Namespaces data
+        # to persistent storage and re-loading the Namespace data from the Namespaces.xml file is
+        # working correctly.
+
+        ['STD:NAMESPACE', 'SERVICE', 'REMOVE SERVICE %s' % (NamespaceService),
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        ['STD:NAMESPACE', 'SERVICE', 'ADD SERVICE %s LIBRARY JSTAF EXECUTE %s' % (NamespaceService, NamespaceServiceJarFile),
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACES',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 5 and " +
+          "STAFResult[0]['name'] == 'AIS' and " +
+          "STAFResult[0]['parent'] == None and " +
+          "STAFResult[1]['name'] == 'DB2' and " +
+          "STAFResult[1]['parent'] == 'AIS' and " +
+          "STAFResult[2]['name'] == 'MyIndependentNS' and " +
+          "STAFResult[2]['parent'] == None and " +
+          "STAFResult[3]['name'] == 'WAS' and " +
+          "STAFResult[3]['parent'] == 'AIS' and " +
+          "STAFResult[4]['name'] == 'WebSphereSVT' and " +
+          "STAFResult[4]['parent'] == 'WAS'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE WebSphereSVT ONLY',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0]['key'] == 'GlobalVar2' and " +
+          "STAFResult[0]['value'] == 'OverrideGlobalValue2' and " +
+          "STAFResult[0]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[1]['key'] == 'WASSVTVar1' and " +
+          "STAFResult[1]['value'] == 'WASSVTValue1' and " +
+          "STAFResult[1]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[2]['key'] == 'WASSVTVar2' and " +
+          "STAFResult[2]['value'] == 'WASSVTValue2' and " +
+          "STAFResult[2]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[3]['key'] == 'WASVar2' and " +
+          "STAFResult[3]['value'] == 'OverrideWASValue2' and " +
+          "STAFResult[3]['namespace'] == 'WebSphereSVT'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE WEBSphereSVT',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 7 and " +
+          "STAFResult[0]['key'] == 'GlobalVar2' and " +
+          "STAFResult[0]['value'] == 'OverrideGlobalValue2' and " +
+          "STAFResult[0]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[1]['key'] == 'WASSVTVar1' and " +
+          "STAFResult[1]['value'] == 'WASSVTValue1' and " +
+          "STAFResult[1]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[2]['key'] == 'WASSVTVar2' and " +
+          "STAFResult[2]['value'] == 'WASSVTValue2' and " +
+          "STAFResult[2]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[3]['key'] == 'WASVar2' and " +
+          "STAFResult[3]['value'] == 'OverrideWASValue2' and " +
+          "STAFResult[3]['namespace'] == 'WebSphereSVT' and " +
+          "STAFResult[4]['key'] == 'WASVar1' and " +
+          "STAFResult[4]['value'] == 'WASValue1' and " +
+          "STAFResult[4]['namespace'] == 'WAS' and " +
+          "STAFResult[5]['key'] == 'GlobalVar1' and " +
+          "STAFResult[5]['value'] == 'GlobalValue1' and " +
+          "STAFResult[5]['namespace'] == 'AIS' and " +
+          "STAFResult[6]['key'] == 'GlobalVar3' and " +
+          "STAFResult[6]['value'] == 'GlobalValue3' and " +
+          "STAFResult[6]['namespace'] == 'AIS'"
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE WAS ONLY',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0]['key'] == 'WASVar1' and " +
+          "STAFResult[0]['value'] == 'WASValue1' and " +
+          "STAFResult[0]['namespace'] == 'WAS' and " +
+          "STAFResult[1]['key'] == 'WASVar2' and " +
+          "STAFResult[1]['value'] == 'WASValue2' and " +
+          "STAFResult[1]['namespace'] == 'WAS'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE WAS',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 5 and " +
+          "STAFResult[0]['key'] == 'WASVar1' and " +
+          "STAFResult[0]['value'] == 'WASValue1' and " +
+          "STAFResult[0]['namespace'] == 'WAS' and " +
+          "STAFResult[1]['key'] == 'WASVar2' and " +
+          "STAFResult[1]['value'] == 'WASValue2' and " +
+          "STAFResult[1]['namespace'] == 'WAS' and " +
+          "STAFResult[2]['key'] == 'GlobalVar1' and " +
+          "STAFResult[2]['value'] == 'GlobalValue1' and " +
+          "STAFResult[2]['namespace'] == 'AIS' and " +
+          "STAFResult[3]['key'] == 'GlobalVar2' and " +
+          "STAFResult[3]['value'] == 'GlobalValue2' and " +
+          "STAFResult[3]['namespace'] == 'AIS' and " +
+          "STAFResult[4]['key'] == 'GlobalVar3' and " +
+          "STAFResult[4]['value'] == 'GlobalValue3' and " +
+          "STAFResult[4]['namespace'] == 'AIS'"
+        ],
+       
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE DB2 ONLY',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0]['key'] == 'DB2Var1' and " +
+          "STAFResult[0]['value'] == 'DB2Value1' and " +
+          "STAFResult[0]['namespace'] == 'DB2' and " +
+          "STAFResult[1]['key'] == 'DB2Var2' and " +
+          "STAFResult[1]['value'] == 'DB2Value2' and " +
+          "STAFResult[1]['namespace'] == 'DB2'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACE DB2',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 5 and " +
+          "STAFResult[0]['key'] == 'DB2Var1' and " +
+          "STAFResult[0]['value'] == 'DB2Value1' and " +
+          "STAFResult[0]['namespace'] == 'DB2' and " +
+          "STAFResult[1]['key'] == 'DB2Var2' and " +
+          "STAFResult[1]['value'] == 'DB2Value2' and " +
+          "STAFResult[1]['namespace'] == 'DB2' and " +
+          "STAFResult[2]['key'] == 'GlobalVar1' and " +
+          "STAFResult[2]['value'] == 'GlobalValue1' and " +
+          "STAFResult[2]['namespace'] == 'AIS' and " +
+          "STAFResult[3]['key'] == 'GlobalVar2' and " +
+          "STAFResult[3]['value'] == 'GlobalValue2' and " +
+          "STAFResult[3]['namespace'] == 'AIS' and " +
+          "STAFResult[4]['key'] == 'GlobalVar3' and " +
+          "STAFResult[4]['value'] == 'GlobalValue3' and " +
+          "STAFResult[4]['namespace'] == 'AIS'"
+        ],
+        
+        # Query each namespace
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WebsphereSVT',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'WebSphereSVT' and " +
+          "STAFResult['description'] == 'WebSphere SVT Namespace' and " +
+          "STAFResult['parent'] == 'WAS' and "
+          "len(STAFResult['children']) == 0"
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WebSphereSVT TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'WebSphereSVT' and " +
+          "len(STAFResult['children']) == 0"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WAS TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'WAS' and " +
+          "len(STAFResult['children']) == 1 and " +
+          "STAFResult['children'][0]['name'] == 'WebSphereSVT' and " +
+          "len(STAFResult['children'][0]['children']) == 0"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WAS',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'WAS' and " +
+          "STAFResult['description'] == 'Global WebSphere Namespace' and " +
+          "STAFResult['parent'] == 'AIS' and " +
+          "len(STAFResult['children']) == 1 and " +
+          "STAFResult['children'][0] == 'WebSphereSVT'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE AiS TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'AIS' and " +
+          "len(STAFResult['children']) == 2 and " +
+          "STAFResult['children'][0]['name'] == 'DB2' and " +
+          "len(STAFResult['children'][0]['children']) == 0 and "
+          "STAFResult['children'][1]['name'] == 'WAS' and " +
+          "len(STAFResult['children'][1]['children']) == 1and " +
+          "STAFResult['children'][1]['children'][0]['name'] == 'WebSphereSVT' and " +
+          "len(STAFResult['children'][1]['children'][0]['children']) == 0"
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE AIS',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'AIS' and " +
+          "STAFResult['description'] == 'Global AIS Namespace' and " +
+          "STAFResult['parent'] == None and " +
+          "len(STAFResult['children']) == 2 and " +
+          "STAFResult['children'][0] == 'DB2' and " +
+          "STAFResult['children'][1] == 'WAS'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE DB2 TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'DB2' and " +
+          "len(STAFResult['children']) == 0"
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE DB2',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'DB2' and " +
+          "STAFResult['description'] == 'Global DB2 Namespace' and " +
+          "STAFResult['parent'] == 'AIS' and " +
+          "len(STAFResult['children']) == 0"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE MyIndependentNS TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'MyIndependentNS' and " +
+          "len(STAFResult['children']) == 0"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE MyIndependentNS',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'MyIndependentNS' and " +
+          "STAFResult['description'] == 'User Independent Namespace' and " +
+          "STAFResult['parent'] == None and " +
+          "len(STAFResult['children']) == 0"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE WebSphereSVT VAR GlobalVar2',
+          [ STAFRC.Ok ], 'OverrideGlobalValue2',
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE WEBSphereSVT VAR GlobalVAR1',
+          [ STAFRC.Ok ], 'GlobalValue1',
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE WebSphereSVT VAR WASVar2',
+          [ STAFRC.Ok ], 'OverrideWASValue2',
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE WebSphereSVT VAR WASVar1',
+          [ STAFRC.Ok ], 'WASValue1',
+        ],
+         
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE WebSphereSVT VAR DB2Var1',
+          [ STAFRC.DoesNotExist], r'.*',
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'GET NAMESPACE WebSphereSVT VAR MyVar1',
+          [ STAFRC.DoesNotExist], r'.*',
+        ],
+
+       # Test DELETE namespace request
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE {STAFTest/NSName}',
+          [ STAFRC.InvalidRequestString ], r'.*'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE {STAFTest/NSName} CONFIRM VAR GlobalVar1',
+          [ STAFRC.InvalidRequestString ], r'.*'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE {STAFTest/NSName} CONFIRM',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE {StafTest/NSName}',
+          [ STAFRC.DoesNotExist ], r'.*'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE {STAFTest/NSName} CONFIRM',
+          [ STAFRC.DoesNotExist ], r'.*'
+        ],
+
+        # Verify that the WAS and DB2 namespaces whose parent referred to the deleted AIS
+        # namespace changed to have parent None.
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WAS',
+          [ STAFRC.Ok ], None,
+          "STAFResult['parent'] == None"
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE DB2',
+          [ STAFRC.Ok ], None,
+          "STAFResult['parent'] == None"
+        ],
+
+        # Delete a namespace that has a parent and has children and verify that the namespace's children were
+        # added to it's parent's children
+
+        [ 'STD:NAMESPACE', NamespaceService, 'CREATE NAMESPACE WebSphereFVT DESCRIPTION "WebSphereFVT Description" PARENT WebSphereSVT',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE WEBSphereSVT CONFIRM',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WebSphereSVT',
+          [ STAFRC.DoesNotExist ], r'.*'
+        ],
+
+        # Verify that the WAS namespace's child list no longer includes WebSphereSVT but does include WebSphereFVT
+
+        ['STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WAS TREE',
+          [ STAFRC.Ok ], None,
+          "STAFResult['name'] == 'WAS' and " +
+          "len(STAFResult['children']) == 1 and " +
+          "STAFResult['children'][0]['name'] == 'WebSphereFVT' and "
+          "len(STAFResult['children'][0]['children']) == 0"
+        ],
+
+        # Verify that the WebSphereFVT namespace's parent is now WAS
+
+        ['STD:NAMESPACE', NamespaceService, 'QUERY NAMESPACE WebSphereFVT',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult['children']) == 0 and " +
+          "STAFResult['parent'] == 'WAS'"
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE WAS CONFIRM',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE DB2 CONFIRM',
+          [ STAFRC.Ok ], r'^$'
+        ],
+        
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE WebSphereFVT CONFIRM',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'DELETE NAMESPACE MyIndependentNS CONFIRM',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', NamespaceService, 'LIST NAMESPACES',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 0"
+        ],
+      
+        # Clean-up
+
+        [ 'STD:NAMESPACE', 'VAR',     'DELETE VAR STAFTest/NSName VAR STAFTest/Var1 VAR STAFTest/Var3',
+          [ STAFRC.Ok ], r'^$'
+        ],
+
+        [ 'STD:NAMESPACE', 'SEM',     'RELEASE MUTEX STAFTest/NAMESPACE',
+          [ STAFRC.Ok ], r'^$'
+        ]
+
+      ]
+
+      </script>
+
+      <return>NAMESPACETests</return>
+
+    </sequence>
+  </function>
+  
+  <!-- ================================================================= -->
+  <!-- check-stafcmd - This function determines whether an arbitrary     -->
+  <!--                 staf command worked.  If not, it generates some   -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-stafcmd" scope="local">
+    <if expr="RC != STAFRC.Ok">
+      <sequence>
+        <message>
+          'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+        </message>
+        <log level="'error'">
+          'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+        </log>
+        <terminate/>
+      </sequence>
+    </if>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- InitJob - This function performs tasks that need to be done once  -->
+  <!--     at the beginning of the job.                                  -->
+  <!-- ================================================================= -->
+
+  <function name="InitJob">
+    <sequence>
+
+      <!-- Resolve the ImportDirectory -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING %s' % ImportDirectory</request>
+      </stafcmd>
+
+      <script>failMessage = 'Resolving VAR %s' % ImportDirectory</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>ImportDirectory = STAFResult</script>
+
+      <message>'ImportMachine=%s' % ImportMachine</message>
+      <message>'ImportDirectory=%s' % ImportDirectory</message>
+
+      <import machine="ImportMachine" file="'%s/STAXUtil.xml' % ImportDirectory"/>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'TestScopes = %s' % (TestScopes)
+      </call>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'TestMachines=%s' % TestMachines
+      </call>
+
+      <call function="'PingTestMachines'"/>
+
+      <!-- Get the handle for this STAX Job -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'HANDLE'</service>
+        <request>'LIST HANDLES NAME STAX/Job/%s' % STAXJobID</request>
+      </stafcmd>
+
+      <script>failMessage = 'Finding handle name STAX/Job/%s' % STAXJobID</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>
+        JobHandle = STAFResult[0]['handle']
+      </script>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'JobHandle=%s' % JobHandle
+      </call>
+
+      <!-- Get the machine nickname for the STAX service machine -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING {STAF/Config/MachineNickname}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Resolving {STAF/Config/MachineNickname}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>STAXMachineNickname = STAFResult</script>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'STAXMachineNickname=%s' % STAXMachineNickname
+      </call>
+
+      <!-- Get the machine name for the STAX service machine -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING {STAF/Config/Machine}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Resolving {STAF/Config/Machine}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>STAXMachine = STAFResult</script>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'STAXMachine=%s' % STAXMachine
+      </call>
+
+      <!-- Get the STAF Root for the STAX service machine (used by FS GET FILE TEXT FORMAT) -->
+      <stafcmd>
+        <location>'local'</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/STAFRoot}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/STAFRoot}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>STAXMachSTAFRoot = STAFResult</script>
+
+      <!-- Get the STAF DataDir for the STAX service machine (used by FS GET FILE TEXT FORMAT) -->
+      <stafcmd>
+        <location>'local'</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/DataDir}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/DataDir}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>STAXMachDataDir = STAFResult</script>
+
+      <!-- Get the platform for the STAX service machine (used by FS GET FILE TEXT FORMAT) -->
+      <stafcmd>
+        <location>'local'</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>
+        STAXMachOSType = STAFResult
+      </script>
+   
+    </sequence>
+
+  </function>
+
+
+  <!-- ================================================================= -->
+  <!-- PingTestMachines - This function pings all the test machines to   -->
+  <!--     verify that STAF is up and running on all of them.  If it's   -->
+  <!--     not running on one or more machines, it terminates the job.   -->
+  <!-- ================================================================= -->
+
+  <function name="PingTestMachines" scope="local">
+    <sequence>
+
+      <message>'Making sure that all TestMachines are running STAF'</message>
+
+      <!-- Make sure that all of the test machines can be sent STAF commands -->
+
+      <call function="'STAXUtilWaitForSTAF'">[TestMachines, 60]</call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0,
+          'failMsg': 'STAXUtilWaitForSTAF failed.  RC=%s Result=%s' % (rc, result),
+          'sendToMonitor': 1,
+          'recordStatus': 1 }
+      </call>
+
+      <if expr="rc != 0">
+        <terminate block="'main'"/>
+      </if>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- GatherInfo - This function retrieves information about the        -->
+  <!--              system we are testing.                               -->
+  <!-- ================================================================= -->
+
+  <function name="GatherInfo">
+    <sequence>
+
+      <message>'Gathering information about machine %s' % TestMach</message>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/STAFRoot}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/STAFRoot}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>TestMachSTAFRoot = STAFResult</script>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/DataDir}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/DataDir}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>TestMachUserDataDir = STAFResult + '/user'</script>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>TestMachOSType = STAFResult</script>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/Machine}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/Machine}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <if expr="TestMachOSType.find('OS/390') == 0">
+        <script>TestMachName = TestMach</script>
+        <else>
+          <script>TestMachName = STAFResult</script>
+        </else>
+      </if>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/MachineNickname}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/MachineNickname}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>TestMachNickname = STAFResult</script>
+
+      <!-- Get the endpoint for the STAX machine when it submits a request to the test machine-->
+      <stafcmd>
+        <location>TestMach</location>
+        <service>'MISC'</service>
+        <request>'WHOAMI'</request>
+      </stafcmd>
+
+      <script>failMessage = 'STAF %s MISC WHOAMI' % (TestMach)</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>STAXEndpoint = STAFResult['endpoint']</script>
+      
+      <call function="'STAXUtilLogAndMsg'">
+        'Test machine: %s   OS type: %s  STAFRoot: %s DataDir/user: %s  Machine: %s MachineNickname: %s STAXEndpoint: %s' % \
+          (TestMach, TestMachOSType, TestMachSTAFRoot, TestMachUserDataDir, TestMachName, TestMachNickname, STAXEndpoint)
+      </call>
+
+      <script>
+        if (TestMachOSType.find('Win9') == 0 or TestMachOSType.find('WinM') == 0):
+            TestMachShell = 'command.com /c %c'
+        elif TestMachOSType.find('Win') == 0:
+            TestMachShell = 'cmd.exe /c %c'
+        else:
+            TestMachShell = '/bin/sh -c %C'
+      </script>
+
+      <message>'TestMachShell for machine %s is %s' % (TestMach, TestMachShell)</message>
+
+      <if expr="(TestMach == 'local') or (TestMach == 'local://local') or (TestMachName == STAXMachine)">
+        <sequence>
+          <script>testMachineIsLocal = 1</script>
+          <log>'Test machine %s is the local machine' % (TestMachName)</log>
+        </sequence>
+        <else>
+          <script>testMachineIsLocal = 0</script>
+        </else>
+      </if>
+
+    </sequence>
+  </function>
+
+  <function name="InitTestMachine">
+    <sequence>
+
+
+      <message>
+        'Preparing to run tests on machine %s' % (TestMach)
+      </message>
+
+      <!-- Delete any Mutex Semaphores left over from a previous run -->
+
+      <script>
+        SemMutexList = [ 'STAFTest/NAMESPACE' ]
+      </script>
+
+      <!-- Delete any Mutex Semaphores left over from a previous test run -->
+
+      <iterate var="mutexName" in="SemMutexList">
+        <sequence>
+          <stafcmd>
+            <location>TestMach</location>
+            <service>'SEM'</service>
+            <request>'RELEASE MUTEX %s FORCE' % mutexName</request>
+          </stafcmd>
+
+          <stafcmd>
+            <location>TestMach</location>
+            <service>'SEM'</service>
+            <request>'DELETE MUTEX %s' % mutexName</request>
+          </stafcmd>
+
+          <script>failMessage = 'Deleting %s' % mutexName</script>
+          <if expr="RC not in [ STAFRC.Ok, STAFRC.SemaphoreDoesNotExist ]">
+            <call function="'check-stafcmd'"/>
+          </if>
+        </sequence>
+      </iterate>
+
+      <!-- Remove any namespaces added from a previous test run -->
+
+      <iterate var="ns" in="['MyIndependentNS', 'DB2', 'WebSphereFVT', 'WebSphereSVT', 'WAS', 'AIS']">
+        <stafcmd>
+          <location>TestMach</location>
+          <service>NamespaceService</service>
+          <request>'DELETE NAMESPACE %s CONFIRM' % (ns)</request>
+        </stafcmd>
+      </iterate>
+    
+    </sequence>
+  </function>
+
+  <function name="TermTestMachine">
+    <sequence>
+
+      <!-- Delete any Mutex Semaphores from this run -->
+
+      <message>
+        'Performing test cleanup on test machine %s' % (TestMach)
+      </message>
+
+      <iterate var="mutexName" in="SemMutexList">
+        <sequence>
+
+          <stafcmd>
+            <location>TestMach</location>
+            <service>'SEM'</service>
+            <request>'DELETE MUTEX %s' % mutexName</request>
+          </stafcmd>
+
+          <script>failMessage = 'Deleting %s' % mutexName</script>
+          <if expr="RC not in [ STAFRC.Ok, STAFRC.SemaphoreDoesNotExist ]">
+            <call function="'check-stafcmd'"/>
+          </if>
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- run-standard-test - This function executes a standard STAF test   -->
+  <!-- ================================================================= -->
+
+  <function name="run-standard-test">
+    <sequence>
+
+      <message>
+        'Testing machine: %s service: %s request: %s' % (
+          TestMach, thisTest[1], thisTest[2])
+      </message>
+
+      <stafcmd>
+        <location>TestMach</location>
+        <service>thisTest[1]</service>
+        <request>thisTest[2]</request>
+      </stafcmd>
+
+      <script>failMsg = ''</script>
+
+      <if expr="RC not in thisTest[3]">
+        <script>
+          failMsg = 'Service: %s, Request: %s - RC (%s) not in %s.  STAFResult=%s' % \
+                    (thisTest[1], thisTest[2], RC, thisTest[3], STAFResult)
+        </script>
+        <elseif expr="thisTest[4] and not re.match(thisTest[4], STAFResult)">
+          <script>
+            failMsg = 'Service: %s, Request: %s - Grep error\nmatching:\n%s\nwith:\n%s' % \
+                      (thisTest[1], thisTest[2], thisTest[4], STAFResult)
+          </script>
+        </elseif>
+        <elseif expr="not thisTest[4] and len(thisTest) >= 6 and not eval(thisTest[5])">
+          <script>
+            failMsg = 'Service: %s, Request: %s - Unexpected STAFResult\nThe following expression evaluated to false:\n%s\nSTAFResult:\n%s' % \
+                      (thisTest[1], thisTest[2], thisTest[5], STAFResult)
+          </script>
+        </elseif>
+        <elseif expr="len(thisTest) >= 7">
+          <script>
+            exec(thisTest[6])
+          </script>
+        </elseif>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': failMsg == '', 'failMsg': failMsg,
+          'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- run-tests - This function runs the testcases on a given system    -->
+  <!-- ================================================================= -->
+
+  <function name="RunTests">
+    <sequence>
+
+      <iterate var="thisTest" in="allTests">
+        <sequence>
+
+          <script>
+            TestType = thisTest[0]
+            TestScope = None
+
+            if string.find(thisTest[0], ':') >= 0:
+              [ TestType, TestScope ] = string.split(thisTest[0], ':')
+          </script>
+
+          <if expr="TestType == 'STD'">
+            <testcase name="TestScope">
+              <call function="'run-standard-test'"/>
+            </testcase>
+            <else>
+              <message>'Unknown test type: %s' % thisTest[0]</message>
+            </else>
+          </if>
+
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- DoAll - This function is the main function called and drives the  -->
+  <!--         overall build process.                                    -->
+  <!-- ================================================================= -->
+
+  <function name="DoAll">
+    <testcase name="'TestNS'">
+      <sequence>
+
+        <script>
+          import time
+          starttime = time.time() # record starting time
+        </script>
+
+        <call function="'InitJob'"/>
+
+        <paralleliterate var="TestMach" in="TestMachines">
+          <sequence>
+
+            <call function="'GatherInfo'"/>
+
+            <script>
+              # Replace any '.'s in test machine name with '-'s so that this
+              # modified machine name can be used in block and testcase names
+              # without creating a hierarchy of blocks and testcases (e.g. blocks
+              # for lucas, then austin, then ibm, then com, since a '.' in a block
+              # name (or testcase name) means a new block (or a new testcas).
+              TestMach_NoDots = TestMach.replace('.', '-')
+            </script>
+
+            <message>'TestMach_NoDots = %s' % (TestMach_NoDots) </message>
+
+            <block name="TestMach_NoDots">
+              <sequence>
+
+                <testcase name="TestMachOSType + '.' + TestMach_NoDots">
+                  <sequence>
+
+                    <call function="'STAXUtilLogAndMsg'">
+                      'STAF Testing started on machine %s' % TestMach
+                    </call>
+
+                    <call function="'InitTestMachine'"/>
+                    <call function="'InitTests'"/>
+                    <call function="'RunTests'"/>
+                    <call function="'TermTestMachine'"/>
+
+                    <call function="'STAXUtilLogAndMsg'">
+                      'STAF Testing completed on machine %s' % TestMach
+                    </call>
+
+                  </sequence>
+                </testcase>
+
+              </sequence>
+            </block>
+
+          </sequence>
+        </paralleliterate>
+
+        <!-- Clean up the STAX machine -->
+
+        <call function="'TermJob'"/>
+
+        <!-- Query the test results -->
+
+        <script>result = None</script>
+
+        <call function="'STAXUtilQueryAllTests'"/>
+
+        <script>[rc, result, totals, testcases] = STAXResult</script>
+
+        <message>
+           'STAXUtilQueryAllTests testcase map:\n%s' % (testcases)
+        </message>
+
+        <if expr="rc == 0">
+          <sequence>
+            <script>
+              [totalTests, totalPasses, totalFails] = totals
+              result = {'fails': totalFails, 'passes': totalPasses }
+
+              activeTests = []
+              for testName in testcases.keys():
+                testResultList = testcases[testName]
+                if testResultList[2] == '&lt;Pending>':
+                  activeTests.append(testName + ': ' + testResultList[2])
+            </script>
+            <message>
+              'Tests that are still running: %s' % (activeTests)
+            </message>
+          </sequence>
+          <else>
+            <call function="'STAXUtilLogAndMsg'">
+              'STAXUtilQueryAllTests failed. RC=%s Result=%s' % (rc, result)
+            </call>
+          </else>
+        </if>
+
+        <call function="'STAXUtilQueryTest'">'TestNS'</call>
+
+        <script>[rc, result, totals] = STAXResult</script>
+
+        <if expr="rc == 0">
+          <sequence>
+            <script>[passes, fails, elapsedTime, numStarts] = totals</script>
+            <message>'STAXUtilQueryTest TestNS results: %s' % (totals)</message>
+            <if expr="fails > 0">
+              <call function="'STAXUtilLogAndMsg'">
+                'Testcase: %s, Passes: %s, Fails: %s, ElapsedTime: %s, NumStarts: %s' % \
+                (testName, passes, fails, elapsedTime, numStarts)
+              </call>
+            </if>
+          </sequence>
+          <else>
+            <call function="'STAXUtilLogAndMsg'">
+              'STAXUtilQueryTest TestNS fails.  RC=%s Result=%s' % (rc, result)
+            </call>
+          </else>
+        </if>
+
+        <!-- Difference between current time and starttime yields time elapsed -->
+        <script>elapsed = time.time() - starttime</script>
+
+        <call function="'STAXUtilLogAndMsg'">
+          'Namespace Testing completed in %.0f seconds' % (elapsed)
+        </call>
+
+        <return>result</return>
+
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- TermJob - This function cleans up the STAX machine after the job. -->
+  <!-- ================================================================= -->
+
+  <function name="TermJob">
+    <sequence>
+     <nop/> 
+   </sequence>
+  </function>
+
+</stax>

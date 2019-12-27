@@ -1,0 +1,44 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stafinfo_targets += $(REL)/bin/STAFInfo$(OS_EE)
+Targets += $(stafinfo_targets)
+CleanupTargets += cleanup_stafinfo
+
+$(stafinfo_targets): SUBSYS_REL := stafinfo
+SUBSYS_REL := stafinfo
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafinfo_targets): OBJS = $(stafinfo_objs)
+$(stafinfo_targets): LIBS = STAF
+
+stafinfo_objs :=\
+  STAFInfo
+
+stafinfo_objs        := $(foreach obj,$(stafinfo_objs),$(O)/stafinfo/$(obj)$(OS_OE))
+stafinfo_dependents  := $(stafinfo_objs:$(OS_OE)=.d)
+$(stafinfo_dependents): SUBSYS_REL := stafinfo
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafinfo_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFClnt targets
+
+$(REL)/bin/STAFInfo$(OS_EE): $(stafinfo_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+cleanup_stafinfo:
+	-@$(DEL) $(O)/stafinfo/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAFInfo$(OS_EE) $(OUT_ERR_TO_DEV_NULL)

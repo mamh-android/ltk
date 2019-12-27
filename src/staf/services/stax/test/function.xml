@@ -1,0 +1,3446 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!-- 
+   Tests the enhancements made for function scoping in STAX 1.1:
+     - Added scope attribute (local or global)
+     - Added STAXGlobal class for truly global variables, even
+       across threads
+     - Added ability to define function arguments
+     - Added new call-with-list and call-with-map elements
+     - Added new return element to return anything from a function
+       and store in a variable named STAXResult
+       
+     This job should run and complete with 359 passes, 0 fails.
+       
+  -->
+
+<stax>
+
+  <defaultcall function="FunctionTests"/>
+
+  <script>machName = "local"</script>
+  
+  <script>
+    scenarioList = ['Scenario01', 'Scenario02', 'Scenario03', 'Scenario04',
+                    'Scenario05', 'Scenario06', 'Scenario07', 'Scenario08',
+                    'Scenario09', 'Scenario10', 'Scenario11', 'Scenario12',
+                    'Scenario13', 'Scenario14', 'Scenario15', 'Scenario16',
+                    'Scenario17']
+
+  </script>
+
+  <script>RC = 0</script>
+  <script>currentFunction = "functiontests"</script>
+  <script>expectedFunctionNotFoundMsg = ""</script>
+  <script>expectedSTAXSignalDataType = ""</script>
+  <script>expectedSTAXSignalDataText = ""</script>
+  <script>expectedSTAXResult = ""</script>
+    
+  <function name="FunctionTests">
+    <function-single-arg>
+      <function-optional-arg name="foo" default="'bar'"/>
+    </function-single-arg>
+    
+    <block name = "'Function Element Tests '">    
+    
+      <sequence>
+      
+        <message>
+          'Starting function test'
+        </message>
+
+        <script>import string</script>
+
+        <!-- Make sure that optional argument foo contains 'bar' if no arguments were 
+             passed via the <defaultcall> element, e.g.
+              <defaultcall function="FunctionTests"/> -->
+
+        <testcase name="'Scenario00'">
+          <if expr="foo == 'bar'">
+            <tcstatus result="'pass'"/>
+            <else>
+              <tcstatus result="'fail'">"foo = %s instead of 'bar'" % (foo)</tcstatus>
+            </else>
+          </if>
+        </testcase>
+        
+        <iterate var="scenarioName" in="scenarioList" indexvar="i">
+        
+          <testcase name='scenarioName'>        
+          
+            <call function='scenarioName'/>              
+            
+          </testcase>
+          
+        </iterate>
+
+        <message>
+          'Finishing function test - there should be 359 passes, 0 fails.'
+        </message>
+      
+      </sequence>
+          
+    </block>
+    
+  </function>
+
+  <function name="Scenario01">
+
+    <block name="'Scenario01Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario01: Function defined with no arguments"</message>
+        
+        <script>
+           expectedSTAXResult = "None"
+           callFunction = 'Function1'
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'STAXFunctionError'
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">"Hi", "there"</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+     
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function1">
+    <function-no-args/>
+
+    <sequence>
+        
+      <message>"Function1 is executing"</message>
+      
+      <script>currentFunction = "Function1"</script>
+
+      <return/>
+
+    </sequence>
+
+  </function>
+ 
+  <function name="Scenario02">
+
+    <block name="'Scenario02Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario02: Function defined with one required argument"</message>
+        
+        <script>
+           callFunction = 'Function2'
+        </script>
+
+        <script>
+           expectedSTAXResult = 'STAXFunctionError'
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>
+           expectedSTAXResult = 'None'
+        </script>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = ""
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str([])
+        </script>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'Hi'
+        </script>
+
+        <call function="callFunction">'Hi'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(['Hi'])
+        </script>
+
+        <call function="callFunction">['Hi']</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str([])
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str([None])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([''])
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([[]])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([{}])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(['Hi'])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+     <!--   
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+     -->   
+        <script>
+           expectedSTAXResult = str({None: None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function2Arg1': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function2Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function2Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function2Arg1': ''})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function2Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': []})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': {}})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': 'Hi'})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function2" scope="local">
+
+    <function-single-arg>
+      <function-required-arg name="Function2Arg1"/>
+    </function-single-arg>
+
+    <sequence>
+        
+      <message>"Function2 is executing"</message>
+      
+      <script>currentFunction = "Function2"</script>
+
+      <message>'Function2Arg1=%s' % str(Function2Arg1)</message>
+
+      <return>Function2Arg1</return>
+
+    </sequence>
+  </function>
+ 
+  <function name="Scenario03">
+
+    <block name="'Scenario03Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario03: Function defined with one optional argument"</message>
+        
+        <script>
+           callFunction = 'Function3'
+        </script>
+
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = ""
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str([])
+        </script>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str([])
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str([None])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([''])
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([[]])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([{}])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(['Hi'])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+     <!--   
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+     -->
+             
+        <script>
+           expectedSTAXResult = str({None: None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str({'': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str({'Function3Arg1': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function3Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function3Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function3Arg1': ''})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function3Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': []})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': {}})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': 'Hi'})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function3" scope="local">
+
+    <function-single-arg>
+      <function-optional-arg name="Function3Arg1" default="'defaultValue'"/>
+    </function-single-arg>
+
+    <sequence>
+        
+      <message>"Function3 is executing"</message>
+      
+      <script>currentFunction = "Function3"</script>
+
+      <message>'Function3Arg1=%s' % str(Function3Arg1)</message>
+
+      <return>Function3Arg1</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario04">
+
+    <block name="'Scenario04Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario04: Function defined as a list with one required argument"</message>
+        
+        <script>
+           callFunction = 'Function4'
+        </script>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = ""
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = ''
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = 'Hi'
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+     <!--   
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+     -->
+                  
+        <script>
+           expectedSTAXResult = str({None: None})
+        </script>
+   
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str({'': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function4Arg1': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function4Arg1': ''})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = str({'arg1': []})
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': {}})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': 'Hi'})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+
+  </function>
+
+  <function name="Function4" scope="local">
+
+    <function-list-args>
+      <function-required-arg name="Function4Arg1"/>
+    </function-list-args>
+
+    <sequence>
+        
+      <message>"Function4 is executing"</message>
+      
+      <script>currentFunction = "Function4"</script>
+
+      <message>'Function4Arg1=%s' % str(Function4Arg1)</message>
+
+      <return>Function4Arg1</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario05">
+
+    <block name="'Scenario05Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario05: Function defined as a list with one optional argument"</message>
+        
+        <script>
+           callFunction = 'Function5'
+        </script>
+
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = ""
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">"Hi", "there"</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str('')
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = 'Hi'
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+      <!--  
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+      --> 
+             
+        <script>
+           expectedSTAXResult = str({None: None})
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str({'': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function5Arg1': None})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function5Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function5Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'Function5Arg1': ''})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function5Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = str({'arg1': []})
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': {}})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({'arg1': 'Hi'})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function5" scope="local">
+
+    <function-list-args>
+      <function-optional-arg name="Function5Arg1" default="'defaultValue'"/>
+    </function-list-args>
+
+    <sequence>
+        
+      <message>"Function5 is executing"</message>
+      
+      <script>currentFunction = "Function5"</script>
+
+      <message>'Function5Arg1=%s' % str(Function5Arg1)</message>
+
+      <return>Function5Arg1</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario06">
+
+    <block name="'Scenario06Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario06: Function defined as a list with two optional arguments"</message>
+        
+        <script>
+           callFunction = 'Function6'
+        </script>
+
+        <script>
+           expectedSTAXResult = "('defaultValue', 'defaultValue2')"
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "(None, 'defaultValue2')"
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('None', 'defaultValue2')"
+        </script>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('', 'defaultValue2')"
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('defaultValue', 'defaultValue2')"
+        </script>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "({}, 'defaultValue2')"
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">'Hi', 'there', 'yall'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = "('defaultValue', 'defaultValue2')"
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "(None, 'defaultValue2')"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('', 'defaultValue2')"
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "([], 'defaultValue2')"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({}, 'defaultValue2')"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', 'defaultValue2')"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+          <call-list-arg>99</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = "({}, 'defaultValue2')"
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+      <!--  
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+       -->
+        
+        <script>
+           expectedSTAXResult = "({None: None}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({'': None}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({'Function6Arg1': None}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function6Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function6Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({'Function4Arg1': ''}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = "({'arg1': []}, 'defaultValue2')"
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({'arg1': {}}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({'arg1': 'Hi'}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "({'arg2': 'there', 'arg1': 'Hi'}, 'defaultValue2')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function6" scope="local">
+
+    <function-list-args>
+      <function-optional-arg name="Function6Arg1" default="'defaultValue'"/>
+      <function-optional-arg name="Function6Arg2" default="'defaultValue2'"/>
+    </function-list-args>
+
+    <sequence>
+        
+      <message>"Function6 is executing"</message>
+      
+      <script>currentFunction = "Function6"</script>
+
+      <message>'Function6Arg1=%s, Function6Arg2=%s' % (str(Function6Arg1), str(Function6Arg2))</message>
+
+      <return>Function6Arg1, Function6Arg2</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario07">
+
+    <block name="'Scenario07Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario07: Function defined as a list with two required arguments"</message>
+        
+        <script>
+           callFunction = 'Function7'
+        </script>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">'Hi', 'there', 'yall'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', None)"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "(None, 'there')"
+        </script>
+       
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+          <call-list-arg>'there'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('', '')"
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "([], {})"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+          <call-list-arg>99</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+      <!--  
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+      -->  
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'">''</call-map-arg>
+          <call-map-arg name="'Function4Arg2'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function7" scope="local">
+
+    <function-list-args>
+      <function-required-arg name="Function7Arg1"/>
+      <function-required-arg name="Function7Arg2"/>
+    </function-list-args>
+
+    <sequence>
+        
+      <message>"Function7 is executing"</message>
+      
+      <script>currentFunction = "Function7"</script>
+
+      <message>'Function7Arg1=%s, Function7Arg2=%s' % (str(Function7Arg1), str(Function7Arg2))</message>
+
+      <return>Function7Arg1, Function7Arg2</return>
+
+    </sequence>
+  </function>
+  
+  <function name="Scenario08">
+
+    <block name="'Scenario08Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario08: Function defined as a list with two required arguments and an other argument"</message>
+        
+        <script>
+           callFunction = 'Function8'
+        </script>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', [])"
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', ['yall'])"
+        </script>
+
+        <call function="callFunction">'Hi', 'there', 'yall'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', ['yall', 'come', 'back'])"
+        </script>
+
+        <call function="callFunction">'Hi', 'there', 'yall', 'come', 'back'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', ['yallcomeback'])"
+        </script>
+
+        <call function="callFunction">'Hi', 'there', 'yall' + 'come' + 'back'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">{'a' : 'Hi', 'b' : 'there', 'c' : 'yall'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', 'there', [None])"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "(None, 'Hi', ['a', 'b', 'c'])"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'a'</call-list-arg>
+          <call-list-arg>'b'</call-list-arg>
+          <call-list-arg>'c'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('', '', [])"
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "([], {}, [])"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', 'there', [])"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "('Hi', 'there', [99])"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+          <call-list-arg>99</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+      <!--  
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+      -->  
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function4Arg1'">''</call-map-arg>
+          <call-map-arg name="'Function4Arg2'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+          <call-map-arg name="'arg3'">'yall'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+      
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function8" scope="local">
+
+    <function-list-args>
+      <function-required-arg name="Function8Arg1"/>
+      <function-required-arg name="Function8Arg2"/>
+      <function-other-args name="Function8Arg3"/>
+    </function-list-args>
+
+    <sequence>
+        
+      <message>"Function8 is executing"</message>
+      
+      <script>currentFunction = "Function8"</script>
+      
+      <message>'Function8Arg1=%s, Function8Arg2=%s, Function8Arg3=%s' % (str(Function8Arg1), str(Function8Arg2), Function8Arg3)</message>
+
+      <return>Function8Arg1, Function8Arg2, Function8Arg3</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario09">
+
+    <block name="'Scenario09Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario09: Function defined as a map with one required argument"</message>
+        
+        <script>
+           callFunction = 'Function9'
+        </script>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'Hi'
+        </script>
+
+        <call function="callFunction">{'Function9Arg1' : 'Hi'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(6)
+        </script>
+
+        <call function="callFunction">{'Function9Arg1' : 2 * 3}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">{'Function9Arg1' : 'Hi', 'Function9Arg2' : 'there'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+      
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+           arg1 = 'Function9Arg1'
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+      <!--  
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+       -->
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+          expectedSTAXResult = str(None)
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function9Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function9Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = ''
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function9Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = str([])
+           arg1 = 'Function9Arg1'
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str({})
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = 'Hi'
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+
+  </function>
+
+  <function name="Function9" scope="local">
+
+    <function-map-args>
+      <function-required-arg name="Function9Arg1"/>
+    </function-map-args>
+
+    <sequence>
+        
+      <message>"Function9 is executing"</message>
+      
+      <script>currentFunction = "Function9"</script>
+
+      <message>'Function9Arg1=%s' % str(Function9Arg1)</message>
+
+      <return>Function9Arg1</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario10">
+
+    <block name="'Scenario10Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario10: Function defined as a map with one optional argument"</message>
+        
+        <script>
+           callFunction = 'Function10'
+        </script>
+
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">"Hi", "there"</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'Hi'
+        </script>
+
+        <call function="callFunction">{'Function10Arg1' : 'Hi'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(6)
+        </script>
+
+        <call function="callFunction">{'Function10Arg1' : 2 * 3}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           arg1 = 'Function10Arg1'
+        </script>
+
+        <call function="callFunction">{arg1 : 2 * 3}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">{'Function10Arg1' : 'Hi', 'Function10Arg2' : 'there'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+      
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = 'defaultValue'
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+             
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+ 
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+      
+        <script>
+           expectedSTAXResult = str(None)
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function10Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function10Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = ''
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function10Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "{}"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function10Arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = 'Hi'
+           arg1 = 'Function10Arg1'
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(6)
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function10Arg1'">2 * 3</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           arg1 = 'Function10Arg1'
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">2 * 3</call-map-arg>
+        </call-with-map>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="arg1">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+        </call-with-map>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+      
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function10" scope="local">
+
+    <function-map-args>
+      <function-optional-arg name="Function10Arg1" default="'defaultValue'"/>
+    </function-map-args>
+
+    <sequence>
+        
+      <message>"Function10 is executing"</message>
+      
+      <script>currentFunction = "Function10"</script>
+
+      <message>'Function10Arg1=%s' % str(Function10Arg1)</message>
+
+      <return>Function10Arg1</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario11">
+
+    <block name="'Scenario11Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario11: Function defined as a map with two optional arguments"</message>
+        
+        <script>
+           callFunction = 'Function11'
+        </script>
+
+        <script>
+           expectedSTAXResult = "('defaultValue', 'defaultValue2')"
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('defaultValue', 'defaultValue2')"
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'Hi', 'there', 'yall'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'defaultValue2')"
+        </script>
+
+        <call function="callFunction">{'Function11Arg1' : 'Hi'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "(6, 'defaultValue2')"
+        </script>
+
+        <call function="callFunction">{'Function11Arg1' : 2 * 3}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           arg1 = 'Function11Arg1'
+        </script>
+
+        <call function="callFunction">{arg1 : 2 * 3}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">{'Function11Arg1' : 'Hi', 'Function11Arg2' : 'there'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">{'Function11Arg1' : 'Hi', 'Function11Arg2' : 'there',  'Function11Arg3' : 'yall'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function11Arg2'">'there'</call-map-arg>
+          <call-map-arg name="arg1">'Hi'</call-map-arg>
+        </call-with-map> 
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function11Arg2'">'there'</call-map-arg>
+          <call-map-arg name="'dummy'">'dummy'</call-map-arg>
+          <call-map-arg name="arg1">'Hi'</call-map-arg>
+        </call-with-map> 
+         
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function11" scope="local">
+
+    <function-map-args>
+      <function-optional-arg name="Function11Arg1" default="'defaultValue'"/>
+      <function-optional-arg name="Function11Arg2" default="'defaultValue2'"/>
+    </function-map-args>
+
+    <sequence>
+        
+      <message>"Function11 is executing"</message>
+      
+      <script>currentFunction = "Function11"</script>
+
+      <message>'Function11Arg1=%s, Function11Arg2=%s' % (str(Function11Arg1), str(Function11Arg2))</message>
+
+      <return>Function11Arg1, Function11Arg2</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario12">
+
+    <block name="'Scenario12Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario12: Function defined as a map with two required arguments"</message>
+        
+        <script>
+           callFunction = 'Function12'
+        </script>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'Hi', 'there', 'yall'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">{'Function12Arg1' : 'Hi'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "(6, ['machA', 'machB'])"
+           a = ['machA']
+           b = ['machB']
+        </script>
+
+        <call function="callFunction">{'Function12Arg1' : 2 * 3, 'Function12Arg2' : a + b}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "(6, 8)"
+           arg1 = 'Function12Arg1'
+           arg2 = 'Function12' + 'Arg2'
+        </script>
+
+        <call function="callFunction">{arg1 : 2 * 3, arg2 : (5*2)-2}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">{'Function12Arg1' : 'Hi', 'Function12Arg2' : 'there'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">{'Function12Arg1' : 'Hi', 'Function12Arg2' : 'there',  'Function12Arg3' : 'yall'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function12" scope="local">
+
+    <function-map-args>
+      <function-required-arg name="Function12Arg1"/>
+      <function-required-arg name="Function12Arg2"/>
+    </function-map-args>
+
+    <sequence>
+        
+      <message>"Function12 is executing"</message>
+      
+      <script>currentFunction = "Function12"</script>
+
+      <message>'Function12Arg1=%s, Function12Arg2=%s' % (str(Function12Arg1), str(Function12Arg2))</message>
+
+      <return>Function12Arg1, Function12Arg2</return>
+
+    </sequence>
+  </function>
+  
+  <function name="Scenario13">
+
+    <block name="'Scenario13Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario13: Function defined as a map with two required arguments and an other argument"</message>
+        
+        <script>
+           callFunction = 'Function13'
+        </script>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">""</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', {})"
+        </script>
+
+        <call function="callFunction">{'Function13Arg1' : 'Hi', 'Function13Arg2' : 'there'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', {'Function13Arg3': 'yall'})"
+        </script>
+
+        <call function="callFunction">{'Function13Arg1' : 'Hi', 'Function13Arg2' : 'there', 'Function13Arg3' : 'yall'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('there', 'Hi', {'b': 'come', 'a': 'yall', 'c': 'back'})"
+        </script>
+
+        <call function="callFunction">{'a' : 'yall', 'Function13Arg2' : 'Hi', 'b' : 'come', 'Function13Arg1' : 'there', 'c' : 'back'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', {'c': 'yallcomeback'})"
+        </script>
+
+        <call function="callFunction">{'Function13Arg1' : 'Hi', 'Function13Arg2' : 'there', 'c' : 'yall' + 'come' + 'back'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = str(STAXFunctionError)
+        </script>
+
+        <call function="callFunction">{'a' : 'Hi', 'b' : 'there', 'c' : 'yall'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "(6, ['machA', 'machB'], {})"
+           a = ['machA']
+           b = ['machB']
+        </script>
+
+        <call function="callFunction">{'Function13Arg1' : 2 * 3, 'Function13Arg2' : a + b}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "(6, 8, {})"
+           arg1 = 'Function13Arg1'
+           arg2 = 'Function13' + 'Arg2'
+        </script>
+
+        <call function="callFunction">{arg1 : 2 * 3, arg2 : (5*2)-2}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', {})"
+        </script>
+
+        <call function="callFunction">{'Function13Arg1': 'Hi', 'Function13Arg2': 'there'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', {'Function13Arg3': 'yall'})"
+        </script>
+
+        <call function="callFunction">{'Function13Arg1' : 'Hi', 'Function13Arg2' : 'there',  'Function13Arg3' : 'yall'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function13Arg2'">'there'</call-map-arg>
+          <call-map-arg name="'Function13Arg3'">'yall'</call-map-arg>
+          <call-map-arg name="'Function13Arg1'">'Hi'</call-map-arg>
+        </call-with-map>
+
+        <script>
+           expectedSTAXResult = "('Hi again', 'there', {None: 'None3'})"
+        </script>
+
+        <call function="callFunction">{'Function13Arg1' : 'Hi again', 'Function13Arg2' : 'there',  None: None, None: None, None : 'None3'}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function13Arg2'">'there'</call-map-arg>
+          <call-map-arg name="'Function13Arg1'">'Hi'</call-map-arg>
+          <call-map-arg name=""/>
+          <call-map-arg name="None"></call-map-arg>
+          <call-map-arg name="">'None3'</call-map-arg>
+          <call-map-arg name="'Function13Arg1'">'Hi again'</call-map-arg>
+        </call-with-map>
+        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function13" scope="local">
+
+    <function-map-args>
+      <function-required-arg name="Function13Arg1"/>
+      <function-required-arg name="Function13Arg2"/>
+      <function-other-args name="Function13Arg3"/>
+    </function-map-args>
+
+    <sequence>
+        
+      <message>"Function13 is executing"</message>
+      
+      <script>currentFunction = "Function13"</script>
+      
+      <message>'Function13Arg1=%s, Function13Arg2=%s, Function13Arg3=%s' % (str(Function13Arg1), str(Function13Arg2), Function13Arg3)</message>
+
+      <return>Function13Arg1, Function13Arg2, Function13Arg3</return>
+
+    </sequence>
+  </function>
+
+  <function name="Scenario14">
+
+    <block name="'Scenario14Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario14: Function with no defined arguments"</message>
+        
+        <script>
+           callFunction = 'Function14'
+        </script>
+
+        <script>
+           expectedSTAXResult = 'None'
+        </script>
+
+        <call function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <call function="callFunction"></call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = 'None'
+        </script>
+
+        <call function="callFunction">None</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call function="callFunction">'None'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = ''
+        </script>
+       
+        <call function="callFunction">''</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "[]"
+        </script>
+       
+        <call function="callFunction">[]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "{}"
+        </script>
+       
+        <call function="callFunction">{}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there')"
+        </script>
+
+        <call function="callFunction">'Hi', 'there'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           expectedSTAXResult = "('Hi', 'there', 'yall')"
+        </script>
+
+        <call function="callFunction">'Hi', 'there', 'yall'</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <!-- Test using call-with-list -->
+             
+        <script>
+           expectedSTAXResult = "[]"
+        </script>
+
+        <message>'&lt;call-with-list function="callFunction"/>'</message>
+        <call-with-list function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = str([None])
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg></call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg/>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "['']"
+        </script>
+
+        <call-with-list function="callFunction">
+          <call-list-arg>''</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "[[]]"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>[]</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "[{}]"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>{}</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "['Hi']"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "['Hi', 'there']"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "['Hi', 'there', 99]"
+        </script>
+        
+        <call-with-list function="callFunction">
+          <call-list-arg>'Hi'</call-list-arg>
+          <call-list-arg>'there'</call-list-arg>
+          <call-list-arg>99</call-list-arg>
+        </call-with-list>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Test using call-with-map -->
+        
+        <script>
+           expectedSTAXResult = "{}"
+        </script>
+     
+        <call-with-map function="callFunction"/>
+        <call function="'PASS-if-correct-STAXResult'"/>
+      <!--  
+        <call-with-map function="callFunction">
+          <call-map-arg name=""></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+      -->  
+            
+        <script>
+           expectedSTAXResult = "{None: None}"
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="None"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+            
+        <script>
+           expectedSTAXResult = "{'': None}"
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="''"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+            
+        <script>
+           expectedSTAXResult = "{'Function14Arg1': None}"
+        </script>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function14Arg1'"></call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function14Arg1'"/>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "{'Function14Arg1': ''}"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'Function14Arg1'">''</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = "{'arg1': []}"
+        </script>
+       
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">[]</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "{'arg1': {}}"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">{}</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "{'arg1': 'Hi'}"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+           expectedSTAXResult = "{'arg2': 'there', 'arg1': 'Hi'}"
+        </script>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'arg1'">'Hi'</call-map-arg>
+          <call-map-arg name="'arg2'">'there'</call-map-arg>
+        </call-with-map>          
+        <call function="'PASS-if-correct-STAXResult'"/>
+         
+        <script>
+           expectedSTAXResult = "[6, 8, 'yoyo']"
+           x = 5
+           y = 3
+           s = 'yo'
+        </script>
+
+        <call function="callFunction">[2 * y, (x*2)-2, s*2]</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>
+           expectedSTAXResult = "{'Function14Arg2': 8, 'Function14Arg1': 6}"
+           arg1 = 'Function14Arg1'
+           arg2 = 'Function14' + 'Arg2'
+        </script>
+
+        <call function="callFunction">{arg1 : 2 * 3, arg2 : (5*2)-2}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function14" scope="local">
+ 
+    <sequence>
+        
+      <message>"Function14 is executing"</message>
+      
+      <script>currentFunction = "Function14"</script>
+
+      <message>'STAXArg=%s' % (str(STAXArg))</message>
+
+      <return>STAXArg</return>
+
+    </sequence>
+    
+  </function>
+ 
+  <function name="Scenario15">
+
+    <block name="'Scenario15Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario15: Function passing arguments by reference simulated"</message>
+        
+        <script>
+           callFunction = 'Function15'
+        </script>
+
+        <script>
+           expectedSTAXResult = 'None'
+        </script>
+
+        <script>
+          A = 1
+          B = ['test1', 'test2']
+        </script>
+        
+        <message>"Call FunctionPassByReference passing:"</message>
+        <message>A, B</message>
+
+        <call function="'FunctionPassByReference'">A, B</call>
+        <script>A, B = STAXResult</script>
+     
+        <if expr="(A == 3) and (B == ['test1', 'test2' ,'test3'])"> 
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>"STAXResult = (3, ['test1', 'test2', 'test3'])"</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult: \n%s, expected %s' % (str(STAXResult), "(3, ['test1', 'test2', 'test3'])")</message>               
+            </sequence>
+          </else>
+        </if>
+      
+      </sequence>         
+      
+    </block>  
+             
+  </function>    
+
+  <function name="FunctionPassByReference" scope="local">
+    <function-list-args>
+      <function-required-arg name="x"/>
+      <function-required-arg name="y"/>
+    </function-list-args>
+
+    <sequence>
+      <script>
+        x = x + 2
+        y.append('test3')
+      </script>  
+      <return>x, y</return>
+    </sequence>  
+
+  </function>
+  
+ 
+  <function name="Scenario16">
+
+    <block name="'Scenario16Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario16: Function local scoping and STAXGlobal"</message>
+        
+        <script>
+           callFunction = 'Function16'
+           duration = '24h'
+           gMachList = STAXGlobal(['machA', 'machB'])
+           testList = ['test1', 'test2']
+        </script>
+        
+        <!-- Note:  Have to use gMachList.get() instead of gMachList -->                
+        
+        <call function="callFunction">
+          {
+            'duration'  : duration,
+            'gMachines' : gMachList.get(),
+            'tests'     : testList
+          }
+        </call>
+ 
+        <script>
+          expectedSTAXResult = '9'
+        </script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>
+          dur = 'duration'
+          machs = 'gMachines'
+        </script>
+        
+        <!-- Note:  Have to use gMachList.get() instead of gMachList -->                
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="dur">duration</call-map-arg>
+          <call-map-arg name="machs">gMachList.get()</call-map-arg>
+          <call-map-arg name="1">'Numeric keyed data'</call-map-arg>
+          <call-map-arg name="1 + 1">'Numeric expression keyed data'</call-map-arg>
+        </call-with-map>
+ 
+        <script>
+          expectedSTAXResult = '8'
+        </script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'gMachines'">['myMach'] + ['yourMach']</call-map-arg>
+          <call-map-arg name="'moreStuff'">{'a':1, 'b':2}</call-map-arg>
+          <call-map-arg name="'junk'">1000</call-map-arg>
+        </call-with-map>
+         
+        <script>
+          expectedSTAXResult = '6'
+        </script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <call-with-map function="callFunction">
+          <call-map-arg name="'gMachines'">['myMach'] + ['yourMach']</call-map-arg>
+        </call-with-map>
+        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <!-- Note:  Have to use gMachList.get() instead of gMachList -->                
+                        
+        <call-with-map function="callFunction">
+          <call-map-arg name="'duration'">duration</call-map-arg>
+          <call-map-arg name="'gMachines'">gMachList.get()</call-map-arg>
+          <call-map-arg name="'tests'">testList</call-map-arg>
+        </call-with-map>
+        
+        <script>
+          expectedSTAXResult = '20'
+        </script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>s = ['machA', 'machB', 'local', 'local', 'local']</script>
+                                                                                     
+        <if expr="str(gMachList) == str(s)">
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>'Correct gMachList=%s' % (str(gMachList))</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect gMachList=%s, expected %s' % (str(gMachList), str(s))</message>               
+            </sequence>
+          </else>
+        </if> 
+       
+      </sequence>         
+      
+    </block>  
+             
+  </function>    
+
+
+
+  <function name="Function16" scope="local">
+
+    <function-map-args>
+      <function-required-arg name="gMachines"/>
+      <function-optional-arg name="duration" default="'1h'"/>
+      <function-optional-arg name="tests" default="['testA']"/>
+      <function-other-args name="junk"/>
+    </function-map-args>
+
+    <sequence>
+
+      <message>'*** Start of Function16 ***'</message>
+      <message>gMachines, duration, tests, junk</message>
+      <script>tests.append('testB')</script>
+      <script>gMachines.append('local')</script>
+      <script>i = 0</script>
+                                                
+      <iterate var="mach" in="gMachines">
+        <sequence>
+          <timer duration="duration">
+            <iterate var="test" in="tests">
+              <sequence>
+                <script>i = i + 1</script>
+                <message>'Iteration #%d - test %s for mach %s' % (i, test, mach)</message>
+              </sequence>  
+            </iterate>
+          </timer>
+          <if expr="RC != 0">
+            <return>RC</return>
+          </if>
+        </sequence>
+      </iterate> 
+      <return>i</return>
+    </sequence>
+  </function>
+
+  <function name="Scenario17">
+
+    <block name="'Scenario17Block'"> 
+
+      <sequence>      
+
+        <message>"Scenario17: Test STAXGlobal"</message>
+        
+        <script>
+           callFunction = 'Function17'
+        </script>
+
+        <script>
+           expectedSTAXResult = "(6, ['Hi', 'there', 'again'])"
+           a = STAXGlobal(3)
+        </script>
+
+        <call function="callFunction">{'Function17Arg1' : 2 * 3, 'Function17Arg2' : a}</call>        
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>
+           b = STAXGlobal([])
+           b.append(5)
+           b.append(3)
+           b[1] = 7
+        </script>
+
+        <if expr="str(b) == '[5, 7]'">
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>'b = %s' % str(b)</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect b: \n%s, expected "[5, 7]"' % (b)</message>               
+            </sequence>
+          </else>
+        </if>
+
+        <script>
+          c = STAXGlobal(1)
+          # Note:  Cannot do c = c + 1
+          d = c + 1
+          c.set(d)
+        </script>
+
+        <if expr="str(c) == '2'">
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>'c = %s' % str(c)</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect c: \n%s, expected "2"' % (str(c))</message>               
+            </sequence>
+          </else>
+        </if>
+
+        <script>
+          # Note: Cannot do c = c + 1
+          c.set(c + 1)
+        </script>
+
+        <if expr="str(c) == '3'">
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>'c = %s' % str(c)</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect c: \d%s, expected "3"' % (str(c))</message>               
+            </sequence>
+          </else>
+        </if>
+        
+        <script>
+          # Better to use a list containing an integer rather than just an integer.
+          # Use a integer list allows the following to work without using the
+          # STAXGlobal.set() method.
+          d = STAXGlobal([5])
+          d[0] = 12
+          d[0] = d[0] + 1
+        </script>
+
+        <if expr="d[0] == 13">
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>'d[0] = %d' % d[0]</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect d[0]: \d%s, expected 13' % (str(d[0]))</message>               
+            </sequence>
+          </else>
+        </if>
+
+        <script>gNumResources = STAXGlobal([2])</script>
+ 
+        <parallel>
+    
+          <sequence>
+            <script>gNumResources[0] = gNumResources[0] + 2</script>
+            <message>'Added two resources: gNumResources[0]=%d' % gNumResources[0]</message>
+          </sequence>
+ 
+          <sequence>
+            <script>gNumResources[0] = gNumResources[0] - 1</script>
+            <message>'Removed a resource: gNumResources[0]=%d' % gNumResources[0]</message>
+          </sequence>
+
+        </parallel>
+
+        <!-- Don't know if add or remove will be done first, but end result should be 3 -->
+        <if expr="gNumResources[0] == 3">
+          <sequence>
+            <tcstatus result="'pass'"/>
+            <message>'gNumResources[0] = %d' % gNumResources[0]</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect gNumResources[0]: \d%s, expected 3' % (str(gNumResources[0]))</message>               
+            </sequence>
+          </else>
+        </if>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Function17" scope="local">
+
+    <function-map-args>
+      <function-required-arg name="Function17Arg1"/>
+      <function-required-arg name="Function17Arg2"/>
+    </function-map-args>
+
+    <sequence>
+        
+      <message>"Function17 is executing"</message>
+      
+      <script>currentFunction = "Function17"</script>
+
+      <message>'Function17Arg1=%s, Function17Arg2=%s' % (str(Function17Arg1), str(Function17Arg2))</message>
+
+      <script>
+        a.set(['Hi', 'there'])  # Need to use set since changing the type of STAXGlobal from int to list
+        a.append('again')
+      </script>
+
+      <message>'a=%s' % str(a)</message>
+
+      <return>Function17Arg1, Function17Arg2</return>
+
+    </sequence>
+  </function>
+  
+  
+  <signalhandler signal="'STAXFunctionArgValidate'">
+    <sequence>
+      <message>'STAXFunctionArgValidateMsg: %s' % STAXFunctionArgValidateMsg</message>
+    </sequence>
+  </signalhandler>
+
+  <function name="PASS-if-correct-STAXResult">
+    <if expr="str(STAXResult) == expectedSTAXResult">
+      <sequence>
+        <tcstatus result="'pass'"/>
+        <message>'STAXResult = %s' % str(STAXResult)</message>
+      </sequence>
+      <else>
+        <sequence>
+          <tcstatus result="'fail'"></tcstatus>
+          <message>'ERROR: Incorrect STAXResult: \n%s, expected %s' % (str(STAXResult), str(expectedSTAXResult))</message>               
+        </sequence>
+      </else>
+    </if>
+  </function>
+
+</stax>

@@ -1,0 +1,1610 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : APIRef SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework API Reference
+.*  Detail:
+.*
+.*     This file contains an API Reference.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.API Reference
+:h1 id=apiref.API Reference
+:h2 id=marshall.Marshalling Structured Data
+:p.STAF supports the automatic marshalling and unmarshalling of structured data.
+The act of marshalling takes a data structure and converts it into a
+string-based representation.  The act of unmarshalling reverses this and
+converts the string-based representation back into a data structure.
+:p.STAF supports the following generic data types with its marshalling.
+:ul compact.
+:li.None - a unique type representing the absence of a value
+:li.String - an arbitrary string value
+:li.List - an ordered collection of other objects
+:li.Map - an unordered collection of key/value pairs
+:li.Map class - a Map with intrinsic metadata
+:li.Marshalling context - represents a set of map class definitions and a
+data structure defined in terms of them
+:eul.
+:p.Most languages support some form of the None, String, List, and Map
+data types.  However, a map class and a marshalling context are likely new
+concepts.
+:p.A map class is really just a specialized map that is associated with a 
+map class definition.  The map class definition is used to reduce the size of
+a marshalling map class in comparison to a map containing the same data.  It
+also contains information about how to display instances of the map class.
+A map class definition contains for following information for each key
+defined for a map class:
+:ul compact.
+:li.key -  The name of the key in the map class
+:li.display-name - The display name for the key
+:li.display-short-name - The short display name for the key (Optional)
+:eul.
+:p.You indicate that a map is an instance of a map class by setting the key
+"staf-map-class-name" to the name of the map class.  And, when you unmarshall
+a data structure, if you see that a map has a key called "staf-map-class-name",
+you know that the map is really an instance of a map class.  You get and set
+map class definitions using a marshalling context.
+:p.A marshalling context is simply a container for map class definitions and
+a data structure that uses (or is defined in terms of) them.  In order to
+use a map class when marshalling data, you must add the map class definition
+to the marshalling context, set the root object of the marshalling context to
+the object you want to marshall, and then marshall the marshalling context
+itself.  When you unmarshall a data structure, you will always receive a
+marshalling context.  Any map class definitions referenced by map classes
+within the data structure will be present in the marshalling context.
+:p.When a string is unmarshalled into a data structure, it is possible that
+one of the string objects that is unmarshalled is itself the string form of
+another marshalled data structure.  By default, STAF will recursively
+unmarshall these nested objects.  However, each language has a way to
+disable these additional processing.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=capi.C
+:p.STAF externalizes six primary APIs to C/C++ programs.  These APIs allow you
+to register/unregister with STAF, submit service requests, and free the memory
+associated with service request results.  In addition, STAF provides a wide
+range of APIs for defining, manipulating, and marshalling data structures.
+Also, STAF provides some APIs for handling private data.
+:p.
+:note.STAF-enabled programs written in C must be linked with the C++ compiler
+(or by using any other means which allows the C++ runtime to get initialized).
+Otherwise, the C++ runtime won't get a chance to initialize so the STAF
+static data doesn't get initialized.  Most systems require mixed C and C++ code
+to get linked by the C++ compiler.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.STAFRegister C API
+:ih1.C API
+:i2.STAFRegister
+:h3.STAFRegister
+:h4.Description
+:p.The STAFRegister call is used by a C program to register with STAF.
+:h4.Syntax
+:xmp.
+STAFRC_t STAFRegister(char *handleName, STAFHandle *handle)
+:exmp.
+:p.:xph.handleName:exph. points to the name by which you want this handle to
+be known.
+:p.:xph.handle:exph. is a pointer to the STAFHandle that will be set on
+successful return from the function.  You will use this handle on all other
+subsequent STAF calls.
+:ih1.examples
+:ih2.C/C++ API
+:i3.STAFRegister
+:h4.Examples
+:xmp.
+char *myName = "MyProgram";
+STAFHandle_t myHandle = 0;
+STAFRC_t rc = STAFRegister(myName, &myHandle);
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.STAFRegisterUTF8 C API
+:ih1.C API
+:i2.STAFRegisterUTF8
+:h3.STAFRegisterUTF8
+:h4.Description
+:p.The STAFRegisterUTF8 API is identical in all respects with STAFRegister,
+except that :xph.handleName:exph. is a string in UTF-8 format.  This API is
+used primarily by the Java interfaces.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.STAFUnRegister C API
+:ih1.C API
+:i2.STAFUnRegister
+:h3.STAFUnRegister
+:p.The STAFUnRegister call is used by a C program to unregister with
+STAF, which frees up any internal STAF resources used by the handle.
+:h4.Syntax
+:xmp.
+STAFRC_t STAFUnRegister(STAFHandle handle)
+:exmp.
+:p.:xph.handle:exph. is the handle that you received on the call to
+STAFRegister.
+:ih1.examples
+:ih2.C API
+:i3.STAFUnRegister
+:h4.Examples
+:xmp.
+/* myHandle was previously set by STAFRegister */
+
+STAFRC_t rc = STAFUnRegister(myHandle);
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.STAFSubmit
+:h3.STAFSubmit
+:h4.Description
+:p.The STAFSubmit call is the primary API that you will use.  It is what
+allows you to submit a request to a service.
+:h4.Syntax
+:xmp.
+STAFRC_t STAFSubmit(STAFHandle handle, char *where, char *service,
+                    char *request, unsigned int requestLength,
+                    char **resultPtr, unsigned int *resultLength);
+:exmp.
+:p.:xph.handle:exph. is the handle you received on the call to STAFRegister.
+:p.:xph.where:exph. points to a string containing the destination machine for
+the service request.  This should be either LOCAL or the name of a machine.
+:p.:xph.service:exph. points to the name of the service to which you are
+submitting the request.
+:p.:xph.request:exph. points to the actual request that you are sending to the
+service. This request may contain NULL (0x00) bytes.
+:p.:xph.requestLength:exph. indicates the length of the request buffer passed
+in.
+:p.:xph.resultPtr:exph. points to a char * that will contain the address of the
+result on return from the function.  If, on return from STAFSubmit,
+:xph.*resultPtr:exph. is not 0, you must use STAFFree to free the result, even
+if the return code from STAFSubmit was non-zero.  Note, if resultPtr is
+non-zero, then the buffer that resultPtr points to will always be NULL
+terminated.  However, this buffer may contain NULL (0x00) bytes, therefore, it
+is not safe to determine the length of the buffer via strlen().  Instead, you
+should use the length provided by :xph.resultLength:exph. below.
+:p.:xph.resultLength:exph. points to an unsigned int which, on return from
+STAFSubmit, will contain the length of the result buffer.
+:ih1.examples
+:ih2.C API
+:i3.STAFSubmit
+:h4.Examples
+:xmp.
+/* myHandle was previously set by STAFRegister */
+
+char *someMachine = "testmach1";
+char *service = "PING";
+char *request = "PING";
+unsigned int requestLength = strlen(request);
+char *result = 0;
+unsigned int resultLength = 0;
+STAFRC_t rc = 0;
+
+rc = STAFSubmit(myHandle, someMachine, service, request, requestLength,
+                &result, &resultLength);
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:i2.STAFSubmit2
+:h3 id=apiss2.STAFSubmit2
+:h4.Description
+:p.The STAFSubmit2 API is identical to the STAFSubmit API except that
+it has an additional parameter, syncOption, which allows submission of
+asynchronous requests.
+:h4.Syntax
+:xmp.
+STAFRC_t STAFSubmit2(STAFHandle_t handle, STAFSyncOption_t syncOption,
+                     char *where, char *service,
+                     char *request, unsigned int requestLength,
+                     char **resultPtr, unsigned int *resultLength)
+:exmp.
+:p.syncOption can be any of the following:
+:ul compact.
+:li.kSTAFReqSync - This indicates the request should be submitted synchronously.
+This is equivalent to calling the STAFSubmit() API.
+:li.kSTAFReqFireAndForget - This indicates the request should be submitted
+asynchronously.  The request number will be passed back in the result buffer.
+The request's results will not be sent to the submitter's queue nor will they
+be retained by the Service service.
+:li.kSTAFReqQueue - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be placed on the submitter's queue.
+The format of this message is described below.
+:li.kSTAFReqRetain - This indicates the request should be submitted
+asynchronously.  The request number will be passed back in the result buffer.
+The submitter can determine the results of the request by using the
+:xph.FREE:exph. command of the Service service (see :hdref refid=srvreqf. for
+more information).
+:li.kSTAFReqQueueRetain - This indicates the request should be submitted
+asynchronously.  The request number will be passed back in the result buffer.
+When the request completes, the results will be placed on the submitter's queue.
+The format of this message is described below.  The submitter should also free
+the results of the request by using the :xph.FREE:exph. command of the Service
+service (see :hdref refid=srvreqf. for more information).
+:eul.
+:p.The format of the queued message obtained when specifying kSTAFReqQueue or
+kSTAFReqQueueRetain will be a marshalled :xph.<Map&colon.STAF/RequestComplete>:exph.
+which represents the request completion information.  See table
+:tref refid=STAFRequestCompleteTable. for the map class definition.
+:table id='STAFRequestCompleteTable' cols='* 2* *'.
+:tcap.Definition of map for "STAF/RequestComplete" type message
+:tnote text='Description'.This map represents STAF/RequestComplete message information.
+:thd.
+:c.Key Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.requestNumber
+:c.&stringObj.
+:c.
+:row.
+:c.rc
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.&stringObj.
+:c.
+:etable.
+:p.
+For example, if you submitted the request "RESOLVE STRING {STAF/Config/OS/Name}"
+to the VAR service using kSTAFReqQueue, and received a request number of 42,
+then the message you would receive when the request completed might look like
+:xmp.
+{
+  requestNumber: 42
+  rc           : 0
+  result       : WinNT
+}
+:exmp.
+:p.
+The queued message will always be delivered with the default priority of 5.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.STAFSubmitUTF8
+:h3.STAFSubmitUTF8
+:h4.Description
+:p.The STAFSubmitUTF8 API is identical in all respects with STAFRegister,
+except that :xph.where:exph., :xph.service:exph., :xph.request:exph.,
+and :xph.*resultPtr:exph. are all strings in UTF-8 format.  This API is
+used primarily by the Java interfaces.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.STAFSubmit2UTF8
+:h3.STAFSubmit2UTF8
+:h4.Description
+:p.The STAFSubmit2UTF8 API is identical in all respects with STAFSubmit2,
+except that :xph.where:exph., :xph.service:exph., :xph.request:exph.,
+and :xph.*resultPtr:exph. are all strings in UTF-8 format.  This API is
+used primarily by the Java interfaces.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.STAFFree
+:h3.STAFFree
+:h4.Description
+:p.STAFFree is used to free the memory occupied by the result buffer on a call
+to STAFSubmit.  You only need to call this if result buffer pointer is not zero
+on return from STAFSubmit.
+:h4.Syntax
+:xmp.
+STAFRC_t STAFFree(STAFHandle handle, char *result);
+:exmp.
+:p.:xph.handle:exph. is the handle you received on the call to STAFRegister.
+:p.:xph.result:exph. is the pointer passed back from the STAFSubmit call.
+:ih1.examples
+:ih2.C API
+:i3.STAFFree
+:h4.Examples
+:xmp.
+/* myHandle was previously set by STAF     */
+/* result was previously set by STAFSubmit */
+
+STAFRC_t rc = 0;
+
+if (result != 0) rc = STAFFree(myHandle, result);
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.Data Structure and Marshalling APIs
+:h3.Data Structure and Marshalling APIs
+:p.STAF externalizes a wide range of APIs for defining data structures and
+(un)marshaling data structures.  Here is a list of the APIs.  A later version
+of this documentation will provide more details.
+:xmp.
+typedef enum
+{
+    kSTAFNoneObject               = 0,
+    kSTAFScalarStringObject       = 1,
+    kSTAFListObject               = 2,
+    kSTAFMapObject                = 3,
+    kSTAFMarshallingContextObject = 4
+} STAFObjectType_t;
+
+typedef enum
+{
+    kSTAFMarshallingDefaults = 0x00000000
+} STAFObjectMarshallingFlags_t;
+
+
+typedef enum
+{
+    kSTAFUnmarshallingDefaults = 0x00000000,
+    kSTAFIgnoreIndirectObjects = 0x00000001
+} STAFObjectUnmarshallingFlags_t;
+
+
+// Object constructors/destructors
+//
+// Note: When a STAFObject is destructed, it recursively deletes all nested
+//       objects
+
+STAFRC_t STAFObjectConstructCopy(STAFObject_t *copy, STAFObject_t source);
+STAFRC_t STAFObjectConstructReference(STAFObject_t *ref, STAFObject_t source);
+STAFRC_t STAFObjectConstructNone(STAFObject_t *pNone);
+STAFRC_t STAFObjectConstructScalarString(STAFObject_t *pScalar,
+                                         STAFStringConst_t string);
+STAFRC_t STAFObjectConstructList(STAFObject_t *list);
+STAFRC_t STAFObjectConstructMap(STAFObject_t *map);
+STAFRC_t STAFObjectConstructMarshallingContext(STAFObject_t *context);
+STAFRC_t STAFObjectDestruct(STAFObject_t *object);
+
+// General functions
+
+STAFRC_t STAFObjectIsStringMarshalledData(STAFStringConst_t string,
+                                          unsigned int *isMarshalledData);
+
+// Object functions
+
+STAFRC_t STAFObjectGetType(STAFObject_t object, STAFObjectType_t *type);
+STAFRC_t STAFObjectGetSize(STAFObject_t object, unsigned int *size);
+STAFRC_t STAFObjectIsReference(STAFObject_t object, unsigned int *isRef);
+STAFRC_t STAFObjectUnmarshallFromString(STAFObject_t *newContext,
+                                        STAFStringConst_t string,
+                                        STAFObject_t context,
+                                        unsigned int flags);
+STAFRC_t STAFObjectMarshallToString(STAFObject_t object, STAFObject_t context,
+                                    STAFString_t *string, unsigned int flags);
+STAFRC_t STAFObjectGetStringValue(STAFObject_t object, STAFString_t *string);
+
+// Scalar functions
+
+STAFRC_t STAFObjectScalarGetStringValue(STAFObject_t object,
+                                        STAFStringConst_t *string);
+STAFRC_t STAFObjectScalarGetUIntValue(STAFObject_t object,
+                                      unsigned int *uInt,
+                                      unsigned int defaultValue);
+
+// List functions
+
+STAFRC_t STAFObjectListAppend(STAFObject_t list, STAFObject_t object);
+
+// Iterator functions
+
+STAFRC_t STAFObjectConstructListIterator(STAFObjectIterator_t *iter,
+                                         STAFObject_t list);
+STAFRC_t STAFObjectIteratorHasNext(STAFObjectIterator_t iter,
+                                   unsigned int *hasNext);
+STAFRC_t STAFObjectIteratorGetNext(STAFObjectIterator_t iter,
+                                   STAFObject_t *object);
+STAFRC_t STAFObjectIteratorDestruct(STAFObjectIterator_t *iter);
+
+// Map functions
+
+STAFRC_t STAFObjectMapGet(STAFObject_t map, STAFStringConst_t key,
+                          STAFObject_t *object);
+STAFRC_t STAFObjectMapPut(STAFObject_t map, STAFStringConst_t key,
+                          STAFObject_t object);
+STAFRC_t STAFObjectMapHasKey(STAFObject_t map, STAFStringConst_t key,
+                             unsigned int *hasKey);
+STAFRC_t STAFObjectConstructMapKeyIterator(STAFObjectIterator_t *pIter,
+                                           STAFObject_t map);
+STAFRC_t STAFObjectConstructMapValueIterator(STAFObjectIterator_t *pIter,
+                                             STAFObject_t map);
+
+// Marshalling Context functions
+
+STAFRC_t STAFObjectMarshallingContextSetMapClassDefinition(
+    STAFObject_t context,
+    STAFStringConst_t name,
+    STAFObject_t mapClassDefinition);
+
+STAFRC_t STAFObjectMarshallingContextGetMapClassDefinition(
+    STAFObject_t context,
+    STAFStringConst_t name,
+    STAFObject_t *mapClassDefinition);
+
+STAFRC_t STAFObjectMarshallingContextHasMapClassDefinition(
+    STAFObject_t context,
+    STAFStringConst_t name,
+    unsigned int *pHasMapClassDefinition);
+
+STAFRC_t STAFObjectMarshallingContextSetRootObject(STAFObject_t context,
+                                                   STAFObject_t object);
+STAFRC_t STAFObjectMarshallingContextGetRootObject(STAFObject_t context,
+                                                   STAFObject_t *object);
+STAFRC_t STAFObjectMarshallingContextAdoptRootObject(STAFObject_t context,
+                                                     STAFObject_t *object);
+STAFRC_t STAFObjectMarshallingContextGetPrimaryObject(STAFObject_t context,
+                                                      STAFObject_t *object);
+STAFRC_t STAFObjectConstructMapClassDefinitionIterator(
+    STAFObjectIterator_t *pIter, STAFObject_t context);
+:exmp.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.Private Data Manipulation APIs
+:h3.Private Data Manipulation APIs
+:p.STAF externalizes some APIs for handling private data in STAF command
+request options.  Here are the definitions for these APIs.
+:xmp.
+// This method adds privacy delimiters to the data.
+// For example, if data passed in is "secret", sets result
+// to "!!@secret@!!".
+
+STAFRC_t STAFAddPrivacyDelimiters(STAFStringConst_t data,
+                                  STAFString_t *result);
+
+// This method removes the specified number of levels of privacy
+// delimiters from the data.  Set numLevels to 0 to remove all
+// levels of privacy delimiters.
+// For example, if data passed in is "!!@secret@!!", sets
+// result to "secret".
+                                  
+STAFRC_t STAFRemovePrivacyDelimiters(STAFStringConst_t data,
+                                     unsigned int numLevels,
+                                     STAFString_t *result);
+
+// This method masks any private data indicated by the privacy
+// delimiters by replacing the private data with asterisks.
+// For example, if data passed in is "!!@secret@!!", sets
+// result to "************".
+                                     
+STAFRC_t STAFMaskPrivateData(STAFStringConst_t data, STAFString_t *result);
+
+// This method escapes any privacy delimiters found in the data.
+// For example, if data passed in is "!!@secret@!!", sets
+// result to "^!!@secret^@!!".
+
+STAFRC_t STAFEscapePrivacyDelimiters(STAFStringConst_t data,
+                                     STAFString_t *result);
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.Other Utility APIs
+:h3.Other Utility APIs
+:p.STAF externalizes some other general utility APIs.
+Here are the definitions for these APIs.
+:xmp.
+/*********************************************************************/
+/* STAFUtilFormatString - Generates a string based on a format       */
+/*                        string, ala printf().  This is generally   */
+/*                        used to format STAF request strings.       */
+/*                                                                   */
+/* Accepts: (In)  The format string                                  */
+/*          (Out) A pointer to the output string                     */
+/*          (In)  All data indicated in the format string            */
+/*                                                                   */
+/* Returns:  Standard return codes                                   */
+/*                                                                   */
+/* Notes  :  1) The caller is responsible for destructing the        */
+/*              output string                                        */
+/*********************************************************************/
+/* Valid format string specifiers:                                   */
+/*                                                                   */
+/* %d - an unsigned integer                                          */
+/* %s - a STAFString_t                                               */
+/* %C - a STAFString_t which will be formatted in colon-length-colon */
+/*      delimited format                                             */
+/* %% - a percent sign                                               */
+/*                                                                   */
+/* Any other %<char> is simply ignored (and not copied)              */
+/*********************************************************************/
+unsigned int STAFUtilFormatString(STAFStringConst_t formatString,
+                                  STAFString_t *outputString, ...);
+
+
+/*********************************************************************/
+/* STAFUtilFormatString2 - Generates a string based on a format      */
+/*                         string, ala printf().  This is generally  */
+/*                         used to format STAF request strings.      */
+/*                                                                   */
+/* Accepts: (In)  The format string                                  */
+/*          (Out) A pointer to the output string                     */
+/*          (In)  A variable argument list                           */
+/*                                                                   */
+/* Returns:  Standard return codes                                   */
+/*                                                                   */
+/* Notes  :  1) The caller is responsible for destructing the        */
+/*              output string                                        */
+/*           2) Valid format strings are the same as defined for     */
+/*              STAFUtilFormatString()                               */
+/*********************************************************************/
+unsigned int STAFUtilFormatString2(STAFStringConst_t formatString,
+                                   STAFString_t *outputString, va_list args);
+
+
+/*********************************************************************/
+/* STAFUtilStripPortFromEndpoint - Removes @<Port> from the end of   */
+/*     an endpoint if present.                                       */
+/*                                                                   */
+/* Accepts: (In/Out)  A pointer to a string containing the endpoint  */
+/*                    with format:                                   */
+/*                      [<Interface>://<Machine Identifier>[@<Port>] */
+/*          (Out)     A pointer to a string containing the stripped  */
+/*                    endpoint with format:                          */
+/*                      [<Interface>://<Machine Identifier>          */
+/*                                                                   */
+/* Returns:  0                                                       */
+/* Notes  :  1) The caller is responsible for destructing the output */
+/*              string containing the stripped endpoint              */
+/*********************************************************************/
+STAFRC_t STAFUtilStripPortFromEndpoint(STAFStringConst_t endpoint,
+                                       STAFString_t *strippedEndpoint);
+
+                                       
+/*********************************************************************/
+/* STAFUtilConvertDurationString - Converts the time duration        */
+/*   expressed as a string to a numeric value in milliseconds.       */
+/*                                                                   */
+/* Accepts: (In)  The duration string                                */
+/*                The duration string may be expressed in            */
+/*                milliseconds, seconds, minutes, hours, days, or    */
+/*                weeks.  Its format is:                             */
+/*                  <Number>[<Type>]                                 */
+/*                where <Number> is an integer >= 0 and <Type>, if   */
+/*                specified, is one of the following:                */
+/*                s (for seconds), m (for minutes), h (for hours),   */
+/*                d (for days), or w (for weeks). For example:       */
+/*                - 100 specifies 100 milliseconds,                  */
+/*                - 10s specifies 10 seconds,                        */
+/*                - 5m specifies 5 minutes,                          */
+/*                - 2h specifies 2 hours,                            */
+/*                - 1d specifies 1 day,                              */
+/*                - 1w specifies 1 week                              */
+/*          (Out) The numeric duration value in milliseconds         */
+/*          (Out) A pointer to an error string                       */
+/*                                                                   */
+/* Returns:  0,  if successful                                       */
+/*           47  if unsuccessful (*errorBuffer will be set)          */
+/*********************************************************************/
+STAFRC_t STAFUtilConvertDurationString(STAFStringConst_t durationString,
+                                       unsigned int *duration,
+                                       STAFString_t *errorBuffer);
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.C API
+:i2.Other APIs
+:h3.Other APIs
+:p.STAF externalizes other APIs that fall into the following general classes
+:ul compact.
+:li.STAFString* - Handles UTF-8 strings (#include "STAFString.h")
+:li.STAFMutexSem* - Handles mutex semaphores (#include "STAFMutexSem.h")
+:li.STAFEventSem* - Handles event semaphores (#include "STAFEventSem.h")
+:li.STAFThread* - Handles threading support (#include "STAFThread.h" and
+#include "STAFTimestamp.h")
+:li.STAFDynamicLibrary* - Handles shared library / DLL support
+(#include "STAFDynamicLibrary.h")
+:eul.
+:p.Please see the indicated header files for more information on syntax and
+use of these families of APIs.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=c++api.C++
+:p.STAF externalizes five primary classes to C++ programs.  These class are
+:ul compact.
+:li.STAFHandle - Handles (un)registering with STAF as well as submitting
+service requests (#include "STAF.h")
+:li.STAFResult - Contains the result of a STAFHandle->submit() call and some
+utility functions (#include "STAF.h")
+:li.STAFObject - A generic class representing a variety of object types,
+including None, Strings, Lists, Maps, and Marshalling Contexts
+:li.STAFObjectIterator - Handles iterating over various data structures
+:li.STAFMapClassDefinition - Defines the metadata for a map class
+:eul.
+:p.Additionally, these classes use several other classes which are
+:ul compact.
+:li.STAFString - Encapsulates UTF-8 strings (#include "STAFString.h)
+:li.STAFRerPtr template - A smart-pointer class which handles memory management
+(#include "STAFRefPtr.h")
+:li.STAFException - The base of the STAF exception hierarchy
+(#include "STAFException.h")
+:eul.
+:p.STAF also provides some other miscellaneous C++ classes, which are
+:ul compact.
+:li.STAFMutexSem and STAFMutexSemLock - Handles mutex semaphores
+(#include "STAFMutexSem.h")
+:li.STAFEventSem - Handles event semaphores (#include "STAFEventSem.h")
+:li.STAFTimestamp - Handles times and timestamps (#include "STAFTimestamp.h")
+:li.STAFDynamicLibrary - Handles shared library / DLL support
+(#include "STAFDynamicLibrary.h")
+:eul.
+:p.In addition, C++ applications are able to take advantage of the C-only
+APIs, such as Thread support.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.STAFHandle C++ class
+:ih1.C++ classes
+:i2.STAFHandle
+:i2.STAFResult
+:h3.STAFHandle and STAFResult
+:p.The STAFHandle class is used to register with, and submit service requests
+to, STAF.  In C++ STAFHandles are reference counted, so they are automatically
+freed for you.  To obtain a STAFHandle, you call one of the create() methods.
+The first is the standard call you will use, and it allows you to specify the
+name by which your program should be known.  The second create method allows
+you to create a STAFHandle object from an existing STAFHandle_t which would
+have been obtained from the C API STAFRegister().  By default, a STAFHandle
+obtained through the first method will automatically be unregistered when the
+STAFHandle is destructed.  A STAFHandle created via the second method will
+not automatically be unregistered when the STAFHandle is destructed.  In either
+case, you can change this behavior with the setDoUnreg() method.
+:p.Once you have a valid STAFHandlePtr, you can begin submitting requests
+to STAF.  To do this, you use the submit() method, to which you specify the
+machine and service which should handle the request, as well as the request
+string itself.  An optional fourth parameter defines whether this will be
+a synchronous or asynchronous request (if the parameter is not specified,
+the request will be synchronous).  See the documentation for the C API
+STAFSubmit2 for the values allowed for this parameter.
+In return you get a reference counted pointer to a STAFResult
+object. Again, the underlying STAFResult object will be automatically freed
+when the reference count reaches zero.  The STAFResult object itself contains
+a return code 'rc', a result string variable 'result', a result object variable
+'resultObj', and a result marshalling context object variable 'resultContext'.
+If the STAFHandle's fDoUnmarshallResult flag is set to true (which it will be
+by default when a STAFHandle is created), then auto-unmarshalling will be
+performed which means the 'resultContext' variable will be set to the
+marshalling context obtaining from unmarshalling the string result data, and 
+the 'resultObj' variable will contain the root object of this marshalling
+context.  This allows you to not have to call the unmarshall() method to
+unmarshall the result immediately after call a submit() method.
+Note that if the STAFHandle's fDoUnmarshallResult flag is set to a false
+(which can be done using the setDoUnmarshallResult() method), the
+'resultContext' and 'resultObj' variables will be set to the None object.
+:p.You may examine the underlying STAFHandle_t via getHandle().  You may take
+ownership of the underlying STAFHandle_t via adoptImpl().  In this latter case,
+you are now responsible for the STAFHandle_t and are required to call
+STAFUnRegister().  Additionally, after a call to adoptImpl(), the existing
+STAFHandle object is invalidated and may not be used to call the submit() method.
+:p.The utility function wrapData returns the colon-length-colon delimited
+version of the specified string.  This is useful for specifying the values in
+STAF request string.  See :hdref refid=ovform. for more information.
+:p.The utility function stripPortFromEndpoint returns an endpoint with
+the @port removed from the end of the endpoint, if present.
+:p.Several utility functions are provided to handle private data that can
+be specified in values in a STAF request string.
+These functions are addPrivacyDelimiters, escapePrivacyDelimiters,
+removePrivacyDelimiters, and maskPrivateData.
+See :hdref refid=privatedata. for more information about handling private data.
+
+:h4.Definition
+:xmp.
+// STAFResult - This class contains the results of a STAFSubmit call
+
+class STAFResult
+{
+public:
+
+    STAFResult(STAFRC_t theRC = kSTAFOk,
+               const STAFString &theResult = STAFString())
+        : rc(theRC), result(theResult)
+    { /* Do Nothing */ }
+
+    STAFResult(STAFRC_t theRC, const char *data, unsigned int dataLen,
+               STAFString&colon.&colon.CodePageType codePageType)
+        : rc(theRC), result(data, dataLen, codePageType)
+    { /* Do Nothing */ }
+
+    STAFResult(STAFRC_t theRC, const char *data, unsigned int dataLen,
+               STAFString&colon.&colon.CodePageType codePageType, bool doUnmarshallResult)
+        : rc(theRC), result(data, dataLen, codePageType)
+    {
+        if (doUnmarshallResult)
+        {
+            resultContext = STAFObject&colon.&colon.unmarshall(
+                result, kSTAFUnmarshallingDefaults);
+            resultObj = resultContext->getRootObject();
+        }
+        else
+        {
+            resultContext = STAFObject&colon.&colon.createNone();
+            resultObj = STAFObject&colon.&colon.createNone();
+        }
+    }
+
+    STAFRC_t rc;
+    STAFString result;
+    STAFObjectPtr resultObj;
+    STAFObjectPtr resultContext;
+};
+
+
+class STAFHandle;
+typedef STAFRefPtr<STAFResult> STAFResultPtr;
+typedef STAFRefPtr<STAFHandle> STAFHandlePtr;
+
+
+// STAFHandle - This class is used to interact with STAF.  You obtain a
+//              STAFHandle via the create() call.
+
+class STAFHandle
+{
+    // This is the standard call to create a STAFHandle.  By default, this
+    // STAFHandle object will unregister with STAF when destructed.
+    static STAFRC_t create(const STAFString &name, STAFHandlePtr &handle);
+
+    // This call is used to create a STAFHandle which uses an existing
+    // STAFHandle_t.  By default, this STAFHandle object will not unregister
+    // with STAF when destructed.
+    static STAFRC_t create(STAFHandle_t handleT, STAFHandlePtr &handle,
+                           bool doUnreg = false);
+
+    STAFResultPtr submit(const STAFString &where, const STAFString &service,
+                         const STAFString &request,
+                         const STAFSyncOption_t synchOption = kSTAFReqSync);
+
+    // This returns the colon-length-colon delimited version of a string
+    static STAFString wrapData(const STAFString &data);
+
+    // This will format a string for you.  See STAFUtilFormatString() in
+    // STAFUtil.h
+    //
+    // Note: DO NOT try to pass STAFString's into the ... portion of this
+    //       function.  The only supported data types are "unsigned int" and
+    //       STAFString_t.  Therefore be sure to call getImpl() on all
+    //       STAFString's before passing them to this method.
+
+    static STAFString formatString(STAFStringConst_t formatString, ...);
+
+    // This returns the endpoint without the port (strips @nnnn from the end
+    // of the endpoint, if present)
+    static STAFString stripPortFromEndpoint(const STAFString &endpoint);
+
+    // This method returns the data with privacy delimiters added.
+    // For example, if pass in "secret", it returns "!!@secret@!!".
+    static STAFString addPrivacyDelimiters(const STAFString &data);
+
+    // This method removes any privacy delimiters from the data.
+    // For example, if pass in "!!@secret@!!", it returns "secret".
+    static STAFString removePrivacyDelimiters(const STAFString &data,
+                                              unsigned int numLevels = 0);
+
+    // This method masks any private data indicated by the privacy delimiters
+    // by replacing the private data with asterisks.
+    // For example, if pass in "!!@secret@!!", it returns "************".
+    static STAFString maskPrivateData(const STAFString &data);
+    
+    // This method returns the data with privacy delimiters escaped.
+    // For example, if pass in "!!@secret@!!", it returns "^!!@secret^@!!".
+    static STAFString escapePrivacyDelimiters(const STAFString &data);
+
+    STAFHandle_t getHandle() { return fHandle; }
+
+    // This call allows you to claim ownership of the underlying STAFHandle_t.
+    // Once this call is made, this STAFHandle object is no longer valid, and
+    // it is your responsibility to unregister the STAFHandle_t with STAF.
+    STAFHandle_t adoptHandle();
+
+    bool getDoUnreg() { return fDoUnreg; }
+    void setDoUnreg(bool doUnreg) { fDoUnreg = doUnreg; }
+
+    bool getDoUnmarshallResult() { return fDoUnmarshallResult; }
+
+    void setDoUnmarshallResult(bool flag)
+    {
+        fDoUnmarshallResult = flag;
+    }
+
+    ~STAFHandle();
+
+protected:
+
+    STAFHandle(STAFHandle_t handle, bool doUnreg)
+        : fDoUnreg(doUnreg), fHandle(handle)
+    {
+        fDoUnmarshallResult = true;
+    }
+
+    bool fDoUnreg;
+    STAFHandle_t fHandle;
+    bool fDoUnmarshallResult;
+
+};
+:exmp.
+:ih1.examples
+:ih2.C++ Classes
+:i3.STAFHandle
+:h4.Examples
+:xmp keep=4.
+#include "STAF.h"
+#include "STAF_iostream.h"
+
+int main(void)
+{
+    STAFHandlePtr handle;
+    unsigned int rc  = STAFHandle&colon.&colon.create("MyApplication", handle);
+
+    if (rc != 0)
+    {
+        cout << "Error registering with STAF, RC: " << rc << endl;
+        return 1;
+    }
+
+    STAFResultPtr result = handle->submit("LOCAL", "PING", "PING");
+
+    cout << "PING RC: " << result->rc << ", Result: " << result->result << endl;
+
+    STAFString semName("Sem name with spaces");
+
+    result = handle->submit("LOCAL", "SEM", "POST EVENT " +
+                            STAFHandle&colon.&colon.wrapData(semName));
+
+    cout << "Sem Post RC: " << result->rc << ", Result: " << result->result
+         << endl;
+
+    // Send an Asynchronous request
+    result = handle->submit("LOCAL", "SERVICE", "LIST", kSTAFReqQueueRetain);
+
+    cout << "Service List Request Number: " << result->result << endl;
+
+    return 0;
+}
+:exmp.
+:ih1.marshalling
+:i2.STAFObject C++ class
+:ih1.C++ classes
+:i2.STAFObject
+:h3.STAFObject
+:p.The STAFObject class is used to represent a variety of structured data types.
+Unlike newer languages, C++ doesn't have a reflective type system allowing us to
+marshall arbitrary data structures.  Therefore, we introduced a class which
+would allow us to provide general data structures which could be reflectively
+marshalled.  Note, that all data structure methods are provided in the one
+STAFObject class.
+:p.All data types are created via static methods.  Note the createReference()
+method.  This allows you to create a reference to another object.  This is
+important to note, as when you add an object to another object (for example,
+adding a string to a list) the recipient takes ownership of the object.  Thus,
+if you want to keep ownership of the object, you will need to add a reference of
+the object to the other object, instead of the object itself.
+:p.Note, when a STAFObject is destructed, all objects it contains are
+destructed (recursively) as well.  At this point, any references to objects
+that were contained in that data structure are now "dangling".  The only
+valid methods for a "dangling" reference are isRef(), type(), and destruction.
+:xmp.
+typedef enum
+{
+    kSTAFNoneObject               = 0,
+    kSTAFScalarStringObject       = 1,
+    kSTAFListObject               = 2,
+    kSTAFMapObject                = 3,
+    kSTAFMarshallingContextObject = 4
+} STAFObjectType_t;
+
+typedef enum
+{
+    kSTAFMarshallingDefaults = 0x00000000
+} STAFObjectMarshallingFlags_t;
+
+
+typedef enum
+{
+    kSTAFUnmarshallingDefaults = 0x00000000,
+    kSTAFIgnoreIndirectObjects = 0x00000001
+} STAFObjectUnmarshallingFlags_t;
+
+
+typedef STAFRefPtr<STAFObject> STAFObjectPtr;
+
+class STAFObject
+{
+public:
+    // Creation methods
+
+    static STAFObjectPtr createReference(const STAFObject &source);
+    static STAFObjectPtr createReference(const STAFObjectPtr &source);
+    static STAFObjectPtr createReference(STAFObject_t source);
+    static STAFObjectPtr createNone();
+    static STAFObjectPtr createScalar(const STAFString &aString);
+    static STAFObjectPtr createList();
+    static STAFObjectPtr createMap();
+    static STAFObjectPtr createMarshallingContext();
+
+    // General methods
+
+    static bool isMarshalledData(const STAFString &aString);
+
+    // General object methods
+
+    STAFObjectType_t type();
+    unsigned int size();
+
+    bool isRef();
+    STAFObjectPtr reference();
+
+    STAFString asString();
+
+    STAFString marshall(unsigned int flags = kSTAFMarshallingDefaults);
+    void marshall(STAFString &output,
+                  unsigned int flags = kSTAFMarshallingDefaults);
+
+    // Note: This method always returns a Marshalling Context
+    static STAFObjectPtr unmarshall(const STAFString &input,
+                                    unsigned int flags =
+                                    kSTAFUnmarshallingDefaults);
+
+    // List methods
+
+    void append(const STAFObjectPtr &objPtr);
+    void append(const STAFString &aString);
+
+    STAFObjectIteratorPtr iterate();
+
+    // Map methods
+
+    bool hasKey(const STAFString &key);
+
+    STAFObjectPtr get(const STAFString &key);
+
+    void put(const STAFString &key, const STAFObjectPtr &objPtr);
+    void put(const STAFString &key, const STAFString &aString);
+
+    STAFObjectIteratorPtr keyIterator();
+    STAFObjectIteratorPtr valueIterator();
+
+    // Marshalling Context methods
+
+    void setMapClassDefinition(const STAFMapClassDefinitionPtr &defPtr);
+
+    STAFMapClassDefinitionPtr getMapClassDefinition(const STAFString &name);
+
+    bool hasMapClassDefinition(const STAFString &name);
+
+    STAFObjectIteratorPtr mapClassDefinitionIterator();
+
+    void setRootObject(const STAFObjectPtr &objPtr);
+    STAFObjectPtr getRootObject();
+
+    // Destructor
+
+    ~STAFObject();
+};
+:exmp.
+
+:ih1.examples
+:ih2.C++ Classes
+:i3.STAFObject
+:h4.Examples
+
+:p.This example submits a request to the PROCESS service to start a
+command and wait for it to complete.  The result from this request
+is a marshalled map containing the process completion information.
+So this example demonstrates how to get the process return code from the
+result object (the root object of the marshalling context for the result).
+:xmp keep=4.
+#include "STAF.h"
+#include "STAF_iostream.h"
+
+int main(void)
+{
+    STAFHandlePtr handlePtr;
+
+    unsigned int rc = STAFHandle&colon.&colon.create("STAF/TestProcess", handlePtr);
+
+    if (rc != 0)
+    {
+        cout << "Error registering with STAF, RC: " << rc << endl;
+        return rc;
+    }
+
+    // Submit a request to start a process on a machine and wait for
+    // it to complete.  For this example, simply starting the process
+    // on the local machine and listing and contents of C:/temp.
+
+    STAFString machine = STAFString("local");
+    STAFString command = STAFString("dir C:/temp");
+
+    STAFResultPtr res = handlePtr->submit(
+        machine, "PROCESS", "START COMMAND " +
+        STAFHandle&colon.&colon.wrapData(command) + " RETURNSTDOUT RETURNSTDERR WAIT");
+
+    if (res->rc != kSTAFOk)
+    {
+        cout << "PROCESS START request failed with RC=" << STAFString(res->rc)
+             << " Result=" << res->result << endl;
+        return res->rc;
+    }
+
+    // The result buffer from a successful PROCESS START WAIT request
+    // returns a marshalled map containing the process completion information.
+    // The marshalling context (e.g. the unmarshalled result) is available in
+    // the 'resultContext' variable of the STAFResultPtr and the root object
+    // for the marshalling context (which, in this case, is a map) is available
+    // in the 'resultObj' variable of the STAFResultPtr.  That is,
+    //   res->resultContext = STAFObject&colon.&colon.unmarshall(res->result);
+    //   res->resultObj = res->resultContext->getRootObject();
+    // assuming auto-unmarshalling has not been disabled for the handle.
+    
+    // Print the result from the PROCESS START WAIT request in a
+    // "Pretty Print" format using the asFormattedString() method
+    
+    cout << "Process Result (Pretty Printed): " << endl
+         << res->resultContext->asFormattedString() << endl << endl;
+
+    // Check if the process RC is 0 by getting the "rc" key from the
+    // process completion map
+
+    if (res->resultObj->get("rc")->asString() == "0")
+        cout << "Process completed successfully" << endl;
+    else
+        cout << "Process failed with RC="
+             << res->resultObj->get("rc")->asString() << endl;
+
+    return 0;
+}
+:exmp.
+
+:ih1.C++ classes
+:i2.STAFObjectIterator
+:h3.STAFObjectIterator
+:p.The STAFObjectIterator class represents an iterator over other objects.
+You can not directly create a STAFObjectIterator.  You obtain a
+STAFObjectIterator via calling an iteration method on a STAFObject.  You can
+iterate over the items in a list, the keys in a map, the values in a map, and
+the names of the map class definitions in a marshalling context.
+:h4.Definition
+:xmp.
+typedef STAFRefPtr<STAFObjectIterator> STAFObjectIteratorPtr;
+
+class STAFObjectIterator
+{
+public:
+    bool hasNext();
+    STAFObjectPtr next();
+
+    ~STAFObjectIterator();
+};
+:exmp.
+
+:ih1.examples
+:ih2.C++ Classes
+:i3.STAFObjectIterator
+:h4.Examples
+
+:p.This example submits a request to the FS service to list the
+contents of a directory (in the long, detailed format).  The
+result from this request is a marshalled list of maps, so this
+example demonstrates how to get list object from the result object
+and how to iterate through this list using the STAFObjectIterator
+class.
+:xmp keep=4.
+#include "STAF.h"
+#include "STAF_iostream.h"
+
+int main(void)
+{
+    STAFHandlePtr handlePtr;
+
+    unsigned int rc = STAFHandle&colon.&colon.create("STAF/TestProcess", handlePtr);
+
+    if (rc != 0)
+    {
+        cout << "Error registering with STAF, RC: " << rc << endl;
+        return rc;
+    }
+    // Submit a request to the FS service to list the contents of a
+    // directory in the long format with detailed information about
+    // the entries in the directory
+    
+    STAFString directory = "C:/temp/staf";
+
+    STAFResultPtr res = handlePtr->submit(
+        machine, "FS", "LIST DIRECTORY " +
+        STAFHandle&colon.&colon.wrapData(directory) + " LONG DETAILS");
+
+    if (res->rc != kSTAFOk)
+    {
+        cout << "FS LIST DIRECTORY " << directory << " LONG DETAILS request"
+             << " failed with RC=" << STAFString(res->rc)
+             << " Result=" << res->result << endl;
+        return res->rc;
+    }
+
+    // The result buffer from a successful LIST DIRECTORY LONG DETAILS
+    // request returns a marshalled list of maps containing information
+    // about the entries in the directory.
+    // The marshalling context (e.g. the unmarshalled result) is available in
+    // the 'resultContext' variable of the STAFResultPtr and the root object
+    // for the marshalling context (which, in this case, is a map) is available
+    // in the 'resultObj' variable of the STAFResultPtr.  That is,
+    //   res->resultContext = STAFObject&colon.&colon.unmarshall(res->result);
+    //   res->resultObj = res->resultContext->getRootObject();
+    // assuming auto-unmarshalling has not been disabled for the handle.
+    
+    // Print the result in a "Pretty Print" format using the 
+    // asFormattedString() method
+    
+    cout << endl << "LIST DIRECTORY Result (Pretty Printed): " << endl
+         << res->resultContext->asFormattedString() << endl << endl;
+
+    // Iterate through the result object (which is a List containing a Map
+    // for each entry in the directory).
+    // Check if the directory contains a file named test.txt that
+    // was last modified after 20060306-00:00:00.
+    
+    STAFObjectIteratorPtr iter = res->resultObj->iterate();
+
+    while (iter->hasNext())
+    {
+        STAFObjectPtr entryMap = iter->next();
+
+        if (entryMap->get("name")->asString() == "test.txt")
+        {
+            if (entryMap->get("lastModifiedTimestamp")->asString() >
+                "20060306-00:00:00")
+            {
+                cout << "Entry test.txt was modified at "
+                     << entryMap->get("lastModifiedTimestamp")->asString()
+                     << endl;
+            }
+        }
+    }
+
+    return 0;
+}
+:exmp.
+
+:ih1.marshalling
+:i2.STAFMapClassDefinition C++ class
+:ih1.C++ classes
+:i2.STAFMapClassDefinition
+:h3.STAFMapClassDefinition
+:p.The STAFMapClassDefinition class is used to represent the metadata
+associated with a map class.  Note, the order with which keys are added
+determines their display order.
+:h4.Definition
+:xmp.
+typedef STAFRefPtr<STAFMapClassDefinition> STAFMapClassDefinitionPtr;
+
+class STAFMapClassDefinition
+{
+public:
+    static STAFMapClassDefinitionPtr create(const STAFString &name);
+    static STAFMapClassDefinitionPtr createReference(
+        STAFMapClassDefinitionPtr source);
+
+    STAFObjectPtr createInstance();
+
+    STAFMapClassDefinitionPtr reference();
+
+    void addKey(const STAFString &keyName);
+    void addKey(const STAFString &keyName, const STAFString &displayName);
+
+    void setKeyProperty(const STAFString &keyName, const STAFString &propName,
+                        const STAFString &propValue);
+
+    STAFObjectIteratorPtr keyIterator();
+
+    STAFString name() const;
+
+    STAFObjectPtr getMapClassDefinitionObject();
+};
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=rexxapi.Rexx
+:p.STAF externalizes three APIs to Rexx programs.  These APIs allow you to
+register/unregister with STAF and submit service requests.  These APIs are
+located in the RXStaf DLL.  A Rexx program wishing to use these APIs must
+be sure to load them from the DLL, with the following two lines of code.
+:xmp.
+call RxFuncAdd "STAFLoadFuncs", "RXSTAF", "STAFLoadFuncs"
+call STAFLoadFuncs
+:exmp.
+:p.STAF also provides wrapper interfaces around the LOG, MONITOR, and RESPOOL
+services, as well as a small set of utility functions.  These wrapper
+interfaces and utility functions are provided in Rexx Library files which
+have the extension .rxl.  In order to incorporate these wrappers into your
+Rexx programs, you may do one of the following:
+:ul compact.
+:li.Cut and paste the wrapper functions into your programs
+:li.Import them into you Rexx programs using the Rexx Pre-Processor (RxPP).
+:eul.
+:p.The names of these libraries are as follows:
+:ul compact.
+:li.STAFMon.rxl - Wrapper interface around the MONITOR service
+:li.STAFLog.rxl - Wrapper interfaces around the LOG service
+:li.STAFPool.rxl - Wrapper interfaces around the RESPOOL service
+:li.STAFUtil.rxl - Utility functions
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.STAFRegister Rexx API
+:ih1.Rexx API
+:i2.STAFRegister
+:h3.STAFRegister
+:h4.Description
+:p.The STAFRegister call is used by a Rexx program to register with STAF.
+:h4.Syntax
+:xmp.
+call STAFRegister handleName&lbrk., handleVarName&rbrk.
+:exmp.
+:p.:xph.handleName:exph. is the name by which you want this handle to be
+known.
+:p.:xph.handleVarName:exph. is the name of the Variable which you want to
+contain the handle that you will use on all other subsequent STAF calls.
+If this parameter is not specified, the handle will be placed in the variable
+STAFHandle.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFRegister
+:h4.Examples
+:xmp.
+call STAFRegister "MyHandleName", "MyHandle"
+say "My handle is:" MyHandle
+:exmp.
+:p.or
+:xmp.
+call STAFRegister "MyHandleName"
+say "My handle is:" STAFHandle
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.Rexx API
+:i2.STAFUnRegister
+:h3.STAFUnRegister
+:h4.Description
+:p.The STAFUnRegister call is used by a Rexx program to unregister with
+STAF, which frees up any internal STAF resources used by the handle.
+:h4.Syntax
+:xmp.
+call STAFUnRegister &lbrk.handle&rbrk.
+:exmp.
+:p.:xph.handle:exph. is the handle that you received on the call to
+STAFRegister.  If this parameter is not specified, the handle will be
+retrieved from the STAFHandle variable.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFUnRegister
+:h4.Examples
+:xmp.
+call STAFUnRegister MyHandle
+:exmp.
+:p.or
+:xmp.
+call STAFUnRegister
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.Rexx API
+:i2.STAFSubmit
+:h3.STAFSubmit
+:h4.Description
+:p.The STAFSubmit call is the primary API that you will use.  It is what
+allows you to submit a request to a service.
+:h4.Syntax
+:xmp.
+call STAFSubmit &lbrk.handle,&rbrk.  where, service, request &lbrk., resultVarName&rbrk.
+:exmp.
+:p.:xph.handle:exph. is the handle you received on the call to STAFRegister.
+If this parameter is not specified, the handle will be retrieved from the
+STAFHandle variable.
+:p.:xph.where:exph. is the destination machine for the service request.  This
+should be either LOCAL or the name of a machine.
+:p.:xph.service:exph. is the name of the service to which you are submitting
+the request.
+:p.:xph.request:exph. is the actual request that you are sending to the service.
+:p.:xph.resultVarName:exph. is the name of a variable that will contain the
+result of the service request. If you specify :xph.resultVarName:exph., you
+must also specify :xph.handle:exph.
+:note.The Rexx variable "STAFResult" will always be set to the result of the
+service request.  However, :xph.resultVarName:exph. allows you to get another
+variable set if needed.
+:note.To define whether a submit request should be synchronous or asynchronous,
+the STAFSyncOption variable should be set prior to calling STAFSubmit (if it 
+is not set, the submit will be synchronous).  The possible values for 
+STAFSyncOption are defined in STAFUtil.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFSubmit
+:h4.Examples
+:xmp.
+/* myHandle was previously set by a call to STAFRegister */
+
+someMachine = "testmach1"
+service = "PING"
+request = "PING"
+
+call STAFSubmit myHandle, someMachine, service, request, "SomeVar"
+say "STAFSubmit return code     :" RESULT
+say "Service request result     :" STAFResult
+say "Also service request result:" SomeVar
+:exmp.
+:p.or
+:xmp.
+/* STAFHandle was previously set by a call to STAFRegister */
+
+someMachine = "testmach1"
+service = "PING"
+request = "PING"
+
+call STAFSubmit someMachine, service, request
+say "STAFSubmit return code     :" RESULT
+say "Service request result     :" STAFResult
+
+call STAFSyncValues
+STAFSyncOption = STAFSync.!ReqRetain
+call STAFSubmit someMachine, service, request
+say "Asynchronous Service request number     :" STAFResult
+
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.Rexx API
+:i2.STAFMon wrapper
+:h3.STAFMon wrapper library
+:h4.Description
+:p.The STAFMon wrapper library provides a wrapper around the MONITOR service.
+The following functions are provided:
+:ul compact.
+:li.STAFMonitorErrorText - Initializes STAF Monitor error codes
+:li.STAFMonitor - Logs data to the Monitor service
+:eul.
+:h4.Syntax
+:xmp.
+call STAFMonErrorText
+call STAFMonitor <Message>[, <Extra request data>]
+:exmp.
+:p.:xph.<Message>:exph. is the message that you wish to log to the MONITOR
+service.
+:p.:xph.<Extra request data>:exph. is any additional information that should
+be passed along with the MONITOR service LOG request, such as additional
+options like RESOLVEMESSAGE.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFMon
+:h4.Examples
+:xmp.
+/* STAFHandle was set by a previous call to STAFRegister */
+call STAFMonErrorText
+
+do i = 1 to numLoops
+    call STAFMonitor "Beginning of loop #"i
+      ...
+      ...
+end
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.Rexx API
+:i2.STAFLog wrapper
+:h3.STAFLog wrapper library
+:h4.Description
+:p.The STAFLog wrapper library provides a wrapper around the LOG service.
+The following functions are provided:
+:ul compact.
+:li.STAFLogErrorText - Initializes STAF Logging error codes
+:li.STAFInitLog - Initializes the data structures used for logging to a
+particular STAF log
+:li.STAFSetCurrentLog - Sets the current log
+:li.STAFLog - Logs data to the current log
+:eul.
+:h4.Syntax
+:xmp.
+call STAFLogErrorText
+call STAFInitLog <Reference>, <Log name>[, [Log type], [Monitor mask]]
+call STAFSetCurrentLog <Reference>
+call STAFLog <Log level>, <Message>[, <Extra request data>]
+:exmp.
+:p.:xph.<Reference>:exph. is a text string of your desire that is used to
+refer to a log.  This facilitates switching between several different log
+files.
+:p.:xph.<Log name>:exph. is the name of the log to which you wish to log
+messages
+:p.:xph.[Log type]:exph. is the type of log.  This should be one of GLOBAL,
+MACHINE, or HANDLE.  The default is MACHINE.
+:p.:xph.[Monitor mask]:exph. is a string which specifies which logging levels
+should also be sent to the MONITOR service.  The default is "FATAL ERROR
+WARNING INFO STATUS"
+:p.:xph.<Log level>:exph. is the logging level of the message to be logged,
+e.g. ERROR or WARNING.
+:p.:xph.<Message>:exph. is the message that you wish to log to the LOG
+service.
+:p.:xph.<Extra request data>:exph. is any additional information that should
+be passed along with the LOG service LOG request, such as additional
+options like RESOLVEMESSAGE.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFLog
+:h4.Examples
+:xmp.
+/* STAFHandle was set by a previous call to STAFRegister */
+call STAFLogErrorText
+
+call STAFInitLog "Public", "Testcase1", "MACHINE"
+call STAFInitLog "Private", "Testcase1", "HANDLE", "FATAL ERROR WARNING"
+
+call STAFSetCurrentLog "Public"
+call STAFLog "INFO", "Beginning testcase 1"
+
+  ...
+
+call STAFSetCurrentLog "Private"
+call STAFLog "DEBUG", "Some private debug data"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.Rexx API
+:i2.STAFPool wrapper
+:h3.STAFPool wrapper library
+:h4.Description
+:p.The STAFPool wrapper library provides a wrapper around the RESPOOL service.
+The following functions are provided:
+:ul compact.
+:li.STAFPoolErrorText - Initializes STAF Resource Pool error codes
+:li.STAFPoolRequest - Requests an entry from resource pool
+:li.STAFPoolRelease - Releases a resource pool entry
+:eul.
+:h4.Syntax
+:xmp.
+call STAFPoolErrorText
+call STAFPoolRequest <Pool name>, <Entry variable name>[, [Entry type], [Timeout]]
+call STAFPoolRelease <Pool name>, <Entry>[, <Force>]
+:exmp.
+:p.:xph.<Pool name>:exph. is the name of the pool from which to request or
+release an entry.
+:p.:xph.<Entry variable name>:exph. is the name of the variable in which to
+place the actual requested entry's value.
+:p.:xph.[Entry type]:exph. is the type of entry requested.  This should be
+either FIRST or RANDOM.  The default is RANDOM.
+:p.:xph.[Timeout]:exph. is an amount of time, in milliseconds, after which
+the request should timeout.  The default is to wait indefinitely.
+:p.:xph.<Force>:exph. specifies whether the entry should be forceable released.
+This should be either FORCE or NOFORCE.  The default is NOFORCE.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFPool
+:h4.Examples
+:xmp.
+/* STAFHandle was set by a previous call to STAFRegister */
+call STAFPoolErrorText
+
+call STAFPoolRequest "Pool1", "Entry1"
+say "The entry obtained was:" Entry1
+
+  ...
+
+call STAFPoolRelease Entry1
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.Rexx API
+:i2.STAFUtil library
+:h3.STAFUtil library
+:h4.Description
+:p.The STAFUtil library provides some utilitiy functions for use by Rexx
+programs.  The following functions are provided:
+:ul compact.
+:li.STAFErrorText - Initializes general STAF error codes
+:li.STAFSyncValues - Initializes constants uses to indicate whether
+submit requests should be synchronous or asynchronous
+:ul compact.
+:li.STAFSync.!ReqSync - This indicates the request should be submitted
+synchronously.  This is equivalent to calling STAFSubmit without setting the
+STAFSyncOption variable.
+:li.STAFSync.!ReqFireAndForget - This operates identically to the
+kSTAFReqFireAndForget value of the C STAFSubmit2 API (see :hdref refid=apiss2.
+for more information).
+:li.STAFSync.!ReqQueue - This operates identically to the kSTAFReqQueue value of
+the C STAFSubmit2 API (see :hdref refid=apiss2. for more information).
+:li.STAFSync.!ReqRetain - This operates identically to the kSTAFReqRetain value
+of the C STAFSubmit2 API (see :hdref refid=apiss2. for more information).
+:li.STAFSync.!ReqQueueRetain - This operates identically to the
+kSTAFReqQueueRetain value of the C STAFSubmit2 API (see :hdref refid=apiss2.
+for more information).
+:eul.
+:li.STAFWrapData - Generates the colon-delimited version of a string
+:li.MakeSTAFResult - Creates a STAF Service result string (only used by
+service providers)
+:eul.
+:h4.Syntax
+:xmp.
+call STAFErrorText
+call STAFSyncValues
+wrappedData = STAFWrapData(<Data>)
+serviceResult = MakeSTAFResult(<Return code>[, <Result string>])
+:exmp.
+:p.:xph.<Data>:exph. is the data for which to generate the colon delimited
+version.
+:p.:xph.<Return code>:exph. is the service request's return code.
+:p.:xph.<Result string>:exph. is the service request's result string.
+:ih1.examples
+:ih2.Rexx API
+:i3.STAFUtil
+:h4.Examples
+:xmp.
+/* STAFHandle was set by a previous call to STAFRegister */
+call STAFErrorText
+
+someData = "..."
+wrappedData = STAFWrapData(someData)
+
+/* The following would only be used by a service provider */
+returnCode = 0
+resultString = "..."
+serviceResult = MakeSTAFResult(returnCode, resultString)
+
+/* The following sets the STAFSyncOption variable to one of the STAFSync constants */
+STAFSyncOption = STAFSync.!ReqRetain
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=javaapi.Java
+:p.
+For information on STAF's V3 support for the Java language, see the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFJava.htm">STAF Java User's Guide</A>.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=perlapi.Perl
+:p.
+For information on STAF's V3 support for the Perl language, see the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFPerl.htm">STAF Perl User's Guide</A>.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=pythonapi.Python
+:p.
+For information on STAF's V3 support for the Python language, see the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFPython.htm">STAF Python User's Guide</A>.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=tclapi.Tcl
+:p.
+For information on STAF's V3 support for the Tcl language, see the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFTcl.htm">STAF Tcl User's Guide</A>.
+:p.

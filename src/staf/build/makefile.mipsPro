@@ -1,0 +1,76 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+#########################
+# Setup C/C++ variables #
+#########################
+
+CC_CC             := CC -n32
+CC_C              := CC -n32
+CC_MK_SHARED_LIB  := CC -n32 -shared
+
+ifeq ($(BUILD_TYPE),retail)
+    CC_BUILD_TYPE_FLAGS = $(CC_OPTIMIZE)
+else
+    CC_BUILD_TYPE_FLAGS = $(CC_DEBUG)
+endif
+
+CC_DEBUG        := -g
+CC_OPTIMIZE     := -O1 -OPT:Olimit=0
+CC_FPIC         := -KPIC
+CC_SHAREDLIBNAMEFLAGS = -DSTAF_SHARED_LIB_PREFIX=$(OS_SHARED_LIB_PREFIX) \
+                        -DSTAF_SHARED_LIB_SUFFIX=$(OS_SHARED_LIB_SUFFIX)
+CC_STD_SUPPORT  := -DSTAF_Config_NoSTDIOStreamSupport \
+                   -DSTAF_Config_NoSTDFStreamSupport
+CC_STL_PTHREAD_SUPPORT := -D_PTHREADS
+
+
+# Note: Message 1460 is a warning about declaring something inline after using
+#       it.  I don't know why this pops up, but it is all over the place, so
+#       it is suppressed.  Message 1552 is a warning that a variable was set
+#       but never used.  In all the cases I looked at, this appeared to be a
+#       bug with the compiler, because the variable was used, so I suppressed
+#       this warning as well.  Message 1376 is a warning about no accessible
+#       constructors.  This is a mildly common idiom in STAF, along with
+#       a couple of static-only classes, so I suppressed this as well.
+
+CC_SUPPRESSMESSAGES := -diag_suppress 1460,1552,1376
+CC_COMMONFLAGS   = $(OS_COMMONFLAGS) $(COMMONFLAGS) $(CC_BUILD_TYPE_FLAGS) \
+                   $(CC_STD_SUPPORT) $(CC_ARCHITECTURE) $(CC_FPIC) \
+                   $(CC_SHAREDLIBNAMEFLAGS) $(CC_SUPPRESSMESSAGES) \
+                   $(CC_STL_PTHREAD_SUPPORT) -DSTAF_NATIVE_COMPILER
+CC_CFLAGS        = $(CC_COMMONFLAGS) $(CFLAGS)
+CC_LINKFLAGS     = $(CC_COMMONFLAGS) $(LINKFLAGS) -Wl,-Bsymbolic
+
+##########################################
+# Set commands needed by master makefile #
+##########################################
+
+# Note: CC_LINK_IT and CC_SHARED_LIB_IT have the libraries after the obj's
+#       due to a peculiar lookup algorithm used by the MIPSPro compiler.  If
+#       the libraries are before the obj's, none of the library routines are
+#       found.
+
+define CC_DEPEND_IT
+    $(CC_CC) -M $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $< | \
+       sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@
+endef
+
+define CC_DEPEND_IT_C
+    $(CC_C) -M $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $< | \
+       sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@
+endef
+
+CC_COMPILE_IT    = $(CC_CC) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_COMPILE_IT_C  = $(CC_C) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_LINK_IT       = $(CC_CC) -o $@ $(CC_LINKFLAGS) $(ALL_INCLUDEDIR_LIST)\
+                   $(ALL_LIBDIR_LIST) $(OBJS) $(ALL_LIB_LIST)
+
+CC_SHARED_LIB_IT = $(CC_MK_SHARED_LIB) -o $@ $(CC_LINKFLAGS) $(ALL_LIBDIR_LIST)\
+                   $(OBJS) $(ALL_LIB_LIST)

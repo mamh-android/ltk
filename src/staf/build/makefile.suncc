@@ -1,0 +1,70 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2009                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# This makefile builds STAF on Solaris using the Sun Studio C/C++ compilers
+# instead of using gcc
+
+#########################
+# Setup C/C++ variables #
+#########################
+
+CC_CC             := CC -mt
+CC_C              := cc -mt
+CC_MK_SHARED_LIB  := CC -mt -G -library=Cstd
+
+ifeq ($(BUILD_TYPE),retail)
+    CC_BUILD_TYPE_FLAGS = $(CC_OPTIMIZE) -DNDEBUG
+else
+    CC_BUILD_TYPE_FLAGS = $(CC_DEBUG)
+endif
+
+CC_DEBUG        := -g #-g0
+CC_OPTIMIZE     := -xO2
+CC_FPIC         := -KPIC
+CC_STL_PTHREADS := -D_PTHREADS
+CC_SHAREDLIBNAMEFLAGS = -DSTAF_SHARED_LIB_PREFIX=$(OS_SHARED_LIB_PREFIX) \
+                        -DSTAF_SHARED_LIB_SUFFIX=$(OS_SHARED_LIB_SUFFIX)
+                        
+ifeq ($(OS_NAME),solaris)
+    ifeq ($(BUILD_ARCH),SPARC64)
+        CC_ARCHFLAGS = -m64
+    endif    
+    ifeq ($(BUILD_ARCH),x64-64)
+        CC_ARCHFLAGS = -m64
+    endif
+endif    
+
+CC_COMMONFLAGS = $(OS_COMMONFLAGS) $(COMMONFLAGS) $(CC_FPIC)\
+                 $(CC_BUILD_TYPE_FLAGS) $(CC_SHAREDLIBNAMEFLAGS)\
+                 $(CC_STL_PTHREADS) -DSTAF_NATIVE_COMPILER\
+                 $(CC_ARCHFLAGS)
+
+CC_CFLAGS = $(CC_COMMONFLAGS) $(CFLAGS)
+
+CC_LINKFLAGS     = $(CC_COMMONFLAGS) $(LINKFLAGS)
+CC_SHARED_LIB_LINKFLAGS = $(CC_COMMONFLAGS) $(LINKFLAGS)
+
+##########################################
+# Set commands needed by master makefile #
+##########################################
+
+CC_DEPEND_IT     = cd $(@D); $(CC_CC) -M1 $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) \
+                   $< | sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@
+
+CC_DEPEND_IT_C   = cd $(@D); $(CC_C) -xM1 $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) \
+                   $< | sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@
+
+CC_COMPILE_IT    = $(CC_CC) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_COMPILE_IT_C  = $(CC_C) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_LINK_IT       = $(CC_CC) -o $@ $(CC_LINKFLAGS) $(ALL_INCLUDEDIR_LIST)\
+                   $(ALL_LIBDIR_LIST) $(ALL_LIB_LIST) $(OBJS)
+
+CC_SHARED_LIB_IT = $(CC_MK_SHARED_LIB) -o $@ $(CC_SHARED_LIB_LINKFLAGS) \
+                   $(ALL_INCLUDEDIR_LIST) $(ALL_LIBDIR_LIST) $(ALL_LIB_LIST) \
+                   $(OBJS)

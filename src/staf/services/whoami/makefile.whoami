@@ -1,0 +1,45 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+whoami_class_targets =\
+  $(O)/services/whoami/STAF-INF/classes/com/ibm/staf/service/whoami/WhoAmI.class \
+  $(O)/services/whoami/MANIFEST.MF
+whoami_targets += $(whoami_class_targets)\
+                  $(REL)/lib/WhoAmI.jar
+Targets += $(whoami_targets)
+CleanupTargets += cleanup_event
+
+$(whoami_targets): SUBSYS_REL := services/whoami
+SUBSYS_REL := services/whoami
+
+# Include inference rules
+include $(InferenceRules)
+
+$(whoami_targets): $(REL)/lib/JSTAF.zip
+
+WHOAMI_CLASSPATH = $(OS_O)/services/whoami$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define WHOAMI_JAVA_COMPILE_IT
+    @echo "*** Compiling WhoAmI Service Java Sources ***"
+    @$(CREATE_PATH)
+    @$(JAVAC) -d $(OS_O)/services/whoami/STAF-INF/classes -classpath '$(WHOAMI_CLASSPATH)' $(OS_SRC)/services/whoami/*.java
+endef
+
+$(O)/services/whoami/STAF-INF/classes/com/ibm/staf/service/whoami/%.class: $(SRC)/services/whoami/%.java
+	$(WHOAMI_JAVA_COMPILE_IT)
+
+# WhoAmI Java targets
+
+$(O)/services/whoami/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(REL)/lib/WhoAmI.jar: $(whoami_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/whoami; $(JAR) cfm '$(OS_@)' MANIFEST.MF `find . -name "*.class" -print`
+
+cleanup_whoami:
+	-@$(DEL) $(O)/services/whoami/* $(OUT_ERR_TO_DEV_NULL)

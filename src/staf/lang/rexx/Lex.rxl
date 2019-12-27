@@ -1,0 +1,217 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+/* Lex.rxl - Lexing library */
+#Function All
+
+/*************************************************/
+/* Token stem format                             */
+/*                                               */
+/* Tokens.0   - # of tokens                      */
+/* Tokens.i   - Type of token #i                 */
+/* Tokens.i.0 - Value of token #i                */
+/* Tokens.i.!Line - Line number this token is on */
+/*************************************************/
+
+/*************************************************************************/
+/* LexFile - Performs a lexical analysis on a file                       */
+/*                                                                       */
+/* Accepts: The name of the file to lex                                  */
+/*                                                                       */
+/* Returns: 0                                                            */
+/*                                                                       */
+/* Note: It expects the following variables to be set.                   */
+/*                                                                       */
+/*    Whitespace   - A string of characters to be considered whitespace  */
+/*    Terminals    - A space separated list of terminal characters       */
+/*    FirstSet     - The first character of any two character terminals  */
+/*    FollowSet    - The second character of any two character terminals */
+/*    KeySymbols.0 - A space separated list of key terminals             */
+/*    KeySymbols.i - The ID of key symbol #i                             */
+/*    KeyWords     - A space separated list of keywords (the keyword is  */
+/*                   its own id)                                         */
+/*                                                                       */
+/*************************************************************************/
+LexFile: PROCEDURE EXPOSE lexdata lexpos Tokens. Whitespace Terminals,
+                          FirstSet FollowSet KeySymbols. KeyWords
+
+  parse arg File
+
+  linenumber = 1
+  nextlinenumber = 1
+  noerror = 1
+  lexpos = 1
+  lexlength = CHARS(File)
+  lexdata = CHARIN(File, , lexlength)
+  call STREAM File, 'c', 'close'
+
+  Tokens.0 = 0
+
+  TokenType = ''
+
+  do i = 1 while TokenType \= 'EOF'
+
+      TokenType = GetToken()
+
+      Tokens.0 = Tokens.0 + 1
+      CurrTokenInput = Tokens.0
+      Tokens.CurrTokenInput = TokenType
+      Tokens.CurrTokenInput.!Line = linenumber
+
+      if (TokenType = 'STRING') | (TokenType = "NUMBER") then
+          Tokens.CurrTokenInput.0 = lexid
+      else
+          Tokens.CurrTokenInput.0 = "No valid value"
+
+  end
+
+RETURN 0
+
+/* End of LexFile */
+
+
+/************************************/
+/* A few helper "macros" for lexing */
+/************************************/
+
+GetChar:
+
+  data = SUBSTR(lexdata, lexpos, 1)
+  lexpos = lexpos + 1
+  RETURN data
+
+PutBack:
+
+  lexpos = lexpos - 1
+  RETURN 0
+
+
+/*******************************************************
+  GetToken - Gets the next token from the input stream
+*******************************************************/
+GetToken:
+
+  lextype = ''
+  lexid = ''
+
+  do while (lexpos <= lexlength) & (lextype = '')
+
+      lexinput = GetChar()
+      linenumber = nextlinenumber
+
+      if VERIFY(lexinput, Whitespace) = 0 then
+      do
+          /* This is whitespace */
+          if lexinput = '0A'x then nextlinenumber = linenumber + 1
+          ITERATE
+      end
+      else if VERIFY(lexinput, "0123456789") = 0 then
+      do
+          /* This is a number */
+          lexid = lexinput
+          lextype = "NUMBER"
+          lexinput = GetChar()
+
+          do while (lexpos <= lexlength) & (VERIFY(lexinput, "0123456789") = 0)
+              lexid = lexid || lexinput
+              lexinput = GetChar()
+          end
+
+          if (lexpos <= lexlength) & (lexinput = ".") then
+          do
+              lexid = lexid || lexinput
+              lexinput = GetChar()
+
+              do while (lexpos <= lexlength) &,
+              (VERIFY(lexinput, "0123456789") = 0)
+                  lexid = lexid || lexinput
+                  lexinput = GetChar()
+              end
+          end
+
+          if lexpos <= lexlength then call PutBack
+      end
+      else if VERIFY(lexinput, "'"'"') = 0 then
+      do
+          /* This is a quoted string */
+          lextype = "STRING"
+          quotechar = lexinput
+          lexinput = GetChar()
+          do while (lexpos <= lexlength) & (lexinput \= quotechar)
+              if lexinput = "\" then
+                  lexinput = GetChar()
+              lexid = lexid || lexinput
+              if lexpos <= lexlength then
+                  lexinput = GetChar()
+          end
+      end
+      else if lexinput = "#" then
+      do
+          lexpos = POS('0A'x, lexdata, lexpos) + 1
+          if lexpos = 1 then lexpos = lexlength + 1
+      end
+      else if VERIFY(lexinput, Terminals) = 0 then
+      do
+          /* This is a terminal */
+          /* First check for a two-character symbol */
+          if POS(lexinput, firstset) \= 0 then
+          do
+              nextinput = GetChar()
+              symbolpos = WORDPOS(lexinput || nextinput, KeySymbols.0)
+              if symbolpos \= 0 then
+                  lextype = KeySymbols.symbolpos
+              else call PutBack
+          end
+
+          /* otherwise, check to make sure this terminal is a symbol */
+          if lextype = '' then
+          do
+              symbolpos = WORDPOS(lexinput, KeySymbols.0)
+              if symbolpos \= 0 then
+                  lextype = KeySymbols.symbolpos
+              else
+              do
+                  lextype = "STRING"
+                  lexid = lexinput
+              end
+          end
+      end
+      else
+      do
+          /* This is either a keyword or a string */
+
+          nextpos = VERIFY(lexdata, Terminals || Whitespace, 'M', lexpos)
+          if nextpos = 0 then
+          do
+              lexid = SUBSTR(lexdata, lexpos - 1)
+              lexpos = lexlength + 1
+          end
+          else
+          do
+              lexid = SUBSTR(lexdata, lexpos - 1, nextpos - lexpos + 1)
+              lexpos = nextpos
+          end
+
+          keywordpos = WORDPOS(TRANSLATE(lexid), KeyWords)
+          if keywordpos \= 0 then
+              lextype = WORD(KeyWords, keywordpos)
+          else
+              lextype = "STRING"
+      end
+
+  end  /* while still getting a token type */
+
+  /* This if statement takes care of a string appearing as the last */
+  /* line in a file                                                 */
+
+  if lextype = '' then lextype = 'EOF'
+
+  RETURN lextype
+
+/* End of GetToken */
+
+#End

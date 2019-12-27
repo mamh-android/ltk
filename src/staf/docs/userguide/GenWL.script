@@ -1,0 +1,430 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : GenWL SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Generic Workload
+.*  Detail:
+.*
+.*     This file contains information on the Generic Workload processor.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.GenWL
+:ih1.workload
+:i2.generic workload processor
+:h1 id=genwl.Generic Workload Processor
+:p.The Generic Workload Processor, GenWL (pronounced Jen-Wall), allows you to
+define a workload based on a set of machines, processes, and variables, and
+then provides a means to start, stop, and query the workload.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.GenWL
+:i2.syntax
+:h2 id=genwlsyntax.GenWL Syntax
+:p.The syntax for the Generic Workload Processor is
+:xmp.
+GenWL <Workload Definition File> -<Start[&colon.<Actions>] | Stop | Query | Free>
+      [-<Include | Exclude>&colon.<MACHINE | PROCESS>&colon.<List>]
+      [-Quiet | -Verbose]
+:exmp.
+:p.The :xph.<Workload Definition File>:exph. defines the workload and is
+discussed in the next section.  The default file extension is .gwl.
+:p.:xph.-Start:exph. is used to start the workload.  The processes are
+started asynchronously in the order that they are defined in the :xph.<Workload
+Definition File>:exph.  You may optionally specify which actions will take
+place when you start a workload.  These are specified in a comma separated
+list in place of :xph.<Actions>:exph. above.  No spaces should be used between
+the commas and the actions.  The following are the valid actions:
+:ul compact.
+:li.GlobalVar - Causes global variables to be set
+:li.MachineVar - Causes machine variables to be set
+:li.Var - Causes GlobalVar and MachineVar actions to occur
+:li.Process - Causes processes to be executed
+:li.All - Causes GlobalVar, MachineVar, and Process actions to occur (this is
+the default)
+:eul.
+:p.:xph.-Stop:exph. is used to stop the workload.
+:p.:xph.-Query:exph. is used to query the workload.
+:p.:xph.-Free:exph. is used to free the termination information for the
+workload.
+:p.:xph.-Include:exph. and :xph.-Exclude:exph. allow you to specify that
+a certain set of machines or processes should be included or excluded from
+processing.  The list of machines or processes is separated by commas and
+may contain a trailing *, as a wildcard, on any value.  No spaces should be
+used between the commas and the values.  These lists are used
+in place of :xph.<List>:exph. above.  :xph.-Includes:exph. are processed
+before :xph.-Excludes:exph..
+:p.:xph.-Quiet:exph. supresses all informational messages while processing
+:p.:xph.-Verbose:exph. provides additional informational messages while
+processing
+:h4.Examples
+:note.GenWL is a REXX program.  On non-OS/2 systems, you will need to preface
+the following examples with :xph.REXX:exph..
+:p.Goal&colon. Start the workload defined in WebTests.gwl
+:xmp.
+GenWL WebTests -Start
+:exmp.
+:p.Goal&colon. Query the workload defined in Ogre.cfg
+:xmp.
+GenWL Ogre.cfg -Query
+:exmp.
+:p.Goal&colon. Set all global variables defined in MyTest.gwl on machines
+client1, client2, and client3.
+:xmp.
+GenWL MyTest -Start&colon.GlobalVar -Include&colon.MACHINE&colon.client1,client2,client3
+:exmp.
+:p.Goal&colon. Query the workload defined in MyTest.gwl, but exclude machines
+whose names begin with bad.
+:xmp.
+GenWL MyTest -Query -Exclude&colon.MACHINE&colon.bad*
+:exmp.
+:p.Goal&colon. Stop the processes named Test1 and Test2 on machines client1 and
+client2 that are defined in workload MyTest.gwl
+:xmp.
+GenWL MyTest -Stop -Include&colon.MACHINE&colon.client1,client2 -Include&colon.PROCESS&colon.Test1,Test2
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=genwlwdf.Workload Definition File
+:p.The workload definition file defines the various machines, processes, and
+variables that will be used in the workload.  The language used in these
+files consists of the following elements, which will be discussed below.
+:ul compact.
+:li.Comment
+:li.Workload statement - declares the name of the workload
+:li.Variable statement - defines a workload, machine, or process variable
+:li.Machine block - defines the variables and processes for a machine
+:li.Process block - defines a process
+:li.Process references - provides a reference to a previously defined process
+:eul.
+:p.Blank lines in the file are ignored.
+.*
+.*---------------------------------------------------------------------
+.*
+:h3.Comment
+:p.A comment begins with a pound sign, #, and continues through to the end
+of the line.
+:h4.Examples
+:xmp.
+WORKLOAD "Web Tests"      # Set the workload name
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h3.Workload statement
+:p.The WORKLOAD statement defines the name of the workload.
+:h4.Syntax
+:xmp.
+WORKLOAD <Name>
+:exmp.
+:h4.Examples
+:xmp.
+WORKLOAD "Web Tests"
+WORKLOAD Ogre
+:exmp.
+:p.You must have a WORKLOAD statement in your workload definition file.  If you
+have more than one, the last one takes precedence.
+.*
+.*---------------------------------------------------------------------
+.*
+:h3.Variable statement
+:p.A variable statement allows you to specify a variable and its value.
+A variable statement inside of a process block is local to that particular
+process.  A variable statement inside of a machine block, but outside of a
+process block, is global to that machine.  A variable statement outside of a
+machine block is a workload variable, and is set as a global variable on all
+the machines defined in the workload definition file.
+:h4.Syntax
+:xmp.
+VAR <Name=Value>
+:exmp.
+:h4.Examples
+:xmp.
+VAR WebServer=testsrv1.test.austin.ibm.com
+VAR "Good String=Command completed successfully"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h3.Machine block
+:p.A machine block defines a machine you wish to use in the workload as well
+as any global variables on that machine and any processes to run on that
+machine.
+:h4.Syntax
+:xmp.
+MACHINE <Name>
+    &lbrk.One or more variable statements&rbrk.
+    &lbrk.One or more process blocks&rbrk.
+    &lbrk.One or more process references&rbrk.
+END
+:exmp.
+:h4.Examples
+:xmp.
+MACHINE Client1
+
+    VAR LogDirectory=d:\logs
+    VAR MonitorDirectory=d:\monitor
+
+    PROCESS
+        COMMAND d:\testcase\tc1.exe
+    END
+
+    PROCREF tc2
+END
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h3.Process block
+:p.A process block defines a process.  If the process is defined within a
+machine block then the process is specific to that machine.  If the process
+is defined outside of a machine block, then the process is global in nature
+and may be referenced by any machine block using a PROCREF statement (see
+:hdref refid=procref.).
+:h4.Syntax
+:xmp.
+PROCESS
+    &lbrk.NAME <Name>&rbrk.
+    COMMAND <Command>
+    &lbrk.WORKDIR <WorkDir>&rbrk.
+    &lbrk.TITLE <Title>&rbrk.
+    &lbrk.ENV <Name=Value>&rbrk.  &lbrk.ENV <Name=Value>&rbrk. ...
+    &lbrk.One or more variable statements&rbrk.
+END
+:exmp.
+:p.:xph.NAME:exph. specifies the name of the process.  This is used to refer
+back to the process via a PROCREF.
+:p.:xph.COMMAND:exph., :xph.PARMS:exph., :xph.WORKDIR:exph., :xph.TITLE:exph.,
+and :xph.ENV:exph. are defined as in :hdref refid=procsrv..
+:h4.Examples
+:xmp.
+PROCESS
+    NAME WebTest1
+    COMMAND cmd.exe
+    PARMS "/c d:\\webtests\\webtest1.cmd"
+    WORKDIR d:\webtests
+    TITLE "Web Test 1"
+    ENV USEHOSTS=1
+    VAR WebServer=testsrv2.test.austin.ibm.com
+END
+
+PROCESS COMMAND d:\webtests\webtest2.exe END
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h3 id=procref.Process reference
+:p.A process reference is a reference to a previously defined process.  It is
+used inside a machine block to indicate that the previously defined process
+is to be executed by this machine.
+:h4.Examples
+:xmp.
+PROCREF WebTest1
+PROCREF "Big bad stress test"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=genwlnotes.Notes on querying a workload
+:p.When you query a workload, you will see a section for each machine as
+defined in the workload definition file.  In this section there will be one
+line of information per process defined on that machine.  Each line contains
+the handle of the process, with the registered name of the process in
+parentheses.  Following this information is either any available MONITOR
+data, if the process is still running, or completion information, if the
+process is no longer running.
+:h3.Examples
+:xmp.
+Client1
+-------
+42(WebTest1) - 19980215-13:12:17 Starting loop 123
+43(WebTest2) - 19980215-13:10:39 ERROR: invalid internal html link
+
+
+Client2
+-------
+35(WebTest1) - Completed at 19980205-10:19:48, RC: 0
+43(WebTest3) - 19980215-13:11:26 Entering JavaScript verification phase
+:exmp.
+:p.You may also receive warning messages if there are a greater or lesser
+number of processes running under the context of the workload on a given
+machine than are defined in the workload definition file.  For example, if
+Client1 is running three processes with the workload name "Web Tests", but
+only two are defined in the workload definition file, you will get a warning
+indicating that there is one more process running than defined.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.examples
+:i2.GenWL
+:ih1.GenWL
+:i2.example
+:h2 id=genwlexmp.GenWL Example
+:h3.GenWL Input
+:xmp keep=4.
+# This is a  generic workload definition file for use with test environment 08
+# It makes use of the sitloop command file to start test cases.
+
+Workload "ST08 Environment Tests"
+
+#
+# Define a workload variable
+#
+
+VAR WorkLoadID=ST08T5
+
+VAR Success_msg="Command completed successfully"
+VAR LogDirectory={STAF/Config/BootDrive}\ITLUTIL\STAFLog
+VAR MonitorDirectory={STAF/Config/BootDrive}\ITLUTIL\STAFMon
+
+#
+# Define some processes for later use
+#
+
+PROCESS
+    NAME VACPP02
+    TITLE VACPP02
+    COMMAND cmd.exe
+    PARMS "/c sitloop /lc=1 /lt=600 /tc=vacpp02 /cmd=vacpp02_staf.cmd c: c:"
+END
+PROCESS
+    NAME VACPP03
+    TITLE VACPP03
+    COMMAND cmd.exe
+    PARMS "/c sitloop /lc=1 /lt=600 /tc=vacpp03 /cmd=vacpp03_staf.cmd c: c:"
+END
+
+#--------
+# ST08S04
+#--------
+Machine cd1b
+    PROCESS
+        TITLE L123G_1
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=600 /tc=L123G_1 /cmd=sitl123g_staf.cmd /p=s04held"
+    END
+End  # End of the machine block
+
+#--------
+# ST08R01
+#--------
+Machine cd1c
+    PROCESS
+        TITLE DB2_1
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=60 /tc=DB2_1 /cmd=sitdb2r_staf.cmd /c=1"
+    END
+    PROCESS
+        TITLE EXER_CCC
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=60 /tc=exer_ccc /cmd=exer_ccc_staf.cmd /S-ST08S04"
+    END
+    PROCESS
+        TITLE INTEROPA
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=60 /tc=INTEROPA /staf /cmd=sitls01.cmd /alias=s05util"
+    END
+    PROCESS
+        TITLE NW_1
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=20 /lt=600 /tc=NW_1 /cmd=itlnw211_staf.cmd"
+    END
+    PROCESS
+        TITLE L123G_1
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=5 /lt=600 /tc=L123G_1 /cmd=sitl123g_staf.cmd /p=s04held"
+    END
+End  # End of the machine block
+
+#--------
+# ST08R02
+#--------
+Machine cf2b
+    PROCESS
+        TITLE EXER_WEB
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=60 /tc=exer_web /cmd=exer_web_staf.cmd /ID-WEB"
+    END
+    PROCESS
+        TITLE INTEROPB
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=60 /tc=INTEROPB /staf /cmd=sitls01.cmd /alias=s01util"
+    END
+    PROCESS
+        TITLE Notes_TestNSF
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=4 /lt=600 /tc=notes_testnsf /cmd=sittnsf_staf.cmd"
+    END
+    PROCESS
+        TITLE BAPCO_3
+        COMMAND cmd.exe
+        PARMS "/c bapstart03_staf /lh=2"
+    END
+    PROCREF VACPP02
+    PROCREF VACPP03
+End  # End of the machine block
+
+#--------
+# ST08R09
+#--------
+Machine cd3b
+    PROCESS
+        TITLE EXER_WEB
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=10 /lt=60 /tc=exer_web /cmd=exer_web_staf.cmd /WS-ST08R09 /h-cd1b /ms-600 /ID-WEB"
+    END
+    PROCESS
+        TITLE ITLPing01
+        COMMAND cmd.exe
+        PARMS "/c sitloop /hours=2 /lc=20 /lt=60 /tc=itlping01 /cmd=itlping01_staf.cmd cf2c"
+    END
+End  # End of the machine block
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.GenWL
+:i2.query output
+:h3.GenWL Output
+:xmp keep=3.
+cd1b
+----
+5(nw_1) - 19980428-19:31:09 ST08T5---COMPLETED PASS: 18, SLEEP FOR 448SEC
+
+cd1c
+----
+84(DB2_1) - Completed at 19980428-17:41:29, RC: 1
+85(exer_ccc) - 19980428-19:31:04 ST08T5---STARTING PASS: 27
+86(INTEROPA) - 19980428-19:31:00 SITLS01---PASS 19: COPY 8MB.DAT FROM REMOTE COMPLETE
+87(NW_1) - 19980428-19:27:37 ST08T5---COMPLETED PASS: 19, SLEEP FOR 446SEC
+88(L123G_1) - Completed at 19980428-18:55:39, RC: 1
+
+cf2b
+----
+Warning: There were 6 more processes running on this machine than were
+         defined in st08.gwl
+2(exer_web) - Completed at 19980417-18:07:08, RC: 0
+3(INTEROPB) - 19980417-14:36:32 SITLS01---PASS 1: COPY 8MB.DAT TO REMOTE COMPLETE
+4(notes_testnsf) - Completed at 19980417-15:14:25, RC: 1
+5(bapco_3) - Completed at 19980417-14:51:16, RC: 0
+6(vacpp02) - 19980417-14:28:44 ST08T5---STARTING PASS: 1
+7(vacpp03) - 19980417-14:28:44 ST08T5---STARTING PASS: 1
+10(exer_web) - 19980428-19:26:20 ST08T5---STARTING PASS: 14
+11(INTEROPB) - 19980428-17:35:17 ST08T5---STARTING PASS: 1
+12(notes_testnsf) - 19980428-19:24:19 ST08T5---COMPLETED PASS: 3, SLEEP FOR 237SEC
+13(bapco_3) - 19980401-14:04:27 COMPLETED PASS: 1
+14(vacpp02) - 19980428-17:35:17 ST08T5---STARTING PASS: 1
+15(vacpp03) - 19980428-17:35:17 ST08T5---STARTING PASS: 1
+
+cd3b
+----
+6(exer_web) - 19980428-19:27:04 ST08T5---STARTING PASS: 11
+7(itlping01) - 19980428-19:30:44 ST08T5---COMPLETED PASS: 103, SLEEP FOR 53SEC
+:exmp.

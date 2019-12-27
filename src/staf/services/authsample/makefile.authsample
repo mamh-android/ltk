@@ -1,0 +1,50 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2003                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+authsample_class_targets =\
+  $(O)/services/authsample/STAF-INF/classes/com/ibm/staf/service/authsample/AuthSample.class
+  
+authsample_jar_targets =\
+  $(O)/services/authsample/MANIFEST.MF
+    
+authsample_targets += $(REL)/lib/AuthSample.jar
+                
+Targets += $(authsample_targets)
+CleanupTargets += cleanup_authsample
+
+$(authsample_targets): SUBSYS_REL := services/authsample
+SUBSYS_REL := services/authsample
+
+# Include inference rules
+include $(InferenceRules)
+
+$(authsample_targets): $(REL)/lib/JSTAF.jar
+
+AUTHSAMPLE_CLASSPATH = $(OS_O)/services/authsample$(OS_PS)$(OS_REL)/lib/JSTAF.jar$(OS_PS)$(JAVA_CLASSPATH)
+  
+define AUTHSAMPLE_JAVA_COMPILE_IT
+    @echo "*** Compiling Authenticator Sample Java Sources ***"
+    @$(CREATE_PATH)
+    @$(JAVAC) -d $(OS_O)/services/authsample/STAF-INF/classes -classpath '$(AUTHSAMPLE_CLASSPATH)' $(OS_SRC)/services/authsample/*.java
+endef
+
+$(O)/services/authsample/STAF-INF/classes/com/ibm/staf/service/authsample/%.class: $(SRC)/services/authsample/%.java
+	$(AUTHSAMPLE_JAVA_COMPILE_IT)
+
+# Copy Authenticator Sample objects
+
+$(O)/services/authsample/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+# Create AuthSample.jar
+
+$(REL)/lib/AuthSample.jar: $(authsample_class_targets) $(authsample_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/authsample; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF
+
+cleanup_authsample:
+	-@$(DEL) $(O)/services/authsample/* $(OUT_ERR_TO_DEV_NULL)

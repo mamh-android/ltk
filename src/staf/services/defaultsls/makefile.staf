@@ -1,0 +1,58 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFDefaultSLS = $(subst Name,STAFDSLS,$(DLL))
+
+stafdslservice_targets += $(REL)/lib/$(LIB_STAFDefaultSLS)\
+                          $(REL)/include/STAFDefaultSLS.h
+Targets += $(stafdslservice_targets)
+CleanupTargets += cleanup_stafdslservice
+
+$(stafdslservice_targets): SUBSYS_REL := services/defaultsls
+SUBSYS_REL := services/defaultsls
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafdslservice_targets): OBJS = $(stafdslservice_objs)
+$(stafdslservice_targets): LIBS = STAF
+$(stafdslservice_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafdslservice_objs :=\
+  STAFDefaultSLS
+
+stafdslservice_objs        := $(foreach obj,$(stafdslservice_objs),$(O)/services/defaultsls/$(obj)$(OS_OE))
+stafdslservice_dependents  := $(stafdslservice_objs:$(OS_OE)=.d)
+$(stafdslservice_dependents): SUBSYS_REL := services/defaultsls
+
+ifeq ($(OS_NAME),win32)
+    stafdslservice_objs += $(SR_SRC)/STAFDefaultSLS.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafdslservice_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFDefaultSLS targets
+
+$(REL)/lib/$(LIB_STAFDefaultSLS): $(stafdslservice_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+$(REL)/include/STAFDefaultSLS.h: $(SRC)/services/defaultsls/STAFDefaultSLS.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafdslservice:
+	-@$(DEL) $(O)/services/defaultsls/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAFDefaultSLS) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/STAFDefaultSLS.h $(OUT_ERR_TO_DEV_NULL)
+
+
+

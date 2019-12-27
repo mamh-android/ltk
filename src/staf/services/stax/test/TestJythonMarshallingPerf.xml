@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?> 
+<!DOCTYPE stax SYSTEM "stax.dtd"> 
+
+<stax>  
+
+<defaultcall function="main">100000</defaultcall> 
+
+<function name="main">
+
+  <function-prolog>
+    Tests performance of Jython marshalling and formatObject.
+    Accepts an argument containing the number of entries to marshall.
+  </function-prolog>
+
+  <function-single-arg>
+    <function-required-arg name="entries"/>
+  </function-single-arg>
+
+  <sequence>
+<!--
+Here are the expected results:
+
+*************************************************************
+Test For Errors in Marshalling, FormatObject, and Unmarshall
+*************************************************************                
+Test for errors using a list with 1 entries of map class objects each with 2 keys
+Verify you can format, marshall, and unmarshall an object that references a map class but does not define the map class in the context:
+FormatObject result without map class definition in context:
+[
+  {
+    key2               : Value 2 1
+    staf-map-class-name: STAF/Test/MyMapClassDefinition
+    key1               : Value 1 1
+  }
+]
+Marshalled string:
+@SDT/[1:127:@SDT/{:116::4:key2@SDT/$S:9:Value 2 1:19:staf-map-class-name@SDT/$S:30:STAF/Test/MyMapClassDefinition:4:key1@SDT/$S:9:Value 1 1
+Length of marshalled string: 139
+Unmarshall and call FormatObject on the context:
+[
+  {
+    staf-map-class-name: STAF/Test/MyMapClassDefinition
+    key2               : Value 2 1
+    key1               : Value 1 1
+  }
+]
+Print root list object as a formatted string:
+[
+  {
+    staf-map-class-name: STAF/Test/MyMapClassDefinition
+    key2               : Value 2 1
+    key1               : Value 1 1
+  }
+]
+FormatObject result with wrong map class definition in context:
+[
+  {
+    key2               : Value 2 1
+    staf-map-class-name: STAF/Test/MyMapClassDefinition
+    key1               : Value 1 1
+  }
+]
+Marshalling string with wrong map class definition in context:
+@SDT/*:289:@SDT/{:139::13:map-class-map@SDT/{:111::31:STAF/Test/MyMapClassDefinition2@SDT/{:66::4:name@SDT/$S:31:STAF/Test/MyMapClassDefinition2:4:keys@SDT/[0:0:@SDT/[1:127:@SDT/{:116::4:key2@SDT/$S:9:Value 2 1:19:staf-map-class-name@SDT/$S:30:STAF/Test/MyMapClassDefinition:4:key1@SDT/$S:9:Value 1 1
+Length of marshalled data: 300
+Unmarshall and call FormatObject on the context:
+[
+  {
+    key2               : Value 2 1
+    staf-map-class-name: STAF/Test/MyMapClassDefinition
+    key1               : Value 1 1
+  }
+]
+FormatObject result with map class definition in context:
+[
+  {
+    Key #1: Value 1 1
+    Key #2: Value 2 1
+  }
+]
+20061005-17:30:55	Add a map object created for the map class definition with no keys
+20061005-17:30:55	Verify you can format, marshall, and unmarshall an object that references a map class without any keys defined:
+[
+  {
+    Key #1: Value 1 1
+    Key #2: Value 2 1
+  }
+  {
+  }
+]
+MarshalledString: 
+@SDT/*:525:@SDT/{:375::13:map-class-map@SDT/{:347::31:STAF/Test/MyMapClassDefinition2@SDT/{:66::4:name@SDT/$S:31:STAF/Test/MyMapClassDefinition2:4:keys@SDT/[0:0::30:STAF/Test/MyMapClassDefinition@SDT/{:191::4:name@SDT/$S:30:STAF/Test/MyMapClassDefinition:4:keys@SDT/[2:124:@SDT/{:52::12:display-name@SDT/$S:6:Key #1:3:key@SDT/$S:4:key1@SDT/{:52::12:display-name@SDT/$S:6:Key #2:3:key@SDT/$S:4:key2@SDT/[2:127:@SDT/%:72::30:STAF/Test/MyMapClassDefinition@SDT/$S:9:Value 1 1@SDT/$S:9:Value 2 1@SDT/%:35::31:STAF/Test/MyMapClassDefinition2
+Length of marshalled data: 536
+[
+  {
+    Key #1: Value 1 1
+    Key #2: Value 2 1
+  }
+  {
+  }
+]
+Verify that you can format, marshall, and unmarshall an object that references a map class without a key that it doesn't provide an entry for:
+[
+  {
+    Key #1: Value 1 1
+    Key #2: Value 2 1
+  }
+  {
+    Key YYY: <None>
+    Key XXX: ValueXXX
+  }
+]
+MarshalledString: 
+@SDT/*:686:@SDT/{:508::13:map-class-map@SDT/{:480::31:STAF/Test/MyMapClassDefinition2@SDT/{:198::4:name@SDT/$S:31:STAF/Test/MyMapClassDefinition2:4:keys@SDT/[2:130:@SDT/{:55::12:display-name@SDT/$S:7:Key YYY:3:key@SDT/$S:6:KeyYYY@SDT/{:55::12:display-name@SDT/$S:7:Key XXX:3:key@SDT/$S:6:KeyXXX:30:STAF/Test/MyMapClassDefinition@SDT/{:191::4:name@SDT/$S:30:STAF/Test/MyMapClassDefinition:4:keys@SDT/[2:124:@SDT/{:52::12:display-name@SDT/$S:6:Key #1:3:key@SDT/$S:4:key1@SDT/{:52::12:display-name@SDT/$S:6:Key #2:3:key@SDT/$S:4:key2@SDT/[2:155:@SDT/%:72::30:STAF/Test/MyMapClassDefinition@SDT/$S:9:Value 1 1@SDT/$S:9:Value 2 1@SDT/%:63::31:STAF/Test/MyMapClassDefinition2@SDT/$0:0:@SDT/$S:8:ValueXXX
+Length of marshalled data: 697
+[
+  {
+    Key #1: Value 1 1
+    Key #2: Value 2 1
+  }
+  {
+    Key YYY: <None>
+    Key XXX: ValueXXX
+  }
+]
+**************************************************************
+Test Performance for Marshalling, FormatObject, and Unmarshall
+**************************************************************
+
+Test using a list with 100000 entries
+
+FormatObject starting...
+FormatObject Elapsed Time: 4 seconds
+Marshalling starting...
+Marshalling Elapsed Time: 5 seconds
+Length of marshalled string: 2888911
+Unmarshalling starting...
+Unmarshalling Elapsed Time: 5 seconds
+
+Test using a map with 100000 entries
+
+FormatObject starting...
+FormatObject Elapsed Time: 5 seconds
+Marshalling starting...
+Marshalling Elapsed Time: 4 seconds
+Length of marshalled string: 3167795
+Unmarshalling starting...
+Unmarshalling Elapsed Time: 5 seconds
+
+Test using a list with 10000 entries of map class objects each with 10 keys
+
+FormatObject starting...
+FormatObject Elapsed Time: 5 seconds
+Marshalling starting...
+Marshalling Elapsed Time: 4 seconds
+Length of marshalled string: 2749668
+Unmarshalling starting...
+Unmarshalling Elapsed Time: 5 seconds
+     
+ -->
+      
+    <script>
+      import string
+      import sys
+      import time
+    
+      saveEntries = entries
+      entries = 1
+      numKeys = 2
+    </script>
+
+    <log message="1">
+        """*************************************************************
+        Test For Errors in Marshalling, FormatObject, and Unmarshall
+        *************************************************************"""
+    </log>
+    <log message="1">
+      'Test for errors using a list with %s entries of map class objects each with %s keys' % (entries, numKeys)
+    </log>
+ 
+    <script>
+      # Define a map class with 2 keys
+
+      myMapClass = STAFMapClassDefinition('STAF/Test/MyMapClassDefinition')
+
+      for k in range(1, numKeys + 1):
+          myMapClass.addKey("key%s" % (k), "Key #%s" % (k))
+
+      mc = STAFMarshalling.STAFMarshallingContext()
+
+      # Create a list containing the specified number of entries
+
+      resultList  = []
+
+      for i in range(1, entries + 1):
+          # Create an instance of this map class definition and assign
+          # data to the map class instance
+
+          theMap = myMapClass.createInstance()
+
+          for j in range(1, numKeys + 1):
+              theMap["key%s" % (j)] = "Value %s %s" % (j, i)
+
+          resultList.append(theMap)
+
+      mc.setRootObject(resultList)
+    </script>
+
+    <log message="1">
+      ("Verify you can format, marshall, and unmarshall an object " +
+       "that references a map class but does not define the map class " +
+       "in the context:")
+    </log>
+
+    <log message="1">
+      "FormatObject result without map class definition in context:\n%s" % \
+      (STAFMarshalling.formatObject(mc))
+    </log>
+    
+    <script>result = STAFMarshalling.marshall(mc)</script>
+
+    <log message="1">"Marshalled string:\n%s" % (result)</log>
+    
+    <log message="1">"Length of marshalled string: %s" % (len(result))</log>
+
+    <script>mc2 = STAFMarshalling.unmarshall(result)</script>
+
+    <log message="1">
+      "Unmarshall and call FormatObject on the context:\n%s" % \
+      (STAFMarshalling.formatObject(mc2) )
+    </log>
+
+    <script>
+      # Verify that calling formatObject on an object that references a
+      # map class but does not provide a marshalling context does not
+      # cause an error.
+
+      outputList = mc2.getRootObject();
+    </script>
+
+    <log message="1">
+      "Print root list object as a formatted string:\n%s" % \
+      (STAFMarshalling.formatObject(outputList))
+    </log>
+    
+    <script>
+      # Now create another map class definition with no keys and add it to
+      # the context but don't reference it.
+
+      myMapClass2 = STAFMapClassDefinition("STAF/Test/MyMapClassDefinition2");
+      mc.setMapClassDefinition(myMapClass2);
+    </script>
+
+    <log message="1">
+      "FormatObject result with wrong map class definition in context:\n%s" % \
+      (STAFMarshalling.formatObject(mc))
+    </log>
+
+    <log message="1">"Marshalling string with wrong map class definition in context:"</log>
+
+    <script>result = STAFMarshalling.marshall(mc)</script>
+    <log message="1">result</log>
+
+    <log message="1">"Length of marshalled data: %s" % (len(result))</log>
+
+    <script>mc2 = STAFMarshalling.unmarshall(result)</script>
+
+    <log message="1">
+      "Unmarshall and call FormatObject on the context:\n%s" % \
+     STAFMarshalling.formatObject(mc)
+    </log>
+
+    <script>
+      # Now add the right map class definition to the context
+      mc.setMapClassDefinition(myMapClass)
+    </script>
+
+    <log message="1">
+      "FormatObject result with map class definition in context:\n%s" % (STAFMarshalling.formatObject(mc))
+    </log>
+
+    <log message="1">
+      "Add a map object created for the map class definition with no keys"
+    </log>
+
+    <script>
+    # Now create an instance for the map class with no keys
+
+    theMap2 = myMapClass2.createInstance()
+    theMap2["KeyXXX"] = "ValueXXX"
+    theMap2["KeyZZZ"] = "ValueZZZ"
+
+    resultList.append(theMap2)
+
+    mc.setRootObject(resultList)
+    </script>
+    
+    <log message="1">
+      "Verify you can format, marshall, and unmarshall an object that references a map class without any keys defined:\n%s" % \
+      STAFMarshalling.formatObject(mc)
+    </log>
+
+    <script>result = STAFMarshalling.marshall(mc)</script>
+
+    <log message="1">"MarshalledString: \n%s" % (result)</log>
+
+    <log message="1">"Length of marshalled data: %s" % (len(result))</log>
+
+    <log>"Unmarshall and call FormatObject on the context"</log>
+
+    <script>mc2 = STAFMarshalling.unmarshall(result)</script>
+    <log message="1">STAFMarshalling.formatObject(mc2)</log>
+
+    <script>
+        # Add keys to the second map class definition.  One that doesn't match
+        # the entry and one that does
+
+        myMapClass2.addKey("KeyYYY", "Key YYY");
+        myMapClass2.addKey("KeyXXX", "Key XXX");
+    </script>
+
+    <log message="1">
+        "Verify that you can format, marshall, and unmarshall an object that references a map class without a key that it doesn't provide an entry for:\n%s" % \
+        STAFMarshalling.formatObject(mc)
+    </log>
+
+    <script>result = STAFMarshalling.marshall(mc)</script>
+
+    <log message="1">"MarshalledString: \n%s" % (result)</log>
+
+    <log message="1">"Length of marshalled data: %s" % (len(result))</log>
+
+    <log>"Unmarshall and call FormatObject on the context"</log>
+
+    <script>mc2 = STAFMarshalling.unmarshall(result)</script>
+    <log message="1">STAFMarshalling.formatObject(mc2)</log>
+    
+    <script>resultList = []</script>
+
+    <script>
+       ##################
+       # Test performance  #
+       ##################
+
+       entries = saveEntries
+    </script>
+
+    <log message="1">
+        """***************************************************************
+        Test Performance for Marshalling, FormatObject, and Unmarshall
+        **************************************************************"""
+    </log>
+
+    <log message="1">
+      'Test using a list with %s entries' % (entries)
+    </log>
+ 
+    <script>
+      # Create a list containing the specified number of entries
+
+      myList = []
+
+      for i in range(0, entries):
+        myList.append("entryValue ##%s" % (i))
+
+      mc = STAFMarshalling.STAFMarshallingContext()
+      mc.setRootObject(myList)
+    </script>
+
+    <log message="1">
+      'FormatObject starting...'
+    </log>
+    
+    <script>
+      starttime = time.time() # record starting time for formatObject
+      STAFMarshalling.formatObject(mc)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'FormatObject Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <log message="1">
+      'Marshalling starting...'
+    </log>
+
+    <script>
+      starttime = time.time() # record starting time for marshalling
+      result = STAFMarshalling.marshall(mc)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'Marshalling Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <log message="1">
+      'Length of marshalled string: %s' % (len(result))
+    </log>
+    
+    <log message="1">
+      'Unmarshalling starting...'
+    </log>
+
+    <script>
+      starttime = time.time() # record starting time for unmarshalling
+      result = STAFMarshalling.unmarshall(result)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'Unmarshalling Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <script>myList = []</script>
+
+    <log message="1">
+      'Test using a map with %s entries' % (entries)
+    </log>
+
+    <script>
+      # Create a map containing the specified number of entries
+
+      myMap = {}
+
+      for i in range(0, entries):
+        myMap["key%s" % (i)] = "value%s" % (i)
+
+      mc = STAFMarshalling.STAFMarshallingContext()
+      mc.setRootObject(myMap)
+    </script>
+
+    <log message="1">
+      'FormatObject starting...'
+    </log>
+ 
+    <script>
+      starttime = time.time() # record starting time for formatObject
+      STAFMarshalling.formatObject(mc)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'FormatObject Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <log message="1">
+      'Marshalling starting...'
+    </log>
+
+    <script>
+      starttime = time.time() # record starting time for marshalling
+      result = STAFMarshalling.marshall(mc)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'Marshalling Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <log message="1">
+      'Length of marshalled string: %s' % (len(result))
+    </log>
+        
+    <log message="1">
+      'Unmarshalling starting...'
+    </log>
+
+    <script>
+      starttime = time.time() # record starting time for unmarshalling
+      result = STAFMarshalling.unmarshall(result)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'Unmarshalling Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <script>myMap = {}</script>
+    
+    <script>
+      numEntries = int(entries / 10)
+      
+      if numEntries &lt; 1 and entries > 0:
+        numEntries = 1
+
+      numKeys = 10
+    </script>
+
+    <log message="1">
+      'Test using a list with %s entries of map class objects each with %s keys' % (numEntries, numKeys)
+    </log>
+ 
+    <script>
+      myMapClass = STAFMapClassDefinition('STAF/Test/MyMapClassDefinition')
+
+      for k in range(1, numKeys + 1):
+          myMapClass.addKey("key%s" % (k), "Key #%s" % (k))
+
+      mc = STAFMarshalling.STAFMarshallingContext()
+      mc.setMapClassDefinition(myMapClass)
+
+      # Create a list containing the specified number of entries
+
+      resultList  = []
+
+      for i in range(1, numEntries + 1):
+          # Create an instance of this map class definition and assign
+          # data to the map class instance
+
+          theMap = myMapClass.createInstance()
+
+          for j in range(1, numKeys + 1):
+              theMap["key%s" % (j)] = "Value %s %s" % (j, i)
+
+          resultList.append(theMap)
+
+      mc.setRootObject(resultList)
+    </script>
+
+    <log message="1">
+      'FormatObject starting...'
+    </log>
+    
+    <script>
+      starttime = time.time() # record starting time for formatObject
+      STAFMarshalling.formatObject(mc)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'FormatObject Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <log message="1">
+      'Marshalling starting...'
+    </log>
+
+    <script>
+      starttime = time.time() # record starting time for marshalling
+      result = STAFMarshalling.marshall(mc)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'Marshalling Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <log message="1">
+      'Length of marshalled string: %s' % (len(result))
+    </log>
+    
+    <log message="1">
+      'Unmarshalling starting...'
+    </log>
+
+    <script>
+      starttime = time.time() # record starting time for unmarshalling
+      result = STAFMarshalling.unmarshall(result)
+      elapsed = time.time() - starttime
+    </script>
+
+    <log message="1">
+      'Unmarshalling Elapsed Time: %.0f seconds' % (elapsed)
+    </log>
+
+    <script>resultList = []</script>
+
+  </sequence>
+</function> 
+
+</stax> 

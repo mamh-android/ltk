@@ -1,0 +1,329 @@
+Feature ID  : 2573802
+Response Due: 05/04/2009
+Title       : Checksum functionality requests for STAF FS Service
+
+Description
+-----------
+
+Provide the ability to calculate and return the checksum of a file
+in a hexadecimal form.
+
+Allow the cryptographic hashing algorithm used to produce a unique
+checksum for any file to be specified (e.g. MD5, SHA-1), with MD5
+being the default if not specified.
+
+To provide a checksum value of a file, we'll use cryptographic
+hashing functions (e.g. MD5, SHA-1) provided by OpenSSL.  However,
+since we don't provide OpenSSL support for z/OS or Windows IA64, the
+checksum functionality won't be provided for these operating systems.
+
+
+Problem(s) Solved
+-----------------
+
+Getting a file's checksum is a simple way to check to see that a
+file has not been tampered with or to verify that a file has been
+downloaded or copied correctly.
+
+For example, after copying a file from a "build server" to another
+machine (e.g. to be installed), compare the checksums to ensure
+that the copied file is the same as the original file.
+
+C:\>STAF myServer FS GET ENTRY "/builds/win32/MyProduct.exe" CHECKSUM
+Response
+--------
+4BDA51110311804D0FED7D761D090AD0
+
+C:\>STAF local FS GET ENTRY "C:/temp/MyProduct.exe" CHECKSUM
+Response
+--------
+4BDA51110311804D0FED7D761D090AD0
+
+Compare the checksums to verify they are identical.
+
+
+Related Features/Patches
+------------------------
+
+This feature is a duplicate of Feature #1226458 "Add checksum feature
+to FS Service".
+
+
+External Changes
+----------------
+
+a) Changes to the FS service's GET ENTRY request:
+
+Syntax:
+
+Add a new CHECKSUM option as follows:
+
+GET ENTRY <Name> <TYPE | SIZE | MODTIME | LINKTARGET |
+                  CHECKSUM [<Algorithm>]>
+
+CHECKSUM specifies to calculate a fixed-size checksum of the file
+system entry and return its value in a hexadecimal form.  You may
+optionally specify the cryptographic hashing algorithm used to
+produce a unique checksum for any file.  The following algorithms
+are supported: MD2, MD4, MD5, RIPEMD160, SHA, SHA1 (case-insensitive).
+The default is MD5.  Note that SHA1 (160 bits) and RIPEMD160
+(160 bits) are considered more current and more secure than MD5
+(128 bits), but MD5 is still widely used.  You cannot retrieve the
+checksum for a directory.  This option will resolve variables.
+
+Results:
+
+On successful return, the contents of the result buffer will
+contain the checksum for the file in hexadecimal form.
+
+Examples:
+
+1) Retrieve the MD5 checksum of file C:\builds\win32\MyApp.zip
+   on machine buildserver.
+
+  STAF buildServer FS GET ENTRY "C:/builds/win32/MyApp.zip" CHECKSUM
+  Response
+  --------
+  4BDA51110311804D0FED7D761D090AD0
+
+2) Retrieve the SHA-1 checksum of file /tmp/MyApp.zip
+   on machine client1.
+
+  STAF client1 FS GET ENTRY "/tmp/MyApp.zip" CHECKSUM SHA1
+  Response
+  --------
+  83B4F130E213D61AE6BB393FA9AEE711CC9FF91B
+
+
+Internal Changes
+----------------
+
+a) stafproc/STAFFSService.cpp:
+
+To provide a checksum value of a file, we'll use cryptographic
+hashing algorithms (e.g. MD5, SHA-1) provided by OpenSSL.
+
+Call the following OpenSSL APIs to provide the checksum:
+- OpenSSL_add_all_digests()
+- EVP_get_digestbyname()
+- EVP_MD_CTX_init()
+- EVP_DigestInit_ex()
+- EVP_DigestUpdate() - Can call multiple times to provide the
+                       contents of a file (in a buffer)
+- EVP_DigestFinal_ex()
+- EVP_MD_CTX_cleanup()
+
+To calculate a checksum, the entire file must be read.  We'll
+use the readFile() method to read a file (same method that is
+used by a FS COPY request to read a file) and we'll use a
+buffer size of 4096 bytes.
+
+Here's what the code would look like in the handleGet() method
+in STAFFSService.cpp:
+
+else if (parsedResult->optionTimes("CHECKSUM") != 0)
+{
+#ifdef STAF_USE_SSL
+    // Check if the entry specified is a directory and if so, return
+    // an error as you cannot get the checksum for a directory
+
+    if (entry->type() == kSTAFFSDirectory)
+    {
+        return STAFServiceResult(
+            kSTAFInvalidValue,
+            "Cannot get the checksum for an entry that is a "
+            "directory")
+    }
+
+    // Default the checksum alogrithm to MD5 if not specified
+
+    STAFString checksumAlgorithm = "MD5";
+
+    // Get the checksum value, if specified, and resolve any STAF
+    // variables in it
+
+    if (parsedResult->optionValue("CHECKSUM") != "")
+    {
+        rc = RESOLVE_OPTIONAL_STRING_OPTION(
+             "CHECKSUM", checksumAlgorithm);
+    }
+
+    // Compute the checksum for the specified cryptographic hashing
+    // algorithm (aka digest) using functions provided by OpenSSL
+
+    const EVP_MD *md;
+
+    OpenSSL_add_all_digests();
+
+    md = EVP_get_digestbyname(
+        checksumAlgorithm.toUpperCase().toCurrentCodePage()->buffer());
+
+    if (!md)
+    {
+        return STAFServiceResult(
+            kSTAFInvalidValue,
+            STAFString("Unknown algorithm specified for the "
+                       "CHECKSUM option: ") + checksumAlgorithm);
+    }
+
+    // Open the file to read it
+
+    fstream inFile(entryName.toCurrentCodePage()->buffer(),
+                   ios::in | STAF_ios_binary);
+
+    if (!inFile)
+    {
+        return STAFServiceResult(
+            kSTAFFileOpenError,
+            STAFString("Cannot open file ") + entryName);
+    }
+
+    // Get the size of the file (upperSize and lowerSize).
+    // If the file size is < 4G, upperSize will be zero.
+
+    unsigned int upperSize = entry->size().first;
+    unsigned int lowerSize = entry->size().second;
+
+    // Check if file size exceeds the maximum that the FS service handles
+
+    if (upperSize > 0)
+    {
+        inFile.close();
+
+        STAFString errMsg = STAFString(
+            "File size exceeds the maximum size (") + UINT_MAX +
+            ") supported.  File name: " + entryName;
+
+        return STAFServiceResult(kSTAFFileReadError, errMsg);
+    }
+
+    unsigned int fileLength = lowerSize;
+
+    EVP_MD_CTX mdctx;
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+
+    EVP_MD_CTX_init(&mdctx);
+    EVP_DigestInit_ex(&mdctx, md, NULL);
+
+    // Read the entire file using a buffer size of 4096 bytes and
+    // update the digest with the buffer
+
+    unsigned int bytesCopied = 0;
+    char fileBuffer[4096] = {0};
+    unsigned int writeLength = 0;
+            
+    while ((fileLength > 0) && inFile.good())
+    {
+        writeLength = STAF_MIN(sizeof(fileBuffer), fileLength);
+                
+        rc = readFile(inFile, reinterpret_cast<char *>(fileBuffer),
+                      writeLength, entryName, "local", fileLength,
+                      bytesCopied);
+
+        if (rc != kSTAFOk) break;
+ 
+        EVP_DigestUpdate(&mdctx, fileBuffer, writeLength);
+        fileLength -= writeLength;
+        bytesCopied += writeLength;
+    }
+            
+    inFile.close();
+
+    if (rc == kSTAFOk)
+    {
+        // Get the checksum value
+        EVP_DigestFinal_ex(&mdctx, md_value, &md_len);
+    }
+
+    EVP_MD_CTX_cleanup(&mdctx);
+
+    if (rc == kSTAFOk)
+    {
+        // Convert the checksum value to a hexadecimal format
+        return convertToHex(reinterpret_cast<char *>(md_value), md_len);
+    }
+    else
+    {
+        return STAFServiceResult(
+            kSTAFFileReadError,
+            STAFString("Error reading file ") + entryName);
+    }
+#else
+    return STAFServiceResult(
+        kSTAFInvalidRequestString, "Cannot specify the CHECKSUM "
+        "option because STAF OpenSSL support is not provided");
+#endif
+}
+
+b) stafproc/makefile.staf:
+
+Had to change the makefile for the staf project because the
+internal FS service (which is part of the STAFProc executable)
+now requires the OpenSSL libraries containing the OpenSSL
+functions to calculate the checksum.  Added a check if the
+STAF_USE_SSL environment variable is defined and then the
+OPENSSL_ROOT environment variable is used to determine the
+location of the OpenSSL libraries (similar to the makefile
+for the secure STAF TCP connection provider).
+
+
+Design Considerations
+---------------------
+
+1) OpenSSL was choosen as the method by which STAF would obtain
+  checksums, as OpenSSL provides APIs to do this and provides
+  support for all the commonly used crpytographic hashing
+  algorithms.  However, since OpenSSL support is not currently
+  provided for STAF on z/OS or Windows IA64, the checksum
+  functionality won't be provided for these operating systems.
+
+  In the future, if OpenSSL support is provided for STAF on z/OS
+  or Windows IA64, we will add support for CHECKSUM.
+
+2) To calculate a checksum, the entire file must be read.  We
+  chose to use the same methods to read a file that a FS COPY
+  request uses to read a file when copying it.  This is not
+  the fastest means to read a large file.  Thus, using STAF to
+  calculate the checksum for a file which size is very large
+  will be slower than using "md5sum <fileName> or
+  "openssl dgst -md5 <file>" (if these capabilites are available
+  on the machine).
+
+3) An FS QUERY ENTRY request returns the type, size, last
+  modification time, and link target for a file.  These are the
+  same options you can specify for a FS GET ENTRY request.
+  We chose not to add the checksum to the result for a FS QUERY
+  ENTRY request for the following reasons:
+  - To calculate a checksum, the entire file must be read.  If
+    the size of the file is very large, this can take some time
+    to read the entire file.  Since a FS QUERY ENTRY request can
+    be submitted simply to check if a file system entry exists,
+    then we didn't want to slow down the performance of a FS
+    QUERY request.  In the future, if this is requested, we
+    could add a LONG (or DETAILS) option to a FS GET ENTRY
+    request and include the checksum in the result, along with
+    the other information about the file system entry.    
+  - Also, a checksum can only be provided for a file, not a
+    directory, so no checksum would be available when querying
+    a file system entry that is a directory.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+The CHECKSUM option will only work for machines running STAF
+V3.3.4 or later as that's the version of STAF that will first
+provide this capability.  For example, you would get the
+following error if the machine is not running STAF
+V3.3.4 or later:
+
+C:\STAF machine FS GET ENTRY "C:/temp/MyProduct.zip" CHECKSUM
+Error submitting request, RC: 7
+Additional info
+---------------
+When specifying one of the options ENTRY, you must also specify
+one of the options TYPE SIZE MODTIME LINKTARGET
+
+You will also get this same error if the machine is running STAF
+V3.3.4 or later and its operating system is z/OS or Windows IA64.

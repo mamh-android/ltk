@@ -1,0 +1,36 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_LIBS ?= pthread
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := xlC
+endif
+
+OS_COMMONFLAGS := -DSTAF_OS_NAME_AIX -DSTAF_GETHOSTBYNAME_R_3PARM
+
+OS_LD_PATH_NAME := LIBPATH
+
+# Provide the default location for Java files on this system
+
+JAVA_BUILD_V11 ?= 1
+JAVA_V11_ROOT ?= /usr/jdk_base
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /usr/java_dev2
+
+REXX_ROOT ?= /usr/lpp/orexx

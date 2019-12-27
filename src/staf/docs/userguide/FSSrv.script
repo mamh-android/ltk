@@ -1,0 +1,2349 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : FSSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework FS Service
+.*  Detail:
+.*
+.*     This file describes the STAF FS (File System) Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.file system service
+:ih1.services
+:i2.file system service
+:h2 id=fssrv.File System (FS) Service
+:h3.Description
+:p.The File System service, called FS, allows you to interface with the file
+system on STAF Clients.  It provides the following commands.
+:ul compact.
+:li.COPY FILE - Allows you to copy a file between machines, or to
+another location on the same machine
+:li.COPY DIRECTORY - Allows you to copy selected files from a directory or
+entire directories (including subdirectories if needed) between machines,
+or to another directory on the same machine
+:li.MOVE FILE - Allows you to rename a file or move files from one directory
+to another directory on a machine.
+:li.MOVE DIRECTORY - Allows you to rename a directory on a machine.
+:li.GET FILE - Retrieves the contents of a file from a machine
+:li.GET ENTRY - Retrieves an attribute of a file system entry, such as its
+type, size, last modification time, link target, or checksum.
+:li.QUERY - Retrieves the various attributes of file system entry
+:li.LIST DIRECTORY - Lists the selected contents of a directory, or provides
+summary information for the selected contents of a directory (e.g. total
+size, number of files and subdirectories)
+:li.LIST COPYREQUESTS - Lists the copy requests in progress
+:li.LIST SETTINGS - Lists the operational settings for the File System
+service
+:li.CREATE - Creates a directory
+:li.DELETE - Deletes selected file system entries
+:li.SET - Changes operational settings for the File System service
+:li.&help.
+:eul.
+:p.In the descriptions of these commands, three different options are used to
+refer to objects in the file system.  :xph.FILE:exph. is used when the object in
+question must be a file.  :xph.DIRECTORY:exph. is used when the object in
+question must be a directory.  :xph.ENTRY:exph. is used when the object in
+question may be any object in the file system.
+:p.Some of these commands (e.g. COPY DIRECTORY, LIST DIRECTORY, DELETE)
+allow match patterns to be specified.  These patterns recognize two special
+characters, '*' and '?', as wildcards:
+:ul compact.
+:li.'*' matches a string of characters (including an empty string)
+:li.'?' matches any single character (the empty string does not match)
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.COPY
+:i3.file system service
+:h3.COPY FILE
+:p.COPY FILE allows you to copy one file between machines, or to another
+location on the same machine.
+
+:h4.Notes:
+:ol compact.
+:li.A file copied via the FS service does not retain its system or extended attributes.
+:li.If a file copied via the FS service is a symbolic link, the entry referenced
+by the link will be copied (not the symbolic link itself).
+:li.The FS service supports copying a file whose size is less than 4 GB on most
+platforms, assuming the operating system supports the creation of large files, that is,
+files larger than 2 GB.
+:eol.
+
+:h4.Syntax
+:xmp.
+COPY FILE <FileName> &lbrk.TOFILE <Name> | TODIRECTORY <Name>&rbrk. &lbrk.TOMACHINE <Machine>&rbrk.
+     &lbrk.TEXT &lbrk.FORMAT <Format>&rbrk.&rbrk. &lbrk.FAILIFEXISTS | FAILIFNEW&rbrk.
+:exmp.
+:p.:xph.FILE:exph. specifies the name of the file to copy. &varres.
+:p.:xph.TOFILE:exph. specifies the name of the file to create.  The directory path
+specified must already exist on the machine where the file is being copied to, or
+else the copy request will fail with RC 17 (File open error).
+If neither :xph.TOFILE:exph. nor :xph.TODIRECTORY:exph. is specified, this
+defaults to the same, unresolved, name as specified in :xph.FILE:exph..
+&varres. These variables will be resolved on the target machine.
+:p.:xph.TODIRECTORY:exph. specifies the name of the directory to copy the file to.
+The name of the "to file" will be the same as specified in :xph.FILE:exph..
+This directory must already exist on the target machine.
+&varres. These variables will be resolved on the target machine.
+:p.:xph.TOMACHINE:exph. specifies the machine to copy the file to.  This
+defaults to the machine which originated the request.
+Specifying:xph. local :exph.indicates to copy the file to the same
+machine that the file is being copied from.
+Note that specifying:xph. local :exph.instead of the from machine's host name can
+significantly improve performance, especially if your TCP network performance
+is slow.  This is because:xph. local :exph.(or:xph. local://local:exph.) indicates
+to use the local network interface versus specifying a TCP host name or IP address
+which indicates to use the TCP network interface.  &varres.
+:p.:xph.TEXT:exph. specifies to convert line-ending characters in the file being
+copied as specified via the :xph.FORMAT:exph. option and to perform codepage conversion.
+This option should only be specified for a text file, not a binary file.
+:p.:xph.FORMAT:exph. specifies the end-of-line character(s) to use.  &varres.
+See :hdref refid=fsgetfile. for more information on available formats.
+.*:p.:xph.CONVERT:exph. specifies to perform codepage conversion.  Note that
+.*specifying this option decreases performance for the copy request.
+:p.:xph.FAILIFEXISTS:exph. specifies that the copy should fail if
+:xph.TOFILE:exph. already exists.  The default is to replace the file if it
+exists.
+:p.:xph.FAILIFNEW:exph. specifies that the copy should fail if :xph.TOFILE:exph.
+does not already exist.  The default is to create the file if it does not
+exist.
+:h4.Security
+There can be up to three machines involved in a COPY FILE request
+(and any of these machines can be the same machine):
+:ol compact.
+:li.:xph.orgMachine:exph. - The machine that submitted (i.e. originated) the
+COPY FILE request
+:li.:xph.sourceMachine:exph. - The machine where the file to be copied resides
+(this is the machine to which you submitted the COPY FILE request)
+:li.:xph.toMachine:exph. - The machine where the file will be copied to
+:eol.
+:p.&seclvl. 4 as follows:
+:ul compact.
+:li.The:xph. sourceMachine :exph.must give at least trust level 4 to the:xph. orgMachine:exph..
+:li.The:xph. toMachine :exph.must give at least trust level 4 to the:xph. sourceMachine:exph..
+:li.The:xph. toMachine :exph.must give at least trust level 4 to the:xph. orgMachine:exph..
+:eul.
+:p.
+An exception to these trust requirements is if the:xph. orgMachine :exph.is the same
+as the:xph. toMachine :exph.and the:xph. STRICTFSCOPYTRUST :exph.operational setting
+is disabled (which it is by default), then the:xph. toMachine :exph.does not have to
+give trust level 4 to the:xph. sourceMachine:exph..  See :hdref refid=opparms. for
+more information on the:xph. STRICTFSCOPYTRUST :exph.operational parameter.
+
+:h4.Return Codes
+:p.All return codes from COPY FILE are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a COPY FILE command.
+:h4.Examples
+:p.In the following examples, assume the command is being submitted locally from
+machine TestSrv1.
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Copy file c:\testcase\tc1.cmd from machine TestSrv1 to file
+c:\testcase\tc1.cmd on machine Client1
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE c:\testcase\tc1.cmd TOMACHINE Client1:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy file c:\testcase\tc1.cmd from machine TestSrv1 to file
+d:\WebTests\webtc1.cmd on machine Client1.  Don't overwrite the file if it
+exists.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE c:\testcase\tc1.cmd TOFILE d:\WebTests\webtc1.cmd TOMACHINE Client1 FAILIFEXISTS:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy text file test1.txt (in the directory specified by STAF
+variable TestcaseDir) from machine TestSrv1 to file test1.txt (in the
+directory specified by STAF variable TestcaseDir) on machine Client1.
+Convert any line-ending characters in the file to those appropriate for
+machine Client1, if machine Client1 has a different platform (e.g. Unix)
+than machine TestSrv1 (e.g. Windows).
+:p.
+:hp2.Syntax::ehp2.&nbsp; Note that both of these :xph.COPY FILE:exph. examples are equivalent.
+:xmp.
+COPY FILE {TestcaseDir}/test1.txt TOMACHINE Client1 TEXT
+COPY FILE {TestcaseDir}/test1.txt TOMACHINE Client1 TEXT FORMAT Native
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Copy text file c:\tc\test1.txt from machine TestSrv1
+to file c:\tc\test1.txt on machine Client1.  Convert any line-ending
+characters in the file to a space.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE c:\tc\test1.txt TOMACHINE Client1 TEXT FORMAT " ":exph.
+:eul.
+:p.
+In the following examples, assume the command is being submitted to machine
+Client1 from machine TestSrv1.
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve file d:\WebTests\Logs\WebTC1.log from Client1 and store
+it in directory f:\Logs on machine TestSrv1.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE d:\WebTests\Logs\WebTC1.log TOFILE f:\Logs\WebTC1.log :exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy file d:\WebTests\Logs\WebTC1.log from Client1 to server
+LogSrv in directory h:\Logs.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE d:\WebTests\Logs\WebTC1.log TODIRECTORY h:\Logs TOMACHINE LogSrv:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy file d:\WebTests\Logs\WebTC1.log from Client1 to file c:\temp\tc1.log
+on machine Client1.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE d:\WebTests\Logs\WebTC1.log TOFILE c:\temp\tc1.log TOMACHINE local:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy the startup.cmd on the boot drive of Client1 to the boot
+drive of TestSrv1.  Convert any line-ending characters of the text file as
+needed.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY FILE {STAF/Config/BootDrive}\startup.cmd TEXT:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.COPY DIRECTORY
+:i3.file system service
+:h3.COPY DIRECTORY 
+:p.COPY DIRECTORY allows you to copy selected files from a directory or entire
+directories (including subdirectories if needed) between machines, or to another
+directory on the same machine.  It allows you to specify wildcards (e.g. *, ?)
+in the :xph.NAME:exph. and/or :xph.EXT:exph. options to match patterns in file
+names to be copied from the specified directory and its subdirectories too if
+the :xph.RECURSE:exph. option is specified.
+
+:h4.Notes:
+:ol compact.
+:li.A file system entry copied via the FS service does not retain its system or
+extended attributes.
+:li.The types of entries supported by a COPY DIRECTORY request are files and directories.
+:li.If a file system entry copied via the FS service is a symbolic link, the entry
+referenced by the link will be copied (not the symbolic link itself).
+:li.The FS service supports copying a file whose size is less than 4 GB on most
+platforms, assuming the operating system supports the creation of large files, that is,
+files larger than 2 GB.
+:eol.
+
+:h4.Syntax
+:xmp.
+COPY DIRECTORY <Name> &lbrk.TODIRECTORY <Name>&rbrk. &lbrk.TOMACHINE <Machine>&rbrk.
+     &lbrk.NAME <Pattern>&rbrk. &lbrk.EXT <Pattern>&rbrk. &lbrk.CASESENSITIVE | CASEINSENSITIVE&rbrk.
+     &lbrk.TEXTEXT <Pattern>... &lbrk.FORMAT <Format>&rbrk.&rbrk.
+     &lbrk.RECURSE &lbrk.KEEPEMPTYDIRECTORIES | ONLYDIRECTORIES&rbrk.&rbrk.
+     &lbrk.IGNOREERRORS&rbrk. &lbrk.FAILIFEXISTS | FAILIFNEW&rbrk.
+:exmp.
+:p.:xph.DIRECTORY:exph. specifies the name of the source directory to copy. &varres.
+:p.:xph.TODIRECTORY:exph. specifies the name of the destination directory.  This defaults
+to the same, unresolved, name as specified in :xph.DIRECTORY:exph.. &varres.  These
+variables will be resolved on the target machine.
+:p.:xph.TOMACHINE:exph. specifies the machine to copy the directory and its contents to.
+This defaults to the machine which originated the request.
+Specifying :xph.local:exph. indicates to copy the directory and its contents to the same
+machine that the directory is being copied from.
+Note that specifying:xph. local :exph.instead of the from machine's host name can
+significantly improve performance, especially if your TCP network performance
+is slow.  This is because:xph. local :exph.(or:xph. local://local:exph.) indicates
+to use the local network interface versus specifying a TCP host name or IP address
+indicates to use the TCP network interface.  &varres.
+:p.:xph.NAME:exph. specifies a pattern used to match the name of files in the specified
+directory (and files in its subdirectories, if :xph.RECURSE:exph. is specified).
+Only the files whose names match this pattern will be copied.
+Match patterns may be specified using special characters '*' and/or '?' as wildcards.
+The default pattern is "*".  &varres.
+:p.:xph.EXT:exph. specifies a pattern used to match the extension of files in the specified
+directory (and files in its subdirectories, if :xph.RECURSE:exph. is specified).
+Only the files whose extensions match this pattern will be copied.
+Match patterns may be specified using special characters '*' and/or '?' as wildcards.
+The default pattern is "*".  &varres.
+:note.The COPY DIRECTORY command recognize the "name" (:xph.NAME:exph.)
+portion of a filename as the character(s) that precede a period (or the entire
+filename if it does not include a period) and the "extension" (:xph.EXT:exph.)
+portion of a filename are character(s) that follow a period.
+For example, for filename myfile.txt the "name" portion is "myfile" and
+the "extension" portion is "txt".  To match filenames whose name begins
+with "my" and whose extension is "txt", you could specify options
+:xph.NAME my* EXT txt:exph..
+:p.:xph.CASESENSITIVE:exph. specifies that the patterns specified by :xph.NAME:exph.,
+:xph.EXT:exph., and :xph.TEXTEXT:exph. are to be matched in a case sensitive manner.
+:p.:xph.CASEINSENSITIVE:exph. specifies that the patterns specified by :xph.NAME:exph.,
+:xph.EXT:exph., and :xph.TEXTEXT:exph. are to be matched in a case insensitive manner.
+:note.If neither :xph.CASESENSITIVE:exph. nor :xph.CASEINSENSITIVE:exph. is
+specified, the default is determined by the operating system -- unix systems
+default to :xph.CASESENSITIVE:exph., all others default to :xph.CASEINSENSITIVE:exph..
+Options :xph.CASESENSITIVE:exph. and :xph.CASEINSENSITIVE:exph. only have an effect if
+you also specify a pattern to match using at least one of the following options:
+:xph.NAME:exph., :xph.EXT:exph., or :xph.TEXTEXT:exph..
+:p.:xph.TEXTEXT:exph. specifies a pattern used to match the extension of text files being 
+copied.  The files whose extensions match this pattern should contain text, not binary
+data.  The line-ending characters in the files being copied whose extensions match
+this pattern will be converted as specified via the :xph.FORMAT:exph. option and
+codepage conversion will be performed.
+Multiple :xph.TEXTEXT:exph. patterns are handled as an "or" condition.
+Match patterns may be specified using special characters '*' and/or '?' as wildcards.
+&varres.
+:p.:xph.FORMAT:exph. specifies the end-of-line character(s) to use.  &varres.
+See :hdref refid=fsgetfile. for more information on available formats.
+.*:p.:xph.CONVERT:exph. specifies to perform codepage conversion.  Note that specifying
+.*this option decreases performance for the copy request.
+:p.:xph.RECURSE:exph. specifies that the subdirectories in :xph.DIRECTORY:exph. will be
+recursively copied.
+:p.:xph.KEEPEMPTYDIRECTORIES:exph. specifies that the empty directories are also to be
+created in the :xph.TODIRECTORY:exph. on the target.  The default behavior is to prune
+the empty directories while copying files.
+:p.:xph.ONLYDIRECTORIES:exph. specifies that the directory (empty directories and no files
+copied) structure is to be created in the :xph.TODIRECTORY:exph. on the target machine.
+Using the :xph.NAME:exph., :xph.EXT:exph., :xph.CASESENSITIVE:exph. and
+:xph.CASEINSENSITIVE:exph. options with the :xph.ONLYDIRECTORIES:exph. option will be
+ignored as no files will be copied.
+:p.:xph.IGNOREERRORS:exph. specifies that errors encountered copying entries should not
+be returned.  By default, all errors encountered while copying entries will be returned
+in the result buffer.
+:p.:xph.FAILIFEXISTS:exph. specifies that the copy should fail if
+:xph.TODIRECTORY:exph. already exists.  The default is to copy over the directory contents
+if it exists.
+:p.:xph.FAILIFNEW:exph. specifies that the copy should fail if :xph.TODIRECTORY:exph.
+does not already exist.  The default is to create the directory if it does not exist if
+at least one file is copied.
+
+:h4.Security
+There can be up to three machines involved in a COPY DIRECTORY request
+(and any of these machines can be the same machine):
+:ol compact.
+:li.:xph.orgMachine:exph. - The machine that submitted (i.e. originated) the
+COPY DIRECTORY request
+:li.:xph.sourceMachine:exph. - The machine where the directory to be copied resides
+(this is the machine to which you submitted the COPY DIRECTORY request)
+:li.:xph.toMachine:exph. - The machine where the directory will be copied to
+:eol.
+:p.&seclvl. 4 as follows:
+:ul compact.
+:li.The:xph. sourceMachine :exph.must give at least trust level 4 to the:xph. orgMachine:exph..
+:li.The:xph. toMachine :exph.must give at least trust level 4 to the:xph. sourceMachine:exph..
+:li.The:xph. toMachine :exph.must give at least trust level 4 to the:xph. orgMachine:exph..
+:eul.
+:p.
+An exception to these trust requirements is if the:xph. orgMachine :exph.is the same
+as the:xph. toMachine :exph.and the:xph. STRICTFSCOPYTRUST :exph.operational setting
+is disabled (which it is by default), then the:xph. toMachine :exph.does not have to
+give trust level 4 to the:xph. sourceMachine:exph..  See :hdref refid=opparms. for
+more information on the:xph. STRICTFSCOPYTRUST :exph.operational parameter.
+
+:h4.Return Codes
+:p.All return codes from COPY DIRECTORY are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+:ul.
+:li.On successful return, the result buffer will be empty.
+:p.
+:li.If errors were encountered copying entries and :xph.IGNOREERRORS:exph.
+was not specified, the result buffer will contain a
+marshalled :xph.<List> of <Map&colon.STAF/Service/FS/ErrorInfo>:exph. representing
+a list of error information about the entries that were not successfully copied.
+The map is defined as follows: 
+:table id='fsErrorInfoTable' cols='* * * *'.
+:tcap.Definition of map class STAF/Service/FS/ErrorInfo
+:tnote text='Description'.This map class represents error information for an entry
+in a directory.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.rc
+:c.RC
+:c.&stringObj.
+:c.
+:row.
+:c.osRC
+:c.OS RC
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Name" value will be the full path name of the entry that was not
+copied successfully.
+:li.The "RC" value will be the STAF return code for the copy request error.
+:li.The "OS RC" value will be the operating system return code, if the STAF
+return code indicated a base operating system error occurred (i.e. if RC == 10),
+otherwise it will be &noneObj..
+:eol.
+:etnote.
+:etable.
+:p.
+For example, if a copy directory request is submitted from the command line,
+and two errors occurred during the copy, the result, in table format, could look like:
+:xmp.
+Name                RC OS RC
+------------------- -- ------
+c:\tmp\project.htm  17 <None>
+c:\tmp\project5.xml 10 32
+:exmp.
+:eul.
+
+:h4.Examples
+:p.In the following examples, assume the command is being issued locally from
+machine TestSrv1.
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Copy directory c:/testcase from machine TestSrv1 to directory
+c:/testcase on machine Client1
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY c:/testcase TOMACHINE Client1:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy directory c:/testcase and its subdirectories from machine TestSrv1
+to directory c:/testcase on machine Client1.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY c:/testcase TOMACHINE Client1 RECURSE:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy directory c:/testcase from machine TestSrv1 to directory d:/WebTests
+on machine Client1.  Don't overwrite the directory if it exists.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.COPY DIRECTORY c:/testcase TODIRECTORY d:/WebTests TOMACHINE Client1 FAILIFEXISTS:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy all files with an extension of "tmp" in directory c:/testcase to
+directory c:/testcase on machine Client1.  Match the extension in a case insensitive
+manner.  Do not recurse down subdirectories.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.COPY DIRECTORY c:/testcase TOMACHINE Client1 EXT tmp CASEINSENSITIVE:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy all files that have no extension (e.g. like "file1") that
+reside in directory c:/testcase to directory c:/testcase on machine Client1.
+Do not recurse down subdirectories.  Note that you must use the length delimited format, 
+:xph.:0&colon.:exph., to indicate an empty string for the EXT option because if you specify
+no value or "", then the STAF command parser thinks that no value was specified for the
+EXT option and this will cause an "Invalid Request String" error (RC 7) since the EXT
+option requires a value.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.COPY DIRECTORY c:/testcase TOMACHINE Client1 EXT :0: :exph.
+:p.
+:li.:hp2.Goal::ehp2. Recursively copy all files under {MyTempDirectory} with a base name beginning
+with "test" to directory {MyTempDirectory} on machine Client1.  Match the file names in a
+case sensitive manner.  Do not report any errors during the copying.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.COPY DIRECTORY {MyTempDirectory} TOMACHINE Client1 NAME "test*" CASESENSITIVE RECURSE IGNOREERRORS:exph.
+:eul.
+:p.
+In the following examples, assume the command is being issued locally from
+machine TestSrv1 and the following directory structures exist under the c:/testcase directory:
+:xmp.
+  c:\testcase
+  c:\testcase\error.txt
+  c:\testcase\web.exe
+  c:\testcase\web.txt
+  c:\testcase\web.xml
+  c:\testcase\subdir
+  c:\testcase\subdir\subdir_1
+  c:\testcase\subdir\subdir_2
+  c:\testcase\subdir\subdir_2\readme.txt
+:exmp.
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Copy directory c:/testcase and its subdirectories, including empty subdirectories,
+from machine TestSrv1 to directory c:/testcase on machine Client1.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY c:/testcase TOMACHINE Client1 RECURSE KEEPEMPTYDIRECTORIES:exph.
+:p.The expected result is that the following entries exist on machine Client1:
+:xmp.
+  c:\testcase
+  c:\testcase\error.txt
+  c:\testcase\web.exe
+  c:\testcase\web.txt
+  c:\testcase\web.xml
+  c:\testcase\subdir
+  c:\testcase\subdir\subdir_1
+  c:\testcase\subdir\subdir_2
+  c:\testcase\subdir\subdir_2\readme.txt
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Copy directory c:/testcase and its subdirectories from machine TestSrv1 to
+directory c:\testcase on machine Client1.  However, do not copy any files.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY c:/testcase TOMACHINE Client1 RECURSE ONLYDIRECTORIES:exph.
+:p.The expected result is that the following entries were created on machine Client1:
+:xmp.
+  c:\testcase
+  c:\testcase\subdir
+  c:\testcase\subdir\subdir_1
+  c:\testcase\subdir\subdir_2
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Copy all files from machine TestSrv1 in directory c:/testcase
+whose name is 'web' to directory /testcase on machine Client1.
+Convert the line-ending characters in the files whose extensions are
+'txt' or 'xml' (as they are considered to be text files) to the
+line-ending characters for machine Client1's platform. 
+:p.
+:hp2.Syntax::ehp2.&nbsp;
+Note that both of these :xph.COPY DIRECTORY:exph. examples are equivalent.
+:xmp.
+COPY DIRECTORY c:/testcase TODIRECTORY /testcase TOMACHINE Client1
+     NAME web TEXTEXT txt TEXTEXT xml
+     
+COPY DIRECTORY c:/testcase TODIRECTORY /testcase TOMACHINE Client1
+     NAME web TEXTEXT txt TEXTEXT xml FORMAT Native
+:exmp.
+:p.The expected result is that the following entries were created on machine Client1.
+Note that error.txt was not copied since its name is not 'web'.
+:xmp.
+  /testcase
+  /testcase/web.exe
+  /testcase/web.txt
+  /testcase/web.xml
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Copy all .txt files from machine TestSrv1 in directory c:/testcase,
+and it's subdirectories, to directory /testcase on
+machine Client1.  Convert the line-ending characters in all the files being copied
+(as they are considered to be text files) to the line-ending characters for machine
+Client1's platform.
+:p.
+:hp2.Syntax::ehp2.&nbsp;
+Note that both of these :xph.COPY DIRECTORY:exph. examples are equivalent.
+:xmp.
+COPY DIRECTORY c:/testcase TODIRECTORY /testcase TOMACHINE Client1
+     EXT txt TEXTEXT "*" RECURSE
+     
+COPY DIRECTORY c:/testcase TODIRECTORY /testcase TOMACHINE Client1
+     EXT txt TEXTEXT txt FORMAT Native RECURSE
+:exmp.
+:p.The expected result is that the following entries were created on machine Client1.
+:xmp.
+  /testcase
+  /testcase/error.txt
+  /testcase/subdir
+  /testcase/subdir/subdir_2
+  /testcase/subdir/subdir_2/readme.txt
+:exmp.
+:eul.
+:p.
+In the following examples, assume the command is being issued to machine
+Client1 from machine TestSrv1.
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve all files in directory d:\WebTests\Logs from Client1 and store
+them in directory f:\Logs on machine TestSrv1.  Do not copy its subdirectories.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY d:/WebTests/Logs TODIRECTORY f:/Logs:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy directory d:\WebTests\Logs and its non-empty subdirectories from 
+Client1 to directory h:\Logs on server LogSrv.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY d:/WebTests/Logs TODIRECTORY h:/Logs TOMACHINE LogSrv RECURSE:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy directory d:\WebTests\Logs and its non-empty subdirectories from
+Client1 to directory h:\Logs on Client1.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY d:/WebTests/Logs TODIRECTORY h:/Logs TOMACHINE local RECURSE:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy all *.cmd files in the root of the boot drive from Client1 to the
+root of the boot drive of machine TestSrv1.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY {STAF/Config/BootDrive}\ EXT cmd:exph.
+:p.
+:li.:hp2.Goal::ehp2. Copy all *.log files in directory C:\mytests from Client1 to the
+directory D:\tests on Client1.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.COPY DIRECTORY C:/mytests EXT log TODIRECTORY D:/tests TOMACHINE local:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.MOVE
+:i3.file system service
+:h3.MOVE FILE
+:p.MOVE FILE allows you to rename a file or move files from one directory
+to another directory on a machine.
+
+:h4.Notes:
+:ol compact.
+:li.A file moved via the FS service retains its system or extended attributes.
+:li.The FS service uses the operating system's move command to move files.
+If moving a file on Windows, the 'move' command is used.
+If moving a file on Unix, the 'mv' command is used.
+:eol.
+
+:h4.Syntax
+:xmp.
+MOVE FILE <Name> <TOFILE <Name> | TODIRECTORY <Name>>
+:exmp.
+:p.:xph.FILE:exph. specifies the name of the file to move/rename.
+You may specify wildcards using '*' to move multiple files from one directory
+to another directory. &varres.
+:p.:xph.TOFILE:exph. specifies the new name of the file.
+The directory path specified must already exist, or else the move request
+will fail (e.g. if specify C:\Tests\Test1\test1.exe, directory C:\Tests\Test1
+must already exist).  Existing destination files will be overwritten. &varres,
+:p.:xph.TODIRECTORY:exph. specifies the name of the directory to move the
+file(s) to.  This directory must already exist.
+Existing destination files will be overwritten. &varres.
+
+:h4.Security
+:p.&seclvl. 4
+
+:h4.Return Codes
+:p.All return codes from MOVE FILE are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain no data or may contain
+information about the files moved (e.g. if a wildcard is specified in
+the :xph.FILE:exph. value).
+If the request failed, the result buffer may contain information about
+the error.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Rename file C:\testcase\test1.exe to file C:\testcase\test2.exe,
+overwriting the file if it exists.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE FILE C:\testcase\test1.exe TOFILE C:\testcase\test2.exe:exph.
+:p.
+:li.:hp2.Goal::ehp2. Move file test1.exe from directory C:\testcase to 
+directory C:\testcase\TestDir, overwriting the file if it exists.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE FILE C:\testcase\test1.exe TODIRECTORY C:\testcase\TestDir:exph.
+:p.
+:li.:hp2.Goal::ehp2. Move all files that begin with "test" and have extension txt
+from directory C:\testcase to directory D:\Saved_Tests.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE FILE C:\testcase\test*.txt TODIRECTORY D:\Saved_Tests:exph.
+:p.
+:li.:hp2.Goal::ehp2. Move file startup.cmd on the boot drive to drive E:.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE FILE {STAF/Config/BootDrive}\startup.cmd TODIRECTORY E:\:exph.
+:p.
+:li.:hp2.Goal:ehp2. Rename file /tmp/testcase/test1.sh to file /opt/MyTests/test1.sh,
+overwriting the file if it exists.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE FILE /tmp/testcase/test1.sh TOFILE /opt/MyTests/test1.sh:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.MOVE
+:i3.file system service
+:h3.MOVE DIRECTORY
+:p.MOVE DIRECTORY allows you to rename a directory on a machine.
+
+:h4.Notes:
+:ol compact.
+:li.A file moved via the FS service retains its system or extended attributes.
+:li.The FS service uses the operating system's move command to move files.
+If moving a file on Windows, the 'move' command is used.
+If moving a file on Unix, the 'mv' command is used.
+:eol.
+
+:h4.Syntax
+:xmp.
+MOVE DIRECTORY <Name> TODIRECTORY <Name>
+:exmp.
+:p.:xph.DIRECTORY:exph. specifies the name of the directory to move. &varres.
+:p.:xph.TODIRECTORY:exph. specifies the name of the directory to move the
+directory to.  If this directory does not already exist, the directory will
+be renamed to it.  If this directory already exists, the directory will be moved
+to a new subdirectory within it.
+The path to the directory must already exist, or else the move request will
+fail (e.g. if specify C:\Tests\Test1, directory C:\Tests must already exist). 
+&varres.
+
+:h4.Security
+:p.&seclvl. 4
+
+:h4.Return Codes
+:p.All return codes from MOVE DIRECTORY are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain no data or may contain
+information about the files moved.
+If the request failed, the result buffer may contain information about
+the error.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Rename directory C:\testcase to a new directory named
+C:\MyTestcases.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE DIRECTORY C:\testcase TODIRECTORY C:\MyTestcases:exph.
+:p.
+:li.:hp2.Goal::ehp2. Move directory Test1 from directory C:\testcase to 
+directory "D:\My Testcases".
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE DIRECTORY C:\testcase\Test1 TODIRECTORY "D:\My Testcases":exph.
+:p.
+If directory "D:\My Testcases" exists, the directory will be renamed
+to "D:\My Testcases\Test1" (assuming a directory named Test1 does not
+already exist in "D:\My Testcases").  If directory "C:\My Testcases" does not
+exist, the directory will be renamed to "D:\My Testcases".
+:p.
+:li.:hp2.Goal::ehp2. Move directory mydir on the boot drive to drive E:.
+:p.
+:hp2.Syntax::ehp2.&nbsp; :xph.MOVE DIRECTORY {STAF/Config/BootDrive}/mydir TODIRECTORY E:\:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.GET FILE
+:i3.file system service
+:h3 id=fsgetfile.GET FILE
+:p.GET FILE retrieves the contents of a text file.
+:p.Notes:
+:ol.
+:li.If the file specified is a symbolic link, the contents of the entry
+referenced by the link will be retrieved.
+:p.
+:li.Since the entire content of a returned file is stored in the result
+string, if you attempt to get the contents of a very large file, you may
+run out of memory so using the GET FILE request is not recommended for
+large files.  To help prevent this problem, you can specify a maximum size
+for a file returned by this request by setting the MAXRETURNFILESIZE
+operational parameter in the STAF configuration file on the machine where
+the file resides, or by setting the STAF/MaxReturnFileSize variable in the
+request variable pool of the handle that submitted the request.
+The lowest of these two values is used as the maximum return file size
+(not including 0 which indicates no limit).
+:eol.
+
+:h4.Syntax
+:xmp.
+GET FILE <FileName> &lbrk.&lbrk.TEXT | BINARY&rbrk. &lbrk.FORMAT <Format>&rbrk.&rbrk.
+:exmp.
+:p.:xph.FILE:exph. specifies the name of the text file to get. &varres.
+:p.:xph.TEXT:exph. specifies to convert line-ending characters in the file being
+retrieved as specified via the :xph.FORMAT:exph. option and to perform codepage conversion.
+This option should only be specified for a text file, not a binary file.
+This is the default.
+:p.:xph.BINARY:exph. specifies to retrieve the contents of the file in binary.
+:p.:xph.FORMAT:exph. specifies the format of the file's contents.  &varres.
+:ul.
+:li.If the :xph.TEXT:exph. option is specified, the following formats are supported&colon.
+:p.
+:ul compact.
+:li.:xph.NATIVE:exph. specifies to convert line-ending characters in the file(s)
+to those of the target machine so that the line-ending characters are appropriate
+to the target platform.  This is the default.
+:li.:xph.UNIX:exph. specifies to converts line-ending characters in the file(s)
+to the line-ending characters for Unix.
+:li.:xph.WINDOWS:exph. specifies to convert line-ending characters in the file(s)
+to the line-ending characters for Windows.
+:li.:xph.ASIS:exph. specifies that no conversion of line-ending characters in the file
+be done.  This value is only supported for a :xph.GET FILE:exph. request.
+Note that prior to STAF V2.5, this was the default (as the :xph.TEXT:exph. option was not
+yet implemented).
+:li.:xph.<String>:exph. specifies to convert line-ending characters in the file(s)
+to the specified string.
+:eul.
+:li.If the :xph.BINARY:exph. option is specified, the following formats are supported&colon.
+:p.
+:ul compact.
+:li.:xph.Hex:exph. - Converts the contents of the file to a Hex representation.
+:eul.
+:eul.
+
+:h4.Security
+:p.&seclvl. 4.
+
+:h4.Return Codes
+:p.All return codes from GET FILE are documented in :hdref refid=retcode..
+
+:p.Notes:
+:p.
+:ol.
+:li.If return code 58 (Maximum Size Exceeded) is returned, that indicates that
+the file size exceeded the maximum return file size specified.
+:p.
+:li.If return code 39 (Converter Error) is returned,
+see section :hdref refid=FSGetFileConverterError. for more information on this error.
+:eol.
+
+:h4.Results
+:p.On successful return, the result buffer will contain the contents of the
+specified file.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve the contents of the CONFIG.SYS file as text.
+Convert any line-ending characters to those of the platform of the machine
+making the request.
+.br
+:hp2.Syntax::ehp2.&nbsp;  Note that all of these :xph.GET FILE:exph. examples are equivalent.
+:xmp.
+GET FILE {STAF/Config/BootDrive}/CONFIG.SYS
+GET FILE {STAF/Config/BootDrive}/CONFIG.SYS TEXT
+GET FILE {STAF/Config/BootDrive}/CONFIG.SYS TEXT FORMAT Native
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the contents of the STAF configuration file as text.
+Convert any line-ending characters in the file being retrieved to the
+line-ending characters for Unix.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.GET FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TEXT FORMAT Unix:exph.
+:p.
+:li.:hp2.Goal::ehp2. In this example, assume the command is being issued to
+a Unix machine from a Windows machine.  Retrieve the contents of file
+/testcases/test1.txt as text and convert the line-ending characters to the 
+line-ending characters for Windows.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.GET FILE /testcases/test1.txt TEXT FORMAT Windows:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the contents of file /testcases/test1.txt as text and
+convert the line-ending characters to a space.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.GET FILE /testcases/test1.txt TEXT FORMAT " ":exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the contents of file c:/testcases/test1.cmp in binary
+and display its contents in hex.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+Note that both of these :xph.GET FILE:exph. examples are equivalent.
+:xmp.
+GET FILE c:/testcases/test1.cmp BINARY
+GET FILE c:/testcases1/test1.cmp BINARY FORMAT HEX
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.GET ENTRY
+:i3.file system service
+:h3 id=fsgete.GET ENTRY
+:p.GET ENTRY retrieves an attribute of a file system entry, such as its type,
+size, last modification time, link target, or checksum.
+
+:h4.Syntax
+:xmp.
+GET ENTRY <Name> <TYPE | SIZE | MODTIME | LINKTARGET | CHECKSUM [<Algorithm>]>
+:exmp.
+:p.:xph.ENTRY:exph. specifies the name of the file system entry for which to
+retrieve an attribute. &varres.
+:p.:xph.TYPE:exph. specifies the type of the file system entry should be
+retrieved.
+:p.:xph.SIZE:exph. specifies the size of the file system entry should be
+retrieved.  Note that if the file system entry is a directory, it retrieves
+the size of only the directory entry, not the total size of all the entries
+within the directory.  To get the total size of a directory, use the FS
+service's LIST DIRECTORY request with the SUMMARY option.
+:p.:xph.MODTIME:exph. specifies the last modification time of the file
+system entry should be retrieved.
+:p.:xph.LINKTARGET:exph. specifies the link target for the file system
+entry should be retrieved.  If the file system entry is not a symbolic link,
+&noneObj. will be returned.
+:p.:xph.CHECKSUM:exph. specifies to calculate a fixed-size checksum of the
+file system entry and return its value in a hexadecimal form.
+Getting a file's checksum is a simple way to check to see that a file has
+not been tampered with or to verify that a file has been downloaded or
+copied correctly.  You may optionally specify the cryptographic hashing
+algorithm used to produce a unique checksum for any file.  The following
+algorithms are supported: MD2, MD4, MD5, RIPEMD160, SHA, SHA1
+(case-insensitive).  The default is MD5.
+Note that SHA1 (160 bits) and RIPEMD160 (160 bits) are considered more
+current and more secure than MD5 (128 bits), but MD5 is still widely used.
+You cannot retrieve the checksum for a directory.  &varres.
+:p.If the file system entry is a symbolic link, information about the entry
+referenced by the link (e.g. the link target) will be provided.  This includes
+the type, size, last modification time, or checksum of the link target.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from GET ENTRY are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.On successful return, the contents of the result buffer will depend on the
+attribute type requested.
+:p.
+:ul.
+:li.If the :xph.TYPE:exph. option is specified, the result buffer
+will contain one of the following letters:
+:table cols='* 2*' align='c l'.
+:tcap.File System Entry Types Reference
+:thd.
+:c.Type identifier
+:c.Description
+:ethd.
+:row.
+:c.F
+:c.File
+:row.
+:c.D
+:c.Directory
+:row.
+:c.P
+:c.Pipe
+:row.
+:c.S
+:c.Socket
+:row.
+:c.B
+:c.Block device
+:row.
+:c.C
+:c.Character device
+:row.
+:c.O
+:c.Other undefined type
+:row.
+:c.?
+:c.Unknown type
+:etable.
+:p.
+:li.If the :xph.SIZE:exph. option is specified, the result buffer will contain
+a marshalled :xph.<Map&colon.STAF/Service/FS/SizeInfo>:exph. representing
+the 64-bit size of the file system entry.
+The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/FS/SizeInfo
+:tnote text='Description'.This map class represents the 64-bit size of
+the file system entry.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:c.
+:row.
+:c.upperSize
+:c.Upper 32-bit Size
+:c.&stringObj.
+:c.
+:row.
+:c.lowerSize
+:c.Lower 32-bit Size
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+The "Size" value is the 64-bit size of the file system entry in bytes.
+The "Upper 32-bit Size" and "Lower 32-bit Size" values are provided for
+historical reasons as the "Size" value wasn't added until STAF V3.3.5.
+They represent the upper 32-bits of the size and the lower 32-bits of
+the size in bytes.  Note that if the size < 4,294,967,296 bytes (aka 4G),
+the upper 32-bit size will be 0 and the lower 32-bit size will be the
+same as the size field.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.MODTIME:exph. option is specified, the result buffer will
+contain the last modification time of the file system entry in a string with
+format :xph.YYYYMMDD-HH&colon.MM&colon.SS:exph.
+:p.
+:li.If the :xph.LINKTARGET:exph. option is specified, the result buffer will
+contain the link target for the file system entry.  If the file system entry
+is not a symbolic link, string &noneObj. will be returned.
+:p.
+:li.If the :xph.CHECKSUM:exph. option is specified, the result buffer will
+contain the checksum for the file in hexadecimal form.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve the type of the file system entry
+C&colon.\Stuff\WhatIsIt.d
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY C&colon.\Stuff\WhatIsIt.d TYPE:exph.
+.br
+:hp2.Results::ehp2.
+:xmp.
+F
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the last modification time of the file system entry
+{STAF/Config/BootDrive}\CONFIG.SYS
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY {STAF/Config/BootDrive}\CONFIG.SYS MODTIME:exph.
+.br
+:hp2.Results::ehp2.
+:xmp.
+20040512-18:07:52
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the size of the file system entry /test1/projectX.tar
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY /test1/projectX.tar SIZE:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Size             : 340488704
+Upper 32-bit Size: 0
+Lower 32-bit Size: 340488704
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the size of the file system entry /test/myproject.zip
+which is > 4G in size
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY /test/myproject.zip SIZE:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Size             : 4800000000
+Upper 32-bit Size: 1
+Lower 32-bit Size: 505032704
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the link target of the file system entry
+/usr/local/staf/bin/staf which is a symbolic link
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY /usr/local/staf/bin/staf LINKTARGET:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+/usr/local/staf/bin/STAF
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the MD5 checksum of file C:/STAF/bin/STAF.cfg
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY C:/STAF/bin/STAF.cfg CHECKSUM MD5:exph.
+.br
+:hp2.Results::ehp2.
+:xmp.
+3F6C5A05CA3E7422C57851CAFA223FA2
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the SHA-1 checksum of file C:/STAF/bin/STAF.cfg
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.GET ENTRY C:/STAF/bin/STAF.cfg CHECKSUM SHA1:exph.
+.br
+:hp2.Results::ehp2.
+:xmp.
+83B4F130E213D61AE6BB393FA9AEE711CC9FF91B
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.file system service
+:h3.QUERY
+:p.QUERY retrieves all associated attributes of a file system entry.
+:p.
+Note that if the file system entry queried is a symbolic link, information
+about the entry referenced by the link will be retrieved.
+
+:h4.Syntax
+:xmp.
+QUERY ENTRY <Name>
+:exmp.
+:p.:xph.ENTRY:exph. specifies the name of the file system entry to query.
+&varres.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from QUERY are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+On successful return, the result buffer for a :xph.QUERY:exph. request
+will contain a marshalled :xph.<Map&colon.STAF/Service/FS/QueryInfo>:exph.
+representing information about the file system entry attributes.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/FS/QueryInfo
+:tnote text='Description'.This map class represents information about
+a file system entry attributes.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.linkTarget
+:c.Link Target
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:row.
+:c.upperSize
+:c.Upper 32-bit Size
+:c.&stringObj.
+:c.
+:row.
+:c.lowerSize
+:c.Lower 32-bit Size
+:c.&stringObj.
+:c.
+:row.
+:c.lastModifiedTimestamp
+:c.Modified Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:tnote text='Notes'.
+The values for "Link Target", "Type", "Size", "Upper 32-bit Size", "Lower 32-bit Size", 
+and "Last Modification Time" are formatted as specified
+in section :hdref refid=fsgete..
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve the attributes for the file system entry
+/tests/project.tar.gz
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.QUERY ENTRY /tests/project.tar.gz:exph.
+.br
+:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Name              : /tests/project.tar.gz
+Link Target       : <None>
+Type              : F
+Size              : 340488704
+Upper 32-bit Size : 0
+Lower 32-bit Size : 340488704
+Modified Date-Time: 20080512-18:07:52
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the attributes for the file system entry
+C:\tests\myproject.zip whose size is > 4G
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.QUERY ENTRY C:/tests/myproject.zip:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Name              : C:/tests/myproject.zip
+Link Target       : <None>
+Type              : F
+Size              : 4800000000
+Upper 32-bit Size : 1
+Lower 32-bit Size : 505032704
+Modified Date-Time: 20090712-08:30:01
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the attributes for the file system entry
+/usr/local/staf/bin/staf which is a symbolic link
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.QUERY ENTRY /usr/local/staf/bin/staf:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Name              : /usr/local/staf/bin/staf
+Link Target       : /usr/local/staf/bin/STAF
+Type              : F
+Size              : 91098
+Upper 32-bit Size : 0
+Lower 32-bit Size : 91098
+Modified Date-Time: 20090708-21:43:11
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST DIRECTORY
+:i3.file system service
+:h3.LIST DIRECTORY
+:p.LIST DIRECTORY lists the selected contents of a directory, or provides
+summary information for the selected contents of a directory (e.g. total
+size, number of files and subdirectories).
+:h4.Syntax
+:xmp.
+LIST DIRECTORY <Name> &lbrk.RECURSE&rbrk. &lbrk.LONG &lbrk.DETAILS&rbrk. | SUMMARY&rbrk. &lbrk.TYPE <Types>&rbrk.
+     &lbrk.NAME <Pattern>&rbrk. &lbrk.EXT <Pattern>&rbrk. &lbrk.CASESENSITIVE | CASEINSENSITIVE&rbrk.
+     &lbrk.SORTBYNAME | SORTBYSIZE | SORTBYMODTIME&rbrk.     
+:exmp.
+:p.:xph.DIRECTORY:exph. specifies the name of the directory to list. &varres.
+:p.:xph.RECURSE:exph. specifies that any subdirectories will be recursively listed.
+:p.:xph.LONG:exph. specifies to list the selected contents of the directory
+in a long format.  That is, the list of child entries should include their
+name, type, size, last modification time, and link target.  By default, it
+returns a list that only includes the name of the entry if neither the
+:xph.LONG:exph. nor :xph.SUMMARY:exph. option is specified.
+:p.:xph.DETAILS:exph. specifies to provide more details about the child entries
+in the list.  Specifically, the upper 32-bit size and lower 32-bit size will be
+shown in separate fields and the size will be shown in bytes instead of rounding
+the size in kilobytes or megabytes.
+:p.:xph.SUMMARY:exph. specifies to provide only a summary of the selected contents
+of the directory including its total size in bytes, number of files, and number of
+subdirectories.
+:p.:xph.TYPE:exph. specifies the types of child entries to return.  These types
+are the same types described in section :hdref refid=fsgete., with the addition
+of '!', which, when specified along with 'D', includes the special directories
+'.' and '..'.  You may also specify the string "ALL" to include all entry types.
+By default, only files and non-special directories are included.  &varres.
+:p.:xph.NAME:exph. specifies a pattern used to match the name of child entries
+in the specified directory (and child entries in its subdirectories, if the
+:xph.RECURSE:exph. option is specified).  Only child entries whose name match
+this pattern will be listed.  Match patterns may be specified using special
+characters '*' and/or '?' as wildcards.  The default pattern is "*".  &varres.
+:p.:xph.EXT:exph. specifies a pattern used to match the extension of child entries
+in the speciifed directory (and child entries in its subdirectories if the
+:xph.RECURSE:exph. option is specified).  Only child entries whose extension match
+this pattern will be listed.  Match patterns may be specified using special
+characters '*' and/or '?' as wildcards.  The default pattern is "*". &varres.
+:note.The LIST DIRECTORY command recognizes the "name" (:xph.NAME:exph.)
+portion of a filename as the character(s) that precede a period (or the entire
+filename if it does not include a period) and the "extension" (:xph.EXT:exph.)
+portion of a filename are character(s) that follow a period.
+For example, for filename myfile.txt the "name" portion is "myfile" and
+the "extension" portion is "txt".  To match filenames whose name begins
+with "my" and whose extension is "txt", you could specify options
+:xph.NAME my* EXT txt:exph..
+:p.:xph.CASESENSITIVE:exph. specifies that the patterns specified by
+:xph.NAME:exph. and :xph.EXT:exph. are to be matched in a case sensitive manner.
+It also affects the sorting performed by :xph.SORTBYNAME:exph..
+:p.:xph.CASEINSENSITIVE:exph. specifies that the patterns specified by
+:xph.NAME:exph. and :xph.EXT:exph. are to be matched in a case insensitive
+manner.  It also affects the sorting performed by :xph.SORTBYNAME:exph..
+:note.If neither :xph.CASESENSITIVE:exph. nor :xph.CASEINSENSITIVE:exph. is
+specified, the default is determined by the operating system -- unix systems
+default to :xph.CASESENSITIVE:exph., all others default to
+:xph.CASEINSENSITIVE:exph..
+:p.:xph.SORTBYNAME:exph. specifies that the list of child entries should be
+sorted by their name.
+:p.:xph.SORTBYSIZE:exph. specifies that the list of child entries should be
+sorted by their size.
+:p.:xph.SORTBYMODTIME:exph. specifies that the list of child entries should be
+sorted by their last modification time.
+:note.If none of the sorting options is used, the default is not to sort the
+list.  It will be in the same order as returned by the operating system, which
+is not guaranteed to perform any sorting of its own.
+
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST DIRECTORY are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain the contents of the
+specified directory as follows:
+:ul.
+:li.If neither the :xph.LONG:exph. nor the :xph.SUMMARY:exph. option is specified,
+the result buffer will contain a marshalled :xph.<List> of <String>:exph.
+representing the names of the matching entries in the specified directory.
+:p.
+:li.If the :xph.LONG:exph. option is specified without the :xph.DETAILS:exph.
+option, the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/FS/ListLongInfo>:exph. representing
+information about each entry in the file, including name, type, size,
+date-time last modified, and link target.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/FS/ListLongInfo
+:tnote text='Description'.This map class represents information about an entry
+in a specified directory.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:c.
+:row.
+:c.lastModifiedTimestamp
+:c.Modified Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.linkTarget
+:c.Link Target
+.br
+(Link)
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Size" value contains the 64-bit size in human-readable form where
+the size will be shown in bytes, or in kilobytes using the extension
+'K', or in megabytes using the extension 'M'.
+:li.The "Link Target" value specifies the link target for an entry.
+If the entry is not a symbolic link, it will be set to &noneObj..
+:li.If the entry is a symbolic link, information about the entry referenced
+by the link (e.g. the link target) will be provided.  This includes the type,
+size, and last modification time of the link target.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.LONG:exph. and :xph.DETAILS:exph. options are specified,
+the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/FS/ListDetailsInfo>:exph. representing
+detailed information about each entry in the file, including name, type, size,
+date-time last modified, and link target.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/FS/ListDetailsInfo
+:tnote text='Description'.This map class represents detailed information about
+an entry in a specified directory.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.linkTarget
+:c.Link Target
+.br
+(Link)
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:row.
+:c.upperSize
+:c.U-Size
+:c.&stringObj.
+:c.
+:row.
+:c.lowerSize
+:c.L-Size
+:c.&stringObj.
+:c.
+:row.
+:c.lastModifiedTimestamp
+:c.Modified Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Link Target" value specifies the link target for an entry.
+If the entry is not a symbolic link, it will be set to &noneObj..
+:li.If the entry is a symbolic link, information about the entry referenced
+by the link (e.g. the link target) will be provided.  This includes the type,
+size, and last modification time of the link target.
+:li.The "Size" value is the 64-bit size of the file system entry in bytes.
+The "U-Size" and "L-Size" values are provided for historical reasons as
+the "Size" value wasn't added until STAF V3.3.5.  They represent the
+upper 32-bits of the size and the lower 32-bits of the size in bytes.
+Note that if the size < 4,294,967,296 bytes (aka 4G), the upper 32-bit size
+will be 0 and the lower 32-bit size will be the same as the size field.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.SUMMARY:exph. option is specified, the result buffer will
+contain a marshalled :xph.<Map&colon.STAF/Service/FS/ListSummaryInfo>:exph.
+representing summarized information about the matching entries in the
+directory including total size, number of files, and number of subdirectories.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/FS/ListSummaryInfo
+:tnote text='Description'.This map class represents summary information about
+the matching entries in a specified directory.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:c.
+:row.
+:c.numFiles
+:c.Files
+:c.&stringObj.
+:c.
+:row.
+:c.numDirectories
+:c.Directories
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Name" value is the resolved name of the directory being listed.
+:li.The "Size" value is the total size in bytes of all the entries
+in the directory that match the specified criteria.
+:li.The "Files" value is the total number of files in the directory that match
+the specified criteria.
+:li.The "Directories" value is the total number of subdirectories in the
+specified directory that match the specified criteria.
+:eol.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List the contents of the /tmp directory in the default format
+(without specifying the LONG option).
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY /tmp:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like the following:
+:xmp.
+win2003.exe
+2-ltp-logfile
+test1
+project.tar
+ACME_NEW2.xml
+project.htm
+AutoFVT.bsh
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List the contents of the /tmp directory specifying to get
+more information on the entries in the directory.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY /tmp LONG:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+Type Size  Modified Date-Time Name          Link Target
+---- ----- ------------------ ------------- ------------------
+F    324M  20080512-18:07:52  win2003.exe   <None>
+F    323   20080706-16:13:10  2-ltp-logfile <None>
+D    0     20080728-11:21:44  test1         <None>
+F    1210K 20080517-11:57:10  project.tar   <None>
+F    258K  20080412-11:49:06  ACME_NEW2.xml <None>
+F    12505 20070506-19:14:40  project.htm   <None>
+F    44    20080928-16:24:40  AutoFVT.bsh   /tests/AutoFVT.bsh
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List the contents of the /tmp directory specifying to get
+more detailed information on the entries in the directory, sorted by size.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY /tmp LONG DETAILS SORTBYSIZE:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+Name           Link Target Type Size      U-Size L-Size    Modified Date-Time
+-------------- ----------- ---- --------- ------ --------- ------------------
+test1          <None>      D    0         0      0         20080728-11:21:44
+AutoFVT.bsh    /tests/Auto F    44        0      44        20080928-16:24:40
+               FVT.bsh
+2-ltp-logfile  <None>      F    323       0      323       20080706-16:13:10
+project.htm    <None>      F    12505     0      12505     20070506-19:14:40
+ACME_NEW2.xml  <None>      F    264691    0      264691    20080412-11:49:06
+project.tar    <None>      F    1239040   0      1239040   20080517-11:57:10
+win2003.exe    <None>      F    340488704 0      340488704 20080512-18:07:52
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List only the files in the /tmp directory.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY /tmp LONG TYPE F SORTBYNAME:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+Type Size  Modified Date-Time Name          Link Target
+---- ----- ------------------ ------------- ------------------
+F    323   20080706-16:13:10  2-ltp-logfile <None>
+F    258K  20080412-11:49:06  ACME_NEW2.xml <None>
+F    44    20080928-16:24:40  AutoFVT.bsh   /tests/AutoFVT.bsh
+F    324M  20080512-18:07:52  win2003.exe   <None>
+F    1210K 20080517-11:57:10  project.tar   <None>
+F    12505 20070506-19:14:40  project.htm   <None>
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the entries in C&colon.\Projects with an 
+extension of "txt".  Match this extension in a case sensitive manner.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY C&colon.\Projects EXT txt CASESENSITIVE:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like the following:
+:xmp.
+javacore.20080420.041412.7713.txt
+windoc.txt
+mytest.txt
+svt-spa02dynos390.txt
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Recursively list all the entries in the /tmp/test1 directory
+with a name of "hello" and an extension of "txt" and sort the matching entries
+by name.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY /tmp/test1 NAME hello EXT txt RECURSE SORTBYNAME:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like the following:
+:xmp.
+backup/docs/hello.txt
+docs/hello.txt
+hello.txt
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List the files directly in the /tmp directory that have
+no extension.  Note that you must use the length delimited format, 
+:xph.:0&colon.:exph., to indicate an empty string for the EXT option because if you specify
+no value or "", then the STAF command parser thinks that no value was specified for the
+EXT option and this will cause an "Invalid Request String" error (RC 7) since the EXT
+option requires a value.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.LIST DIRECTORY /tmp EXT :0: TYPE F:exph.
+.br
+:hp2.Results::ehp2.  If the request is submitted from the command line, the result,
+in default format, could look like the following:
+:xmp.
+dumpData
+output
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Recursively list all the entries in the C&colon./temp
+directory with a name of "test1", sorted by name with details about each
+matching entry.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY C&colon./temp NAME test1 RECURSE SORTBYNAME LONG DETAILS:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like the following:
+:xmp.
+Name                 Link   Type Size U-Size L-Size Modified Date-Time
+-------------------- ------ ---- ---- ------ ------ ------------------
+icu\source\test1.ucm <None> F    871  0      871    20081028-19:18:22
+test1                <None> D    0    0      0      20080707-11:47:40
+test1.bak            <None> F    83   0      83     20080919-11:10:22
+test4\test1.txt      <None> F    32   0      34     20090331-13:03:04
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Get a summary of all the entries in directory C:\tests,
+including its subdirectories.  The result provides the total size of all the
+entries in the directory and the total number of files and subdirectories
+contained in the directory.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY C:/tests SUMMARY RECURSE TYPE ALL:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the command line,
+the result, in default format, could look like the following:
+:xmp.
+Name       : C:\tests
+Size       : 239152838
+Files      : 1976
+Directories: 182
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Get a summary of the files in directory /tests/stax
+whose extension is "xml".  The result provides the total size of all the
+*.xml files that reside in this directory and the total number of files
+whose extension is "xml" that are in the directory.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST DIRECTORY /tests/stax SUMMARY TYPE F EXT xml:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the command line,
+the result, in default format, could look like the following:
+:xmp.
+Name       : C:\tests\stax
+Size       : 4250936
+Files      : 888
+Directories: 0
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST COPYREQUESTS
+:i3.file system service
+:h3.LIST COPYREQUESTS
+:p.LIST COPYREQUESTS displays the File System copy requests currently in
+progress.
+:h4.Syntax
+:xmp.
+LIST   COPYREQUESTS &lbrk.LONG&rbrk. &lbrk.INBOUND&rbrk. &lbrk.OUTBOUND&rbrk.
+       &lbrk.FILE &lbrk.&lbrk.BINARY&rbrk. &lbrk.TEXT&rbrk.&rbrk.&rbrk. &lbrk.DIRECTORY&lbrk.
+:exmp.
+:p.:xph.COPYREQUESTS:exph. specifies to list the :xph.COPY:exph. requests currently
+in progress.
+:p.:xph.LONG:exph. specifies to list more detailed information about the
+copy requests, such as the copy mode and current state of the copy request.
+:p.:xph.INBOUND:exph. specifies to list :xph.COPY:exph. requests that are copying
+to the machine.
+:p.:xph.OUTBOUND:exph. specifies to list :xph.COPY:exph. requests that are copying
+from the machine.
+:p.:xph.FILE:exph. specifies to list :xph.COPY FILE:exph. requests.
+:p.:xph.BINARY:exph. specifies to list :xph.COPY FILE:exph. requests that are 
+copying a file in binary format.
+:p.:xph.TEXT:exph. specifies to list :xph.COPY FILE:exph. requests that are copying
+a file in text format.
+:p.:xph.DIRECTORY:exph. specifies to list :xph.COPY DIRECTORY:exph. requests.
+:p.
+If none of the optional options are specified (other than a :xph.LONG:exph.
+option), all of the copy requests currently in progress will be shown.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST COPYREQUESTS are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain a list of the
+copy requests currently in progress as follows:
+:ul.
+:li.If the :xph.LONG:exph. option is not specified, the result buffer will contain
+a marshalled :xph.<List> of <Map&colon.STAF/Service/FS/CopyRequest>:exph.
+representing the copy requests in progress.
+The map is defined as follows:
+:table cols='* * * 2*' id=fsCopyRequestTable.
+:tcap.Definition of map class STAF/Service/FS/CopyRequest
+:tnote text='Description'.This map class represents a copy request in progress.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+.br
+(Date-Time)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.io
+:c.In/Out
+.br
+(I/O)
+:c.&stringObj.
+:c.:xph.'In' | 'Out':exph.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.:xph.'D' | 'F':exph.
+:tnote text='Notes'. 
+:ol compact.
+:li.The "Start Date-Time" value will contain the date and time that the
+copy request started.
+:li.The "In/Out" value will contain :xph.'In':exph. if the :xph.COPY:exph.
+request is copying a file/directory to this machine or :xph.'Out':exph.
+if the :xph.COPY:exph. request is copying a file/directory from this machine.
+:li.If "In/Out" contains :xph.'In':exph., the "Machine" value will contain
+the endpoint of the machine the file/directory is being copied from and the
+"Name" value will contain the name of the file/directory being copied to.
+If "In/Out" contains :xph.'Out':exph., the "Machine" value will contain
+the endpoint of the machine the file/directory is being copied to and the
+"Name" value will contain the name of the file/directory being copied from.
+:li.The "Type" value will contain :xph.'D':exph. to represent a
+:xph.COPY DIRECTORY:exph. request or :xph.'F':exph. to represent a
+:xph.COPY FILE:exph. request. 
+:eol.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.LONG:exph. option is specified, the result buffer will
+contain a marshalled :xph.<List>:exph. of any of the following map classes
+representing detailed information about the copy requests in progress:
+:ul compact.
+:li.:xph.<Map&colon.STAF/Service/FS/CopyFile>:exph. represents detailed
+information about a file being copied (shown in table :tref refid=fsCopyFileTable.).
+:li.:xph.<Map&colon.STAF/Service/FS/CopyDirectory>:exph. represents detailed
+information about a directory being copied (shown in table
+:tref refid=fsCopyDirectoryTable.).
+:eul.
+:p.
+The maps used in representing detailed information about copy requests
+are defined as follows: 
+:table cols='* * * 2*' id=fsCopyFileTable.
+:tcap.Definition of map class STAF/Service/FS/CopyFile
+:tnote text='Description'.This map class represents detailed information
+about a file being copied.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+.br
+(Date-Time)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.io
+:c.In/Out
+.br
+(I/O)
+:c.&stringObj.
+:c.:xph.'In' | 'Out':exph.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.File Name
+:c.&stringObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.:xph.'F':exph.
+:row.
+:c.mode
+:c.Mode
+:c.&stringObj.
+:c.:xph.'Binary':exph. | :xph.'Text':exph.
+:row.
+:c.state
+:c.Transfer State
+:c.:xph.<Map&colon.STAF/Service/FS/FileCopyState>:exph.
+:c.
+:tnote text='Notes'. 
+:ol compact.
+:li.The "Mode" value will be set to :xph.'Binary':exph. indicating
+that the file copy is being performed in binary mode or 
+:xph.'Text':exph. indicating that the file copy is being performed
+in text mode.
+:li.See table :tref refid=fsFileCopyStateTable. for the definitions
+of other fields.
+:eol.
+:etnote.
+:etable.
+:table cols='* * * 2*' id=fsFileCopyStateTable.
+:tcap.Definition of map class STAF/Service/FS/FileCopyState
+:tnote text='Description'.This map class represents detailed information
+about the state of a file being copied.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.fileSize
+:c.File Size
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.bytesCopied
+:c.Bytes Copied
+:c.&stringObj.
+:c.
+:tnote text='Notes'. 
+:ol compact.
+:li.The "File Size" value will contain the size of the file being
+copied in bytes or &noneObj. if that information is not available
+(like for inbound text file copies). 
+:li.The "Bytes Copied" value will contain the number of bytes in the
+file that have been copied.
+:eol.
+:etnote.
+:etable.
+:table cols='* * * 2*' id=fsCopyDirectoryTable.
+:tcap.Definition of map class STAF/Service/FS/CopyDirectory
+:tnote text='Description'.This map class represents detailed information
+about a directory being copied.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+.br
+(Date-Time)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.io
+:c.In/Out
+.br
+(I/O)
+:c.&stringObj.
+:c.:xph.'In' | 'Out':exph.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.File Name
+:c.&stringObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.:xph.'D':exph.
+:row.
+:c.state
+:c.Transfer State
+:c.:xph.<Map&colon.STAF/Service/FS/DirectoryCopyState>:exph.
+:c.
+:tnote text='Notes'. 
+:ol compact.
+:li.For the "Transfer State", see table :tref refid=fsDirectoryCopyStateTable.
+for the map class definition.
+:li.See table :tref refid=fsCopyRequestTable. for the definitions
+of other fields.
+:eol.
+:etnote.
+:etable.
+:table cols='* * * 2*' id=fsDirectoryCopyStateTable.
+:tcap.Definition of map class STAF/Service/FS/DirectoryCopyState
+:tnote text='Description'.This map class represents detailed information
+about the state of the directory being copied.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:row.
+:c.mode
+:c.Mode
+:c.&stringObj.
+:c.:xph.'Binary':exph. | :xph.'Text':exph.
+:row.
+:c.fileSize
+:c.File Size
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.bytesCopied
+:c.Bytes Copied
+:c.&stringObj.
+:c.
+:tnote text='Notes'. 
+:ol compact.
+:li.The "Name" value will be set to the name of the file within
+the directory that is currently being copied.
+:li.The "Mode" value will be set to :xph.'Binary':exph. indicating
+that the file copy is being performed in binary mode or
+:xph.'Text':exph. indicating that the file copy is being performed
+in text mode.
+:li.The "File Size" value will contain the size of the file being
+copied in bytes or &noneObj. if that information is not available
+(like for inbound text file copies). 
+:li.The "Bytes Copied" value will contain the number of bytes in the
+file that have been copied.
+:eol.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Show all the copy requests that are currently
+in progress.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST COPYREQUESTS:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+Start Date-Time   I/O Machine                Name                      Type
+----------------- --- ---------------------- ------------------------- ----
+20050725-18:31:32 Out tcp://client2.company. c:/temp/TestA             D
+                      com
+20050725-18:31:38 Out tcp://client1.company. c:/tests/Instructions.txt F
+                      com@6500
+20050725-18:31:38 In  client1.company.com    c:/temp/Instructions.txt  F
+20050725-18:31:41 Out tcp://client3.company. c:/tests/TestB/TestB.zip  F
+                      com
+20050725-18:32:05 In  client2.company.com    c:/tests/TestC            D
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show detailed information on all the copy requests
+that are currently in progress.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST COPYREQUESTS LONG:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in the verbose format, could look like the following:
+:xmp.
+[
+  {
+    Start Date-Time: 20050725-18:31:32
+    In/Out         : Out
+    Machine        : tcp://client2.company.com
+    Directory Name : c:/temp/TestA
+    Type           : D
+    Transfer State : {
+      Name        : c:/temp/TestA/TestA.zip
+      Mode        : Binary
+      File Size   : 9873006
+      Bytes Copied: 1288000
+    }
+  }
+  {
+    Start Date-Time: 20050725-18:31:38
+    In/Out         : Out
+    Machine        : tcp://client1.company.com@6500
+    File Name      : c:/tests/Instructions.txt
+    Type           : F
+    Mode           : Text
+    Transfer State : {
+      File Size   : 26019
+      Bytes Copied: 12000
+    }
+  }
+  {
+    Start Date-Time: 20050725-18:31:38
+    In/Out         : In
+    Machine        : client1.company.com
+    File Name      : c:/temp/Instructions.txt
+    Type           : F
+    Mode           : Text
+    Transfer State : {
+      File Size   : <None>
+      Bytes Copied: 12000
+    }
+  }
+  {
+    Start Date-Time: 20050725-18:31:41
+    In/Out         : Out
+    Machine        : tcp://client3.company.com
+    File Name      : c:/temp/TestB/TestB.zip
+    Type           : F
+    Mode           : Binary
+    Transfer State : {
+      File Size   : 70483006
+      Bytes Copied: 63614000
+    }
+  }
+  {
+    Start Date-Time: 20050725-18:32:05
+    In/Out         : In
+    Machine        : client2.company.com
+    Directory Name : c:/temp/TestC
+    Type           : D
+    Transfer State : {
+      Name        : c:/temp/TestC/TestC.txt
+      Mode        : Text
+      File Size   : <None>
+      Bytes Copied: 8000
+    }
+  }
+]
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show the file copy requests that are copying files to
+this machine.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST COPYREQUESTS INBOUND FILE:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+Start Date-Time   In/Out Machine             Name                     Type
+----------------- ------ ------------------- ------------------------ ----
+20050725-18:31:38 In     client1.company.com c:/temp/Instructions.txt F
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show detailed information about the file copy
+requests that are copying files from this machine.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST COPYREQUESTS OUTBOUND FILE LONG:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in verbose format, could look like the following:
+:xmp.
+[
+  {
+    Start Date-Time: 20050725-18:31:38
+    In/Out         : Out
+    Machine        : tcp://client1.company.com@6500
+    File Name      : c:/tests/Instructions.txt
+    Type           : F
+    Mode           : Text
+    Transfer State : {
+      File Size   : 26019
+      Bytes Copied: 12000
+    }
+  }
+  {
+    Start Date-Time: 20050725-18:31:41
+    In/Out         : Out
+    Machine        : tcp://client3.company.com
+    File Name      : c:/temp/TestB/TestB.zip
+    Type           : F
+    Mode           : Binary
+    Transfer State : {
+      File Size   : 70483006
+      Bytes Copied: 63614000
+    }
+  }
+]
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show detailed information about the file copy
+requests that are copying files from this machine in binary mode.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST COPYREQUESTS OUTBOUND BINARY FILE LONG:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+[
+  {
+    Start Date-Time: 20050725-18:31:41
+    In/Out         : Out
+    Machine        : tcp://client3.company.com
+    File Name      : c:/temp/TestB/TestB.zip
+    Type           : F
+    Mode           : Binary
+    Transfer State : {
+      File Size   : 70483006
+      Bytes Copied: 63614000
+    }
+  }
+]
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST SETTINGS
+:i3.file system service
+:h3.LIST SETTINGS
+:p.LIST SETTINGS shows the operational settings for the FS service.
+:h4.Syntax
+:xmp.
+LIST SETTINGS     
+:exmp.
+:p.:xph.SETTINGS:exph. specifies that you want to list the current operational
+settings for the FS service.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST SETTINGS are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/FS/Settings>:exph. representing the current
+settings for the File System service.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/FS/Settings
+:tnote text='Description'.This map class represents the operational
+settings for the File System service.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.strictFSCopyTrust
+:c.Strict FS Copy Trust
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List the current operational settings for the
+File System service.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.LIST SETTINGS:exph.
+.br
+:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in default format, could look like the following:
+:xmp.
+Strict FS Copy Trust: Disabled
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.CREATE
+:i3.file system service
+:h3.CREATE
+:p.CREATE creates a directory.
+:h4.Syntax
+:xmp.
+CREATE DIRECTORY <Name> &lbrk.FULLPATH&rbrk. &lbrk.FAILIFEXISTS&rbrk.
+:exmp.
+:p.:xph.DIRECTORY:exph. specifies the name of the directory to create. &varres.
+:p.:xph.FULLPATH:exph. specifies that any intermediate parent directories should
+be created if they don't exist.
+:p.:xph.FAILIFEXISTS:exph. specifies that the request should generate an error
+if the specified directory already exists.  By default, the request will succeed
+if the specified directory already exists.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from CREATE are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will be empty.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Create the directory /tmp/tests
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.CREATE DIRECTORY /tmp/tests:exph.
+:p.
+:li.:hp2.Goal::ehp2. Create the directory {Tests/Root} and ensure that any
+intermediate parent directories are created as well.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.CREATE DIRECTORY {Tests/Root} FULLPATH:exph.
+:p.
+:li.:hp2.Goal::ehp2. Create the directory D&colon.\TestData.  Generate an error if the
+directory already exists.
+.br
+:hp2.Syntax::ehp2.&nbsp; :xph.CREATE DIRECTORY D&colon.\TestData FAILIFEXISTS:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.file system service
+:h3.DELETE
+:p.DELETE deletes selected file system entries.
+:p.
+Note that if a file system entry being deleted is a symbolic link, the
+symbolic link will be deleted, not the entry referenced by the link.
+
+:h4.Syntax
+:xmp.
+DELETE ENTRY <Name> CONFIRM &lbrk.RECURSE&rbrk. &lbrk.IGNOREERRORS&rbrk.
+       &lbrk. CHILDREN &lbrk.TYPE <Types>&rbrk. &lbrk.NAME <Pattern>&rbrk. &lbrk.EXT <Pattern>&rbrk.
+                  &lbrk.CASESENSITIVE | CASEINSENSITIVE&rbrk. &rbrk.
+:exmp.
+:p.:xph.ENTRY:exph. specifies the name of the file system entry to delete.
+&varres.
+:p.:xph.CHILDREN:exph. specifies that only children matching :xph.NAME:exph.,
+:xph.EXT:exph., and :xph.TYPE:exph. should be deleted.  The entry itself will
+not be deleted.
+:p.:xph.NAME:exph. specifies a pattern used to match the name of child entries.
+Only child entries whose name match this pattern will be deleted.  Match
+patterns may be specified using special characters '*' and/or '?' as wildcards.
+The default pattern is "*". &varres.
+:p.:xph.EXT:exph. specifies a pattern used to match the extension of child
+entries.  Only child entries whose extension match this pattern will be
+deleted.  Match patterns may be specified using special characters '*' and/or
+'?' as wildcards.  The default pattern is "*".  &varres.
+:note.The DELETE command recognizes the "name" (:xph.NAME:exph.)
+portion of a file system name as the character(s) that precede a period (or the
+entire name if it does not include a period) and the "extension" (:xph.EXT:exph.)
+portion of a file system name are character(s) that follow a period.
+For example, for file system name myfile.txt, the "name" portion is "myfile" and
+the "extension" portion is "txt".  To match file system names whose name begins
+with "my" and whose extension is "txt", you could specify options
+:xph.NAME my* EXT txt:exph..
+:p.:xph.TYPE:exph. specifies the types of child entries to delete.  These types
+are the same types described in section :hdref refid=fsgete..  You may also
+specify the string "ALL" to delete all entry types.  By default, all entry types
+are deleted.  &varres.
+:p.:xph.CASESENSITIVE:exph. specifies that the patterns specified by
+:xph.NAME:exph. and :xph.EXT:exph. are to be matched in a case sensitive manner.
+:p.:xph.CASEINSENSITIVE:exph. specifies that the patterns specified by
+:xph.NAME:exph. and :xph.EXT:exph. are to be matched in a case insensitive
+manner.
+:note.If neither :xph.CASESENSITIVE:exph. nor :xph.CASEINSENSITIVE:exph. is
+specified, the default is determined by the operating system -- unix systems
+default to :xph.CASESENSITIVE:exph., all others default to
+:xph.CASEINSENSITIVE:exph..
+:p.:xph.RECURSE:exph. specifies that the entry's children will be recursively
+deleted.
+:note.If neither :xph.CHILDREN:exph. nor :xph.RECURSE:exph. is used, only
+the entry itself will be deleted.  If :xph.RECURSE:exph. is specified without
+:xph.CHILDREN:exph. then the entry and all of its children will be deleted.  If
+:xph.RECURSE:exph. and :xph.CHILDREN:exph. are specified, then only the children
+matching the specified :xph.NAME:exph., :xph.EXT:exph., and :xph.TYPE:exph. will
+be deleted (i.e., the entry itself will not be deleted).
+:p.:xph.IGNOREERRORS:exph. specifies that errors encountered (recursively)
+deleting children should not be returned.  By default, all errors encountered
+while (recursively) deleting children will be returned in the result buffer.
+:p.:xph.CONFIRM:exph. indicates that you really want the deletion to occur.
+:h4.Security
+:p.&seclvl. 4.  If you specify :xph.RECURSE:exph., you must have trust level 5.
+:h4.Return Codes
+:p.All return codes from DELETE are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+:ul.
+:li.On successful return, the result buffer will be empty. 
+:p.
+:li.If errors were encountered deleting entries and :xph.IGNOREERRORS:exph.
+was not specified, the result buffer will contain a
+marshalled :xph.<List> of <Map&colon.STAF/Service/FS/ErrorInfo>:exph. representing
+a list of error information about the entries that were not successfully deleted.
+See table :tref refid=fsErrorInfoTable. for the map class definition of
+:xph.<Map&colon.STAF/Service/FS/ErrorInfo>:exph..
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete the entry /tmp/myfile.txt
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.DELETE ENTRY /tmp/myfile.txt CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the directory /tmp/myfiles and all of its children.
+.br
+:hp2.Syntax::ehp2.&nbsp; 
+:xph.DELETE ENTRY /tmp/myfiles RECURSE CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all entries in directory /tmp whose name begins
+with "report" and whose extension is "txt" (e.g. delete entries like
+/tmp/report1.txt, /tmp/report25.txt, and /tmp/reportForMe.txt).
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.DELETE ENTRY /tmp CHILDREN NAME "report*" EXT txt CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Recursively delete all the children of C&colon.\TEMP, without
+deleting the directory itself.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.DELETE ENTRY C&colon.\TEMP CHILDREN RECURSE CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all entries with an extension of "tmp" in
+C&colon.\MyFiles.  Match the extension in a case insensitive manner.  Do not
+recurse down subdirectories.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.DELETE ENTRY C&colon.\TEMP CHILDREN EXT tmp CASEINSENSITIVE CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all files in the /tmp directory that have
+no extension.  Note that you must use the length delimited format, 
+:xph.:0&colon.:exph., to indicate an empty string for the EXT option because if you specify
+no value or "", then the STAF command parser thinks that no value was specified for the
+EXT option and this will cause an "Invalid Request String" error (RC 7) since the EXT
+option requires a value.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.DELETE ENTRY /tmp CHILDREN EXT :0: TYPE F CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Recursively delete all files (and only files) under {MyTempFiles}
+with a base name beginning with "test".  Match the name in a case sensitive
+manner.  Do not report any errors during the deletion.
+.br
+:hp2.Syntax::ehp2.&nbsp;
+:xph.DELETE ENTRY {MyTempFiles} CHILDREN NAME "test*" TYPE F RECURSE CASESENSITIVE IGNOREERRORS CONFIRM:exph.
+
+:eul.
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.file system service
+:h3 id=fsset.SET
+The SET command allows you to change the operational parameters for the
+File System service dynamically (without stopping/restarting STAF) which is
+important for STAF machines that must be continuously available.
+:p.
+Note that to make these settings permanent (e.g. if you want these changes
+to apply once STAF is stopped and restarted), you'll need to update the
+STAF configuration file with these new settings.
+
+:h4.Syntax
+:xmp.
+SET  STRICTFSCOPYTRUST <Enabled | Disabled>
+:exmp.
+:p.See section :hdref refid=opparms. for a description of this option.
+Note that setting :xph.STRICTFSCOPYTRUST Enabled:exph. is equivalent
+to setting the :xph.STRICTFSCOPYTRUST:exph. operational parameter in the
+STAF configuration file.  Setting :xph.STRICTFSCOPYTRUST Disabled:exph. is
+equivalent to not setting the :xph.STRICTFSCOPYTRUST:exph. operational
+parameter in the STAF configuration file.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from :xph.SET:exph. are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a successful SET command.
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Enabled strict trust checking when copying a file or
+directory.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET STRICTFSCOPYTRUST Enabled:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------

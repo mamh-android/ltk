@@ -1,0 +1,38 @@
+DESC: Java 1.4.1 by IBM Corporation
+JVM_EXE: bin\java.exe
+CLASSPATH: "-cp "
+CLASSPATH_SEPARATOR: ;
+SYSTEM: -D
+SYSTEM_SEPARATOR: =
+JVM_PROPERTIES:
+	java.vendor=IBM Corporation
+	java.version=1.4.1...
+/:
+SET_ENV_FOR_WIZARD:
+    JAVA2D_USEAWTFONTS=0
+/:
+PLATFORM_HINT:
+	\HKEY_LOCAL_MACHINE\SOFTWARE\IBM\Java2 Runtime Environment\1.4.1\JavaHome
+	\HKEY_LOCAL_MACHINE\SOFTWARE\IBM\Java Development Kit\1.4.1\JavaHome
+/:
+PATH_HINT:
+	"\Program Files\IBM\Java141\jre"
+	\IBM\Java141\jre
+	"\Program Files\IBM\Java141"
+	\IBM\Java141
+/:
+VERBOSE: -verbose
+VERBOSE_GC: -verbose:gc
+VERBOSE_CLASS: -verbose:class
+VERBOSE_JNI: -verbose:jni
+VERSION: -version
+BOOT_CLASSPATH: -Xbootclasspath:
+NO_CLASS_GC: -Xnoclassgc
+INIT_JAVA_HEAP: -Xms
+MAX_JAVA_HEAP: -Xmx
+REDUCE_OS_SIGNALS: -Xrs
+CHECK_JNI: -Xcheck:jni
+RUNHPROF_HELP: -Xrunhprof:help
+RUNHPROF_OPTION: -Xrunhprof
+DEBUG: -Xdebug
+FUTURE: -Xfuture

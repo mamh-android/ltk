@@ -1,0 +1,15 @@
+TYPEMAP
+  STAFHandle_t *  T_PTROBJ_STAF
+  STAFSyncOption_t T_UV
+INPUT
+T_PTROBJ_STAF
+  if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/^STAF(.*)_tPtr$/PLSTAF::$1/g;\$ntt}\"))
+    {
+      IV tmp = SvIV((SV*)SvRV($arg));$var = ($type) tmp;
+    }
+  else
+    croak(\"$var is not of type ${(my $ntt=$ntype)=~s/^STAF(.*)_tPtr$/PLSTAF::$1/g;\$ntt}\")
+OUTPUT
+T_PTROBJ_STAF
+  sv_setref_pv($arg, \"${(my $ntt=$ntype)=~s/^STAF(.*)_tPtr$/PLSTAF::$1/g;\$ntt}\",
+    (void*)$var);

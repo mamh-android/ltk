@@ -1,0 +1,132 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2007                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_SUBTYPE = macosx
+OS_LIBS = pthread
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := gcc
+endif
+
+OS_COMMONFLAGS = -DSTAF_OS_NAME_MACOSX $(CC_DEBUG) -D_REENTRANT \
+                 -DSTAF_NO_GETHOSTBYNAME_R -DSTAF_NO_GETHOSTBYADDR_R \
+                 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 
+
+OS_LD_PATH_NAME := DYLD_LIBRARY_PATH
+OS_SHARED_LIB_SUFFIX := .dylib
+
+ifeq ($(BUILD_ARCH),universal)
+        # Provide the default location for Java files on this system
+
+    JAVA_BUILD_V11 ?= 0
+    JAVA_BUILD_V12 ?= 1
+    JAVA_V12_ROOT ?= /System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home
+    JAVA_V12_LIBDIRS ?= $(JAVA_V12_ROOT)/lib
+
+    # Provide the default location for Perl files on this system
+
+    PERL_V510_ROOT ?= /System/Library/Perl/5.10.0
+    PERL_V510_INCLUDEDIRS ?= $(PERL_V510_ROOT)/darwin-thread-multi-2level/CORE
+    PERL_V510_LIBDIRS ?= $(PERL_V510_ROOT)/darwin-thread-multi-2level/CORE
+    PERL_V510_LIBS ?= perl
+    PERL_V510_DYNALOADER ?=
+    PERL_BUILD_V510 ?= 1
+
+    PERL_V58_ROOT ?= /System/Library/Perl/5.8.9
+    PERL_V58_INCLUDEDIRS ?= $(PERL_V58_ROOT)/darwin-thread-multi-2level/CORE
+    PERL_V58_LIBDIRS ?= $(PERL_V58_ROOT)/darwin-thread-multi-2level/CORE
+    PERL_V58_LIBS ?= perl
+    PERL_V58_DYNALOADER ?=
+    PERL_BUILD_V58 ?= 1
+
+    # Provide the default location for Python files on this system
+
+    PYTHON_V26_ROOT ?= /System/Library/Frameworks/Python.framework/Versions/2.6
+    PYTHON_V26_INCLUDEDIRS ?= $(PYTHON_V26_ROOT)/include/python2.6
+    PYTHON_V26_LIBDIRS ?= $(PYTHON_V26_ROOT)/lib/python2.6
+    PYTHON_V26_LIBS ?= python2.6
+    PYTHON_BUILD_V26 ?= 1
+
+    PYTHON_V27_ROOT ?= /usr/local/Python-2.7
+    PYTHON_V27_INCLUDEDIRS ?= $(PYTHON_V27_ROOT)/include/python2.7
+    PYTHON_V27_LIBDIRS ?= $(PYTHON_V27_ROOT)/lib
+    PYTHON_V27_LIBS ?= python2.7
+    PYTHON_BUILD_V27 ?= 1
+
+    PYTHON_V31_ROOT ?= /usr/local/Python-3.1
+    PYTHON_V31_INCLUDEDIRS ?= $(PYTHON_V31_ROOT)/include/python3.1
+    PYTHON_V31_LIBDIRS ?= $(PYTHON_V31_ROOT)/lib
+    PYTHON_V31_LIBS ?= python3.1
+    PYTHON_BUILD_V31 ?= 1
+
+    # Provide the default location for zlib files on this system
+
+    ZLIB_SOURCEDIR ?= /opt/dev/autobuild/tools/zlib-1.2.5
+
+    # Provide the default location for openssl files on this system
+
+    OPENSSL_ROOT ?= /usr
+    OPENSSL_VERSION ?= 0.9.8
+
+    # Provide the default location for Ant on this system
+
+    ANT_ROOT ?= /opt/dev/autobuild/tools/apache-ant-1.6.2
+else
+    # Provide the default location for Java files on this system
+
+    JAVA_BUILD_V11 ?= 0
+    JAVA_BUILD_V12 ?= 1
+    JAVA_V12_ROOT ?= /System/Library/Frameworks/JavaVM.framework/Versions/1.4.2/Home
+    JAVA_V12_LIBDIRS ?= $(JAVA_V12_ROOT)/lib
+
+    # Provide the default location for Perl files on this system
+
+    PERL_V510_ROOT ?= /usr/local/ActivePerl-5.10
+    PERL_V510_INCLUDEDIRS ?= $(PERL_V510_ROOT)/lib/CORE
+    PERL_V510_LIBDIRS ?= $(PERL_V510_ROOT)/lib/CORE
+    PERL_V510_LIBS ?= perl
+    PERL_V510_DYNALOADER ?=
+    PERL_BUILD_V510 ?= 1
+
+    PERL_V58_ROOT ?= /System/Library/Perl
+    PERL_V58_INCLUDEDIRS ?= $(PERL_V58_ROOT)/5.8.6/darwin-thread-multi-2level/CORE
+    PERL_V58_LIBDIRS ?= $(PERL_V58_ROOT)/5.8.6/darwin-thread-multi-2level/CORE
+    PERL_V58_LIBS ?= perl
+    PERL_V58_DYNALOADER ?= $(PERL_V58_ROOT)/5.8.6/darwin-thread-multi-2level/auto/DynaLoader/DynaLoader.a
+    PERL_BUILD_V58 ?= 1
+
+    # Provide the default location for Python files on this system
+
+    PYTHON_V23_ROOT ?= /System/Library/Frameworks/Python.framework/Versions/2.3
+    PYTHON_V23_INCLUDEDIRS ?= $(PYTHON_V23_ROOT)/include/python2.3
+    PYTHON_V23_LIBDIRS ?= $(PYTHON_V23_ROOT)/lib/python2.3
+    PYTHON_V23_LIBS ?= python2.3
+    PYTHON_BUILD_V23 ?= 1
+
+    # Provide the default location for zlib files on this system
+
+    ZLIB_SOURCEDIR ?= /opt/dev/autobuild/tools/zlib-1.2.5
+
+    # Provide the default location for openssl files on this system
+
+    OPENSSL_ROOT ?= /opt/dev/autobuild/tools/openssl-0.9.8e-root
+
+    # Provide the default location for Ant on this system
+
+    ANT_ROOT ?= /opt/dev/autobuild/tools/apache-ant-1.6.2
+endif

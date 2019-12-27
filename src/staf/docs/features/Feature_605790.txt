@@ -1,0 +1,334 @@
+Feature ID  : 605790
+Response Due: 03/23/2007
+Title       : Add finally element to try/catch block
+
+Description
+-----------
+
+Add a finally element to the try element (similar to what Java 
+provides).
+
+A try element executes a task.  If a value is thrown and the try element
+has one or more catch elements that can catch it, then control will be
+transferred to the first such catch element.  If the try element has a
+finally element, then the finally element's task is executed, no matter
+whether the try task completes normally or abruptly, and no matter
+whether a catch element is first given control.
+
+- A try element must contain at least one catch or finally element.
+- A try element must contain one or more catch elements if no finally
+  element is specified.
+- A try element can contain one or more catch elements if a finally
+  element is specified.
+- A try element can contain at most one finally element.
+
+The task contained by the try element is called the try task.
+The task contained by a catch element is called the catch task.
+The task contained by the finally element is called the finally task.
+
+A try statement may have catch elements (aka exception handlers).
+The earliest possible catch element accepts the exception.
+
+A try element can throw an exception type E iff either:
+- The try task can throw E and E is not assignable to any catch element
+  of the try element and no finally element is present or the finally
+  task can complete normally; or
+- Some catch task of the try element can throw E and either no finally
+  task is present or the finally task can complete normally; or
+- A finally task is present and can throw E.
+
+A finally element ensures that the finally task is executed after the
+try task and any catch task that might be executed, no matter how
+control leaves the try task or catch task.
+
+Handling of the finally task is rather complex, so the two cases of a
+try element with and without a finally element are described separately.
+
+1) Execution of try-catch
+
+A try element without a finally element is executed by first executing
+the try task.  Then there is a choice:
+- If execution of the try task completes normally, then no further
+  action is taken and the try element completes normally.
+- If execution of the try task completes abruptly because of a throw of
+  exception E, then there is a choice:
+  - If exception E can be handled by any catch element of the try
+    element, then the first such catch element is selected and the task
+    of that catch element is executed.  If that task completes normally,
+    then the try element completes normally;  if that task completes
+    abruptly for any reason, then the try element completes abruptly for
+    the same reason.  
+  - If exception E cannot be handled by any catch element of the try
+    element, then the try element completes abruptly because of a throw
+    of exception E.
+- If execution of the try task completes abruptly for any other reason,
+  then the try element completes abruptly for the same reason.
+
+2) Execution of try-catch-finally
+
+A try element with a finally element is executed by first executing the
+try task.  Then there is a choice:
+- If execution of the try task completes normally, then the finally task
+  is executed, and then there is a choice:
+  - If the finally task completes normally, then the try element
+    completes normally.
+  - If the finally task completes abruptly for reason S, then the try
+    element completes abruptly for reason S.
+- If execution of the try task completes abruptly because of a throw of
+  exception E, then there is a choice:
+  - If exception E can be handled by any catch element of the try
+    element, then the first such catch element is selected and the task
+    of that catch element is executed.  Then there is a choice:
+    - If the catch task completes normally, then the finally task is
+      executed.  Then there is a choice:
+      - If the finally task completes normally, then the try element
+        completes normally.
+      - If the finally task completes abruptly for any reason, then the
+        try element completes abruptly for the same reason.
+    - If the catch task completes abruptly for reason R, then the
+      finally task is executed. Then there is a choice:
+      - If the finally task completes normally, then the try element
+        completes abruptly for reason R.
+      - If the finally task completes abruptly for reason S, then the
+        try element completes abruptly for reason S (and reason R is
+        discarded).
+  - If exception E cannot be handled by any catch element of the try
+    element, then the finally task is executed.  Then there is a choice:
+    - If the finally task completes normally, then the try element
+      completes abruptly because of a throw of exception E
+    - If the finally task completes abruptly for reason S, then the try
+      element completes abruptly for reason S (and the throw of
+      exception R is discarded).
+- If execution of the try task completes abruptly for any other reason
+  R, then the finally task is executed.  Then there is a choice:
+  - If the finally task completes normally, then the try element
+    completes abruptly for reason R.
+  - If the finally task completes abruptly for reason S, then the try
+    element completes abruptly for reason S (and reason R is discarded).
+
+
+When a finally element is specified and when a condition occurs that
+alters the flow synchronously or asynchronously, the finally task will
+always be executed no matter which condition:
+
+a) STAXReturnCondition                  // STAXReturnAction
+b) STAXHoldThreadCondition(source)      // STAXBlockAction,
+                                        // STAXJobAction,
+                                        // STAXParallelIterateAction,
+                                        // STAXParallelAction,
+                                        // STAXSTAFCommandAction, 
+                                        // STAXProcessAction   
+c) STAXTerminateThreadCondition(source) // STAXThread
+d) STAXTerminateBlockCondition(source)  // STAXBlockAction
+e) STAXHardHoldThreadCondition          // STAXParallelAction, 
+                                        // STAXParallelIterateAction
+f) STAXExceptionCondition               // STAXThrowAction,
+                                        // STAXCatchAction
+g) STAXRethrowExceptionCondition        // STAXRethrowAction
+h) STAXBreakCondition                   // STAXBreakAction
+i) STAXContinueCondition                // STAXContinueAction
+j) STAXTimerExpiredCondition            // STAXTimerAction
+
+
+Problem(s) Solved
+-----------------
+
+If a job ends due to being terminated via a terminate job request, or
+is terminated for any reaons, there needs to be a way to call a
+finally function for potential cleanup.
+
+
+Related Features
+----------------
+
+N/A
+
+
+External Changes
+----------------
+
+Document that if you want to have a guaranteed way to stop a finally
+task, you should have the first element contained in your finally task
+be a block or timer element.
+
+
+The DTD for the try, catch, and new finally element looks like:
+
+<!--============== The Try / Catch / Finally Elements ============= -->
+<!--
+     The try element allows you to perform a task and to catch
+     exceptions that are thrown.  Also, if a finally element is
+     specified, then the finally task is executed, no matter whether
+     the try task completes normally or abruptly, and no matter whether
+     a catch element is first given control.
+-->
+<!ELEMENT try        ((%task;), ((catch+) | ((catch*), finally)))>
+<!--
+     The catch element performs a task when the specified exception is
+     caught.  The var attribute specifies the name of the variable to
+     receive the data specified within the throw element.  The typevar
+     attribute specifies the name of the variable to receive the type
+     of the exception.
+
+-->
+<!ELEMENT catch      (%task;)>
+<!ATTLIST catch
+          exception  CDATA        #REQUIRED
+          var        CDATA        #IMPLIED
+          typevar    CDATA        #IMPLIED
+>
+<!ELEMENT finally    (%task;)>
+
+
+Internal Changes
+----------------
+
+1) Update the STAXTryActionFactory class to handle parsing a finally
+   element and if it has a finally task, have it return a
+   STAXFinallyAction object instead of a STAXTryAction object.
+   The STAXFinallyAction object will run the try task and then run the
+   finally task.
+
+2) STAXTryAction.java and STAXCatchAction.java:  No changes.
+   STAXTryAction continues to execute the try task and the catch tasks
+   just like before the finally task existed.
+
+3) Change STAXTimerExpiredCondition.java so that this condition is not
+   inheritable.
+
+4) Add a new STAXFinallyAction class.
+
+   public class STAXFinallyAction implements STAXAction
+
+   public void execute(STAXThread thread): 
+   {
+       if (fState == INIT)
+       {
+           - Execute the try/catch tasks
+       }
+       else if (fState == TRY_COMPLETE)
+       {
+           // Try and catch tasks are done.  Now execute the finally task
+         
+           - Put hard hold on this thread
+           - Pulls all inheritable conditions off the condition stack and
+             saves
+           - Create new thread and use same Python interpreter
+           - Schedule the child thread to run
+       }
+
+       else if (fState == WAIT_THREAD)
+       {
+           // The child thread for the finally action completed
+           If no inheritable conditions were added to condition stack by
+           child thread
+           {
+               Put inheritable conditions previously saved back on the
+               condition stack
+           }
+       }
+   }
+
+ 
+
+ public void execute(STAXThread thread)
+ {
+     if (fState == INIT)
+     {
+         // Execute the try/catch tasks
+
+         thread.pushAction(tryAction.cloneAction());
+     {
+     else if (fState == TRY_COMPLETE)
+     {
+         // Try and catch tasks are done.  Now execute the finally task.
+
+         // Need to synchronize on fFinallyThread so that the thread
+         // is added before the threadComplete() method does its checks
+
+         synchronized (fFinallyThread)
+         {
+             // Pull all inheritable conditions off condition stack and save
+             // fSaveInheritableConditionList = XXX
+
+             boolean useSamePyInterpreter = true;
+             fFinallyThread = thread.createChildThread(useSamePyInterpreter);
+             fFinallyThread.addCompletionNotifiee(this);
+             fFinallyThread.pushAction(finallyAction.cloneAction());
+             fFinallyThread.schedule(); 
+          }
+      
+          fState = WAIT_THREAD;
+          thread.addCondition(fHardHoldCondition);   
+      }
+      else if (fState == THREAD_COMPLETE)
+      {
+          // Check if any inheritable conditions were added to the condition
+          // stack by the child child
+          if thread's condition stack.size() == 0
+          {
+             // XXX: Put inheritable conditions previously saved back on the
+             // thread's condition stack
+          }
+ 
+          fState = COMPLETE;
+          thread.popAction();
+      }
+  }
+
+  public void handleCondition(STAXThread thread, int endCode)
+  {
+      synchronized (fFinallyThread)
+      {
+          if (fFinallyThread != null)
+          {
+              fFinallyThread.terminate(
+                  STAXThread.THREAD_END_STOPPED_BY_PARENT);
+          }
+      }
+          
+      fState = COMPLETE;
+      thread.popAction();
+  }
+
+  public STAXAction cloneAction()
+  {
+      return new STAXFinallyAction(fFinallyAction);
+  }
+
+  public void threadComplete(STAXThread thread, int endCode)
+  {
+      synchronized (fFinallyThread)
+      {
+          fState = THREADS_COMPLETE;
+
+          // thread.getParentThread() should be the thread we are
+          // running on.
+   
+          thread.getParentThread().removeCondition(fHardHoldCondition);
+          thread.getParentThread().schedule();
+      }
+  } 
+
+  private STAXHardHoldThreadCondition fHardHoldCondition =
+      new STAXHardHoldThreadCondition("Finally");
+  private int fState = INIT;
+  private STAXThread fFinallyThread = null;
+  private STAXAction fFinallyAction;
+
+
+Design Considerations
+---------------------
+
+To make the code cleaner to implement, we changed the STAXTryActionFactory
+to return a STAXFinallyAction object if a <finally> element was provided
+in the <try> element.  Implementing it this way resulted in no changes
+required in the STAXTryAction or STAXCatchAction.  We don't think this
+will be a problem in the future, and it should also make it easier to
+allow other elements in the future to contain a <finally> element.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

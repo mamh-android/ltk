@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="Main"/>
+
+  <function name="Main">
+
+    <sequence>
+
+      <script>importFile = '/usr/local/staf/xml/commonFunctions.xml'</script>
+
+      <message>'Importing functions from file %s' % importFile</message>
+
+      <import file="importFile" machine="'local'"/>
+
+      <script>
+        poolName = 'MachinePool'
+        poolDescription = 'Pool of test machines'
+        resPoolServer = 'local'
+      </script>
+
+      <testcase name="'ResPoolTest'">
+
+        <sequence>
+
+          <call function="'CreatePool'"/>
+
+          <script>numMachines = 5  # Number of machines needed</script>
+
+          <call function="'AllocateMachines'">numMachines</call>
+          <script>machineList = STAXResult</script>
+
+          <!-- Query the pool and send a message to the STAX Monitor containing 
+               the query results after the machines have been allocated -->
+          <call function="'QueryPool'"/>
+
+          <!-- *************************  Run Tests  ************************* -->
+          <!-- This is where the tests would run that require these 5 machines -->
+
+          <call function="'ReleaseMachines'">machineList</call> 
+
+          <!-- Query the pool and send a message to the STAX Monitor containing
+               the query results after the machines have been released -->
+          <call function="'QueryPool'"/>
+
+          <tcstatus result="'pass'">'Completed successfully'</tcstatus>
+
+        </sequence>
+
+      </testcase>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="ReleaseMachines" scope="local">
+
+    <function-description>
+      Releases the allocated machines (provided in a list) so that they can
+      be used by other tests.
+    </function-description>
+
+    <function-single-arg>
+      <function-required-arg name="machineList">
+        List of machines to release
+      </function-required-arg>
+    </function-single-arg>
+
+    <sequence>
+
+      <!-- Release machines from the pool -->
+
+      <message>'Release the machines in %s from the pool' % machineList</message>
+
+      <!-- Insert code here to release the machines that are in machineList -->
+
+      <iterate var="machine" in="machineList">
+
+        <sequence>
+
+          <call function="'RunSTAFCommand'">
+            [
+              resPoolServer, 'RESPOOL',
+              'RELEASE POOL %s ENTRY %s' % (poolName, machine)
+            ]
+          </call>
+
+          <call function="'CheckSuccess'">
+            [STAXResult[0], [0], STAXResult[1]]
+          </call>
+
+        </sequence>
+
+      </iterate>
+
+
+    </sequence>
+ 
+  </function>
+
+
+  <function name="AllocateMachines" scope="local">
+
+    <function-description>
+      Allocates a specified number of machines and returns a list of the
+      allocated machines.
+    </function-description>
+
+    <function-single-arg>
+      <function-optional-arg name="numMachines" default="1">
+        Number of machines to allocate
+      </function-optional-arg>
+    </function-single-arg>
+
+    <sequence>
+
+      <!-- Request machines from the pool -->
+
+      <message>
+        'Request %s machines from %s' % (numMachines, poolName)
+      </message>
+  
+      <script>machineList = []</script>
+
+      <loop var="i" from="1" to="numMachines">
+
+        <sequence>
+
+          <call function="'RunSTAFCommand'">
+            [resPoolServer, 'RESPOOL', 'REQUEST POOL %s' % poolName]
+          </call>
+
+          <script>
+            # Save machine name before gets overwritten by next call
+            allocMachine = STAXResult[1]
+          </script>
+
+          <call function="'CheckSuccess'">
+            [STAXResult[0], [0], STAXResult[1]]
+          </call>
+
+          <script>machineList.append(allocMachine)</script>
+
+        </sequence>
+
+      </loop>
+ 
+      <return>machineList</return>
+
+    </sequence>
+ 
+  </function>
+
+
+  <function name="QueryPool" scope="local">
+
+    <sequence>
+
+      <message>'Query the %s resource pool' % poolName</message>
+
+      <!-- Query the pool -->
+      <call function="'RunSTAFCommand'">
+        [resPoolServer, 'RESPOOL', 'QUERY POOL %s' % poolName]
+      </call>
+
+      <script>
+        # Save query results before gets overwritten by next call
+        queryResults = STAXResult[1]
+      </script>
+
+      <call function="'CheckSuccess'">
+        [STAXResult[0], [0], STAXResult[1]]
+      </call>
+
+      <message>queryResults</message>
+      <log>queryResults</log>
+
+      <script>
+         # Check how many resources are available in the pool
+         availResources = 0
+         ownedResources = 0
+
+         for resource in queryResults['resourceList']:
+           if resource['owner'] == None:
+             availResources = availResources + 1
+           else:
+             ownedResources = ownedResources + 1
+
+         msg = '%s of the %s machines are available' % \
+                   (availResources, len(queryResults['resourceList']))
+         msg += '\n%s of the %s machines are owned' % \
+                   (ownedResources, len(queryResults['resourceList']))
+      </script>
+
+      <message>msg</message>
+      <log>msg</log>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="CreatePool" scope="local">
+
+    <block name="'CreatePool'">
+
+      <sequence>
+
+        <!-- Delete a resource pool if already exists -->  
+
+        <message>'Delete a resource pool named %s' % poolName</message>
+
+        <call function="'RunSTAFCommand'">  
+          resPoolServer, 'RESPOOL', 'DELETE POOL %s CONFIRM FORCE' % (poolName)
+        </call>
+
+        <!-- Pass if pool is successfully deleted (RC=0) or if it does 
+             not already exist (RC=48) -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [0, 48], STAXResult[1]]
+        </call>
+
+        <!-- Create a resource pool -->  
+
+        <message>'Creating a resource pool named %s' % poolName</message>
+
+        <call function="'RunSTAFCommand'">
+          [resPoolServer, 'RESPOOL',
+           'CREATE POOL %s DESCRIPTION "%s"' % (poolName, poolDescription)]
+        </call>
+
+        <!-- Check if pool is successfully created -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [0], STAXResult[1]]
+        </call>
+
+        <!-- Add 10 machines to the MachinePool (machine1 to machine10) -->
+
+        <message>'Add 10 machines to the %s resource pool' % poolName</message>
+
+        <loop var="i" from="1" to="10">
+
+          <sequence>
+
+            <call function="'RunSTAFCommand'">
+              [resPoolServer, 'RESPOOL',
+               'ADD POOL %s ENTRY machine%s' % (poolName, i)]
+            </call>
+
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </loop>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+ 
+</stax>

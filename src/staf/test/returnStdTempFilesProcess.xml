@@ -1,0 +1,957 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<!-- Description
+       This is a test for the temporary file use with returnstdout
+       and returnstderr options of start process, using the <process> element
+       FEATURE 523404
+
+       It needs workdir, env, stdout, stderr, stderrtostdout, shell,
+       start, stop process flags to be working correctly and
+       independantly verified.
+
+ -->
+<stax>
+
+  <defaultcall function="Main"/>
+
+  <script>
+
+    mySTAXMachine = 'local' # Set to your STAX Service machine
+    # handles are created on the stax machine, it must be local
+
+    machName = 'local'      # Set to the machine where your process should run
+
+ # Set to wherever you put ReturnTest.class
+    classpath = '{STAF/Config/STAFRoot}/services{STAF/Config/Sep/Path}{STAF/Env/ClassPath}'
+
+ # Set to wherever you want returnfile1, 2, and 3 to be created
+    workdir = '{STAF/Config/STAFRoot}/services'
+
+    wintempOutFile = 'C:\\temp.out'  # Set to whereever you want to put your temporary stdout file
+    wintempErrFile = 'C:\\temp.err'  # Set to whereever you want to put your temporary stderr file
+
+    unixtempOutFile = '/tmp/temp.out'  # Set to whereever you want to put your temporary stdout file
+    unixtempErrFile = '/tmp/temp.err'  # Set to whereever you want to put your temporary stderr file
+
+
+
+
+    scriptFile='java ReturnTest'
+    classPathEnv = 'CLASSPATH=%s' %classpath
+    env = 'ENV CLASSPATH=' + classpath +' WORKDIR '+workdir
+
+    # this is the directory that the temp file is created in on win32 by the c runtime library
+    wintempDir='c:\\'
+     # this is the directory that the temp file is created in on unix by the c runtime library
+    unixtempDir='/tmp'
+
+    ImportMachine = mySTAXMachine
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/libraries'
+    STAXJarFile = '{STAF/Config/STAFRoot}/services/STAX.jar'
+
+    import string
+    import re
+
+  </script>
+
+
+<!-- ================================================================= -->
+  <function name="DeleteFile">
+
+    <function-map-args>
+      <function-required-arg name="theFile"/>
+    </function-map-args>
+
+    <sequence>
+
+      <stafcmd>
+        <location>machName</location>
+        <service>'FS'</service>
+        <request>'DELETE ENTRY %s CONFIRM' %(theFile)</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'Failed (RC=%d): deleting outfile %s' %(RC, theFile),
+          'sendToMonitor': RC != 0,
+          'recordStatus': RC != 0 }
+      </call>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="getPhandle" scope = "local">
+    <function-map-args>
+      <function-required-arg name="handleName"/>
+      <function-required-arg name="machineName"/>
+    </function-map-args>
+
+    <sequence>
+
+      <script>failMessage = 'Getting handle %s on machine $%s' %(handleName,machineName)</script>
+
+      <stafcmd>
+        <location>machineName</location>
+        <service>'HANDLE'</service>
+        <request>'QUERY NAME %s' %(handleName)</request>
+      </stafcmd>
+
+      <if expr = "STAFResult != ''">
+        <script>
+          splitList = STAFResult.split()
+          theHandle = splitList[0]
+        </script>
+
+        <else>
+          <script>theHandle = 0</script>
+        </else>
+
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult),
+          'sendToMonitor': RC !=0,
+          'recordStatus': RC !=0 }
+      </call>
+
+      <return>RC,STAFResult,theHandle</return>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="GetQContent" scope = "local">
+    <function-map-args>
+      <function-required-arg name="theHandle"/>
+      <function-optional-arg name="location" default = "None"/>
+    </function-map-args>
+
+    <sequence>
+      <script>
+        getCommand='list handle %d' %(theHandle)
+        failMessage='Getting Q %s contents' %(theHandle)
+      </script>
+
+      <stafcmd>
+        <location>mySTAXMachine</location>
+        <service>'QUEUE'</service>
+        <request>'%s' %(getCommand)</request>
+      </stafcmd>
+
+      <if expr="RC == 0">
+        <script>qContents=STAFResult</script>
+
+        <else>
+          <script>qContents=''</script>
+        </else>
+
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0,
+            'failMsg': 'Failed (RC=%d): %s %s, Result: %s' % (RC, failMessage, location, STAFResult),
+            'sendToMonitor': RC !=0,
+            'recordStatus': RC !=0 }
+      </call>
+
+
+
+      <return>RC,STAFResult,qContents</return>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="validateProcessTest">
+
+    <sequence>
+
+      <script>
+        [testParams,validQcontent,validReturnStr,delay]=thisTest[1:5]
+      </script>
+
+      <!-- Verify contents of STAF return -->
+      <call function="'STAXUtilCheckSuccess'">
+          { 'result': resultContent[0] == returnContent[0],
+            'failMsg': 'Failed : STDOUT Grep error\nmatching:\n%s\nwith:\n%s' %(resultContent[0], returnContent[0]),
+            'sendToMonitor': -1 != testParams.find('RETURNSTDOUT'),
+            'recordStatus': -1 != testParams.find('RETURNSTDOUT') }
+      </call>
+
+      <call function="'STAXUtilCheckSuccess'">
+          { 'result': resultContent[1] == returnContent[1],
+            'failMsg': 'Failed : STDERR Grep error\nmatching:\n%s\nwith:\n%s' %(resultContent[0], returnContent[0]),
+            'sendToMonitor': -1 != testParams.find('RETURNSTDERR'),
+            'recordStatus': -1 != testParams.find('RETURNSTDERR') }
+      </call>
+
+            <call function="'STAXUtilCheckSuccess'">
+          { 'result': resultContent[2] == returnContent[2],
+            'failMsg': 'Failed : returnfile1 Grep error\nmatching:\n%s\nwith:\n%s' %(resultContent[0], returnContent[0]),
+            'sendToMonitor': -1 != testParams.find(returnFiles[0]),
+            'recordStatus': -1 != testParams.find(returnFiles[0]) }
+      </call>
+            <call function="'STAXUtilCheckSuccess'">
+          { 'result': resultContent[3] == returnContent[3],
+            'failMsg': 'Failed : returnfile2 Grep error\nmatching:\n%s\nwith:\n%s' %(resultContent[0], returnContent[0]),
+            'sendToMonitor': -1 != testParams.find(returnFiles[1]),
+            'recordStatus': -1 != testParams.find(returnFiles[1]) }
+      </call>
+            <call function="'STAXUtilCheckSuccess'">
+          { 'result': resultContent[4] == returnContent[4],
+            'failMsg': 'Failed : returnfile3 Grep error\nmatching:\n%s\nwith:\n%s' %(resultContent[0], returnContent[0]),
+            'sendToMonitor': -1 != testParams.find(returnFiles[2]),
+            'recordStatus': -1 != testParams.find(returnFiles[2]) }
+      </call>
+
+      <!-- Get the contents -->
+      <stafcmd>
+        <location>machName</location>
+        <service>'FS'</service>
+        <request>'List Directory %s sortbymodtime type F' %(tempDir)</request>
+      </stafcmd>
+
+      <script>dirCon = STAFResult</script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'Failed (RC=%d): listing Dir %s contents, Result: %s' % (RC, tempDir, STAFResult),
+          'sendToMonitor': RC !=0,
+          'recordStatus': RC !=0 }
+      </call>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': dirCon == dirContents,
+          'failMsg': 'Test failed - Temp file not destroyed',
+          'sendToMonitor': 1,
+          'recordStatus': 1 }
+      </call>
+
+      <if expr="dirCon != dirContents">
+
+        <script>
+          contents = string.replace (dirCon,dirContents,'')
+          leftoverFileSources.append(currentTest)
+          leftoverFiles.append(contents)
+        </script>
+
+      </if>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="runProcessTest">
+
+    <sequence>
+
+      <script>
+        RC = 0
+        STAFResult = ''
+        processHandleName = handleNames[1]
+        [scriptFile,testParams] = thisTest[:2]
+        testCommand = 'start shell command %s %s STATICHANDLENAME %s %s' %(scriptFile, testParams, processHandleName, env)
+      </script>
+
+      <process>
+        <location>machName</location>
+        <command mode="'shell'">scriptFile</command>
+        <workdir>workdir</workdir>
+        <env>classPathEnv</env>
+        <statichandlename>processHandleName</statichandlename>
+        <stderr mode="'stdout'" if="-1 != testParams.find('STDERRTOSTDOUT')"/>
+        <returnstdout if="-1 != testParams.find('RETURNSTDOUT')"/>
+        <returnstderr if="-1 != testParams.find('RETURNSTDERR')"/>
+        <returnfile if="-1 != testParams.find(returnFiles[0])">returnFiles[0]</returnfile>
+        <returnfile if="-1 != testParams.find(returnFiles[1])">returnFiles[1]</returnfile>
+        <returnfile if="-1 != testParams.find(returnFiles[2])">returnFiles[2]</returnfile>
+      </process>
+
+      <!--<message>STAXResult</message>-->
+
+      <if expr="STAXResult == None">
+        <sequence>
+
+           <!-- XXX: Don't record testcase status for processes that are being stopped for now as the RC may not be 0 -->
+          <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0,
+            'failMsg': 'Failed (RC=%d): %s, Result: %s' % (RC, testCommand, STAFResult),
+            'sendToMonitor': 1,
+            'recordStatus': delay == maxDelay }
+          </call>
+
+          <call function="'STAXUtilCheckSuccess'">
+          { 'result': 0,
+            'failMsg': 'Failed STAXResult=None',
+            'sendToMonitor': 1,
+            'recordStatus': 1 }
+          </call>
+
+          <return/>
+
+        </sequence>
+      </if>
+
+      <script>
+        indx = 0
+
+        a = 0
+        if -1 != testParams.find('RETURNSTDOUT'):
+          resultContent[0] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find('RETURNSTDERR'):
+          resultContent[1] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find(returnFiles[0]):
+          resultContent[2] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find(returnFiles[1]):
+          resultContent[3] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find(returnFiles[2]):
+          resultContent[4] = STAXResult[indx][1]
+
+      </script>
+
+      <!-- XXX: Don't record testcase status for processes that are being stopped for now as the RC may not be 0 -->
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'Failed (RC=%d): %s, Result: %s' % (RC, testCommand, STAFResult),
+          'sendToMonitor': 1,
+          'recordStatus': delay == maxDelay }
+      </call>
+
+
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="delayedProcessHalt" scope="local">
+    <function-map-args>
+      <function-required-arg name="procName"/>
+      <function-required-arg name="delay"/>
+      <function-required-arg name="maxDelay"/>
+    </function-map-args>
+
+    <sequence>
+
+      <script>
+        minDelay = 200
+        delay = delay - minDelay
+        maxDelay = maxDelay - minDelay
+      </script>
+
+      <stafcmd>
+        <location>mySTAXMachine</location>
+        <service>'DELAY'</service>
+        <request>'DELAY %d' %(minDelay)</request>
+      </stafcmd>
+
+      <call function="'getPhandle'">
+        {'handleName':procName,
+         'machineName':machName}
+      </call>
+
+      <script>procHandle=STAXResult[2]</script>
+
+      <stafcmd>
+        <location>mySTAXMachine</location>
+        <service>'DELAY'</service>
+        <request>'DELAY %d' %(delay)</request>
+      </stafcmd>
+
+
+      <if expr="delay != maxDelay">
+        <sequence>
+
+          <stafcmd>
+            <location>machName</location>
+            <service>'PROCESS'</service>
+            <request>'STOP HANDLE %d' %(procHandle)</request>
+          </stafcmd>
+
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': RC == 0,
+              'failMsg': 'Failed (RC=%d): stopping process on Handle %d' %(RC, procHandle),
+              'sendToMonitor': RC != 0,
+              'recordStatus': RC != 0 }
+          </call>
+
+        </sequence>
+      </if>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="freeProcess" scope="local">
+    <function-map-args>
+      <function-required-arg name="procName"/>
+      <function-required-arg name="machName"/>
+    </function-map-args>
+
+    <sequence>
+
+      <call function="'getPhandle'">
+        {'handleName':procName,
+         'machineName':machName}
+      </call>
+
+      <script>procHandle=STAXResult[2]</script>
+
+      <if expr = "procHandle != 0">
+        <sequence>
+
+          <stafcmd>
+            <location>machName</location>
+            <service>'PROCESS'</service>
+            <request>'FREE HANDLE %d' %(procHandle)</request>
+          </stafcmd>
+
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': RC == 0,
+              'failMsg': 'Failed (RC=%d): freeing the handle %s' %(RC, procHandle),
+              'sendToMonitor': RC != 0,
+              'recordStatus': RC != 0 }
+          </call>
+
+        </sequence>
+      </if>
+
+    </sequence>
+
+  </function>
+<!-- ================================================================= -->
+
+  <function name="runProcessTestWithDelay">
+
+    <sequence>
+
+      <script>
+        [delay,maxDelay]=thisTest[4:6]
+        returnStr=STAXGlobal([''])
+        resultContent=['','','','','']
+      </script>
+
+      <parallel>
+
+        <call function="'runProcessTest'"/>
+
+        <call function="'delayedProcessHalt'">
+          {'procName':handleNames[1],
+           'delay':delay,
+           'maxDelay':maxDelay}
+        </call>
+
+      </parallel>
+
+      <!-- Allow the deleteion of the temp file to register in the OS -->
+      <stafcmd>
+        <location>mySTAXMachine</location>
+        <service>'DELAY'</service>
+        <request>'DELAY 1000'</request>
+      </stafcmd>
+
+      <call function="'validateProcessTest'"/>
+
+      <call function="'freeProcess'">
+        {'procName':handleNames[1],
+         'machName':machName}
+      </call>
+
+    </sequence>
+  </function>
+
+
+<!-- ================================================================= -->
+
+  <function name="GetValidContent">
+    <sequence>
+
+      <script>
+        [scriptFile,testParams]=thisValidation[:2]
+        processHandleName = handleNames[1]
+        testCommand = 'start shell command %s %s wait notify onend NAME %s STATICHANDLENAME %s %s' %(scriptFile, testParams, handleNames[0], handleNames[1], env)
+        if -1 != testParams.find('STDERRTOSTDOUT'):
+          errmode = 'stdout'
+        else:
+          errmode = 'replace'
+      </script>
+
+      <process>
+        <location>machName</location>
+        <command mode="'shell'">scriptFile</command>
+        <workdir>workdir</workdir>
+        <env>classPathEnv</env>
+        <statichandlename>processHandleName</statichandlename>
+        <stdout if="-1 != testParams.find('RETURNSTDOUT')">tempOutFile</stdout>
+        <stderr mode="errmode" if="-1 != testParams.find('RETURNSTDERR')">tempErrFile</stderr>
+        <returnstdout if="-1 != testParams.find('RETURNSTDOUT')"/>
+        <returnstderr if="-1 != testParams.find('RETURNSTDERR')"/>
+        <returnfile if="-1 != testParams.find(returnFiles[0])">returnFiles[0]</returnfile>
+        <returnfile if="-1 != testParams.find(returnFiles[1])">returnFiles[1]</returnfile>
+        <returnfile if="-1 != testParams.find(returnFiles[2])">returnFiles[2]</returnfile>
+      </process>
+
+      <!--<message>STAXResult</message>-->
+      <if expr="STAXResult == None">
+        <sequence>
+
+            <!-- XXX: Don't record testcase status for processes that are being stopped for now as the RC may not be 0 -->
+          <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0,
+            'failMsg': 'Failed (RC=%d): Getting valid content: running process: %s' %(RC,testCommand),
+            'sendToMonitor': 1,
+            'recordStatus': delay == maxDelay }
+          </call>
+
+          <call function="'STAXUtilCheckSuccess'">
+          { 'result': 0,
+            'failMsg': 'Failed STAXResult=None',
+            'sendToMonitor': 1,
+            'recordStatus': 1 }
+          </call>
+
+          <return/>
+
+        </sequence>
+      </if>
+
+      <script>
+        indx = 0
+
+        a=0
+        if -1 != testParams.find('RETURNSTDOUT'):
+          returnContent[0] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find('RETURNSTDERR'):
+          returnContent[1] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find(returnFiles[0]):
+          returnContent[2] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find(returnFiles[1]):
+          returnContent[3] = STAXResult[indx][1]
+          a = indx + 1
+        indx = a
+
+        if -1 != testParams.find(returnFiles[2]):
+          returnContent[4] = STAXResult[indx][1]
+
+      </script>
+
+      <!-- XXX: Don't record testcase status for processes that are being stopped for now as the RC may not be 0 -->
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'Failed (RC=%d): Gettting valid content: running process: %s' %(RC,testCommand),
+          'sendToMonitor': RC != 0,
+          'recordStatus': delay == maxDelay }
+      </call>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="GetValidContentWithDelay">
+    <sequence>
+      <script>
+        [deleteFile,delay,maxDelay]=thisValidation[2:5]
+      </script>
+
+      <parallel>
+
+        <call function="'GetValidContent'"/>
+
+        <call function="'delayedProcessHalt'">
+          {'procName':handleNames[1],
+           'delay':delay,
+           'maxDelay':maxDelay}
+        </call>
+
+      </parallel>
+
+      <!-- destroy the outfile -->
+      <!-- Allow the release of the delete File to register in the OS -->
+      <stafcmd>
+        <location>mySTAXMachine</location>
+        <service>'DELAY'</service>
+        <request>'DELAY 5000'</request>
+      </stafcmd>
+
+
+      <call function="'DeleteFile'">
+        {'theFile':deleteFile}
+      </call>
+
+      <call function="'freeProcess'">
+        {'procName':handleNames[1],
+         'machName':machName}
+      </call>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="VerifyNoTempFiles" scope="local">
+    <function-map-args>
+      <function-required-arg name="dir"/>
+      <function-required-arg name="leftoverFiles"/>
+      <function-required-arg name="leftoverFileSources"/>
+    </function-map-args>
+
+    <sequence>
+
+      <!-- wait for any outstanding test cases processes to complete and trigger the tempfile purge-->
+      <process>
+        <location>machName</location>
+        <command mode = "'shell'">'\"STAF LOCAL DELAY DELAY 4500\"'</command>
+      </process>
+
+
+      <!-- wait for OS to register file system changes -->
+      <stafcmd>
+        <location>machName</location>
+        <service>'DELAY'</service>
+        <request>'DELAY 5000'</request>
+      </stafcmd>
+
+      <!-- Get the contents -->
+      <stafcmd>
+        <location>machName</location>
+        <service>'FS'</service>
+        <request>'List Directory %s sortbymodtime type F' %(dir)</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0,
+            'failMsg': 'Failed (RC=%d): listing Dir %s contents, Result: %s' % (RC, dir, STAFResult),
+            'sendToMonitor': RC !=0,
+            'recordStatus': RC !=0 }
+      </call>
+
+      <script>
+        dirContents = STAFResult
+        numFiles = len(leftoverFiles) - 1
+      </script>
+
+      <loop var="indx" from='0' to="numFiles">
+      <testcase name = "'%sTest'%(leftoverFileSources[indx])">
+        <sequence>
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': 0 == string.count(dirContents, leftoverFiles[indx]),
+              'failMsg': 'Failed tempfile %s present %s' %(indx, leftoverFiles[indx]) ,
+              'sendToMonitor': 1,
+              'recordStatus': 1 }
+          </call>
+        </sequence>
+      </testcase>
+      </loop>
+
+    </sequence>
+
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="CleanupTest">
+    <sequence>
+
+      <!-- free handle -->
+      <call function="'getPhandle'">
+        {'handleName':handleNames[0],
+         'machineName':mySTAXMachine}
+      </call>
+
+      <stafcmd>
+        <location>mySTAXMachine</location>
+        <service>'HANDLE'</service>
+        <request>'DELETE HANDLE %d' %(STAXResult[2])</request>
+      </stafcmd>
+
+      <!-- clean up workdir -->
+      <iterate var="outfile" in="returnFiles">
+        <sequence>
+          <call function="'DeleteFile'">
+            {'theFile':'%s'%(outfile)}
+          </call>
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="EstablishBaseCase">
+
+    <block name="'BaseCase'">
+      <sequence>
+
+        <!-- Get correct output for the process using a specified output file -->
+        <script>
+
+          returnContent=['','','','','']
+          returnQContent=STAXGlobal([''])
+          thisValidation = [scriptFile,'%s %s%s' %(theReturnType[0], theReturnType[1],retFileFlag[0]), theReturnType[2], theDelay, theMaxDelay]
+        </script>
+
+        <!-- create Q handle -->
+        <stafcmd>
+          <location>mySTAXMachine</location>
+          <service>'HANDLE'</service>
+          <request>'CREATE HANDLE NAME %s' %(handleNames[0])</request>
+        </stafcmd>
+
+        <call function="'GetValidContentWithDelay'"/>
+
+        <script>
+          tmp = returnQContent[0]
+          indx = string.find(tmp,':Here is')
+          returnQContent[0] = tmp[indx:len(tmp)]
+          theReturnValues = ['', returnContent[0], returnQContent[0]]
+        </script>
+
+        <call function="'CleanupTest'"/>
+
+      </sequence>
+    </block>
+  </function>
+
+
+<!-- ================================================================= -->
+
+  <function name="InitTest">
+    <sequence>
+
+        <script>
+
+        returnContent=STAXGlobal (['','','','',''])
+        resultContent=STAXGlobal (['','','','',''])
+
+        if machOSType.find('Win') == 0:
+          tempDir = wintempDir
+          tempOutFile = wintempOutFile
+          tempErrFile = wintempErrFile
+        else:
+          tempDir = unixtempDir
+          tempOutFile = unixtempOutFile
+          tempErrFile = unixtempErrFile
+
+        stdoutFile = tempOutFile
+        stderrFile = tempErrFile
+        QHandleName='testProcTmpReturnFileQ'
+        processHandleName='testProcTmpReturnFile'
+        handleNames=[QHandleName, processHandleName]
+        handles=[-1,-1]
+        stopDelay = 2000
+        theMaxDelay = 8000
+        failMessage='initializing'
+        leftoverFiles = STAXGlobal([])
+        leftoverFileSources = STAXGlobal([])
+        theReturnValues = STAXGlobal(['','',''])
+        returnFiles = ['%s/returnfile1'%workdir,'%s/returnfile2'%workdir,'%s/returnfile3'%workdir]
+
+      </script>
+
+
+      <!-- Initialize the environment -->
+
+      <!-- Get the contents in the temp directory -->
+      <!-- run the process to set the timestamps on stax temp files -->
+      <process>
+        <location>machName</location>
+        <command mode="'shell'">scriptFile</command>
+        <workdir>workdir</workdir>
+        <env>classPathEnv</env>
+      </process>
+
+      <!-- Get the temp dir's contents -->
+      <stafcmd>
+        <location>machName</location>
+        <service>'FS'</service>
+        <request>'List Directory %s sortbymodtime type F' %(tempDir)</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0,
+            'failMsg': 'Failed (RC=%d): listing Dir %s contents, Result: %s' % (RC, tempDir, STAFResult),
+            'sendToMonitor': RC !=0,
+            'recordStatus': RC !=0 }
+      </call>
+
+      <script>dirContents = STAFResult</script>
+
+      <script>
+        haltTypes = ['']
+        flagList = [ ['',0,0] ]
+        returnTypeList = [ ['RETURNSTDOUT','stdout %s' %(stdoutFile), stdoutFile ],
+                           ['RETURNSTDERR','stderr %s' %(stderrFile), stderrFile ],
+                           ['RETURNSTDOUT STDERRTOSTDOUT','stdout %s' %(stdoutFile), stdoutFile ] ]
+        delayList = [stopDelay,theMaxDelay]
+        returnFileFlagList = [ ['',''],
+                               [' RETURNFILE %s/%s'%(workdir, returnFiles[0]),' %s'%(returnFiles[0])],
+                               [' RETURNFILE %s/%s RETURNFILE %s/%s'%(workdir, returnFiles[0], workdir, returnFiles[1]), ' %s %s'%(returnFiles[0],returnFiles[1])],
+                               [' RETURNFILE %s/%s RETURNFILE %s/%s RETURNFILE %s/%s'%(workdir, returnFiles[0], workdir, returnFiles[1], workdir, returnFiles[2]),' %s %s %s'%(returnFiles[0],returnFiles[1],returnFiles[2])] ]
+
+      </script>
+
+    </sequence>
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="TempfileTest">
+
+    <sequence>
+
+      <call function="'InitTest'"/>
+
+      <!--<message>returnFileFlags</message>-->
+
+      <iterate var="theDelay" in="delayList">
+      <block name="'Stop after %d' %(theDelay)">
+      <testcase name="'Stop after %d' %(theDelay)">
+
+        <iterate var="theReturnType" in="returnTypeList">
+          <iterate var="retFileFlag" in ="returnFileFlagList">
+          <block name="'%s%s'%(theReturnType[0],retFileFlag[1])">
+          <testcase name="'%s%s'%(theReturnType[0],retFileFlag[1])">
+
+            <sequence>
+
+              <call function="'EstablishBaseCase'"/>
+
+              <iterate var="theFlag" in="flagList">
+              <block name="'Test'">
+              <testcase name="'Test'">
+                <sequence>
+
+                  <!-- create Q handle -->
+                  <stafcmd>
+                    <location>mySTAXMachine</location>
+                    <service>'HANDLE'</service>
+                    <request>'CREATE HANDLE NAME %s' %(handleNames[0])</request>
+                  </stafcmd>
+
+                  <!-- run a test -->
+                  <script>
+                    currentTest = 'Stop after %d.%s%s.%s' %(theDelay, theReturnType[0],retFileFlag[1], theFlag[0])
+                    thisTest=[scriptFile, '%s %s%s' %(theFlag[0], theReturnType[0],retFileFlag[0]), theReturnValues[theFlag[1]], theReturnValues[theFlag[2]], theDelay, theMaxDelay]
+                  </script>
+                  <call function="'runProcessTestWithDelay'"/>
+
+                  <call function="'CleanupTest'"/>
+
+                </sequence>
+
+              </testcase>
+              </block>
+              </iterate>
+
+            </sequence>
+
+          </testcase>
+          </block>
+          </iterate>
+        </iterate>
+
+      </testcase>
+      </block>
+      </iterate>
+
+      <call function="'VerifyNoTempFiles'">
+        {'dir':tempDir,
+         'leftoverFiles':leftoverFiles,
+         'leftoverFileSources':leftoverFileSources}
+      </call>
+
+    </sequence>
+  </function>
+
+
+<!-- ================================================================= -->
+
+  <function name="Main">
+
+    <sequence>
+
+      <log>'This is the start of the STAX job'</log>
+
+        <!-- Resolve the ImportDirectory -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING %s' % ImportDirectory</request>
+      </stafcmd>
+
+      <script>failMessage = 'Resolving VAR %s' % ImportDirectory</script>
+
+      <script>ImportDirectory = STAFResult</script>
+
+      <message>'ImportMachine=%s' % ImportMachine</message>
+      <message>'ImportDirectory=%s' % ImportDirectory</message>
+
+      <import machine="ImportMachine" file="'%s/STAXUtil.xml' % ImportDirectory"/>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'machName = %s' % machName
+      </call>
+
+      <stafcmd>
+        <location>machName</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>machOSType = STAFResult</script>
+
+      <testcase name="'main'">
+        <call function="'TempfileTest'"/>
+      </testcase>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'This is the end of the STAX job'
+      </call>
+
+    </sequence>
+
+  </function>
+
+</stax>
+
+
+

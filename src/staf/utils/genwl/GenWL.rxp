@@ -1,0 +1,1004 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+/*************************************************/
+/* GenWL - A generic workload processer for STAF */
+/*************************************************/
+
+OPTIONS "ETMODE EXMODE"
+
+SIGNAL ON ERROR NAME TrapHandler
+SIGNAL ON HALT NAME TrapHandler
+SIGNAL ON SYNTAX NAME TrapHandler
+
+call RxFuncAdd 'STAFLoadFuncs', 'RXSTAF', 'STAFLoadFuncs'
+call STAFLoadFuncs
+
+parse arg commandline
+
+/**************************************/
+/* If no parameters then display help */
+/**************************************/
+
+if commandline = '' then
+do
+    call PrintUsage
+    RETURN 1
+end
+
+/*************************************************/
+/* Check to see if they are requesting full help */
+/*************************************************/
+
+if (LEFT(commandline, 1) = '?') | (LEFT(commandline, 2) = '-?') |,
+   (LEFT(commandline, 2) = '/?') then
+do
+    call PrintUsage 'full'
+    RETURN 1
+end
+
+/*************************************/
+/* Verify the command line arguments */
+/*************************************/
+
+call DoParseCommandLine commandline
+if RESULT \= 0 then
+do
+    call PrintUsage
+    RETURN 1
+end
+
+
+/*****************************************************************
+   Tokens
+
+     Key Words
+
+     WORKLOAD   MACHINE   PROCESS   COMMAND    PARMS   PROCREF
+     WORKDIR    VAR       ENV       END        TITLE   NAME
+
+   Whitespace
+
+    Space Tab CR LF EOF
+
+*****************************************************************/
+
+Whitespace = ' ' || D2C(9) || D2C(10) || D2C(13) || D2C(26)
+
+Terminals =  ''
+FirstSet  = ""
+FollowSet = ""
+
+KeySymbols.0 = ''
+
+KeyWords = "WORKLOAD  MACHINE  PROCESS  COMMAND  PARMS    WORKDIR",
+           "VAR       ENV      END      TITLE    PROCREF  NAME"
+
+KeyWords = SPACE(KeyWords)
+
+/******************************************/
+/* First lex the file into a token stream */
+/******************************************/
+
+if debugLex then say "Begining lex phase"
+
+if \quietMode then
+    say "Reading and processing" workloadScript
+
+/* Debug: call TIME 'R' */
+
+call LexFile workloadScript
+
+/* Debug: say "Lex time:" TIME('R') */
+
+if debugLex then
+do
+    /* Output the token stream */
+    say
+    do i = 1 to Tokens.0
+        if (Tokens.i = 'STRING') | (Tokens.i = 'NUMBER') then
+            say Tokens.i "= '" || Tokens.i.0 || "'"
+        else
+            say Tokens.i
+    end
+    say
+end
+
+/******************************/
+/* Now parse the token stream */
+/******************************/
+
+CR = '0D'x
+LF = '0A'x
+CRLF = '0D0A'x
+workload = ""
+machine.0 = 0
+var.0 = 0
+process.0 = 0
+ExposeList = "workload machine. var. machineIndex process."
+
+if debugParse then
+do
+    say "Beginning Parse Phase"
+    say
+end
+
+call DoParse
+if RESULT \= 0 then EXIT 1
+
+/* Debug: say "Parse time:" TIME('R') */
+
+if debugSym then
+do
+    /* Output the symbol table */
+
+    say "Workload:" workload
+
+    do i = 1 to var.0
+        say "Var #"i"  :" var.i
+    end
+
+    do i = 1 to process.0
+        say
+        say "Process #"i "Name   :" process.i.!Name
+        say "Process #"i "Command:" process.i.!Command
+        say "Process #"i "Parms  :" process.i.!Parms
+        say "Process #"i "WorkDir:" process.i.!WorkDir
+
+        do j = 1 to process.i.!Env.0
+            say "Process #"i "Env #"j" :" process.i.!Env.j
+        end
+
+        do j = 1 to process.i.!Var.0
+            say "Process #"i "Var #"j" :" process.i.!Var.j
+        end
+    end
+
+    do i = 1 to machine.0
+        say
+        say "Machine #"i "Name  :" machine.i.!Name
+
+        do j = 1 to machine.i.!Var.0
+            say "Machine #"i "Var #"j":" machine.i.!Var.j
+        end
+
+        do j = 1 to machine.i.!Process.0
+            if machine.i.!Process.j.!Type = "PROCREF" then
+            do
+                say "Machine #"i "Process #"j "ProcRef:",
+                    machine.i.!Process.j.!ProcRef
+            end
+            else
+            do
+                say
+                say "Machine #"i "Process #"j "Command:",
+                    machine.i.!Process.j.!Command
+                say "Machine #"i "Process #"j "Parms  :",
+                    machine.i.!Process.j.!Parms
+                say "Machine #"i "Process #"j "WorkDir:",
+                    machine.i.!Process.j.!WorkDir
+
+                do k = 1 to machine.i.!Process.j.!Env.0
+                    say "Machine #"i "Process #"j "Env #"k" :",
+                        machine.i.!Process.j.!Env.k
+                end
+
+                do k = 1 to machine.i.!Process.j.!Var.0
+                    say "Machine #"i "Process #"j "Var #"k" :",
+                        machine.i.!Process.j.!Var.k
+                end
+            end
+        end
+    end  /* do for each machine */
+
+    say
+end  /* end if debugging symbols */
+
+
+if workload = "" then
+do
+    say "No WORKLOAD specified in" workloadScript
+    RETURN 1
+end
+
+/* Verify all PROCREFs point to something valid */
+
+do i = 1 to machine.0
+
+    do j = 1 to machine.i.!Process.0
+
+        if machine.i.!Process.j.!Type = "PROCREF" then
+        do
+            procIndex = 0
+
+            do k = 1 to process.0 while procIndex = 0
+                if TRANSLATE(machine.i.!Process.j.!ProcRef) =,
+                   TRANSLATE(process.k.!Name) then
+                do
+                    procIndex = k
+                    machine.i.!Process.j.!ProcRefIndex = k
+                end
+            end
+
+            if procIndex = 0 then
+            do
+                say "Unknown process reference,",
+                     machine.i.!Process.j.!ProcRef", for machine",
+                    machine.i.!Name
+                RETURN 1
+            end
+        end
+
+    end  /* do for each process */
+
+end  /* do for each machine */
+
+
+if CommandLineOptionTimes("UseHandle") \= 0 then
+    STAFHandle = CommandLineOptionValue("UseHandle")
+else
+do
+    call STAFRegister "Generic WorkLoad Processor"
+    if RESULT \= 0 then
+    do
+        say "Error registering with STAF, RC:" RESULT
+        RETURN 1
+    end
+end
+
+retCode = 0
+
+if CommandLineOptionTimes("Start") \= 0 then retCode = HandleStart()
+else if CommandLineOptionTimes("Stop") \= 0 then retCode = HandleStop()
+else if CommandLineOptionTimes("Free") \= 0 then retCode = HandleFree()
+else retCode = HandleQuery()
+
+if CommandLineOptionTimes("UseHandle") = 0 then
+do
+    call STAFUnRegister
+    if RESULT \= 0 then
+        say "Error unregistering with STAF, RC:" RESULT
+end
+
+RETURN retCode
+
+/* End of main */
+
+
+/*******************************************************/
+/* HandleStart - Handles starting up all the processes */
+/*******************************************************/
+HandleStart:
+
+  do i = 1 to machine.0
+
+      if UseItem("MACHINE", machine.i.!Name) = 0 then
+      do
+          if verboseMode then
+              say "Bypassing machine:" machine.i.!Name
+          ITERATE
+      end
+
+      if \quietMode then
+          say "Processing machine:" machine.i.!Name
+
+      /* Add all global and machine variables to machine */
+
+      setVars = ""
+
+      if startGlobalVars then
+      do
+          do j = 1 to var.0
+              setVars = setVars "VAR" STAFWrapData(var.j)
+          end
+      end
+
+      if startMachineVars then
+      do
+          do j = 1 to machine.i.!Var.0
+              setVars = setVars "VAR" STAFWrapData(machine.i.!Var.j)
+          end
+      end
+
+      if setVars \= "" then
+      do
+          call STAFSubmit machine.i.!Name, "VAR", "SET SYSTEM" setVars
+          if RESULT \= 0 then
+          do
+              say "Error setting variables on machine",
+                  machine.i.!Name", RC:" RESULT
+              if STAFResult \= "" then
+                  say "Additional Info:" STAFResult
+          end
+      end
+
+      if \startProcesses then ITERATE
+
+      /* Loop through and start each process */
+
+      do j = 1 to machine.i.!Process.0
+
+          if machine.i.!Process.j.!Type = "PROCREF" then
+              procStem = "process."machine.i.!Process.j.!ProcRefIndex
+          else
+              procStem = "machine.i.!Process.j"
+
+          if UseItem("PROCESS", VALUE(procStem".!Name")) = 0 then
+          do
+              if verboseMode then
+                  say "Bypassing process:" VALUE(procStem".!Name")
+              ITERATE
+          end
+
+          startCommand = "START ASYNC WORKLOAD" STAFWrapData(workload),
+                         "COMMAND" STAFWrapData(VALUE(procStem".!Command"))
+
+          if VALUE(procStem".!Title") \= "" then
+          do
+              startCommand = startCommand "TITLE",
+                             STAFWrapData(VALUE(procStem".!Title"))
+          end
+
+          if VALUE(procStem".!WorkDir") \= "" then
+          do
+              startCommand = startCommand "WORKDIR",
+                             STAFWrapData(VALUE(procStem".!WorkDir"))
+          end
+
+          if VALUE(procStem".!Parms") \= "" then
+          do
+              startCommand = startCommand "PARMS",
+                             STAFWrapData(VALUE(procStem".!Parms"))
+          end
+
+
+          do k = 1 to VALUE(procStem".!Env.0")
+              startCommand = startCommand "ENV",
+                             STAFWrapData(VALUE(procStem".!Env.k"))
+          end
+
+          do k = 1 to VALUE(procStem".!Var.0")
+              startCommand = startCommand "VAR",
+                             STAFWrapData(VALUE(procStem".!Var.k"))
+          end
+
+          call STAFSubmit machine.i.!Name, "PROCESS", startCommand
+          if RESULT \= 0 then
+          do
+              say "Error starting process on machine," machine.i.!Name",",
+                  "RC:" RESULT
+              if STAFResult \= "" then
+                  say "Additional Info:" STAFResult
+              say "Request was:"
+              say startCommand
+          end
+
+      end  /* for each process on the machine */
+
+  end  /* for each machine */
+
+  RETURN 0
+
+/* End of HandleStart */
+
+
+/***************************************************/
+/* HandleStop - Handles stopping all the processes */
+/***************************************************/
+HandleStop:
+
+  do i = 1 to machine.0
+
+      if UseItem("MACHINE", machine.i.!Name) = 0 then
+      do
+          if verboseMode then
+              say "Bypassing machine:" machine.i.!Name
+          ITERATE
+      end
+
+      if \quietMode then
+          say "Processing machine:" machine.i.!Name
+
+      call STAFSubmit machine.i.!Name, "PROCESS", "QUERY WORKLOAD",
+                      STAFWrapData(workload)
+      if RESULT \= 0 then
+      do
+          say "Error querying processes on machine," machine.i.!Name",",
+              "RC:" RESULT
+          if STAFResult \= "" then
+              say "Additional Info:" STAFResult
+          ITERATE
+      end
+
+      parse var STAFResult . (LF) . (LF) data
+
+      handle.0 = 0
+      do while data \= ""
+          handle.0 = handle.0 + 1
+          handleIndex = handle.0
+          parse var data handle.handleIndex . (LF) data
+      end
+
+      if handle.0 > machine.i.!Process.0 then
+      do
+          say "Warning: There were" (handle.0 - machine.i.!Process.0),
+              "more processes running on this machine than were"
+          say "         defined in" workloadScript
+      end
+      else if handle.0 < machine.i.!Process.0 then
+      do
+          say "Warning: There were" (machine.i.!Process.0 - handle.0),
+              "less processes running on this machine than were"
+          say "         defined in" workloadScript
+      end
+
+      call STAFSubmit machine.i.!Name, "PROCESS", "STOP WORKLOAD",
+                      STAFWrapData(workload)
+      if RESULT \= 0 then
+      do
+          say "Error stopping processes on machine," machine.i.!Name",",
+              "RC:" RESULT
+          if STAFResult \= "" then
+              say "Additional Info:" STAFResult
+          ITERATE
+      end
+
+      if WORD(STAFResult, 1) \= WORD(STAFResult, 2) then
+      do
+          say "Note:" WORD(STAFResult, 2) - Word(STAFResult, 1) "processes",
+              "were already completed/stopped on machine," machine.i.!Name
+      end
+
+  end  /* for each machine */
+
+  RETURN 0
+
+/* End of HandleStop */
+
+
+/****************************************************/
+/* HandleQuery - Handles querying all the processes */
+/****************************************************/
+HandleQuery:
+
+  do i = 1 to machine.0
+
+      if UseItem("MACHINE", machine.i.!Name) = 0 then
+      do
+          if verboseMode then
+              say "Bypassing machine:" machine.i.!Name
+          ITERATE
+      end
+
+      say
+      say machine.i.!Name
+      say COPIES('-', LENGTH(machine.i.!Name))
+
+      call STAFSubmit machine.i.!Name, "PROCESS", "QUERY WORKLOAD",
+                      STAFWrapData(workload)
+      if RESULT \= 0 then
+      do
+          say "Error querying processes on machine," machine.i.!Name",",
+              "RC:" RESULT
+          if STAFResult \= "" then
+              say "Additional Info:" STAFResult
+          ITERATE
+      end
+
+      parse var STAFResult . (LF) . (LF) data
+
+      handle.0 = 0
+      do while data \= ""
+          handle.0 = handle.0 + 1
+          handleIndex = handle.0
+          parse var data handle.handleIndex . (LF) data
+      end
+
+      if handle.0 > machine.i.!Process.0 then
+      do
+          say "Warning: There were" (handle.0 - machine.i.!Process.0),
+              "more processes running on this machine than were"
+          say "         defined in" workloadScript
+      end
+      else if handle.0 < machine.i.!Process.0 then
+      do
+          say "Warning: There were" (machine.i.!Process.0 - handle.0),
+              "less processes running on this machine than were"
+          say "         defined in" workloadScript
+      end
+
+      do j = 1 to handle.0
+
+          call STAFSubmit machine.i.!Name, "PROCESS", "QUERY HANDLE",
+                          handle.j
+          if RESULT \= 0 then
+          do
+              say "Error querying process handle," handle.j", on machine,",
+                  machine.i.!Name", RC:" RESULT
+              if STAFResult \= "" then
+                  say "Additional Info:" STAFResult
+              ITERATE
+          end
+
+          parse var STAFResult . ': ' . (LF),
+                               . ': ' handle.j.!Name (LF),
+                               . ': ' handle.j.!Title (LF),
+                               . ': ' . (LF),
+                               . ': ' handle.j.!Command (LF),
+                               . ': ' handle.j.!Parms (LF),
+                               . ': ' handle.j.!WorkDir (LF),
+                               . ': ' . (LF),
+                               . ': ' handle.j.!StartDate (LF),
+                               . ': ' handle.j.!StartTime (LF),
+                               . ': ' handle.j.!EndDate (LF),
+                               . ': ' handle.j.!EndTime (LF),
+                               . ': ' handle.j.!RC (LF)
+
+          call StripCR("handle.j.!Name")
+          call StripCR("handle.j.!Title")
+          call StripCR("handle.j.!Command")
+          call StripCR("handle.j.!Parms")
+          call StripCR("handle.j.!WorkDir")
+          call StripCR("handle.j.!StartDate")
+          call StripCR("handle.j.!StartTime")
+          call StripCR("handle.j.!EndDate")
+          call StripCR("handle.j.!EndTime")
+          call StripCR("handle.j.!RC")
+
+          /* Debug: Terse info about handle
+          say handle.j'|'handle.j.!Name'|'handle.j.!Title'|' ||,
+              handle.j.!Command'|'handle.j.!Parms'|'handle.j.!WorkDir'|' ||,
+              handle.j.!StartDate'-'handle.j.!StartTime'|' ||,
+              handle.j.!EndDate'-'handle.j.!EndTime'|'handle.j.!RC
+          */
+
+          handle.j.!Monitor = "GenWL internal error"
+
+          call STAFSubmit machine.i.!Name, "MONITOR",,
+                          "QUERY MACHINE" STAFWrapData(machine.i.!Name),
+                          "HANDLE" handle.j
+          if RESULT = 2 then
+          do
+              handle.j.!Monitor = "Monitor not available on this machine"
+          end
+          else if RESULT = 17 then
+          do
+              handle.j.!Monitor = "No monitor information available for this",
+                                  "process"
+          end
+          else if RESULT \= 0 then
+          do
+              handle.j.!Monitor = "Monitor Query error, RC:" RESULT
+
+              if STAFResult \= "" then
+                  handle.j.!Monitor = handle.j.!Monitor"," STAFResult
+          end
+          else handle.j.!Monitor = STAFResult
+
+          if handle.j.!EndDate = "" then
+          do
+              say handle.j"("handle.j.!Name") -" handle.j.!Monitor
+          end
+          else
+          do
+              say handle.j"("handle.j.!Name") - Completed at",
+                  handle.j.!EndDate"-"handle.j.!EndTime", RC:" handle.j.!RC
+          end
+
+      end  /* for each handle */
+
+  end  /* for each machine */
+
+  RETURN 0
+
+/* End of HandleQuery */
+
+
+/*******************************************************/
+/* HandleFree - Handles freeing all the processes data */
+/*******************************************************/
+HandleFree:
+
+  do i = 1 to machine.0
+
+      if UseItem("MACHINE", machine.i.!Name) = 0 then
+      do
+          if verboseMode then
+              say "Bypassing machine:" machine.i.!Name
+          ITERATE
+      end
+
+      if \quietMode then
+          say "Processing machine:" machine.i.!Name
+
+      call STAFSubmit machine.i.!Name, "PROCESS",,
+                      "QUERY WORKLOAD" STAFWrapData(workload)
+      if RESULT \= 0 then
+      do
+          say "Error querying processes on machine," machine.i.!Name",",
+              "RC:" RESULT
+          if STAFResult \= "" then
+              say "Additional Info:" STAFResult
+          ITERATE
+      end
+
+      parse var STAFResult . (LF) . (LF) data
+
+      handle.0 = 0
+      do while data \= ""
+          handle.0 = handle.0 + 1
+          handleIndex = handle.0
+          parse var data handle.handleIndex . (LF) data
+      end
+
+      if handle.0 > machine.i.!Process.0 then
+      do
+          say "Warning: There were" (handle.0 - machine.i.!Process.0),
+              "more processes running on this machine than were"
+          say "         defined in" workloadScript
+      end
+      else if handle.0 < machine.i.!Process.0 then
+      do
+          say "Warning: There were" (machine.i.!Process.0 - handle.0),
+              "less processes running on this machine than were"
+          say "         defined in" workloadScript
+      end
+
+      call STAFSubmit machine.i.!Name, "PROCESS",,
+                      "FREE WORKLOAD" STAFWrapData(workload)
+      if RESULT \= 0 then
+      do
+          say "Error freeing processes on machine," machine.i.!Name",",
+              "RC:" RESULT
+          if STAFResult \= "" then
+              say "Additional Info:" STAFResult
+          ITERATE
+      end
+
+  end  /* for each machine */
+
+  RETURN 0
+
+/* End of HandleFree */
+
+
+/*****************************************************************************/
+/* UseItem - Determines if a certain machine or process should be used based */
+/*           on the machine and process include/exclude lists                */
+/*                                                                           */
+/* Accepts: The type of item (Machine or Process)                            */
+/*          The item to check                                                */
+/*                                                                           */
+/* Returns:  0, if the item should NOT be used                               */
+/*          >1, if the item should be used                                   */
+/*****************************************************************************/
+UseItem: PROCEDURE EXPOSE processInclude. processExclude. machineInclude.,
+                          machineExclude.
+
+  parse arg type, item
+
+  if WORDPOS(TRANSLATE(type), "MACHINE PROCESS") = 0 then RETURN 0
+
+  item = TRANSLATE(item)
+
+  if VALUE(type"Include.0") > 0 then doInclude = 0
+  else doInclude = 1
+
+  do i = 1 to VALUE(type"Include.0") while doInclude = 0
+      testItem = TRANSLATE(VALUE(type"Include.i"))
+
+      if testItem = item then doInclude = 1
+
+      if RIGHT(testItem, 1) = '*' then
+      do
+          if ABBREV(item, LeftBut(testItem, 1)) then
+              doInclude = 1
+      end
+  end
+
+  do i = 1 to VALUE(type"Exclude.0") while doInclude = 1
+      testItem = TRANSLATE(VALUE(type"Exclude.i"))
+
+      if testItem = item then doInclude = 0
+
+      if RIGHT(testItem, 1) = '*' then
+      do
+          if ABBREV(item, LeftBut(testItem, 1)) then
+              doInclude = 0
+      end
+  end
+
+  RETURN doInclude
+
+/* End of UseItem */
+
+
+/*************************************************************/
+/* StripCR - Strips a CR off the end of the variable's value */
+/*                                                           */
+/* Accepts: The name of the variable to fix                  */
+/*                                                           */
+/* Returns: 0                                                */
+/*************************************************************/
+StripCR:
+
+  parse arg StripCR_VarName
+
+  StripCR_VarValue = VALUE(StripCR_VarName)
+  if RIGHT(StripCR_VarValue, 1) = CR then
+  do
+      call VALUE StripCR_VarName,,
+                 SUBSTR(StripCR_VarValue, 1, LENGTH(StripCR_VarValue) - 1)
+  end
+
+  RETURN 0
+
+/* End of StripCR */
+
+
+/**************************************************/
+/* PrintUsage - prints usage info for the program */
+/**************************************************/
+PrintUsage: PROCEDURE
+
+  parse arg full
+
+  say
+  say "GenWL - Generic WorkLoad processor"
+  say "Version 1.21"
+  say
+  say "Usage: GenWL <WorkLoad filename>  -<Start[:<Actions>] | Stop | Query |",
+      "Free>"
+  say "             [-<Include | Exclude>:<MACHINE | PROCESS>:<List>]"
+  say "             [-Quiet | -Verbose]"
+
+  if full = '' then
+  do
+      say
+      say "For more help, enter 'GenWL -?'"
+      RETURN 0
+  end
+
+  say
+  say "where,"
+  say
+  say "<WorkLoad filename> is the name of a Generic WorkLoad configuration"
+  say "file.  The default extension is .gwl."
+  say
+  say "-Start will start the workload defined in <WorkLoad filename>.  This can"
+  say "be modified by only specifying that only certain actions be taken.  The"
+  say "The valid actions are the following:"
+  say
+  say "  GlobalVar  - Causes global variables to be set"
+  say "  MachineVar - Causes machine variables to be set"
+  say "  Var        - Causes GlobalVar and MachineVar actions to occur"
+  say "  Process    - Causes processes to be executed"
+  say "  All        - Causes GlobalVar, MachineVar, and Process actions to",
+      "occur"
+  say
+  say "  The default action is All"
+  say
+  say "-Stop will stop the workload defined in <WorkLoad filename>"
+  say
+  say "-Query will display the status of the the workload defined in"
+  say "<WorkLoad filename>."
+  say
+  say "-Free will free the completion data for the workload defined in"
+  say "<WorkLoad filename>."
+  say
+  say "-Quiet suppresses the display off all informational messages"
+  say
+  say "-Include and -Exclude cause the specified machines or processes to be"
+  say "used or ignored.  If a machine is process is specified in both an"
+  say "-Include and -Exclude list, then the machine or process is excluded."
+  say "The default is for all machines and processes to be used."
+  say
+  say "<List> is a command seperated list of machines or processes.  Note,"
+  say "the * wildcard is allowed at the end of a machine or process.  For"
+  say 'example, "ev4a,ev3d,ev2*" or "Startup,Config,FileSys*"'
+  say
+  say
+  say "Examples:"
+  say
+  say "In the following examples the workload definition is specified in the"
+  say "file MyWork.gwl."
+  say
+  say "To start the workload, use the command"
+  say
+  say "  GenWL MyWork -start"
+  say
+  say "To stop the workload on machines client1 and client2 only, use the",
+      "command"
+  say
+  say "  GenWL MyWork -stop -include:machine:client1,client2"
+  say
+  say "To set the global and machine variables only on machines client3 and"
+  say "client5, use the command"
+  say
+  say "  GenWL MyWork -start:var -include:machine:client3,client5"
+  say
+  say "To only start the Ogre1 processes in the workload without setting the"
+  say "machine and global variables, use the command"
+  say
+  say "  GenWL MyWork -start:process -include:process:Ogre1"
+
+  RETURN 0
+
+/* End of PrintUsage */
+
+
+/*****************************************************************/
+/* ParseCommandLine - Parses and verifies the command line parms */
+/*****************************************************************/
+DoParseCommandLine:
+
+  call InitCommandLineParser 1
+
+  call AddCommandLineOption "Start", 1, "ALLOWED"
+  call AddCommandLineOption "Stop", 1, "NO"
+  call AddCommandLineOption "Query", 1, "NO"
+  call AddCommandLineOption "Free", 1, "NO"
+  call AddCommandLineOption "Debug"
+  call AddCommandLineOption "UseHandle"
+  call AddCommandLineOption "Quiet", 1, "NO"
+  call AddCommandLineOption "Verbose", 1, "NO"
+  call AddCommandLineOption "Include", 0, "YES"
+  call AddCommandLineOption "Exclude", 0, "YES"
+
+  call AddCommandLineGroup "Start Stop Query Free", 1, 1
+  call AddCommandLineGroup "Quiet Verbose", 0, 1
+
+  call ParseCommandLine commandline
+  if RESULT \= 0 then RETURN RESULT
+
+  if CommandLineNumArgs() = 0 then
+  do
+      say
+      say "You must specify the <WorkLoad filename>"
+      RETURN 1
+  end
+
+  workloadScript = CommandLineArgValue(1)
+
+  if POS('.', workloadScript) = 0 then
+      workloadScript = workloadScript || ".gwl"
+
+  quietMode = CommandLineOptionTimes("Quiet")
+  verboseMode = CommandLineOptionTimes("Verbose")
+
+  processInclude.0 = 0
+  processExclude.0 = 0
+  machineInclude.0 = 0
+  machineExclude.0 = 0
+
+  do i = 1 to CommandLineOptionTimes("Include")
+      thisSpec = CommandLineOptionValue("Include", i)
+
+      parse var thisSpec thisType ':' thisList
+
+      thisType = TRANSLATE(thisType)
+
+      if (WORDPOS(thisType, "MACHINE PROCESS") = 0) | thisList = "" then
+      do
+          say "Invalid include list:" thisSpec
+          RETURN 1
+      end
+
+      call BuildStemFromList "include.", thisList, ","
+
+      do j = 1 to include.0
+          include.j = STRIP(include.j)
+          if StemPos(include.j, thisType"Include.") = 0 then
+              call AddToStem thisType"Include.", include.j
+      end
+  end
+
+  do i = 1 to CommandLineOptionTimes("Exclude")
+      thisSpec = CommandLineOptionValue("Exclude", i)
+
+      parse var thisSpec thisType ':' thisList
+
+      thisType = TRANSLATE(thisType)
+
+      if (WORDPOS(thisType, "MACHINE PROCESS") = 0) | thisList = "" then
+      do
+          say "Invalid exclude list:" thisSpec
+          RETURN 1
+      end
+
+      call BuildStemFromList "exclude.", thisList, ","
+
+      do j = 1 to exclude.0
+          exclude.j = STRIP(exclude.j)
+          if StemPos(exclude.j, thisType"Exclude.") = 0 then
+              call AddToStem thisType"Exclude.", exclude.j
+      end
+  end
+
+  startGlobalVars = 0
+  startMachineVars = 0
+  startProcesses = 0
+
+  startList = TRANSLATE(CommandLineOptionValue("Start"))
+  if startList = "" then startList = "ALL"
+
+  call BuildStemFromList "list.", startList, ","
+
+  do i = 1 to list.0
+      thisItem = STRIP(list.i)
+      if WORDPOS(thisItem, "GLOBALVAR MACHINEVAR VAR PROCESS ALL") = 0 then
+      do
+          say "Invalid start option," thisItem", specified"
+          RETURN 1
+      end
+
+      if WORDPOS(thisItem, "GLOVALVAR VAR ALL") \= 0 then
+          startGlobalVars = 1
+      if WORDPOS(thisItem, "MACHINEVAR VAR ALL") \= 0 then
+          startMachineVars = 1
+      if WORDPOS(thisItem, "PROCESS ALL") \= 0 then
+          startProcesses = 1
+  end
+
+  debugParse = 0
+  debugLex = 0
+  debugSym = 0
+  debugExec = 0
+  debugNoRun = 0
+
+  if CommandLineOptionTimes("Debug") \= 0 then
+  do
+      debugparm = TRANSLATE(CommandLineOptionValue("Debug"))
+
+      do i = 1 to LENGTH(debugparm)
+
+          option = SUBSTR(debugparm,i,1)
+
+          select
+              when option = 'L' then debugLex = 1
+              when option = 'P' then debugParse = 1
+              when option = 'S' then debugSym = 1
+              when option = 'E' then debugExec = 1
+              when option = 'N' then debugNoRun = 1
+              otherwise
+                  say "Skipping unknown debug option '"option"'"
+          end
+      end
+
+  end  /* end if debugging */
+
+  RETURN 0
+
+/* End of ParseCommandLine */
+
+
+/*********************/
+/* Catch errors here */
+/*********************/
+TrapHandler:
+
+  say "REXX error" rc 'in line' sigl':' ERRORTEXT(rc)
+  say SOURCELINE(sigl)
+
+  say "Unregistering with STAF"
+  call STAFUnRegister
+
+  EXIT 1
+
+/* End of TrapHandler */
+
+
+/********************************************/
+/* Now we imbed the other functions we need */
+/********************************************/
+
+#From CLParser Import All
+#From Misc Import BuildStemFromList AddToStem StemPos LeftBut
+#From STAFUtil Import STAFWrapData
+#From Lex Import All
+#From Parse Import All
+#From GenWLParse Import All

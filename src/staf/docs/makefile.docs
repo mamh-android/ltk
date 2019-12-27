@@ -1,0 +1,184 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+docs_targets += $(REL)/docs/staf/STAFUG.htm\
+               $(REL)/docs/staf/STAFGS.pdf\
+               $(REL)/docs/staf/STAFInstall.pdf\
+               $(REL)/docs/staf/STAFHome.htm\
+               $(REL)/docs/staf/STAFCMDS.htm\
+               $(REL)/docs/staf/STAFRC.htm\
+               $(REL)/docs/staf/STAFFAQ.htm\
+               $(REL)/docs/staf/STAFDiag.htm\
+               $(O)/docs/staf/gettingstarted/STAFGS.htm\
+               $(O)/docs/staf/installguide/STAFInstall.htm\
+               $(REL)/docs/staf/History
+Targets += $(docs_targets)
+CleanupTargets += cleanup_docs
+
+$(docs_targets): SUBSYS_REL := doc
+SUBSYS_REL := doc
+
+UserGuideSrc :=\
+  $(SRC)/docs/userguide/APIRef.script\
+  $(SRC)/docs/userguide/Commands.script\
+  $(SRC)/docs/userguide/CmdRef.script\
+  $(SRC)/docs/userguide/Concepts.script\
+  $(SRC)/docs/userguide/ErrRef.script\
+  $(SRC)/docs/userguide/HandSrv.script\
+  $(SRC)/docs/userguide/Install.script\
+  $(SRC)/docs/userguide/Config.script\
+  $(SRC)/docs/userguide/Issues.script\
+  $(SRC)/docs/userguide/ConfigSrv.script\
+  $(SRC)/docs/userguide/DelaySrv.script\
+  $(SRC)/docs/userguide/EchoSrv.script\
+  $(SRC)/docs/userguide/PingSrv.script\
+  $(SRC)/docs/userguide/LifeCycleSrv.script\
+  $(SRC)/docs/userguide/LogSrv.script\
+  $(SRC)/docs/userguide/RLogSrv.script\
+  $(SRC)/docs/userguide/FLogUtil.script\
+  $(SRC)/docs/userguide/MonSrv.script\
+  $(SRC)/docs/userguide/HelpSrv.script\
+  $(SRC)/docs/userguide/Overview.script\
+  $(SRC)/docs/userguide/ProcSrv.script\
+  $(SRC)/docs/userguide/SampRef.script\
+  $(SRC)/docs/userguide/CodeRef.script\
+  $(SRC)/docs/userguide/RSPRef.script\
+  $(SRC)/docs/userguide/Services.script\
+  $(SRC)/docs/userguide/Utils.script\
+  $(SRC)/docs/userguide/Migrate.script\
+  $(SRC)/docs/userguide/STAFUG.script\
+  $(SRC)/docs/userguide/VarSrv.script\
+  $(SRC)/docs/userguide/FSSrv.script\
+  $(SRC)/docs/userguide/SrvSrv.script\
+  $(SRC)/docs/userguide/TrustSrv.script\
+  $(SRC)/docs/userguide/ShutSrv.script\
+  $(SRC)/docs/userguide/PingSrv.script\
+  $(SRC)/docs/userguide/EchoSrv.script\
+  $(SRC)/docs/userguide/DelaySrv.script\
+  $(SRC)/docs/userguide/MiscSrv.script\
+  $(SRC)/docs/userguide/QueueSrv.script\
+  $(SRC)/docs/userguide/TraceSrv.script\
+  $(SRC)/docs/userguide/SemSrv.script\
+  $(SRC)/docs/userguide/PoolSrv.script\
+  $(SRC)/docs/userguide/DiagSrv.script\
+  $(SRC)/docs/userguide/ZipSrv.script\
+  $(SRC)/samples/rexx/Sample1.cmd\
+  $(SRC)/samples/rexx/Sample2.cmd\
+  $(SRC)/samples/rexx/Sample3.cmd\
+  $(SRC)/samples/rexx/Sample4.cmd\
+  $(SRC)/samples/cpp/LogIt.cpp\
+  $(SRC)/samples/c/LogIt.c\
+  $(SRC)/test/PingTest.cmd\
+  $(SRC)/test/JPing.java
+
+# Doc targets
+
+# Note: We don't really want to ignore the warning on b2h'ing the User's Guide,
+#       but, I don't know how to make b2h ignore the C++ scope operator '::'.
+
+$(REL)/docs/staf/STAFUG.htm: $(UserGuideSrc) $(MAKEFILE_NAME)
+	@echo "*** Building STAF User's Guide ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/userguide
+	@cp $(SRC)/docs/userguide/*.script $(O)/docs/staf/userguide
+	@cp $(SRC)/samples/rexx/Sample1.cmd $(O)/docs/staf/userguide/RexSam1.script
+	@cp $(SRC)/samples/rexx/Sample2.cmd $(O)/docs/staf/userguide/RexSam2.script
+	@cp $(SRC)/samples/rexx/Sample3.cmd $(O)/docs/staf/userguide/RexSam3.script
+	@cp $(SRC)/samples/rexx/Sample4.cmd $(O)/docs/staf/userguide/RexSam4.script
+	@cp $(SRC)/test/PingTest.cmd $(O)/docs/staf/userguide/RexSam5.script
+	@cp $(SRC)/test/JPing.java $(O)/docs/staf/userguide/JavSam1.script
+	@cp $(SRC)/samples/cpp/LogIt.cpp $(O)/docs/staf/userguide/CPPSam1.script
+	@cp $(SRC)/samples/c/LogIt.c $(O)/docs/staf/userguide/CSam1.script
+	@chmod 777 $(O)/docs/staf/userguide/*
+	-@cd $(O)/docs/staf/userguide; $(B2H) STAFUG.script '('HTMLEXT=htm TOC=*2 INDEX "BODYTAG='<BODY" "BGCOLOR=WHITE>'" 'OUTPUTP=$(OS_@)' IMBFT=script
+
+$(REL)/docs/staf/History: $(SRC)/History $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/docs/staf/STAFHome.htm: $(SRC)/docs/STAFHome.htm $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/docs/staf/STAFGS.pdf: $(SRC)/docs/gettingstarted/STAFGS.pdf $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/docs/staf/STAFInstall.pdf: $(SRC)/docs/installguide/STAFInstall.pdf $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/docs/staf/STAFCMDS.htm: $(SRC)/docs/userguide/CmdRef.script $(MAKEFILE_NAME)
+	@echo "*** Building STAF Command Reference ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/userguide
+	@$(B2H) $(OS_SRC)/docs/userguide/CmdRef.script '('HTMLEXT=htm TOC=NO TITLE="'STAF" Command "Reference'" TOPHEAD=NO "BODYTAG='<BODY" "BGCOLOR=WHITE>'" 'OUTPUTP=$(OS_@)' IMBFT=script
+
+$(REL)/docs/staf/STAFRC.htm: $(SRC)/docs/userguide/ErrRef.script $(MAKEFILE_NAME)
+	@echo "*** Building STAF API Return Code Reference ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/userguide
+	@$(B2H) $(OS_SRC)/docs/userguide/ErrRef.script '('HTMLEXT=htm TOC=NO TITLE="'STAF" API Return Code "Reference'" TOPHEAD=NO "BODYTAG='<BODY" "BGCOLOR=WHITE>'" 'OUTPUTP=$(OS_@)' IMBFT=script
+
+ifndef SAXON_ROOT
+  $(error You must set SAXON_ROOT to the full pathname where you installed Saxon)
+endif
+
+ifndef DOCBOOK_ROOT
+  $(error You must set DOCBOOK_ROOT to the full pathname where you installed DocBook XSL)
+endif
+
+
+$(REL)/docs/staf/STAFFAQ.htm: $(SRC)/docs/faq/STAFFAQ.xml $(MAKEFILE_NAME)
+	@echo "*** Building STAF FAQ ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/faq
+	@cp $(SRC)/docs/faq/*.xml $(O)/docs/staf/faq
+	@chmod 777 $(O)/docs/staf/faq/*
+	@cd $(O)/docs/staf/faq; $(JAVA) -cp $(SAXON_ROOT)/saxon.jar com.icl.saxon.StyleSheet -o STAFFAQ.htm STAFFAQ.xml $(DOCBOOK_ROOT)/html/docbook.xsl
+	@cp $(O)/docs/staf/faq/STAFFAQ.htm $(REL)/docs/staf/STAFFAQ.htm
+
+$(REL)/docs/staf/STAFDiag.htm: $(SRC)/docs/diagnosticsguide/STAFDiag.xml $(MAKEFILE_NAME)
+	@echo "*** Building STAF Diagnostics Guide ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/diagnosticsguide
+	@cp $(SRC)/docs/diagnosticsguide/*.xml $(O)/docs/staf/diagnosticsguide
+	@chmod 777 $(O)/docs/staf/diagnosticsguide/*
+	@cd $(O)/docs/staf/diagnosticsguide; $(JAVA) -cp $(SAXON_ROOT)/saxon.jar com.icl.saxon.StyleSheet -o STAFDiag.htm STAFDiag.xml $(DOCBOOK_ROOT)/html/docbook.xsl
+	@cp $(O)/docs/staf/diagnosticsguide/STAFDiag.htm $(REL)/docs/staf/STAFDiag.htm
+	
+# Create STAFGS html document from the .xml file to verify that no syntax errors exist
+# XXX: When able to generate pdf file automatically, change to create it and copy it to $(REL)/docs/staf/STAFGS.pdf
+
+$(O)/docs/staf/gettingstarted/STAFGS.htm: $(SRC)/docs/gettingstarted/STAFGS.xml $(MAKEFILE_NAME)
+	@echo "*** Building Getting Started with STAF ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/gettingstarted
+	@cp $(SRC)/docs/gettingstarted/*.xml $(O)/docs/staf/gettingstarted
+	@cp $(SRC)/docs/gettingstarted/*.gif $(O)/docs/staf/gettingstarted
+	@chmod 777 $(O)/docs/staf/gettingstarted/*
+	@cd $(O)/docs/staf/gettingstarted; $(JAVA) -cp $(SAXON_ROOT)/saxon.jar com.icl.saxon.StyleSheet -o STAFGS.htm STAFGS.xml $(DOCBOOK_ROOT)/html/docbook.xsl
+
+# Create STAFInstall html document from the .xml file to verify that no syntax errors exist
+# XXX: When able to generate pdf file automatically, change to create it and copy it to $(REL)/docs/staf/STAFInstall.pdf
+
+$(O)/docs/staf/installguide/STAFInstall.htm: $(SRC)/docs/installguide/STAFInstall.xml $(MAKEFILE_NAME)
+	@echo "*** Building STAF Installation Guide ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/docs/staf/installguide
+	@cp $(SRC)/docs/installguide/*.xml $(O)/docs/staf/installguide
+	@cp $(SRC)/docs/installguide/*.gif $(O)/docs/staf/installguide
+	@chmod 777 $(O)/docs/staf/installguide/*
+	@cd $(O)/docs/staf/installguide; $(JAVA) -cp $(SAXON_ROOT)/saxon.jar com.icl.saxon.StyleSheet -o STAFInstall.htm STAFInstall.xml $(DOCBOOK_ROOT)/html/docbook.xsl
+
+cleanup_docs:
+	-@$(DEL) $(O)/docs/staf/userguide/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(O)/docs/staf/gettingstarted/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFUG.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFHome.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFFAQ.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFGS.pdf $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFInstall.pdf $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFCMDS.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/STAFRC.htm $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/docs/staf/History $(OUT_ERR_TO_DEV_NULL)

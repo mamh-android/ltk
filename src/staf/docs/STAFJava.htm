@@ -1,0 +1,4906 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Sharon Lucas">
+   <meta name="GENERATOR" content="Mozilla/4.76 [en] (Windows NT 5.0; U) [Netscape]">
+   <title>STAF Java User's Guide</title>
+</head>
+<body>
+
+<h1>Java User's Guide for STAF Version 3</h1>
+<p>
+Last Updated:  June 28, 2012
+<p>
+
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Intro" href="#Header_Intro"><b>1.0 Introduction</b></a>
+<p><a name="ToC_Install" href="#Header_Install"><b>2.0 Installation</b></a>
+
+<p><a name="ToC_Java" href="#Header_Java"><b>3.0 STAF Java APIs</b></a>
+  <menu compact>
+  <a name="Toc_Primary" href="#Header_Primary">3.1 Primary STAF APIs</a>
+    <menu compact>
+    <a name="Toc_STAFHandle" href="#Header_STAFHandle">3.1.1 Class STAFHandle</a>
+    <br><a name="ToC_STAFException" href="#Header_STAFException">3.1.2 Class STAFException</a>
+    <br><a name="ToC_STAFResult" href="#Header_STAFResult">3.1.3 Class STAFResult</a>
+    </menu>
+
+  <br><a name="ToC_Marshalling" href="#Header_Marshalling">3.2 Marshalling APIs</a>
+    <menu compact>
+    <a name="ToC_STAFMCDef" href="#Header_STAFMCDef">3.2.1 Class STAFMapClassDefinition</a>
+    <br><a name="ToC_STAFMC" href="#Header_STAFMC">3.2.2 Class STAFMarshallingContext</a>
+      <menu compact>
+      <a name="ToC_isMarshalled" href="#Header_isMarshalled">3.2.2.1 Static Method <tt>isMarshalledData</tt></a>
+      <br><a name="ToC_marshall" href="#Header_marshall">3.2.2.2 Static Method <tt>marshall</tt></a>
+      <br><a name="ToC_unmarshall" href="#Header_unmarshall">3.2.2.3 Static Method <tt>unmarshall</tt></a>
+      <br><a name="ToC_formatObj" href="#Header_formatObj">3.2.2.4 Static Method <tt>formatObject</tt></a>
+      </menu>
+    </menu>
+
+  <br><a name="ToC_PrivateData" href="#Header_PrivateData">3.3 Private Data Manipulation APIs</a>
+    <menu compact>
+    <a name="ToC_addPrivacyDelimiters" href="#Header_addPrivacyDelimiters">3.3.1 Static Method <tt>STAFUtil.addPrivacyDelimiters</tt></a>
+    <br><a name="ToC_escapePrivacyDelimiters" href="#Header_escapePrivacyDelimiters">3.3.2 Static Method <tt>STAFUtil.escapePrivacyDelimiters</tt></a>
+    <br><a name="ToC_removePrivacyDelimiters" href="#Header_removePrivacyDelimiters">3.3.3 Static Method <tt>STAFUtil.removePrivacyDelimiters</tt></a>
+    <br><a name="ToC_maskPrivateData" href="#Header_maskPrivateData">3.3.4 Static Method <tt>STAFUtil.maskPrivateData</tt></a>
+    </menu>
+
+  <br><a name="ToC_GeneralUtility" href="#Header_GeneralUtility">3.4 General Utility APIs</a>
+    <menu compact>
+    <a name="ToC_wrapData" href="#Header_wrapData">3.4.1 Static Method <tt>STAFUtil.wrapData</tt></a>
+    <br><a name="ToC_unwrapData" href="#Header_unwrapData">3.4.2 Static Method <tt>STAFUtil.unwrapData</tt></a>
+    <br><a name="ToC_stripPort" href="#Header_stripPort">3.4.3 Static Method <tt>STAFUtil.stripPortFromEndpoint</tt></a>
+    <br><a name="ToC_validateTrust" href="#Header_validateTrust">3.4.4 Static Method <tt>STAFUtil.validateTrust</tt></a>
+    <br><a name="ToC_convertDuration" href="#Header_convertDuration">3.4.5 Static Method <tt>STAFUtil.convertDurationString</tt></a>
+    <br><a name="ToC_convertSize" href="#Header_convertSize">3.4.6 Static Method <tt>STAFUtil.convertSizeString</tt></a>
+    <br><a name="ToC_resRequestVar" href="#Header_resRequestVar">3.4.7 Static Method <tt>STAFUtil.resolveRequestVar</tt></a>
+    <br><a name="ToC_resRequestVarAndCheckInt" href="#Header_resRequestVarAndCheckInt">3.4.8 Static Method <tt>STAFUtil.resolveRequestVarAndCheckInt</tt></a>
+    <br><a name="ToC_resRequestVarAndConvertDuration" href="#Header_resRequestVarAndConvertDuration">3.4.9 Static Method <tt>STAFUtil.resolveRequestVarAndConvertDuration</tt></a>
+    <br><a name="ToC_resRequestVarAndConvertSize" href="#Header_resRequestVarAndConvertSize">3.4.10 Static Method <tt>STAFUtil.resolveRequestVarAndConvertSize</tt></a>
+    <br><a name="ToC_resInitVar" href="#Header_resInitVar">3.4.11 Static Method <tt>STAFUtil.resolveInitVar</tt></a>
+    <br><a name="ToC_resInitVarAndCheckInt" href="#Header_resInitVarAndCheckInt">3.4.12 Static Method <tt>STAFUtil.resolveInitVarAndCheckInt</tt></a>
+    <br><a name="ToC_compareSTAFVersion" href="#Header_compareSTAFVersion">3.4.13 Static Method <tt>STAFUtil.compareSTAFVersion</tt></a>
+    <br><a name="ToC_STAFVersion" href="#Header_STAFVersion">3.4.14 Class STAFVersion</a>
+    <br><a name="ToC_STAFQueueMsg" href="#Header_STAFQueueMsg">3.4.15 Class STAFQueueMessage</a>
+    </menu>
+
+  <br><a name="ToC_LogWrappers" href="#Header_LogWrappers">3.5 Wrappers for Log and Monitor Services' LOG Command</a>
+    <menu compact>
+    <a name="ToC_STAFLog" href="#Header_STAFLog">3.5.1 Class STAFLog</a>
+    <br><a name="ToC_STAFMonitor" href="#Header_STAFMonitor">3.5.2 Class STAFMonitor</a>
+    </menu>
+
+  <br><a name="ToC_LogViewers" href="#Header_LogViewers">3.6 Log Viewer / Formatter APIs</a>
+    <menu compact>
+    <a name="ToC_STAFLogViewer" href="#Header_STAFLogViewer">3.6.1 Class STAFLogViewer</a>
+    <br><a name="ToC_STAFJVMLogViewer" href="#Header_STAFJVMLogViewer">3.6.2 Class STAFJVMLogViewer</a>
+    <br><a name="ToC_STAFLogFormatter" href="#Header_STAFLogFormatter">3.6.3 Class STAFLogFormatter</a>
+    </menu>
+    </menu>
+
+  <p><a name="ToC_Examples" href="#Header_Examples"><b>4.0 Java Program Examples</b></a>
+  <menu compact>
+  <a name="ToC_Example1" href="#Header_Example1">4.1 Example 1</a>
+  <br><a name="ToC_Example2" href="#Header_Example2">4.2 Example 2</a>
+  </menu>
+  
+  <a name="ToC_TestSTAFJavaSupport" href="#Header_TestSTAFJavaSupport"><b>5.0 How to Test STAF Java Support</b></a>
+  <menu compact>
+  <a name="Toc_TestJSTAF" href="#Header_TestJSTAF">5.1 Class TestJSTAF</a>
+  </menu>
+
+<p>
+<hr>
+<p>
+<h2><a name="Header_Intro" href="#ToC_Intro">1.0 Introduction</a></h2>
+
+This document describes STAF's V3 support for the Java language.&nbsp; It
+includes information on the core STAF Java APIs as well as the wrappers
+provided for the Monitor and Log services.
+<p>
+STAF Java support must be installed in order to submit requests to STAF
+via a Java program or to register a STAF Java service such as STAX, Event, Cron,
+EventManager, Email, etc.
+<p>
+<hr>
+<p>
+<h2><a name="Header_Install" href="#ToC_Install">2.0 Installation</a></h2>
+
+To install STAF's Java support, select to install "Java support"
+during the install.  It is installed by default for a "typical" install of STAF
+by all STAF installer files except for the STAF FreeBSD 4.10 installer file which
+does not provide Java support.
+<p>
+STAF's Java support is provided in the JSTAF.jar file (located in either
+<tt>C:\STAF\bin\JSTAF.jar</tt> (by default) on Windows systems or
+<tt>/usr/local/staf/lib/JSTAF.jar</tt> (by default) on Unix systems.
+The STAF install adds the <tt>JSTAF.jar</tt> file to the <tt>CLASSPATH</tt>
+environment variable.
+<p>
+To verify that the version of Java you are using works with STAF Java support,
+run TestJSTAF as decribed in section
+<a name="Installation_TestSTAFJavaSupport" href="#Header_TestSTAFJavaSupport">
+5.0 How to Test STAF Java Support</a>.
+<hr>
+<p>
+<h2><a name="Header_Java" href="#ToC_Java">3.0 STAF Java APIs</a></h2>
+
+<P>STAF externalizes the following primary classes to Java applications.
+These classes are:
+<UL COMPACT>
+<LI>STAFHandle - Handles (un)registering with STAF as well as submitting
+service requests
+<LI>STAFException - The exception class thrown by STAFHandle
+<LI>STAFResult - Contains the result of a STAFHandle.submit2() call as well as
+the STAF error constants
+<LI>STAFMapClassDefinition - Contains the metadata for a map class
+<LI>STAFMarshallingContext - Contains a set of map class definitions and an
+object that uses (or is defined in terms of) them
+<LI>STAFQueueMessage - Wrapper class for messages received via a STAF Queue service request
+<LI>STAFUtil - Contains STAF utility functions
+<li>STAFVersion - Used to compare versions of STAF or STAF services
+</UL>
+<P>These classes all reside in the com.ibm.staf package.  In order to use them
+in a Java application, you must import the STAF package like so
+<PRE>import com.ibm.staf.*;
+</PRE><P>STAF externalizes two wrapper classes.  These classes are
+<UL COMPACT>
+<LI>STAFLog - Interfaces with the LOG command of the LOG service
+<LI>STAFMonitor - Interfaces with the LOG command of the MONITOR service
+</UL>
+<P>These classes all reside in the com.ibm.staf.wrapper package.  In order to
+use them in a Java application, you must import the STAF wrapper package like
+so
+<PRE>import com.ibm.staf.wrapper.*;
+</PRE>
+<br>
+
+<h2><a name="Header_Primary" href="#ToC_Primary">3.1 Primary STAF APIs</a></h2>
+
+These APIs allow you to register/unregister with STAF and submit STAF service requests.
+
+<h3><a name="Header_STAFHandle" href="#ToC_STAFHandle">3.1.1 Class STAFHandle</a></h3>
+
+<P>
+The STAFHandle class is the primary class used to communicate with STAF.
+It is used to register with STAF, submit service requests to STAF, and
+unregister with STAF.
+Each Java application should generally create one and only one STAFHandle object.
+The act of creating this object registers the Java application with STAF.
+<p>
+There are two constructors for the STAFHandle class:
+<ul compact>
+<li>The first (and standard) constructor allows you to specify a string containing
+the name by which your handle should be known.  It creates a new STAF handle and
+returns an instance of a STAFHandle object referencing this new STAF handle.
+<li>The second constructor allows you to specify an integer which is the number of
+an existing STAF static handle.  It returns an instance of a STAFHandle object
+referencing this existing static handle.
+</ul>
+<p>
+Once you have a valid STAFHandle instance object, you can begin submitting 
+requests to STAF services by one of two methods:
+<UL compact>
+<LI>The submit() method works in the traditional Java fashion, in that it
+throws an exception, a STAFException in particular, if it encounters an error,
+and it returns a result string on success.
+<LI>The submit2() method returns a STAFResult object in all cases.  This
+object contains the real STAF return code as well as the result string.
+In addition, if auto-unmarshalling is enabled for the handle that called the
+submit2() method, the STAFResult object also contains the marshalling context
+for the result (e.g. the unmarshalled result) and the result object (e.g. the
+root object of the marshalling context).  Otherwise, if auto-unmarshalling is
+disabled, the resultContext and resultObj fields in the STAFResult object will
+be set to null.
+</UL>
+<p>
+Note that a STAFHandle instance object has a auto-unmarshall result member
+variable that defaults to true when a STAFHandle instance object is created,
+but can be set to false via its setDoUnmarshallResult() method.  When set to
+true, this causes STAF results to be automatically unmarshalled when 
+using the submit2() method.
+<P>Before the Java application exits, it should unregister with STAF by calling
+the unRegister() method.
+<P>STAFHandle also defines the following constants which can be used as the
+syncOption parameter for the submit() and submit2() methods:
+<UL COMPACT>
+<LI>ReqSync - This indicates the request should be submitted synchronously.
+This is equivalent to calling the submit() or submit2() method without the
+syncOption parameter.
+<LI>ReqFireAndForget - This operates identically to the
+kSTAFReqFireAndForget value of the C STAFSubmit2 API.  See
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRAPISS2">
+Section 6.2.5, "STAFSubmit2"</a> in the STAF User's Guide for more information.
+<LI>ReqQueue - This operates identically to the kSTAFReqQueue value of the C
+STAFSubmit2 API.  See
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRAPISS2">
+Section 6.2.5, "STAFSubmit2"</a> in the STAF User's Guide for more information.
+<LI>ReqRetain - This operates identically to the kSTAFReqRetain value of the C
+STAFSubmit2 API.  See
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRAPISS2">
+Section 6.2.5, "STAFSubmit2"</a> in the STAF User's Guide for more information.
+<LI>ReqQueueRetain - This operates identically to the kSTAFReqQueueRetain value
+of the C STAFSubmit2 API.  See
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRAPISS2">
+Section 6.2.5, "STAFSubmit2"</a> in the STAF User's Guide for more information.
+</UL>
+<P>
+<H4><A NAME="Header_182">Definition</A></H4>
+
+<ul>
+<PRE>package com.ibm.staf;
+ 
+public class STAFHandle
+{
+    public static final int ReqSync = 0;
+    public static final int ReqFireAndForget = 1;
+    public static final int ReqQueue = 2;
+    public static final int ReqRetain = 3;
+    public static final int ReqQueueRetain = 4;
+ 
+    public STAFHandle(String handleName) throws STAFException;
+    public STAFHandle(int staticHandleNumber);
+    public String submit(String where, String service, String request)
+                  throws STAFException;
+    public String submit(int syncOption, String where, String service,
+                         String request) throws STAFException;
+    public STAFResult submit2(String where, String service, String request);
+    public STAFResult submit2(int syncOption, String where, String service,
+                              String request);
+    public void unRegister() throws STAFException;
+    public int getHandle();
+
+    // Set a flag to indicates whether the result should be auto-unmarshalled
+    // Added in STAF V3.3.1
+    public void setDoUnmarshallResult(boolean flag);
+
+    // Retrieve the auto-unmarshall result flag
+    // Added in STAF V3.3.1
+    public boolean getDoUnmarshallResult();
+}
+</PRE>
+</ul>
+
+<A NAME="IDX224"></A><P><H4><A NAME="Header_183">Examples</A></H4>
+
+<ol>
+<li>This is an example of creating a new STAFHandle and using the submit2()
+method to submit some simple requests to STAF.
+<ul>
+<font color="darkblue">
+<PRE>import com.ibm.staf.*;
+import java.io.*;
+ 
+public class STAFTest
+{
+    public static void main(String argv[])
+    {
+        try
+        {
+            // Create a STAFHandle
+
+            STAFHandle handle = new STAFHandle("MyApplication");
+            System.out.println("My handle is: " + handle.getHandle());
+
+            try
+            {
+                // Submit a synchronous request to the ECHO service on
+                // the local machine
+
+                STAFResult result = handle.submit2(
+                    "local", "ECHO", "ECHO Hello");
+
+                if (result.rc != 0)
+                {
+                    System.out.println(
+                        "ERROR: STAF local ECHO ECHO Hello failed. RC: " +
+                        result.rc + ", Result: " + result.result);
+                }
+                else
+                {
+                    System.out.println("ECHO Result: " + result.result);
+                }
+
+                // Or submit an asynchronous request to the ECHO service on
+                // the local machine
+
+                result = handle.submit2(
+                    STAFHandle.ReqRetain, "local", "ECHO", "ECHO Hello");
+
+                if (result.rc != 0)
+                {
+                    System.out.println(
+                        "ERROR: STAF local ECHO ECHO Hello failed. RC: " +
+                        result.rc + ", Result: " + result.result);
+                }
+                else
+                {
+                    System.out.println(
+                        "Asynchronous ECHO Request number: " + result.result);
+                }
+            }
+            finally
+            {
+                handle.unRegister();
+            }
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error (un)registering with STAF, RC:" + e.rc);
+            System.exit(1);
+        }
+ 
+    }   // End of main()
+ 
+}  // End of STAFTest
+</PRE>
+</font>
+</ul>
+<p>
+<li>This is an example of creating a new STAFHandle and using the submit()
+method (which throws a STAFException if am error in encountered) to
+submit requests to STAF.
+<ul>
+<font color="darkblue">
+<PRE>import com.ibm.staf.*;
+ 
+public class STAFTest
+{
+    public static void main(String argv[])
+    {
+        try
+        {
+            // Create a STAFHandle
+
+            STAFHandle handle = new STAFHandle("MyApplication");
+            System.out.println("My handle is: " + handle.getHandle());
+ 
+            // Submit some requests to STAF services
+
+            String machine = "local";
+            String service = "PING";
+            String request = "PING";
+
+            try
+            {
+                // Submit a synchronous request to the PING service on
+                // the local machine
+                
+                String result = handle.submit(machine, service, request);
+                System.out.println("PING Result: " + result);
+
+                // Submit an asynchronous STAF request to the PING service
+                // on the local machine
+                
+                result = handle.submit(
+                    STAFHandle.ReqQueueRetain, machine, service, request);
+                System.out.println("PING Request number: " + result);
+            }
+            catch (STAFException e)
+            {
+                System.out.println(
+                    "Error submitting STAF " + machine + " " + service +
+                    " " + request);
+                System.out.println("RC: " + e.rc);
+                System.out.println(e.getMessage());
+            }
+            finally
+            {
+                handle.unRegister();
+            }
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error (un)registering with STAF, RC:" + e.rc);
+            System.exit(1);
+        }
+ 
+    }   // End of main()
+ 
+}  // End of STAFTest
+</PRE>
+</font>
+</ul>
+<p>
+<li>This is an example of creating a new static STAFHandle and using the
+static STAFHandle to submit requests to STAF.
+
+<ul>
+<font color="darkblue">
+<PRE>import com.ibm.staf.*;
+ 
+public class STAFTest
+{
+    public static void main(String argv[])
+    {
+        try
+        {
+            // Create a STAFHandle (non-static)
+
+            STAFHandle handle = new STAFHandle("MyApplication");
+            System.out.println("My non-static handle is: " + handle.getHandle());
+ 
+            STAFHandle staticHandle = null;
+            int staticHandleNumber = 0;
+ 
+            try
+            {
+                // Create a STAF static handle
+
+                STAFResult result = handle.submit2(
+                    "local", "HANDLE", "CREATE HANDLE NAME MyStaticHandleName");
+ 
+                if (result.rc != STAFResult.Ok)
+                {
+                    System.exit(1);
+                }
+
+                staticHandleNumber = new Integer(result.result).intValue();
+                staticHandle = new STAFHandle(staticHandleNumber);
+                System.out.println("My static handle is: " + staticHandleNumber);
+
+                // Request a mutex semaphore using the static STAFHandle to
+                // submit the request
+
+                System.out.println("Request mutex semaphore MyMutex");
+
+                result = staticHandle.submit2(
+                    "local", "SEM", "REQUEST MUTEX MyMutex");
+                    
+                if (result.rc != STAFResult.Ok)
+                {
+                    System.out.println(
+                        "ERROR: STAF local SEM REQUEST MUTEX MyMutex failed. RC: " +
+                        result.rc + ", Result: " + result.result);
+                    System.exit(1);
+                }
+
+                // Do whatever else you want to do
+            }
+            finally
+            {
+                if (staticHandleNumber != 0)
+                {
+                    // Release the mutex semaphore using the static STAFHandle
+                    // to submit the request
+
+                    System.out.println("Release mutex semaphore MyMutex");
+
+                    STAFResult result = staticHandle.submit2(
+                        "local", "SEM", "RELEASE MUTEX MyMutex");
+
+                    // Delete the static handle
+                    
+                    System.out.println("Delete static handle");
+
+                    result = handle.submit2(
+                        "local", "HANDLE", "DELETE HANDLE " + staticHandleNumber);
+                }
+
+                handle.unRegister();
+            }
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error (un)registering with STAF, RC:" + e.rc);
+            System.exit(1);
+        }
+ 
+    }   // End of main()
+ 
+}  // End of STAFTest
+</PRE>
+</font>
+</ul>
+<p>
+<li>This is an example of creating a new STAFHandle and using the submit2()
+method to submit requests to STAF.  Note that since auto-unmarshalling is
+enabled by default when creating a new STAFHandle, the STAFResult object
+returned by the submit2() method will contain the result's marshalling
+context and root object so that you don't have to call the unmarshall()
+method to unmarshall results that contain multiple values.
+<ul>
+<font color="darkblue">
+<PRE>import com.ibm.staf.*;
+import java.util.*;
+ 
+public class STAFTest
+{
+    public static void main(String argv[])
+    {
+        try
+        {
+            // Create a STAFHandle
+
+            STAFHandle handle = new STAFHandle("MyApplication");
+            System.out.println("My handle is: " + handle.getHandle());
+
+            try
+            {
+                // Submit a request to the PROCESS service to run a command on
+                // a machine and wait for it to complete and returns its stdout
+                // and stderr.  Note that the result from this request returns
+                // a marshalled map so we'll use STAFResult's resultObj variable
+                // to access the map root object
+
+                String machine = "local";
+                String command = "dir \\temp";
+                String service = "PROCESS";
+                String request = "START SHELL COMMAND " +
+                    STAFUtil.wrapData(command) +
+                    " WAIT RETURNSTDOUT STDERRTOSTDOUT";
+
+                STAFResult result = handle.submit2(machine, service, request);
+                    
+                if (result.rc != 0)
+                {
+                    System.out.println(
+                        "ERROR: STAF " + machine + " " + service + " " + request +
+                        " RC: " + result.rc + ", Result: " + result.result);
+                    System.exit(1);
+                }
+                
+                // The command was started successfully. Check the process
+                // return code and if non-zero, also print an error message
+
+                Map resultMap = (Map)result.resultObj;
+                String processRC = (String)resultMap.get("rc");
+
+                if (!processRC.equals("0"))
+                {
+                    System.out.println(
+                        "ERROR: Process RC is not 0.\n" + result.resultContext);
+                    System.exit(1);
+                }
+
+                // Print the stdout/stderr data for the command
+
+                List returnedFileList = (List)resultMap.get("fileList");
+                Map stdoutMap = (Map)returnedFileList.get(0);
+                String stdoutData = (String)stdoutMap.get("data");
+
+                System.out.println("Process Stdout:\n" + stdoutData);
+            }
+            finally
+            {
+                handle.unRegister();
+            }
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error (un)registering with STAF, RC:" + e.rc);
+            System.exit(1);
+        }
+ 
+    }   // End of main()
+ 
+}  // End of STAFTest
+</PRE>
+</font>
+</ul>
+</ol>
+<br>
+
+<h3><a name="Header_STAFException" href="#ToC_STAFException">3.1.2 Class STAFException</a></h3>
+
+<P>The STAFException class is the exception class thrown by the STAFHandle
+class.  It contains an rc variable which contains the actual return code from
+STAF.  You may use the standard Throwable method getMessage() to retrieve any
+extra information provided by STAF.
+<P><H4><A NAME="Header_185">Definition</A></H4>
+<ul>
+<PRE>
+package com.ibm.staf;
+ 
+public class STAFException extends Exception
+{
+    public STAFException();
+    public STAFException(int theRC);
+    public STAFException(int theRC, String s);
+ 
+    public int rc;
+}
+</PRE>
+</ul>
+
+<h4>Examples</h4>
+
+The following example shows how to deal with a STAFException when registering
+with STAF.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+
+try
+{
+    STAFHandle handle = new STAFHandle("MyApplication");
+    System.out.println("My handle is: " + handle.getHandle());
+}
+catch (STAFException e)
+{
+    System.out.println("Error registering with STAF, RC: " + e.rc);
+    System.exit(1);
+}
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_STAFResult" href="#ToC_STAFResult">3.1.3 Class STAFResult</a></h3>
+
+<P>The STAFResult class is returned by the STAFHandle.submit2() method.  It
+contains both the STAF return code as well as the result string.
+In addition, if auto-unmarshalling is enabled for the handle (which it is by
+default), the STAFResult object also contains the marshalling context for the
+result (e.g. the unmarshalled result) and the result object (e.g. the root
+object of the marshalling context).  Otherwise, if auto-unmarshalling is
+disabled for the handle that called the submit2() method, the resultContext
+and resultObj fields will be set to null.
+
+It is typically used in places where you wish to avoid catching exceptions
+when using STAF or where you want the result to be auto-unmarshalled.
+This class also contains the constant definitions for all the STAF return codes.
+These return codes are common to STAFResult and STAFException.
+<P>
+<H4><A NAME="Header_187">Definition</A></H4>
+
+<ul>
+<PRE>package com.ibm.staf;
+ 
+public class STAFResult
+{
+    STAFResult();
+    STAFResult(int theRC);
+    STAFResult(int theRC, String theResult);
+
+    // Added in STAF V3.3.1
+    STAFResult(int theRC, String theResult, boolean doUnmarshallResult);
+ 
+    public int rc;
+    public String result;
+    public Object resultObj = null;                      // Added in STAF V3.3.1
+    public STAFMarshallingContext resultContext = null;  // Added in STAF V3.3.1
+ 
+    public static final int Ok = 0;
+    public static final int InvalidAPI = 1;
+    public static final int UnknownService = 2;
+    public static final int InvalidHandle = 3;
+    public static final int HandleAlreadyExists = 4;
+    public static final int HandleDoesNotExist = 5;
+    public static final int UnknownError = 6;
+    public static final int InvalidRequestString = 7;
+    public static final int InvalidServiceResult = 8;
+    public static final int REXXError = 9;
+    public static final int BaseOSError = 10;
+    public static final int ProcessAlreadyComplete = 11;
+    public static final int ProcessNotComplete = 12;
+    public static final int VariableDoesNotExist = 13;
+    public static final int UnResolvableString = 14;
+    public static final int InvalidResolveString = 15;
+    public static final int NoPathToMachine = 16;
+    public static final int FileOpenError = 17;
+    public static final int FileReadError = 18;
+    public static final int FileWriteError = 19;
+    public static final int FileDeleteError = 20;
+    public static final int STAFNotRunning = 21;
+    public static final int CommunicationError = 22;
+    public static final int TrusteeDoesNotExist = 23;
+    public static final int InvalidTrustLevel = 24;
+    public static final int AccessDenied = 25;
+    public static final int STAFRegistrationError = 26;
+    public static final int ServiceConfigurationError = 27;
+    public static final int QueueFull = 28;
+    public static final int NoQueueElement = 29;
+    public static final int NotifieeDoesNotExist = 30;
+    public static final int InvalidAPILevel = 31;
+    public static final int ServiceNotUnregisterable = 32;
+    public static final int ServiceNotAvailable = 33;
+    public static final int SemaphoreDoesNotExist = 34;
+    public static final int NotSemaphoreOwner = 35;
+    public static final int SemaphoreHasPendingRequests = 36;
+    public static final int Timeout = 37;
+    public static final int JavaError = 38;
+    public static final int ConverterError = 39;
+    public static final int NotUsed = 40;
+    public static final int InvalidObject = 41;
+    public static final int InvalidParm = 42;
+    public static final int RequestNumberNotFound = 43;
+    public static final int InvalidAsynchOption = 44;
+    public static final int RequestNotComplete = 45;
+    public static final int ProcessAuthenticationDenied = 46;
+    public static final int InvalidValue = 47;
+    public static final int DoesNotExist = 48;
+    public static final int AlreadyExists = 49;
+    public static final int DirectoryNotEmpty = 50;
+    public static final int DirectoryCopyError = 51;
+    public static final int DiagnosticsNotEnabled = 52;
+    public static final int HandleAuthenticationDenied = 53;
+    public static final int HandleAlreadyAuthenticated = 54;
+    public static final int InvalidSTAFVersion = 55;
+    public static final int RequestCancelled = 56;
+    public static final int CreateThreadError = 57;
+    public static final int MaximumSizeExceeded = 58;
+    public static final int MaximumHandlesExceeded = 59;  // Added in STAF V3.3.6
+ 
+    public static final int UserDefined = 4000;
+}
+</PRE>
+</ul>
+
+<h4>Examples</h4>
+<ol>
+<li>The following example shows the use of the STAFResult class when submitting
+a request to a STAF service that returns a single string result.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+
+// The variable "handle" is an instance of the STAFHandle class that was
+// previously instantiated.
+
+STAFResult result = handle.submit2("local", "PING", "PING");
+
+if (result.rc == STAFResult.Ok)
+{
+    System.out.println("Successful PING request.  " +
+        "Result=" + result.result);
+}
+else
+{
+    System.out.println("Error submitting PING request.  " +
+        "RC: " + result.rc + "  Result: " + result.result);
+}
+</pre>
+</font>
+</ul>
+<p>
+<li>The following example shows the use of the STAFResult class when submitting
+a request to a STAF service that returns a marshalled result string.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+import java.util.*;
+
+// The variable "handle" is an instance of the STAFHandle class that was
+// previously instantiated.
+
+String dirName = "{STAF/Config/STAFRoot}/bin";
+String request = "LIST DIRECTORY " + STAFUtil.wrapData(dirName) + " TYPE F LONG";
+        
+STAFResult result = handle.submit2("local", "FS", request);
+
+if (result.rc == STAFResult.Ok)
+{
+    // The result buffer from a successful LIST DIRECTORY LONG request
+    // returns a marshalled list of maps containing information about
+    // the entries in the directory
+
+    System.out.println("Successful FS " + request + "\nResult=" +
+                       result.resultContext);
+
+    // Iterate through the unmarshalled result (which is a List
+    // containing a Map for each entry in the directory) and
+    // check which files have a last modified data > 20080101-00:00:00
+
+    List resultList = (List)result.resultObj;
+    Iterator iter = resultList.iterator();
+
+    while (iter.hasNext())
+    {
+        Map entryMap = (Map)iter.next();
+        String lmTimestamp = (String)entryMap.get("lastModifiedTimestamp");
+                
+        if (lmTimestamp.compareTo("20080101-00:00:00") == 1)
+        {
+            System.out.println("File " + entryMap.get("name") +
+                               " was last modified on " + lmTimestamp);
+        }
+    }
+}
+else
+{
+    System.out.println("Error submitting FS " + request +
+                       "\nRC: " + result.rc + "  Result: " + result.result);
+}
+</pre>
+</font>
+</ul>
+</ol>
+<br>
+
+<h2><a name="Header_Marshalling" href="#ToC_Marshalling">3.2 Marshalling APIs</a></h2>
+<p>
+These APIs allow you to define, manipulate, and (un)marshall data structures, and
+print marshalled data in human-readable ("pretty" print) format.
+<p>
+STAF supports the automatic marshalling and unmarshalling of structured data. 
+The act of marshalling takes a data structure and converts it into a
+string-based representation. The act of unmarshalling reverses this and
+converts the string-based representation back into a data structure. 
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRMARSHALL">
+Section 6.1, "Marshalling Structured Data"</a> in the STAF User's Guide for
+more information.
+
+<h3><a name="Header_STAFMCDef" href="#ToC_STAFMCDef">3.2.1 Class STAFMapClassDefinition</a></h3>
+
+<p>The <tt>STAFMapClassDefinition</tt> class provides the metadata 
+associated with a map class.  In particular, it defines the keys
+associated with the map class.  This class is used to create and/or
+access a STAF map class definition which can be useful if you want to
+generate a STAF marshalling context with map classes.  The map class
+definition is used to reduce the size of a marshalling map class in
+comparison to a map containing the same data.  It also contains
+information about how to display instances of the map class,
+such as the order in which to display the keys and the display names to
+use for the keys.  You get and set map class definitions using the 
+<tt>STAFMarshallingContext</tt> class <tt>setMapClassDefinition</tt> and 
+<tt>getMapClassDefinition</tt> functions.
+<p>
+When constructing a new <tt>STAFMapClassDefinition</tt> object, the
+required argument <i>name</i> specifies the name of the STAF
+map class definition.
+<p>
+<tt>STAFMapClassDefinition</tt> defines the following methods:
+<p>
+<ul>
+<dl>
+<dt><b><tt>createInstance</tt></b>()
+<dd>Returns a <tt>Map</tt> containing one entry with a key name of
+<tt>'staf-map-class-name'</tt> with a value set to the name of the
+map class definition.
+<p>
+<dt><b><tt>addKey</tt></b>(<i>keyName</i><b><font size="+1">[</font></b>,
+    <i>displayName</i><b><font size="+1">]</font></b></i>)</tt>
+<dd>Adds a key to the map class definition.
+<p>The required argument <i>keyName</i> specifies the name of a key.
+<p>The optional argument <i>displayName</i> specifies a string to
+use when displaying the key.  The default is <tt>null</tt> which 
+indicates to use the actual key name when displaying the key.
+<p>
+<dt><b><tt>setKeyProperty</tt></b>(<i>keyName</i>, <i>property</i>, <i>value</i>)
+<dd>Sets a property such as a short display name ("display-short-name")
+for a key in the map class definition.
+<p>The required argument <i>keyName</i> specifies the name of
+a key for which this property is being set.
+<p>The required argument <i>property</i> specifies the name of
+the property being set.  The only property name currently recognized
+<tt>'display-short-name'</tt> which is used by the STAF executable when
+displaying a result in a tabular format when the length of the values
+for the fields is less than the length of the <tt>'display-name'</tt>.
+<p>The required argument <i>value</i> specifies the value for
+the property being set.
+<p>
+<dt><b><tt>keyIterator</tt></b>()
+<dd>Returns an <tt>Iterator</tt> object for the list of all the keys.
+Each entry in the list is a map containing a key named <tt>'key'</tt>,
+and optionally, a key named <tt>'display-name'</tt>, and optionally,
+any key property names such as <tt>'display-short-name'</tt>.
+<p>
+<dt><b><tt>name</tt></b>()
+<dd>Returns a <tt>String</tt> containing the name for the map class
+definition.
+</dl>
+</ul>
+
+<P><H4><A NAME="Header_189">Definition</A></H4>
+
+<ul>
+<PRE>package com.ibm.staf;
+ 
+public class STAFMapClassDefinition
+{
+    public STAFMapClassDefinition(String name);
+ 
+    public Map createInstance();
+ 
+    public void addKey(String keyName);
+    public void addKey(String keyName, String displayName);
+    public void setKeyProperty(String keyName, String property, String value);
+    public Iterator keyIterator();
+    public String name();
+}
+</PRE>
+</ul>
+
+<h4>Examples</h4>
+
+This example shows how to create a marshalling context containing one
+map class definition and a map as the root object and how to create a
+string of marshalled data representing this marshalling context.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+import java.util.*;
+
+public class TestMarshalling
+{
+    public static void main(String [] argv)
+    {
+        // Define a map class for querying information about a test
+
+        myMapClass = new STAFMapClassDefinition("MyApp/Test/MyMap");
+        myMapClass.addKey("name", "Name");
+        myMapClass.addKey("exec", "Executable");
+        myMapClass.addKey("testType", "Test Type");
+        myMapClass.setKeyProperty("testType", "display-short-name", "Type");
+
+        // Create a marshalling context and assign a map class definition to it
+
+        STAFMarshallingContext mc = new STAFMarshallingContext();
+        mc.setMapClassDefinition(myMapClass);
+
+        // Create an instance of this map class definition and assign data
+        // to the map class instance
+
+        Map testMap = myMapClass.createInstance();
+
+        testMap.put("name", "TestA");
+        testMap.put("exec", "C:/tests/TestA.exe");
+        testMap.put("testType", "FVT");
+
+        // Set the map as the root object for the marshalling context
+
+        mc.setRootObject(testMap);
+
+        // Print the marshalling context in a human-readable format
+
+        System.out.println("Formatted output:\n" + mc.toString());
+
+        // Create a marshalled string
+        String result = mc.marshall();
+    }
+
+    private static STAFMapClassDefinition myMapClass;
+}
+</pre>
+</font>
+</ul>
+The output from running this example would be:
+<ul>
+<font color="darkblue">
+<pre>
+Formatted output:
+{
+  Name      : TestA
+  Executable: C:/tests/TestA.exe
+  Test Type : FVT
+}
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_STAFMC" href="#ToC_STAFMC">3.2.2 Class STAFMarshallingContext</a></h3>
+
+<P>The STAFMarshallingContext class is used to create and/or access a STAF
+marshalling context which is used by STAF to help in marshalling and
+unmarshalling data.  A marshalling context is simply a container for
+map class definitions and a data structure that uses (or is defined in
+terms of) them.
+<p>
+In order to use a map class when marshalling data, you must add the
+map class definition to the marshalling context, set the root object
+of the marshalling context to the object you want to marshall,
+and then marshall the marshalling context itself.
+When you unmarshall a data structure, you will always receive a
+marshalling context. Any map class definitions referenced by map
+classes within the data structure will be present in the marshalling context. 
+<p>
+The primary use of this class is to represent multi-valued results
+that consist of a data structure (e.g. results from a QUERY/LIST
+service request, etc.) as a string that can also
+be converted back into the data structure.  This string can be
+assigned to the string result buffer returned from the service request.
+<p>
+When constructing a new STAFMarshalling class object, the optional
+argument <i>obj</i> specifies the root object to be marshalled.
+The default is <tt>null</tt>.
+<p>
+<tt>STAFMarshallingContext</tt> defines the following methods:
+<p>
+<ul>
+<dl>
+<dt><b><tt>setMapClassDefinition</tt></b>(<i>mapClassDef</i>)
+<dd>Called to add a map class definition to the marshalling context.
+ <p>The required argument <i>mapClassDef</i> specifies a
+    <tt>STAFMapClassDefinition</tt> object that can be used when
+    marshalling the object.  You may call this method any number of
+    times to set multiple <tt>STAFMapClassDefinition</tt> objects
+    for the marshalling context.
+<p>
+<dt><b><tt>getMapClassDefinition</tt></b>(<i>mapClassName</i>)
+<dd>Returns the map class definition for the specified map class name.
+ <p>The required argument <i>mapClassName</i> specifies a <tt>String</tt>
+    containing the name of the <tt>STAFMapClassDefinition</tt> object
+    that you want to return.
+<p>
+<dt><b><tt>hasMapClassDefinition</tt></b>(<i>mapClassName</i>)
+<dd>Called to determine whether the marshalling context contains
+the specified map class definition. 
+Returns a <tt>true</tt> value if it exists.
+ <p>The required argument <i>mapClassName</i> specifies a <tt>String</tt>
+    containing the name of the <tt>STAFMapClassDefinition</tt> object
+    that you want to check if the marshalling context's contains
+    in its list of map class definitions.
+<p>
+<dt><b><tt>mapClassDefinitionIterator</tt></b>()
+<dd>Returns an <tt>Iterator</tt> object for the names of the map
+class definitions contained in the marshalling context.
+ <p>Note that the name of a map class definition is a <tt>String</tt>.
+<p>
+<dt><b><tt>setRootObject</tt></b>(<i>rootObject</i>)
+<dd>Sets the root object for the marshalling context.
+    <p>The required argument <i>rootObject</i> can specify any
+    <tt>Object</tt>.
+<p>
+<dt><b><tt>getRootObject</tt></b>()
+<dd>Returns the root object for the marshalling context.
+<p>
+<dt><b><tt>getPrimaryObject</tt></b>()
+<dd>Returns the primary object for the marshalling context which is
+    the marshalling context object itself if the marshalling context
+    contains one or more map class definitions.  Otherwise, it returns
+    the root object.
+<dt><b><tt>marshall</tt></b>()
+<dd>This is the marshalling function that creates marshalled data for
+the marshalling context.  Returns a <tt>String</tt> containing the
+marshalled data.
+</dl>
+</ul>
+<p>
+The <tt>STAFMarshallingContex</tt> class defines following static methods
+<ul>
+<dl>
+<dt><b><tt>STAFMarshallingContext.isMarshalledData</tt></b>(<i>someData</i>)
+<dd>Tests if the argument <i>someData</i> is a string-based
+marshalled representation.  Returns a true value if is a marshalled string.
+<p>
+<dt><b><tt>STAFMarshallingContext.marshall</tt></b>(<i>object</i>, <i>context</i>)
+<dd>This is the marshalling function that creates marshalled data for
+the marshalling context.
+<p>
+<dt><b><tt>STAFMarshallingContext.unmarshall</tt></b>(<i>marshalledObject</i>)
+<dd>A function used to convert a string-based marshalled representation
+specified by argument <i>data</i> back into a data structure.
+It returns a marshalling context (from which you can get the data structure
+via the STAFMarshallingContext class getRootObject() function).
+<p>
+<dt><b><tt>STAFMarshallingContext.formatObject</tt></b>(<i>obj</i>)
+<dd>A function used to convert a data structure into a verbose formatted
+hierarchical string that can be used when you want a "pretty print"
+representation of an object.
+</dl>
+</ul>
+<p>
+More information on these static methods are provided later in this section.
+
+<H4><A NAME="Header_191">Definition</A></H4>
+
+<ul>
+<PRE>
+package com.ibm.staf;
+ 
+public class STAFMarshallingContext
+{
+    public static final int UNMARSHALLING_DEFAULTS = 0;
+    public static final int IGNORE_INDIRECT_OBJECTS = 1;
+ 
+    public static boolean isMarshalledData(String someData);
+ 
+    public STAFMarshallingContext();
+    public STAFMarshallingContext(Object obj);
+ 
+    public void setMapClassDefinition(STAFMapClassDefinition mapClassDef);
+    public STAFMapClassDefinition getMapClassDefinition(String mapClassName);
+    public boolean hasMapClassDefinition(String mapClassName);
+    public Iterator mapClassDefinitionIterator();
+ 
+    public void setRootObject(Object rootObject);
+    public Object getRootObject();
+ 
+    public Object getPrimaryObject();
+ 
+    public String marshall();
+    public static String marshall(Object object,
+                                  STAFMarshallingContext context);
+ 
+    public static STAFMarshallingContext unmarshall(String marshalledObject);
+    public static STAFMarshallingContext unmarshall(
+        String marshalledObject, int flags);
+    public static STAFMarshallingContext unmarshall(
+        String data, STAFMarshallingContext context);
+    public static STAFMarshallingContext unmarshall(
+        String data, STAFMarshallingContext context, int flags);
+ 
+    public static String formatObject(Object obj);
+    public String toString();
+}
+</PRE>
+</ul>
+
+<h4>Examples</h4>
+
+This example shows how to create a marshalling context containing one
+map class definition and a map as the root object and how to create a
+string of marshalled data representing this marshalling context.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+import java.util.*;
+
+public class TestMarshalling
+{
+    public static void main(String [] argv)
+    {
+        // Define a map class for querying information about a test
+
+        myMapClass = new STAFMapClassDefinition("MyApp/Test/MyMap");
+        myMapClass.addKey("name", "Name");
+        myMapClass.addKey("exec", "Executable");
+        myMapClass.addKey("testType", "Test Type");
+        myMapClass.setKeyProperty("testType", "display-short-name", "Type");
+
+        // Create a marshalling context and assign a map class definition to it
+
+        STAFMarshallingContext mc = new STAFMarshallingContext();
+        mc.setMapClassDefinition(myMapClass);
+
+        // Create an instance of this map class definition and assign data
+        // to the map class instance
+
+        Map testMap = myMapClass.createInstance();
+
+        testMap.put("name", "TestA");
+        testMap.put("exec", "C:/tests/TestA.exe");
+        testMap.put("testType", "FVT");
+
+        // Set the map as the root object for the marshalling context
+
+        mc.setRootObject(testMap);
+
+        // Print the marshalling context in a human-readable format
+
+        System.out.println("Formatted output:\n" + mc.toString());
+
+        // Create a marshalled string
+        String result = mc.marshall();
+    }
+
+    private static STAFMapClassDefinition myMapClass;
+}
+</pre>
+</font>
+</ul>
+The output from running this example would be:
+<ul>
+<font color="darkblue">
+<pre>
+Formatted output:
+{
+  Name      : TestA
+  Executable: C:/tests/TestA.exe
+  Test Type : FVT
+}
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_isMarshalled" href="#ToC_isMarshalled">3.2.2.1 Static Method isMarshalledData</a></h3>
+
+<h4>Definition</h4>
+<p>
+<ul>
+<dl>
+<dt><b><tt>STAFMarshallingContext.isMarshalledData</tt></b>(<i>someData</i>)
+<dd>Tests if the argument <i>someData</i> is a string-based
+marshalled representation.  Returns a true value if is a marshalled string.
+<p>The required argument <i>someData</i> is a <tt>String</tt>.
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+if (STAFMarshallingContext.isMarshalledData(result.result))
+{
+    STAFMarshallingContext mc = STAFMarshallingContext.unmarshall(
+        result.result);
+}
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_marshall" href="#ToC_marshall">3.2.2.2 Static Method marshall</a></h3>
+
+<h4>Definition</h4>
+<p>
+<ul>
+<dl>
+<dt><b><tt>STAFMarshallingContext.marshall</tt></b>(<i>object</i>, <i>context</i>)
+<dd>A static method used to create a string-based marshalled representation
+    of the object specified by argument <i>object</i>.
+    <p>The required argument <i>object</i> can be any <tt>Object</tt>.
+    <p>The required argument <i>context</i> specifies the
+    <tt>STAFMarshallingContext</tt> object that should be used when
+    creating the marshalled string. You can specify <tt>null</tt> if
+    you don't need to specify a marshalling context.
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+This example shows how to marshall data without a marshalling context
+object.  If you have a marshalling context object, then you'll
+probably just want to use the non-static marshall() method instead to
+marshall data (e.g. <tt>String result = mc.marshall();</tt>).
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+import java.util.*;
+
+public class MarshallTest3
+{
+    public static void main(String [] argv)
+    {
+        Map myMap = new HashMap();
+        myMap.put("name", "TestA");
+        myMap.put("exec", "C:/tests/TestA.exe");
+        myMap.put("testType", "FVT");
+
+        // Create a marshalled string (without a marshalling context)
+
+        String result = STAFMarshallingContext.marshall(myMap, null);
+
+        // Unmarshall the string and print it in a nicely formatted way
+
+        STAFMarshallingContext mc = STAFMarshallingContext.unmarshall(result);
+        System.out.println(mc);
+
+        // Note:  If you have a marshalling context object, then
+        // just use the non-static marshall() method instead.
+        
+        String result2 = mc.marshall();
+    }
+}</pre>
+</font>
+</ul>
+The output from running this example would be:
+<ul>
+<font color="darkblue">
+<pre>
+{
+  exec    : C:/tests/TestA.exe
+  name    : TestA
+  testType: FVT
+}
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_unmarshall" href="#ToC_unmarshall">3.2.2.3 Static Method unmarshall</a></h3>
+
+<h4>Definition</h4>
+<p>
+<ul>
+<dl>
+<dt><b><tt>STAFMarshallingContext.unmarshall</tt></b>(<i>marshalledObject</i>)
+<dd>A function used to convert a string-based marshalled representation
+specified by argument <i>marshalledObject</i> back into a data structure.
+It returns a marshalling context (from which you can get the data structure
+via the STAFMarshallingContext class getRootObject() function).
+<p>
+The required argument <i>marshalledObject</i> is a string to be unmarshalled.
+<p>
+<dt><b><tt>STAFMarshallingContext.unmarshall</tt></b>(<i>marshalledObject</i>, <i>flags</i>)
+<dd>A function used to convert a string-based marshalled representation
+specified by argument <i>marshalledObject</i> back into a data structure.
+It returns a marshalling context (from which you can get the data structure
+via the STAFMarshallingContext class getRootObject() function).
+<p>
+The required argument <i>marshalledObject</i> is a string to be unmarshalled.
+<p>
+The required argument <i>flags</i> can be used to control
+how to unmarshall the string.
+When a string is unmarshalled into a data structure, it is possible
+that one of the string objects that is unmarshalled is itself the
+string form of another marshalled data structure.
+Use <tt>STAFMarshallingContext.UNMARSHALLING_DEFAULTS</tt> to recursively
+unmarshall these nested objects.
+Use <tt>STAFMarshallingContext.IGNORE_INDIRECT_OBJECTS</tt> to disable this additional processing.
+<p>
+<dt><b><tt>STAFMarshallingContext.unmarshall</tt></b>(<i>data</i>, <i>context</i>)
+<dd>A function used to convert a string-based marshalled representation
+specified by argument <i>data</i> back into a data structure.
+It returns a marshalling context (from which you can get the data structure
+via the STAFMarshallingContext class getRootObject() function).
+<p>
+The required argument <i>data</i> is a string to be unmarshalled.
+<p>
+The required argument <i>context</i> specifies the
+<tt>STAFMarshallingContext</tt> object that should be used when
+unmarshalling the string.  You can specify <tt>null</tt> for this argument.
+<p>
+<dt><b><tt>STAFMarshallingContext.unmarshall</tt></b>(<i>data</i>,
+     <i>context</i>, <i>flags</i>)
+<dd>A function used to convert a string-based marshalled representation
+specified by argument <i>data</i> back into a data structure.
+It returns a marshalling context (from which you can get the data structure
+via the STAFMarshallingContext class getRootObject() function).
+<p>
+The required argument <i>data</i> is a string to be unmarshalled.
+<p>
+The required argument <i>context</i> specifies the
+<tt>STAFMarshallingContext</tt> object that should be used when
+unmarshalling the string.  You can specify <tt>null</tt> for this argument.
+<p>
+The required argument <i>flags</i> can be used to control
+how to unmarshall the string.
+When a string is unmarshalled into a data structure, it is possible
+that one of the string objects that is unmarshalled is itself the
+string form of another marshalled data structure.
+Use <tt>STAMarshallingContext.UNMARSHALLING_DEFAULTS</tt> to recursively
+unmarshall these nested objects.
+Use <tt>STAFMarshalingContext.IGNORE_INDIRECT_OBJECTS</tt> to disable this additional processing.
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+<ol>
+<li>This example shows how to unmarshall the result from a "LIST DIRECTORY"
+request to the FS service which returns a marshalled list of strings.
+It then checks if an entry named "bin" exists in the directory list.
+<p>
+Here is the STAF request that this example executes and its result as
+shown when run using the STAF executable which "pretty prints" the result.
+<ul>
+<font color="darkblue">
+<pre>
+C:\>STAF local FS LIST DIRECTORY {STAF/Config/STAFRoot}
+Response
+--------
+lib
+codepage
+STAFInst
+samples
+include
+bin
+docs
+data
+services
+STAFReg.inf
+LICENSE.htm
+</pre>
+</font>
+</ul>
+
+Here is a Java program that shows how to submit this STAF request and
+unmarshall its result:
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+import java.util.*;
+
+public class TestUnmarshallList
+{
+    public static void main(String [] argv)
+    {
+        // Register with STAF
+
+        try
+        {
+            handle = new STAFHandle("MyApp/Test");
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error registering with STAF, RC: " + e.rc);
+            System.exit(1);
+        }
+
+        // Submit a request to the FS service to LIST the contents of
+        // the STAF root directory
+        
+        String machine = "local";
+        String service = "FS";
+        String request = "LIST DIRECTORY {STAF/Config/STAFRoot}";
+
+        try
+        {
+            String result = handle.submit(machine, service, request);
+
+            // The result from the request is a marshalled list of strings.
+            // Unmarshall the result.
+            
+            STAFMarshallingContext mc = STAFMarshallingContext.unmarshall(
+                result);
+            
+            // Pretty print the result context
+
+            System.out.println("Formatted output:\n" + mc);
+
+            List entryList = (List)mc.getRootObject();
+
+            // Check if an entry named "bin" is in the directory list
+
+            Iterator iter = entryList.iterator();
+
+            while (iter.hasNext())
+            {
+                String entryName = (String)iter.next();
+
+                if (entryName.equals("bin"))
+                {
+                    System.out.println(
+                        "The STAF root directory contains a directory " +
+                        "named bin");
+                }
+            }  
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error submitting request STAF " + machine + " " +
+                service + " " + request +
+                "\nRC: " + e.rc + "  Result: " + e.getMessage());
+        }
+    }
+
+    private static STAFHandle handle;
+}
+</pre>
+</font>
+</ul>
+The output from running this example could be:
+<ul>
+<font color="darkblue">
+<pre>
+Formatted output:
+[
+  lib
+  codepage
+  STAFInst
+  STAFInst.mfs
+  samples
+  include
+  bin
+  LICENSE.htm
+  docs
+  data
+  services
+  NOTICES.htm
+  install.properties
+]
+The STAF root directory contains a directory named bin
+</pre>
+</font>
+</ul>
+<p>
+<li>This example shows how to unmarshall the result from a STAF request to
+the PROCESS service specifying the WAIT option and the RETURNSTDOUT
+option.  The result buffer for this request will contain a marshalled
+&lt;Map:STAF/Service/Process/CompletionInfo> which represents the
+completion information for the process, including the return code from 
+the process, the key (if one was specified with the NOTIFY ONEND option),
+as well as any files specified by RETURNSTDOUT, RETURNSTDERR,
+and/or RETURNFILE. 
+<p>
+Here is the STAF request that this example executes and its result as
+shown when run using the STAF executable which "pretty prints" the result.
+<p>
+<ul>
+<font color="darkblue">
+<tt>C:\>STAF local PROCESS START SHELL COMMAND "dir {STAF/Config/STAFRoot}" RETURNSTDOUT STDERRTOSTDOUT WAIT</tt>
+<pre>
+Response
+--------
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : [
+    {
+      Return Code: 0
+      Data       :  Volume in drive C has no label.
+ Volume Serial Number is B0B7-F95A
+
+ Directory of C:\STAF
+
+01/26/2006  02:56p      <DIR>          .
+01/26/2006  02:56p      <DIR>          ..
+01/26/2006  02:56p      <DIR>          lib
+01/26/2006  02:56p      <DIR>          codepage
+01/26/2006  02:56p      <DIR>          samples
+01/26/2006  02:57p      <DIR>          include
+01/26/2006  02:57p      <DIR>          bin
+02/25/2008  01:30p              17,029 LICENSE.htm
+01/26/2006  03:04p      <DIR>          docs
+01/26/2006  03:11p      <DIR>          data
+02/12/2008  05:05p                  25 STAFReg.inf
+06/05/2008  10:17a               8,729 NOTICES.htm
+06/24/2008  04:34p                  77 install.properties
+               4 File(s)         72,601 bytes
+               9 Dir(s)   8,199,012,352 bytes free
+
+    }
+  ]
+}</pre>
+</font>
+</ul>
+
+Here is a Java program that shows how to submit this STAF request and
+unmarshall its result:
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+import java.util.*;
+
+public class TestUnmarshallMap
+{
+    public static void main(String [] argv)
+    {
+        // Register with STAF
+
+        try
+        {
+            handle = new STAFHandle("MyApp/Test");
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error registering with STAF, RC: " + e.rc);
+            System.exit(1);
+        }
+
+        // Submit a request to the PROCESS service to run a command that
+        // lists the contents of the STAF root directory and waits for
+        // the request to complete
+        
+        String machine = "local";
+        String service = "PROCESS";
+        String command = "dir {STAF/Config/STAFRoot}";
+        String request = "START SHELL COMMAND " + STAFUtil.wrapData(command) +
+                         " RETURNSTDOUT STDERRTOSTDOUT WAIT";
+
+        System.out.println(
+            "STAF " + machine + " " + service + " " + request);
+
+        try
+        {
+            String result = handle.submit(machine, service, request);
+
+            // Unmarshall the result buffer whose root object is a map 
+            // containing process completion information.  The keys for this
+            // map include 'rc' and 'fileList'.  The value for 'fileList'
+            // is a list of the returned files.  Each entry in the list
+            // consists of a map that contains keys 'rc' and 'data'.
+            // In our PROCESS START request, we returned one file, STDOUT,
+            // (and returned STDERR to the STDOUT file).
+  
+            STAFMarshallingContext mc =
+                STAFMarshallingContext.unmarshall(result);
+
+            Map processCompletionMap = (Map)mc.getRootObject();
+
+            // Verify that the process rc is 0
+
+            String processRC = (String)processCompletionMap.get("rc");
+
+            if (!processRC.equals("0"))
+            {
+                System.out.println(
+                    "ERROR:  Process RC is " + processRC + " instead of 0.");
+                System.exit(1);  
+            }
+
+            // Verify that the rc is 0 for returning data to the STDOUT file
+
+            List returnedFileList = (List)processCompletionMap.get(
+                "fileList");
+            Map stdoutMap = (Map)returnedFileList.get(0);
+            String stdoutRC = (String)stdoutMap.get("rc");
+
+            if (!stdoutRC.equals("0"))
+            {
+                System.out.println(
+                    "ERROR retrieving process Stdout data. RC=" + stdoutRC);
+                System.exit(1); 
+            }
+
+            // Get the data from the STDOUT file created by the process
+            // and print it
+
+            String stdoutData = (String)stdoutMap.get("data");
+
+            System.out.println("\nProcess Stdout File Contains:\n");
+            System.out.println(stdoutData);
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error submitting request STAF " + machine + " " +
+                service + " " + request +
+                "\nRC: " + e.rc + "  Result: " + e.getMessage());
+        }
+    }
+
+    private static STAFHandle handle;
+}
+</pre>
+</font>
+</ul>
+The output from running this example could be:
+<ul>
+<font color="darkblue">
+<p>
+<tt>STAF local PROCESS START SHELL COMMAND :26:dir {STAF/Config/STAFRoot} RETURNSTDOUT STDERRTOSTDOUT WAIT</tt>
+<pre>
+Process Stdout File Contains:
+
+ Volume in drive C has no label.
+ Volume Serial Number is B0B7-F95A
+
+ Directory of c:\dev\sf\rel\win32\staf\retail
+
+01/26/2006  02:56p      <DIR>          .
+01/26/2006  02:56p      <DIR>          ..
+01/26/2006  02:56p      <DIR>          lib
+01/26/2006  02:56p      <DIR>          codepage
+01/26/2006  02:56p      <DIR>          samples
+01/26/2006  02:57p      <DIR>          include
+01/26/2006  02:57p      <DIR>          bin
+02/25/2008  01:30p              17,029 LICENSE.htm
+01/26/2006  03:04p      <DIR>          docs
+01/26/2006  03:11p      <DIR>          data
+02/12/2008  05:05p                  25 STAFReg.inf
+06/05/2008  10:17a               8,729 NOTICES.htm
+06/24/2008  04:34p                  77 install.properties
+               4 File(s)         72,601 bytes
+               9 Dir(s)   8,199,012,352 bytes free</pre>
+</font>
+</ul>
+</ol>
+<br>
+
+<h3><a name="Header_formatObj" href="#ToC_formatObj">3.2.2.4 Static Method formatObject</a></h3>
+
+<h4>Definition</h4>
+<p>
+<ul>
+<dl>
+<dt><b><tt>STAFMarshallingContext.formatObject</tt></b>(<i>obj</i>)
+<dd>A function used to convert a data structure into a verbose formatted
+hierarchical string that can be used when you want a "pretty print"
+representation of an object.
+<p>
+The required argument <i>obj</i> specifies any <tt>Object</tt> to
+be formatted in a verbose, more readable format.
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+This example prints the result from a FS QUERY ENTRY request in a "pretty" verbose format:
+<ul>
+<font color="darkblue">
+<pre>
+String request = "QUERY ENTRY {STAF/Config/ConfigFile}";
+    
+try
+{
+    String result = handle("local", "FS", request);
+
+    STAFMarshallingContext mc = STAFMarshallingContext.unmarshall(result);
+
+    System.out.println(
+        "Formatted output using formatObject():\n" +
+        STAFMarshallingContext.formatObject(mc));
+
+    // Note:  Instead of using the static formatObject method, if you
+    // have a STAFMarshallingContext object (e.g. mc), you can simply
+    // print the marshalling context object itself to get the same 
+    // output because the toString() function for a STAFMarshallingContext
+    // object calls the formatObject function.
+
+    System.out.println("\nFormatted output using toString():\n" + mc);
+}
+catch (STAFException e)
+{
+    System.out.println(
+        "Error submitting request STAF local FS " + request +
+        "\nRC: " + e.rc + "  Result: " + e.getMessage());
+}
+</pre>
+</font>
+</ul>
+
+If successful, this could result in the following output printed:
+<ul>
+<font color="darkblue">
+<pre>
+Formatted output using formatObject():
+{
+  Name              : C:\STAF\bin\staf.cfg
+  Type              : F
+  Upper 32-bit Size : 0
+  Lower 32-bit Size : 6612
+  Modified Date-Time: 20050506-16:08:08
+}
+
+Formatted output using toString():
+{
+  Name              : C:\STAF\bin\staf.cfg
+  Type              : F
+  Upper 32-bit Size : 0
+  Lower 32-bit Size : 6612
+  Modified Date-Time: 20050506-16:08:08
+}
+</pre>
+</font>
+</ul>
+<br>
+
+<h2><a name="Header_PrivateData" href="#ToC_PrivateData">3.3 Private Data Manipulation APIs</a></h2>
+<p>
+These APIs allow you to handle private data.  These APIs are all static methods
+in the STAFUtil class:
+<p>
+<ul>
+<li><b><tt>STAFUtil::addPrivacyDelimiters</tt></b> - Adds privacy delimiters to
+    a string (for use in protecting private data specified in a STAF
+    command option that supports handling private data)
+<li><b><tt>STAFUtil::escapePrivacyDelimiters</tt></b> - Escapes privacy delimiters
+    in a string.
+<li><b><tt>STAFUtil::removePrivacyDelimiters</tt></b> - Removes privacy delimiters
+    from a string.
+<li><b><tt>STAFUtil::maskPrivateData</tt></b> - Masks privacy delimiters in
+    a string.
+</ul>
+<p>
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+information about handling private data.
+
+<h3><a name="Header_addPrivacyDelimiters" href="#ToC_addPrivacyDelimiters">
+3.3.1 Static Method <tt>STAFUtil.addPrivacyDelimiters</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.addPrivacyDelimiters</b>(<i>data</i>)</tt>
+<p>
+<dd>This static method adds privacy delimiters to a string and returns
+    the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    This method should be used by anyone who wants to protect private
+    data specified in a STAF command option that supports handling
+    private data.
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt> that contains
+    data you want to protect. 
+    <p>
+    Returns a <tt>String</tt> object containing the string with opening and
+    closing privacy delimiters added and escapes any privacy delimiters
+    already contained in the string with a caret (^).
+    If the string has length 0 or already has an unescaped opening privacy
+    delimiter at the beginning and an unescaped closing privacy delimiter
+    at the end, privacy delimiters are not added.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <i>data</i> is <tt>"passw0rd"</tt>, this method
+        would return <tt>"!!@passw0rd@!!"</tt>.
+    <li>If the <i>data</i> is <tt>"Password: !!@secret@!!"</tt>, this
+        method would return <tt>"!!@Password: ^!!@secret^@!!@!!"</tt>.
+    </ul>
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String addPrivacyDelimiters(String data);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ol>
+<li>Here's an example of adding privacy delimiters to a password specified
+    for the <tt>PASSWORD</tt> option when starting a process as another user.
+<ul>
+<font color="darkblue">
+<pre>
+String password = STAFUtil.addPrivacyDelimiters("passw0rd");
+String request = "START COMMAND C:/tests/TestA.exe USERNAME Test1" +
+    " PASSWORD " + password;
+
+STAFResult result = handle.submit2("local", "PROCESS", request);
+</pre>
+</font>
+</ul>
+
+<li>Here's an example of specifying adding privacy delimiters to a
+    password used in the <tt>COMMAND</tt> option when starting a process.
+<ul>
+<font color="darkblue">
+<pre>
+String command = "C:/tests/admin -password " +
+    STAFUtil.addPrivacyDelimiters("secret");
+String request = "START SHELL COMMAND " + STAFUtil.wrapData(command);
+
+STAFResult result = handle.submit2("local", "PROCESS", request);
+</pre>
+</font>
+</ul>
+
+</ol>
+
+<br>
+
+<h3><a name="Header_escapePrivacyDelimiters" href="#ToC_escapePrivacyDelimiters">
+3.3.2 Static Method <tt>STAFUtil.escapePrivacyDelimiters</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.escapePrivacyDelimiters</b>(<i>data</i>)</tt>
+<p>
+<dd>This static method escapes all privacy delimiters (<tt>!!@</tt> and
+    <tt>@!!</tt>) found in the data with a caret (^) and returns
+    the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    This method should be used before calling the <tt>addPrivacyDelimiters</tt>
+    method for data that needs to be protected but may contain
+    substrings <tt>!!@</tt> and/or <tt>@!!</tt> that should not be
+    mistaken for privacy delimiters .
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt>. 
+    <p>
+    Returns a <tt>String</tt> object containing the updated data.
+    <p>
+    For example, if the <i>data</i> is <tt>"passw@!!d"</tt>, this method
+    would return <tt>"passw^@!!d"</tt>.
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String escapePrivacyDelimiters(String data);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+Here's an example of escaping privacy delimiters in password <tt>'passw@!!d'</tt>
+before adding privacy delimiters to it and then uses the password in the
+<tt>PASSWORD</tt> option when starting a process as another user.
+<ul>
+<font color="darkblue">
+<pre>
+String password = STAFUtil.addPrivacyDelimiters(
+    STAFUtil.escapePrivacyDelimiters("passw@!!d"));
+
+String request = "START COMMAND C:/tests/TestA.exe USERNAME Test1" +
+    " PASSWORD " + password;
+
+STAFResult result = handle.submit2("local", "PROCESS", request);
+</pre>
+</font>
+</ul>
+
+<br>
+
+<h3><a name="Header_removePrivacyDelimiters" href="#ToC_removePrivacyDelimiters">
+3.3.3 Static Method <tt>STAFUtil.removePrivacyDelimiters</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.removePrivacyDelimiters</tt></b>(<i>data</i><b><font size=+1>[</font></b>,
+       <i>numLevels</i><b><font size="+1">]</font></b>)
+<p>
+<dd>This static method removes privacy delimiters found in the data and
+    returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt> that may contain
+    privacy delimiters. 
+    <p>
+    Optional argument <i>numLevels</i> in an <tt>int</tt> that specifies
+    the number of levels of privacy data to remove.  The default is 0
+    which indicates to remove all levels of privacy data.
+    Note that, generally, you'll want to remove all levels of privacy
+    delimiters.
+    <p>
+    Returns a String object containing the updated data with privacy
+    delimiters removed.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <i>data</i> is <tt>"!!@passw0rd@!!"</tt>, this method
+        would return <tt>"passw0rd"</tt>.
+    <li>If the <i>data</i> is <tt>"!!@passw^@!!d@!!"</tt>, this method
+        would return <tt>"passw@!!d"</tt>.
+    <li>If the <i>data</i> is <tt>"!!@Password=^!!@secret^@!!.@!!"</tt> and
+        the <i>numLevels</i> is 0, this method would return
+        <tt>"Password=secret"</tt>.
+    <li>If the <i>data</i> is <tt>"!!@Password=^!!@secret^@!!.@!!"</tt>
+        and the <i>numLevels</i> is 1, this method would return
+        <tt>"Password=!!@secret@!!"</tt>.
+    </ul>
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String removePrivacyDelimiters(String data);
+    public static String removePrivacyDelimiters(String data, int numLevels);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+Here's an example of removing privacy delimiters from protected password
+<tt>"!!@secret@!!"</tt> and assigns <tt>"secret"</tt> as the password.
+<ul>
+<font color="darkblue">
+<pre>
+String protectedPassword = "!!@secret@!!"';
+String password = STAFUtil.removePrivacyDelimiters(protectedPassword);
+</pre>
+</font>
+</ul>
+
+<br>
+
+<h3><a name="Header_maskPrivateData" href="#ToC_maskPrivateData">
+3.3.4 Static Method <tt>STAFUtil.maskPrivateData</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.maskPrivateData</b>(<i>data</i>)</tt>
+<p>
+<dd>This static method masks any private data indicated by privacy
+    delimiters by replacing the private data with asterisks.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt> that may
+    contain privacy delimiters.
+    <p>
+    Returns a String object containing the string with any private
+    data masked.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <i>data</i> is <tt>!!@passw0rd@!!</tt>, this method
+        would return <tt>**************</tt>.
+    <li>If the <i>data</i> is <tt>testA -password !!@secret@!!</tt>,
+        this method would return <tt>testA -password ************</tt>.
+    </ul>
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String maskPrivateData(String data);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+Here's an example of masking any private data indicated by
+    privacy delimiters in a request string before displaying it.
+This example prints:
+<br><tt>START COMMAND C:/tests/TestA.exe USERNAME Test1 PASSWORD **************</tt>
+<ul>
+<font color="darkblue">
+<pre>
+String request = "START COMMAND C:/tests/TestA.exe USERNAME Test1" +
+    " PASSWORD " + STAFUtil.addPrivacyDelimiters("passw0rd");
+
+System.out.println(STAFUtil.maskPrivateData(request);
+</pre>
+</font>
+</ul>
+
+<br>
+
+<h2><a name="Header_GeneralUtility" href="#ToC_GeneralUtility">3.4 General Utility APIs</a></h2>
+<p>
+These are general utility APIs that you may find useful when writing test cases
+in Java or when writing a Java service. 
+<p>
+The general utility APIs that are static functions in the STAFUtil class are:
+<p>
+<ul>
+<li><b><tt>wrapData</tt></b> - Generate the length-delimited
+    version of a string (the :length: format).
+<li><b><tt>unwrapData</tt></b> - Remove the :length: prefix
+    from a string.
+<li><b><tt>stripPortFromEndpoint</tt></b> - Strips the port (@nnnn) from
+    the end of the endpoint. 
+<li><b><tt>validateTrust</tt></b> - Validates that the requesting
+    machine has the required trust to submit a service request.
+    Used by writers of STAF services.
+<li><b><tt>convertDurationString</tt></b> - Verifies that the timeout
+    duration is valid and returns the timeout duration converted to
+    milliseconds.
+<li><b><tt>convertSizeString</tt></b> - Verifies that a file size
+    is valid and returns the size converted to bytes.
+<li><b><tt>resolveRequestVar</tt></b> -
+    This method resolves any STAF variables that are contained within
+    the string passed in on the local machine and returns the resolved
+    value.  It submits a
+    <tt>"RESOLVE REQUEST &lt;request#> STRING &lt;value>"</tt> request to
+    the VAR service on the local system.
+<li><b><tt>resolveRequestVarAndCheckInt</tt></b> -
+    This method resolves any STAF variables that are contained within
+    the string passed in on the local machine and returns the resolved
+    value.  It submits a
+    <tt>"RESOLVE REQUEST &lt;request#> STRING &lt;value>"</tt> request to
+    the VAR service on the local system.
+    Then it checks if the resolved value is an integer and returns an
+    error if it's not an integer.
+<li><b><tt>resolveRequestVarAndConvertDuration</tt></b> - 
+    This method resolves any STAF variables that are contained within
+    the string passed in by submitting a
+    <tt>"RESOLVE REQUEST <request#> STRING <value>"</tt> request to
+    the VAR service on the local system.
+    Then it checks if the resolved value is a valid timeout duration.
+    If valid, it converts the duration into milliseconds and returns
+    a string containing the duration in milliseconds in the result.
+    If not a valid timeout duration, returns an error.
+<li><b><tt>resolveRequestVarAndConvertSize</tt></b> - 
+    This method resolves any STAF variables that are contained within
+    the string passed in by submitting a
+    <tt>"RESOLVE REQUEST <request#> STRING <value>"</tt> request to
+    the VAR service on the local system.
+    Then it checks if the resolved value is a valid file size.
+    If valid, it converts the size into bytes and returns
+    a string containing the size in bytes in the result.
+    If not a valid size, returns an error.
+<li><b><tt>resolveInitVar</tt></b> - Resolves any STAF variables that
+    are contained within the string passed in on the local machine and
+    returns the resolved value.
+    It submits a <tt>"RESOLVE STRING &lt;value>"</tt> request to the
+    VAR service on the local machine. 
+<li><b><tt>resolveInitVarAndCheckInt</tt></b> - Resolves any STAF variables
+    that are contained within the string passed in on the local machine
+    and returns the resolved value.
+    It submits a <tt>"RESOLVE STRING &lt;value>"</tt> request
+    to the VAR service on the local machine.  Then it checks if the
+    resolved value is an integer and retruns an error if it's not an
+    integer
+<li><b><tt>compareSTAFVersion</tt></b> - Gets the version of STAF (or
+    of a STAF service) running on a specified machine and compares it
+    to the required version.
+</ul>
+<p>
+Other general utility APIs are:
+<ul>
+<li><b><tt>STAFVersion</tt> class</b> - Allows you to compare STAF versions.
+This class is useful if you want to verify that a STAF version or a version
+of a STAF service is at a particular level of STAF.
+<li><b><tt>STAFQueueMessage</tt> class</b> - Provides a wrapper around messages
+received via the STAF Queue service.  It takes the received string as input
+and unmarshalls it and breaks it into its constituent parts.
+</b>
+</ul>
+
+<br>
+
+<h3><a name="Header_wrapData" href="#ToC_wrapData">
+3.4.1 Static Method <tt>STAFUtil.wrapData</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.wrapData</tt></b>(<i>data</i>)
+<p>
+<dd>This static method returns a length delimited representation of the
+string.  That is, the <tt>:length:</tt> format for the string.
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDROVFORM">
+Section 7.2, "Option Value Formats"</a> in the STAF User's Guide for more
+information.
+<p>
+The required argument <i>data</i> is a string.
+<p>
+For example, if the <i>data</i> is <tt>Hello world</tt>, this method
+would return a string containing <tt>:11:Hello world</tt>.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String wrapData(String data);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+Instead of enclosing an option value that contains spaces in double quotes
+(like you might do when using the STAF executable to submit a request from
+the command line), in a Java program use the <tt>STAFUtil.wrapData()</tt>
+method to wrap a value.  For example:
+<ul>
+<font color="darkblue">
+<pre>
+// Submit a request to the LOG service to log a message
+
+String message = "Hello world";
+STAFResult result = handle.submit2(
+    "local", "LOG", "LOG GLOBAL LOGNAME MyLog " +
+    "MESSAGE " + STAFUtil.wrapData(message) + " LEVEL Info");
+
+// Submit a request to the PROCESS service to run a command that
+// lists the contents of the STAF root directory and waits for
+// the request to complete
+        
+String machine = "local";
+String service = "PROCESS";
+String command = "dir {STAF/Config/STAFRoot}";
+String request = "START SHELL COMMAND " + STAFUtil.wrapData(command) +
+                 " RETURNSTDOUT STDERRTOSTDOUT WAIT";
+
+STAFResult result = handle.submit2(machine, service, request);
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_unwrapData" href="#ToC_unwrapData">
+3.4.2 Static Method <tt>STAFUtil.unwrapData</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.unwrapData</tt></b>(<i>data</i>)
+<p>
+<dd>This static method returns the string without the <tt>:length:</tt>
+    prefix, if present.
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDROVFORM">
+Section 7.2, "Option Value Formats"</a> in the STAF User's Guide for more
+information.
+<p>
+The required argument <i>data</i> is a string.
+<p>
+For example, if the <i>data</i> is <tt>:8:Hi there</tt>, this method
+would return a string containing <tt>Hi there</tt>.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String unwrapData(String data);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+String wrappedMessage = STAFUtil.wrapData("Hello world");
+String unwrappedMessage = STAFUtil.unwrapData(wrappedMessage);
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_stripPort" href="#ToC_stripPort">
+3.4.3 Static Method <tt>STAFUtil.stripPortFromEndpoint</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.stripPortFromEndpoint</tt></b>(<i>endpoint</i>)
+<p>
+<dd>This static method returns the endpoint without the port (strips
+    <tt>@nnnn</tt> if present from the end of the endpoint).
+<p>
+The required argument <i>endpoint</i> is a string.
+<p>For example, if the endpoint specified is
+<tt>tcp://client1.company.com@6500</tt>, it would return
+<tt>tcp://client1.company.com</tt>.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static String stripPortFromEndpoint(String endpoint);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+String endpoint = STAFUtil.stripPortFromEndpoint(
+    "tcp://client1.company.com@6500");
+</pre>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_validateTrust" href="#ToC_validateTrust">
+3.4.4 Static Method <tt>STAFUtil.validateTrust</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.validateTrust</b>(</tt><i>requiredTrustLevel</i>,
+    <i>service</i>, <i>request</i>, <i>localMachine</i>,
+    <i>info</i>)
+<p>
+<dd>This static method validates that the requesting machine has the
+    required trust level to submit a service request.
+    This method should be used by writers of STAF Java services.
+    <p>
+    Required parameter <i>requiredTrustLevel</i> specifies the 
+    required trust level for this service request.
+    <p>
+    Required parameter <i>service</i> specifies the registered
+    name of the service.
+    <p>
+    Required parameter <i>request</i> specifies the first word (or two)
+    to uniquely identify the request if an error occurs.
+    <p>
+    Required parameter <i>localMachine</i> specifies the logical
+    identifier for the service machine which will be used in the
+    error message if the requesting machine has insufficient trust.
+    <p>
+    Required parameter <i>info</i> specified the request information.
+    <p>
+    This method returns a STAFResult object.  If successful,
+    the return code (rc) in the STAFResult object will be STAFResult.Ok
+    and the result buffer (result) in the STAFResult object will be
+    blank.  If not successful, a non-zero return code will set and
+    the result buffer will contain a detailed error message.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult validateTrust(
+        int requiredTrustLevel, String service, String request,
+        String localMachine, STAFServiceInterfaceLevel30.RequestInfo info);
+}
+</pre>
+</ul>
+
+
+<h4>Examples</h4>
+
+<ul>
+See the <a href="http://staf.sourceforge.net/current/stafsdg.html">
+STAF Service Developer's Guide</a> for examples on using the
+<tt>STAFUtil.validateTrust</tt> method.
+</ul>
+<br>
+
+
+<h3><a name="Header_convertDuration" href="#ToC_convertDuration">
+3.4.5 Static Method <tt>STAFUtil.convertDurationString</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.convertDurationString</b>(</tt><i>durationString</i>)
+<p>
+<dd>This static method verifies that the timeout duration is valid and
+    returns the timeout duration converted to milliseconds.
+    <p>
+    Required parameter <i>durationString</i> specifies the timeout duration
+    in the format <tt>&lt;Number>[s|m|h|d|w]</tt>.
+    For example: "100", "1s", "5m", "1h".
+    <p>
+    This method returns a STAFResult object.  If successful,
+    the return code (rc) in the STAFResult object will be STAFResult.Ok
+    and the result buffer (result) in the STAFResult object will be
+    the converted duration in milliseconds.  If not successful, a non-zero
+    return code will be set and the result buffer will contain a detailed
+    error message.
+<p>
+<b>Since:</b> STAF V3.3.2
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult convertDurationString(String durationString);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<li>Here's an example that uses this method to convert a duration string
+to a duration in milliseconds.
+<ul>
+<font color="darkblue">
+<pre>
+STAFResult result = convertDurationString("10h");
+      
+if (result.rc != STAFResult.Ok) return result;
+
+try
+{
+    long duration = Long.parseLong(result.result);
+}
+catch (NumberFormatException e)
+{
+    return new STAFResult(STAFResult.InvalidValue,
+                          "NumberFormatException: " + e.getMessage());
+}
+</pre>
+</font>
+</ul>
+
+</ul>
+<br>
+
+
+<h3><a name="Header_convertSize" href="#ToC_convertSize">
+3.4.6 Static Method <tt>STAFUtil.convertSizeString</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.convertSizeString</b>(</tt><i>sizeString</i>)
+<p>
+<dd>This static method verifies that the file size is valid and
+    returns the size converted to bytes.
+    <p>
+    Required parameter <i>size</i> specifies the size
+    in the format <tt>&lt;Number>[k|m]</tt>.
+    For example: "1000000", "500k", "5m".
+    <p>
+    This method returns a STAFResult object.  If successful,
+    the return code (rc) in the STAFResult object will be STAFResult.Ok
+    and the result buffer (result) in the STAFResult object will be
+    the converted size in bytes.  If not successful, a non-zero
+    return code will be set and the result buffer will contain a detailed
+    error message.
+<p>
+<b>Since:</b> STAF V3.3.4
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult convertSizeString(String sizeString);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<li>Here's an example that uses this method to convert a size string
+to a size in milliseconds.
+<ul>
+<font color="darkblue">
+<pre>
+long maxFileSizeInBytes = 0;
+
+STAFResult result = convertSizeString("5m");
+      
+if (result.rc != STAFResult.Ok) return result;
+
+try
+{
+    maxFileSizeInBytes = Long.parseLong(result.result);
+}
+catch (NumberFormatException e)
+{
+    // Should never happen because convertSizeString should have
+    // returned an error previously
+
+    return new STAFResult(STAFResult.InvalidValue,
+                          "NumberFormatException: " + e.getMessage());
+}
+</pre>
+</font>
+</ul>
+
+</ul>
+<br>
+
+<h3><a name="Header_resRequestVar" href="#ToC_resRequestVar">
+3.4.7 Static Method <tt>STAFUtil.resolveRequestVar</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.resolveRequestVar</b>(</tt><i>value</i>,
+     <i>handle</i>, <i>requestNumber</i>)
+<p>
+<dd>This static method resolves any STAF variables that are contained
+    within the string passed in by submitting a
+    <tt>"RESOLVE REQUEST &lt;request> STRING &lt;value>"</tt> request
+    to the VAR service on the local machine.
+    The variables will be resolved using the originating handle's
+    pool associated with the specified request number, the local
+    machine's shared variable pool, and the local machine's system
+    variable pool.  
+    This method should be used by writers of STAF Java services as
+    most option values in a service request should be resolved.
+    <p>
+    Required argument <i>value</i> is a <tt>String</tt> that may
+    contain STAF variables to be resolved (e.g. "{STAF/Config/Machine}").
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object.
+    <p>
+    Requires argument <i>requestNumber</i> is the request number.
+    <p>
+    Returns a STAFResult object.  If successful, the rc (return code)
+    in the STAFResult object will be set to STAFResult.Ok and the
+    result (result buffer) in the STAFResult object will contain a
+    string with all STAF variables resolved.  If unsuccessful, the
+    rc will be set to a non-zero integer and the result string will
+    contain an error message.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult resolveRequestVar(
+        String value, STAFHandle handle, int requestNumber);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+See the <a href="http://staf.sourceforge.net/current/stafsdg.html">
+STAF Service Developer's Guide</a> for examples on using the
+<tt>STAFUtil.resolveRequestVar</tt> method.
+</ul>
+<br>
+
+
+<h3><a name="Header_resRequestVarAndCheckInt" href="#ToC_resRequestVarAndCheckInt">
+3.4.8 Static Method <tt>STAFUtil.resolveRequestVarAndCheckInt</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.resolveRequestVarAndCheckInt</b>(</tt><i>option</i>,
+    <i>value</i>, <i>handle</i>, <i>requestNumber</i>)
+<p>
+<dd>This static method resolves any STAF variables that are contained
+    within the string passed in by submitting a
+    <tt>"RESOLVE REQUEST &lt;request> STRING &lt;value>"</tt> request
+    to the VAR service on the local machine.
+    The variables will be resolved using the originating handle's
+    pool associated with the specified request number, the local
+    machine's shared variable pool, and the local machine's system
+    variable pool.  It then checks if the resolved value is an integer  
+    and returns an error if it's not an integer.
+    This method should be used by writers of STAF Java services as
+    most option values in a service request should be resolved.
+    <p>
+    Required argument <i>option</i> is a <tt>String</tt> that contains
+    the name of an option in a service request whose value is being
+    resolved.
+    <p>
+    Required argument <i>value</i> is a <tt>String</tt> that may
+    contain STAF variables to be resolved (e.g. "{STAF/Config/Machine}").
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object.
+    <p>
+    Requires argument <i>requestNumber</i> is the request number.
+    <p>
+    Returns a STAFResult object.  If successful, the rc (return code)
+    in the STAFResult object will be set to STAFResult.Ok and the
+    result (result buffer) in the STAFResult object will contain a
+    string with all STAF variables resolved.  If unsuccessful, the
+    rc will be set to a non-zero integer and the result string will
+    contain an error message.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult resolveRequestVarAndCheckInt(
+        String option, String value, STAFHandle handle, int requestNumber);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+See the <a href="http://staf.sourceforge.net/current/stafsdg.html">
+STAF Service Developer's Guide</a> for examples on using the
+<tt>STAFUtil.resolveRequestVarAndCheckInt</tt> method.
+</ul>
+<br>
+
+<h3><a name="Header_resRequestVarAndConvertDuration" href="#ToC_resRequestVarAndConvertDuration">
+3.4.9 Static Method <tt>STAFUtil.resolveRequestVarAndConvertDuration</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.resolveRequestVarAndConvertDuration</b>(</tt><i>option</i>,
+    <i>value</i>, <i>handle</i>, <i>requestNumber</i>)
+<p>
+<dd>This static method resolves any STAF variables that are contained
+    within the string passed in by submitting a
+    <tt>"RESOLVE REQUEST &lt;request> STRING &lt;value>"</tt> request
+    to the VAR service on the local machine.
+    The variables will be resolved using the originating handle's
+    pool associated with the specified request number, the local
+    machine's shared variable pool, and the local machine's system
+    variable pool.
+    It then checks if the resolved value is a valid timeout duration.
+    If valid, it converts the duration into milliseconds.
+    If not a valid timeout duration, returns an error.
+    This method may be used by writers of STAF Java services to resolve
+    a duration timeout option that needs to be converted to milliseconds.
+    <p>
+    Required argument <i>option</i> is a <tt>String</tt> that contains
+    the name of an option in a service request whose value is being
+    resolved.
+    <p>
+    Required argument <i>value</i> is a <tt>String</tt> that may
+    contain STAF variables to be resolved (e.g. "{STAF/Config/Machine}").
+    This value specifies the timeout duration in the format
+    <tt>&lt;Number>[s|m|h|d|w]</tt>.  For example: "100", "1s", "5m", "1h".
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object.
+    <p>
+    Requires argument <i>requestNumber</i> is the request number.
+    <p>
+    Returns a STAFResult object.  If successful, the rc (return code)
+    in the STAFResult object will be set to STAFResult.Ok and the
+    result (result buffer) in the STAFResult object will contain a
+    string set to the duration value converted to milliseconds.
+    If unsuccessful, the rc will be set to a non-zero integer and the
+    result string will contain an error message.
+<p>
+<b>Since:</b> STAF V3.3.2
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult resolveRequestVarAndConvertDuration(
+        String option, String value, STAFHandle handle, int requestNumber);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<li>Here's an example that uses this method to convert a WAIT option 
+to a duration in milliseconds.
+<ul>
+<font color="darkblue">
+<pre>
+if (parseResult.optionTimes("WAIT") > 0)
+{
+    String waitString = parseResult.optionValue("WAIT");
+    String waitTimeout = "";
+
+    if (waitString.length() != 0)
+    {
+        // Resolve the WAIT value, verify that it is a valid
+        // duration timeout value, and convert it to milliseconds
+        // if needed
+
+        resolvedValue = STAFUtil.resolveRequestVarAndConvertDuration(
+            "WAIT", waitString, fHandle, info.requestNumber);
+
+        if (resolvedValue.rc != STAFResult.Ok)
+            return resolvedValue;
+                    
+        waitTimeout = resolvedValue.result;
+    }
+}
+</pre>
+</font>
+</ul>
+</ul>
+<br>
+
+<h3><a name="Header_resRequestVarAndConvertSize" href="#ToC_resRequestVarAndConvertSize">
+3.4.10 Static Method <tt>STAFUtil.resolveRequestVarAndConvertSize</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.resolveRequestVarAndConvertSize</b>(</tt><i>option</i>,
+    <i>value</i>, <i>handle</i>, <i>requestNumber</i>)
+<p>
+<dd>This static method resolves any STAF variables that are contained
+    within the string passed in by submitting a
+    <tt>"RESOLVE REQUEST &lt;request> STRING &lt;value>"</tt> request
+    to the VAR service on the local machine.
+    The variables will be resolved using the originating handle's
+    pool associated with the specified request number, the local
+    machine's shared variable pool, and the local machine's system
+    variable pool.
+    It then checks if the resolved value is a valid file size.
+    If valid, it converts the size into bytes.
+    If not a valid size, returns an error.
+    This method may be used by writers of STAF Java services to resolve
+    a size option that needs to be converted to bytes.
+    <p>
+    Required argument <i>option</i> is a <tt>String</tt> that contains
+    the name of an option in a service request whose value is being
+    resolved.
+    <p>
+    Required argument <i>value</i> is a <tt>String</tt> that may
+    contain STAF variables to be resolved (e.g. "{STAF/Config/Machine}").
+    This value specifies the size in the format
+    <tt>&lt;Number>[k|m]</tt>.  For example: "1000000", "500k", "5m".
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object.
+    <p>
+    Requires argument <i>requestNumber</i> is the request number.
+    <p>
+    Returns a STAFResult object.  If successful, the rc (return code)
+    in the STAFResult object will be set to STAFResult.Ok and the
+    result (result buffer) in the STAFResult object will contain a
+    string set to the size value converted to bytes.
+    If unsuccessful, the rc will be set to a non-zero integer and the
+    result string will contain an error message.
+<p>
+<b>Since:</b> STAF V3.3.4
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult resolveRequestVarAndConvertSize(
+        String option, String value, STAFHandle handle, int requestNumber);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+<li>Here's an example that uses this method to convert a MAXRETURNFILESIZE option 
+to a size in bytes.
+<ul>
+<font color="darkblue">
+<pre>
+long maxFileSizeInBytes = 0;
+
+if (parseResult.optionTimes("MAXRETURNFILESIZE") > 0)
+{
+    // Resolve the MAXRETURNFILESIZE value, verify that it is a
+    // valid size value, and convert it to bytes, if needed
+
+    resolvedValue = STAFUtil.resolveRequestVarAndConvertSize(
+        "MAXRETURNFILESIZE",
+        parseResult.optionValue("MAXRETURNFILESIZE"),
+        fHandle, info.requestNumber);
+
+    if (resolvedValue.rc != STAFResult.Ok)
+        return resolvedValue;
+                    
+    try
+    {
+        maxFileSizeInBytes = Long.parseLong(resolvedValue.result);
+    }
+    catch (NumberFormatException e)
+    {
+        // Should never happen because resolveRequestVarAndConvertSize
+        // should have returned an error previously
+
+        return new STAFResult(
+            STAFResult.InvalidValue,
+            "Invalid MAXRETURNFILESIZE value: " +
+            resolvedValue.result);
+    }
+}
+</pre>
+</font>
+</ul>
+</ul>
+<br>
+
+<h3><a name="Header_resInitVar" href="#ToC_resInitVar">
+3.4.11 Static Method <tt>STAFUtil.resolveInitVar</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.resolveInitVar</b>(</tt><i>value</i>, <i>handle</i>)
+<p>
+<dd>This static method resolves any STAF variables that are contained
+    within the string passed in the <i>value</i> argument by submitting
+    a <tt>"RESOLVE STRING &lt;value>"</tt> request to the VAR service
+    on the local machine.
+    This method should be used by writers of STAF Java services if
+    they need to resolve a variable in the init() method for a Java
+    service.
+    <p>
+    Required argument <i>value</i> is a <tt>String</tt> that may
+    contain STAF variables to be resolved (e.g. "STAF/Config/Machine}").
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object.
+    <p>
+    Returns a STAFResult object.  If successful, the rc (return code)
+    in the STAFResult object will be set to STAFResult.Ok and the
+    result (result buffer) in the STAFResult object will contain a
+    string with all STAF variables resolved.  If unsuccessful, the
+    rc will be set to a non-zero integer and the result string will
+    contain an error message.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult resolveInitVar(String value, STAFHandle handle);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+See the <a href="http://staf.sourceforge.net/current/stafsdg.html">
+STAF Service Developer's Guide</a> for examples on using the
+<tt>STAFUtil.resolveInitVar</tt> method.
+</ul>
+<br>
+
+<h3><a name="Header_resInitVarAndCheckInt" href="#ToC_resInitVarAndCheckInt">
+3.4.12 Static Method <tt>STAFUtil.resolveInitVarAndCheckInt</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.resolveInitVarAndCheckInt</b>(</tt><i>option</i>, <i>value</i>, <i>handle</i>)
+<p>
+<dd>This static method resolves any STAF variables that are contained
+    within the string passed in the <i>value</i> argument by submitting
+    a <tt>"RESOLVE STRING &lt;value>"</tt> request to the VAR service
+    on the local machine.  Then it checks if the resolved value is an
+    integer and returns an error if it's not an integer.
+    This method should be used by writers of STAF Java services if
+    they need to resolve a variable in the init() method for a Java
+    service.
+    <p>
+    Required argument <i>option</i> is a <tt>String</tt> that contains
+    the name of an option in a service request whose value is being 
+    resolved.
+    <p>
+    Required argument <i>value</i> is a <tt>String</tt> that may
+    contain STAF variables to be resolved (e.g. "STAF/Config/Machine}").
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object.
+    <p>
+    Returns a STAFResult object.  If successful, the rc (return code)
+    in the STAFResult object will be set to STAFResult.Ok and the
+    result (result buffer) in the STAFResult object will contain a
+    string with all STAF variables resolved.  If unsuccessful, the
+    rc will be set to a non-zero integer and the result string will
+    contain an error message.
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult resolveInitVarAndCheckInt(
+        String option, String value, STAFHandle handle);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ul>
+See the <a href="http://staf.sourceforge.net/current/stafsdg.html">
+STAF Service Developer's Guide</a> for examples on using the
+<tt>STAFUtil.resolveInitVarAndCheckInt</tt> method.
+</ul>
+<br>
+
+<h3><a name="Header_compareSTAFVersion" href="#ToC_compareSTAFVersion">
+3.4.13 Static Method <tt>STAFUtil.compareSTAFVersion</tt></a></h3>
+
+<h4>Description</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAFUtil.compareSTAFVersion</b>(</tt><i>machine</i>, <i>handle</i>, <i>minRequiredVersion</i><b><font size="+1">[</font></b>,
+    <i>service</i><b><font size="+1">]</font></b>)
+<p>
+<dd>This static method gets the version of STAF (or of a STAF service)
+    that is running on a machine by submitting a <tt>VERSION</tt> request
+    to either the <tt>MISC</tt> service (to get the version of STAF) or to
+    the specified service on the machine specified by the
+    <i>machine</i> argument.  Then it checks if the version meets the
+    minimum required version specified by the <i>minRequiredVersion</i>
+    argument and returns an error if the version is less than the
+    minimum required version.
+
+    This method should be used by writers of STAF Java services if
+    the service they are writing needs a particular version of STAF.
+    <p>
+    Required argument <i>machine</i> is a <tt>String</tt> that contains
+    the endpoint of the machine whose STAF or STAF service version is
+    to be compared. 
+    <p>
+    Required argument <i>handle</i> is a <tt>STAFHandle</tt> object used to
+    submit the request.
+    <p>
+    Required argument <i>minRequiredVersion</i> is a <tt>String</tt> that
+    contains the minimum version required on the machine.
+    The version must have the following format unless it's blank or
+    "<N/A>", which equates to "no version" and is internally represented
+    as 0.0.0.0:
+    <pre>  a[.b[.c[.d]]] [text]</pre>
+    where:
+    <ul compact>
+      <li><tt>a</tt>, <tt>b</tt>, <tt>c</tt>, and <tt>d</tt>
+          (if specified) are numeric
+      <li><tt>text</tt> is separated by one or more spaces from the
+          version numbers.
+    </ul>
+    <p>
+    Optional argument <i>service</i> is a <tt>String</tt> that
+    contains the name of the service for which you want to compare its
+    version.  Defaults to <tt>MISC</tt> which means that you want to compare
+    the version of STAF running.  Or, you can specify the name of a
+    STAF service (such as STAX, Event, Cron, etc.) that implements a
+    <tt>VERSION</tt> request.
+    <p>
+    STAF Versions are compared as follows:
+    <p>
+    <ul compact>
+    <li>The numeric versions (<tt>a[.b[.c[.d]]]</tt>) are numerically compared.
+    <li>If the numeric versions are "equal", then the <tt>text</tt> values
+        are compared using a case-insensitive string compare.
+        However, note that no text is considered GREATER than any
+        text, e.g. "3.1.0" > "3.1.0 Beta 1".
+    </ul>
+    <p>
+    <b>Examples:</b>
+    <pre>
+      "3" = "3.0" = "3.0.0" = 3.0.0.0"
+      "3.0.0" < "3.1.0"
+      "3.0.2" < "3.0.3"
+      "3.0.9" < "3.0.10"
+      "3.0.0" < "3.1"
+      "3.1.0 Alpha 1" < "3.1.0 Beta 1"
+      "3.1.0 Beta 1" < "3.1.0"</pre>
+    <p>
+    Returns a STAFResult object.  If successful (the version is at or
+    above the required version), the rc (return code) in the STAFResult
+    object will be set to STAFResult.Ok and the result (result buffer) in
+    the STAFResult object will contain the version of STAF (or of the
+    specified STAF service) running on the specified machine.
+    If unsuccessful, the rc will be set to a non-zero integer and the
+    result string will contain an error message.
+    If the version is lower than the mininum required version,
+    STAFResult.InvalidSTAFVersion is returned in the rc with an error
+    message returned in the result. If another error occurs (e.g. RC 16
+    if the machine is not currently running STAF, etc.), an error message
+    will be returned in the result.
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Definition</h4>
+
+<ul>
+<pre>
+public class STAFUtil
+{
+    public static STAFResult compareSTAFVersion(
+        String machine, STAFHandle handle, String minRequiredVersion);
+}
+</pre>
+</ul>
+
+<h4>Examples</h4>
+
+<ol>
+<li>Here's an example of a STAF Java service that uses this method to verify 
+that the version of STAF required by this service is running.
+<ul>
+<font color="darkblue">
+<pre>
+public class MyService implements STAFServiceInterfaceLevel30
+{
+    // Version of STAF (or later) required for this service
+    private final String kRequiredSTAFVersion = "3.1.0";
+    private STAFHandle fHandle;
+
+    public STAFResult init(STAFServiceInterfaceLevel30.InitInfo info)
+    {
+        try
+        {
+            fHandle = new STAFHandle("STAF/SERVICE/" + info.name);
+        }
+        catch (STAFException e)
+        {
+            return new STAFResult(STAFResult.STAFRegistrationError,
+                                  e.toString());
+        }
+
+        // Verify that the required version of STAF is running on the
+        // local service machine.  
+
+        STAFResult res = new STAFResult();
+
+        try
+        {
+            res = STAFUtil.compareSTAFVersion(
+                "local", fHandle, kRequiredSTAFVersion);
+        }
+        catch (Error err)
+        {
+            // Note:  Method compareSTAFVersion was added in STAF V3.1.0
+            //        so need to catch a NoSuchMethod error
+            return new STAFResult(
+                STAFResult.ServiceConfigurationError,
+                "This service requires STAF Version " +
+                kRequiredSTAFVersion + " or later."); 
+        }
+
+        if (res.rc != STAFResult.Ok)
+        {
+            if (res.rc == STAFResult.InvalidSTAFVersion)
+            {
+                return new STAFResult(
+                    STAFResult.ServiceConfigurationError,
+                    "Minimum required STAF version for this service " +
+                    "is not running.  " + res.result);
+            }
+            else     
+            {
+                return new STAFResult(
+                    STAFResult.ServiceConfigurationError,
+                    "Error verifying the STAF version. RC: " + res.rc +
+                    ", Additional info: " + res.result);
+            }
+        }
+        ...
+    }
+    ...
+}
+</pre>
+</font>
+</ul>
+<p>
+<li>Here's another example of verifying that the version of the STAX
+service running on machine "server1" is at least version 3.1.  For example:
+<ul>
+<font color="darkblue">
+<pre>
+// Assumes a STAF Handle called fHandle has already been created
+
+STAFResult res = new STAFResult();
+String machine = "server1";
+String service = "STAX";
+String requiredVersion = "3.1";
+
+try
+{
+    res = STAFUtil.compareSTAFVersion(
+        machine, fHandle, requiredVersion, service);
+}
+catch (Error err)
+{
+    // The required version of STAF is not running as class STAFVersion
+    // was added in STAF V3.1 so this catches a NoSuchMethod error
+    ...
+}
+
+if (res.rc != STAFResult.Ok) 
+{ 
+    if (res.rc == STAFResult.InvalidSTAFVersion) 
+    { 
+        // Service version on the machine is lower than 3.1
+        ...
+    } 
+    else 
+    { 
+        // Error occurred trying to verify the version of the STAX service
+        // on the machine 
+        ...
+    }   
+} 
+</pre>
+</font>
+</ul>
+</ol>
+
+<br>
+
+<h3><a name="Header_STAFVersion" href="#ToC_STAFVersion">3.4.14 Class STAFVersion</a></h3>
+
+<p><h4>Definition</h4>
+
+<p>The <tt>STAFVersion</tt> class allows you to compare STAF versions.
+This class is useful if you want to verify that a STAF version or a version
+of a STAF service is at a particular level of STAF.
+<ul>
+<pre>
+package com.ibm.staf;
+ 
+public class STAFVersion
+{
+    public static int NUM_VERSION_LEVELS = 4;
+
+    public STAFVersion(String version) throws NumberFormatException;
+
+    public int compareTo(STAFVersion version);
+    public String getVersion();
+    public int[] getVersionArray();
+    public String getText();
+    public String toString();
+}
+</pre>
+</ul>
+<p>
+When constructing a new <tt>STAFVersion</tt> object, the
+required argument <i>version</i> is a string containing the STAF version.
+A STAF version must be of the following format unless it's blank or
+"<N/A>", which equates to "no version" and is internally represented
+as 0.0.0.0:
+<pre>  a[.b[.c[.d]]] [text]</pre>
+where:
+<ul compact>
+  <li>a, b, c, and d (if specified) are numeric
+  <li>text is separated by one or more spaces from the version numbers.
+</ul>
+<p>A NumberFormatException is thrown if a non-numeric value is specified
+   in a, b, c, or d.
+<p>
+<b>Since:</b> STAF V3.1.0
+<p>
+<tt>STAFVersion</tt> defines the following methods:
+<p>
+<ul>
+<dl>
+<dt><b><tt>compareTo</tt></b>(<i>version</i>)
+<dd>Compares STAF versions.
+<p>The required argument <i>version</i> is a <tt>STAFVersion</tt> object
+   representing the STAF version to compare.
+<p> 
+   <tt>STAFVersion</tt> instances are compared as follows:
+    <p>
+    <ul compact>
+    <li>The numeric versions (a[.b[.c[.d]]]) are numerically compared.
+    <li>If the numeric versions are "equal", then the [text] values are
+    compared as follows:
+        <ul compact>
+        <li>The text is compared using a case-insensitive string
+            compare
+        <li>Except, note that no text is considered greater than
+            any text (e.g. "3.1.0" > "3.1.0 Beta 1")
+        </ul>
+    </ul>
+    <p>
+    <b>Examples:</b>
+    <pre>
+      "3" = "3.0" = "3.0.0" = 3.0.0.0"
+      "3.0.0" < "3.1.0"
+      "3.0.2" < "3.0.3"
+      "3.0.0" < "3.1"
+      "3.0.9" < "3.0.10"
+      "3.1.0 Alpha 1" < "3.1.0 Beta 1"
+      "3.1.0 Beta 1" < "3.1.0"</pre>
+
+    <p>This method returns an integer as follows:    
+    <ul compact>
+    <li>Returns 0 if the two <tt>STAFVersion</tt> objects are equal.
+    <li>Returns -1 if this <tt>STAFVersion</tt> object is less than the given argument.
+    <li>Returns 1 if this <tt>STAFVersion</tt> object is greater than the given argument.
+    </ul>
+<p>
+<dt><b><tt>getVersion</tt></b>()
+<dd>Returns a <tt>String</tt> containing the version specified
+when constructing a new <tt>STAFVersion</tt> object.
+<p>
+<dt><b><tt>getVersionArray</tt></b>()
+<dd>Returns an <tt>int[]</tt> of size 4 (the maximum number of version levels).
+<p>
+<dt><b><tt>getText</tt></b>()
+<dd>Returns a <tt>String</tt> containing any optional text
+specified in the version.
+<p>
+<dt><b><tt>toString</tt></b>()
+<dd>Returns a <tt>String</tt> containing the version specified
+when constructing a new <tt>STAFVersion</tt> object.</dl>
+</ul>
+
+<P>
+<h4>Examples</h4>
+
+Suppose you already had the STAF version that you wanted to compare
+in a String variable named versionStr and you wanted to
+make sure that it was at version 3.1.0 or higher.  You could check
+this as follows:
+<ul>
+<font color="darkblue">
+<pre>
+String reqVersionStr = "3.1";
+
+try
+{
+    STAFVersion version = new STAFVersion(versionStr);
+    STAFVersion requiredVersion = new STAFVersion(reqVersionStr);
+
+    if (version.compareTo(requiredVersion) < 0)
+    {
+        // Version is lower than the minimum required version
+        return new STAFResult(
+            STAFResult.InvalidSTAFVersion,
+            "Version is " + versionStr + ".  Version " +
+            reqVersionStr + " or later is required.");
+    }
+}
+catch (NumberFormatException e)
+{
+    return new STAFResult(
+        STAFResult.InvalidValue,
+        "Invalid value specified for version, Exception info: " +
+        e.toString());
+}
+catch (Error err)
+{
+    // Note:  Class STAFVersion was added in STAF V3.1.0
+    //        so need to catch a NoSuchMethod error
+    return new STAFResult(
+        STAFResult.InvalidSTAFVersion,
+        "Version is " + versionStr + ".  Version " +
+        reqVersionStr + " or later is required."); 
+}
+</pre>
+</font>
+</ul>
+<br>
+
+
+<h3><a name="Header_STAFQueueMsg" href="#ToC_STAFQueueMsg">3.4.15 Class STAFQueueMessage</a></h3>
+
+<P>The STAFQueueMessage class provides a wrapper around messages received via
+the STAF Queue service.  It takes the received string as input and unmarshalls
+it and breaks it into its constituent parts.
+<P>
+<P><H4><A NAME="Header_193">Definition</A></H4>
+
+<ul>
+<PRE>package com.ibm.staf;
+ 
+public class STAFQueueMessage
+{
+    public STAFQueueMessage(String queueMessage);
+ 
+    public int    priority;
+    public String timestamp;
+    public String machine;
+    public String handleName;
+    public int    handle;
+    public String type;
+    public Object message;
+    public STAFMarshallingContext mc;
+}
+</PRE>
+</ul>
+
+<h4>Examples</h4>
+
+The following example shows how to wait for a message to be queued (by
+submitting a GET WAIT request to the QUEUE service) and
+to use the STAFQueueMessage class to receive the marshalled queue message
+string as input and to unmarshall it and break it into separate fields
+including the queued message itself and its priority, timestamp, type, etc.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+
+public class TestQueue
+{
+    // This is the main command line entry point
+
+    public static void main(String [] argv)
+    {
+        // Verify the command line arguments
+
+        if (argv.length != 0)
+        {
+            System.out.println();
+            System.out.println("Usage: java TestQueue");
+            System.exit(1);
+        }
+
+        // Register with STAF
+
+        try
+        {
+            handle = new STAFHandle("Queue_Class_Test");
+        }
+        catch (STAFException e)
+        {
+            System.out.println("Error registering with STAF, RC: " + e.rc);
+            System.exit(1);
+        }
+
+        System.out.println("Please send a queue message to handle " +
+                           handle.getHandle() + " now");
+
+        try
+        {
+            String result = handle.submit("local", "QUEUE", "GET WAIT");
+
+            STAFQueueMessage message = new STAFQueueMessage(result);
+
+            System.out.println("Priority   : " + message.priority);
+            System.out.println("Timestamp  : " + message.timestamp);
+            System.out.println("Machine    : " + message.machine);
+            System.out.println("Handle name: " + message.handleName);
+            System.out.println("Handle     : " + message.handle);
+            System.out.println("Type       : " + message.type);
+            System.out.println("Message    : " + message.message);
+        }
+        catch (STAFException e)
+        {
+            System.out.println(
+                "Error getting message from queue, RC: " + e.rc +
+                ", Additional Info: " + e.getMessage());
+        }
+
+    }
+
+    private static STAFHandle handle;
+}
+</pre>
+</font>
+</ul>
+If the above example is run and the following command is submitted
+when requested:
+<ul>
+<font color="darkblue">
+<pre>
+C:\>staf local queue queue handle 71 message "Hi there" type "MyType"
+Response
+--------
+</pre>
+</font>
+</ul>
+the result could look like the following:
+<ul>
+<font color="darkblue">
+<pre>
+C:\>java TestQueue
+Please send a queue message to handle 71 now
+Priority   : 5
+Timestamp  : 20050516-12:31:42
+Machine    : local://local
+Handle name: STAF/Client
+Handle     : 73
+Type       : MyType
+Message    : Hi there
+C:>
+</pre>
+</font>
+</ul>
+<br>
+
+<h2><a name="Header_LogWrappers" href="#ToC_LogWrappers">3.5 Wrapper APIs for Log and Monitor Services' LOG Command</a></h2>
+<p>
+These APIs are wrappers around the following LOG commands which can make
+it simple to submit LOG requests to the LOG and MONITOR services:
+<ul compact>
+<li>The LOG service's LOG command
+<li>The MONITOR service's LOG command
+</ul>
+
+<h3><a name="Header_STAFLog" href="#ToC_STAFLog">3.5.1 Class STAFLog</a></h3>
+
+<P>The STAFLog class provides a wrapper around the LOG command of the LOG
+service.  It provides constants for the log type and log levels.  It has
+instance and static methods for logging.  The STAFLog class also interfaces
+with the MONITOR service.  You may provide the STAFLog class a monitor mask.
+For the levels set in the monitor mask, STAFLog will log the message via the
+LOG service and then log the message via the MONITOR service.  STAFLog will
+also log an error message to the MONITOR service, if it should receive an
+error while trying to log a message.
+<P><H4><A NAME="Header_197">Definition</A></H4>
+
+<ul>
+<PRE>package com.ibm.staf.wrapper;
+ 
+public class STAFLog
+{
+    // Log type constants
+ 
+    public static final String GLOBAL  = "GLOBAL";
+    public static final String MACHINE = "MACHINE";
+    public static final String HANDLE  = "HANDLE";
+ 
+ 
+    // Log level constants (int format)
+ 
+    public static final int Fatal     = 0x00000001;
+    public static final int Error     = 0x00000002;
+    public static final int Warning   = 0x00000004;
+    public static final int Info      = 0x00000008;
+    public static final int Trace     = 0x00000010;
+    public static final int Trace2    = 0x00000020;
+    public static final int Trace3    = 0x00000040;
+    public static final int Debug     = 0x00000080;
+    public static final int Debug2    = 0x00000100;
+    public static final int Debug3    = 0x00000200;
+    public static final int Start     = 0x00000400;
+    public static final int Stop      = 0x00000800;
+    public static final int Pass      = 0x00001000;
+    public static final int Fail      = 0x00002000;
+    public static final int Status    = 0x00004000;
+    public static final int Reserved1 = 0x00008000;
+    public static final int Reserved2 = 0x00010000;
+    public static final int Reserved3 = 0x00020000;
+    public static final int Reserved4 = 0x00040000;
+    public static final int Reserved5 = 0x00080000;
+    public static final int Reserved6 = 0x00100000;
+    public static final int Reserved7 = 0x00200000;
+    public static final int Reserved8 = 0x00400000;
+    public static final int Reserved9 = 0x00800000;
+    public static final int User1     = 0x01000000;
+    public static final int User2     = 0x02000000;
+    public static final int User3     = 0x04000000;
+    public static final int User4     = 0x08000000;
+    public static final int User5     = 0x10000000;
+    public static final int User6     = 0x20000000;
+    public static final int User7     = 0x40000000;
+    public static final int User8     = 0x80000000;
+ 
+    // Log level constants (String format)
+ 
+    public static final String FatalStr     = "FATAL";
+    public static final String ErrorStr     = "ERROR";
+    public static final String WarningStr   = "WARNING";
+    public static final String InfoStr      = "INFO";
+    public static final String TraceStr     = "TRACE";
+    public static final String Trace2Str    = "TRACE2";
+    public static final String Trace3Str    = "TRACE3";
+    public static final String DebugStr     = "DEBUG";
+    public static final String Debug2Str    = "DEBUG2";
+    public static final String Debug3Str    = "DEBUG3";
+    public static final String StartStr     = "START";
+    public static final String StopStr      = "STOP";
+    public static final String PassStr      = "PASS";
+    public static final String FailStr      = "FAIL";
+    public static final String StatusStr    = "STATUS";
+    public static final String Reserved1Str = "RESERVED1";
+    public static final String Reserved2Str = "RESERVED2";
+    public static final String Reserved3Str = "RESERVED3";
+    public static final String Reserved4Str = "RESERVED4";
+    public static final String Reserved5Str = "RESERVED5";
+    public static final String Reserved6Str = "RESERVED6";
+    public static final String Reserved7Str = "RESERVED7";
+    public static final String Reserved8Str = "RESERVED8";
+    public static final String Reserved9Str = "RESERVED9";
+    public static final String User1Str     = "USER1";
+    public static final String User2Str     = "USER2";
+    public static final String User3Str     = "USER3";
+    public static final String User4Str     = "USER4";
+    public static final String User5Str     = "USER5";
+    public static final String User6Str     = "USER6";
+    public static final String User7Str     = "USER7";
+    public static final String User8Str     = "USER8";
+ 
+    // Constructors - Default monitor mask is 0x00007C07.  This causes messages
+    //                with log levels Fatal, Error, Warning, Start, Stop, Pass,
+    //                Fail, and Status to also be logged via the MONITOR
+    //                service
+ 
+    public STAFLog(String logType, String logName, STAFHandle handle);
+    public STAFLog(String logType, String logName, STAFHandle handle, int mask)
+ 
+    // Methods to actually log a message with a given level
+ 
+    public STAFResult log(int level, String msg)
+ 
+    public STAFResult log(String level, String msg)
+ 
+    public static STAFResult log(STAFHandle theHandle, String logType,
+                                 String logName, int level, String msg)
+ 
+    public static STAFResult log(STAFHandle theHandle, String logType,
+                                 String logName, String level, String msg)
+ 
+    public static STAFResult log(STAFHandle theHandle, String logType,
+                                 String logName, int level, String msg,
+                                 int mask)
+ 
+    public static STAFResult log(STAFHandle theHandle, String logType,
+                                 String logName, String level, String msg,
+                                 int mask)
+ 
+    // Accessor methods
+ 
+    public String getName();
+    public String getLogType();
+    public int getMonitorMask();
+}
+</PRE>
+</ul>    
+<P>
+<H4><A NAME="Header_198">Examples</A></H4>
+
+<ul>
+<font color="darkblue">
+<PRE>
+import com.ibm.staf.*;
+import com.ibm.staf.wrapper.*;
+   &#46;&#46;&#46;
+   &#46;&#46;&#46;
+// Create a log object that only logs Fatal and Error messages.
+// myHandle is a STAFHandle object that was created earlier.
+ 
+STAFLog logger = new STAFLog(STAFLog.GLOBAL, "MyLog", myHandle,
+                             STAFLog.Fatal | STAFLog.Error);
+ 
+STAFResult result;
+ 
+// Log an error via the instance and static methods
+ 
+result = logger.log(STAFLog.Error, "Error during test");
+result = STAFLog.log(myHandle, STAFLog.GLOBAL, "MyLog", STAFLog.Error,
+                     "Error during test");
+ 
+// Set a mask to log Fatal, Error, Warning and Info messages.
+// Then log a warning via a static method.
+ 
+int myMask = STAFLog.Fatal | STAFLog.Error | STAFLog.Warning | STAFLog.Info;
+ 
+result = STAFLog.log(myHandle, STAFLog.GLOBAL, "MyLog", STAFLog.Warning,
+                     "This is just a warning", myMask);
+</PRE>
+</font>
+</ul>
+<br>
+
+<h3><a name="Header_STAFMonitor" href="#ToC_STAFMonitor">3.5.2 Class STAFMonitor</a></h3>
+
+<P>The STAFMonitor class provides a wrapper around the LOG command of the
+MONITOR service.  It has instance and static methods for logging messages to the
+MONITOR service.
+<P><H4><A NAME="Header_200">Definition</A></H4>
+
+<ul>
+<PRE>package com.ibm.staf.wrapper;
+ 
+public class STAFMonitor
+{
+    // Constructor
+ 
+    STAFMonitor(STAFHandle stafHandle);
+ 
+    // Methods to log data to the MONITOR service
+ 
+    public STAFResult log(String message);
+    public static STAFResult log(STAFHandle theHandle, String message);
+}
+</PRE>
+</ul>
+<P>
+<H4><A NAME="Header_201">Examples</A></H4>
+
+<ul>
+<font color="darkblue">
+<PRE>import com.ibm.staf.*;
+import com.ibm.staf.wrapper.*;
+   &#46;&#46;&#46;
+   &#46;&#46;&#46;
+// Create a monitor object.  myHandle is a STAFHandle object that was created
+// earlier.
+ 
+STAFMonitor monitor = new STAFMonitor(myHandle);
+ 
+STAFResult result;
+ 
+// Log a message to the MONITOR service via the instance and static methods
+ 
+result = monitor.log("Beginning phase 1");
+result = STAFMonitor.log(myHandle, "Beginning phase 2");
+</PRE>
+</font>
+</ul>
+<P>
+
+<h2><a name="Header_LogViewers" href="#ToC_LogViewers">3.6 Log Viewer / Formatter APIs</a></h2>
+<p>
+These APIs are Java GUI classes that allow you to:
+<ul compact>
+<li>Display any STAF log via the <tt>STAFLogViewer</tt> class
+<li>Display a JVM Log for a registered Java service via the <tt>STAFJVMLogViewer</tt> class
+<li>Format a STAF log as html or text via the <tt>STAFLogFormater</tt> class.
+</ul>
+
+<h3><a name="Header_STAFLogViewer" href="#ToC_STAFLogViewer">3.6.1 Class STAFLogViewer</a></h3>
+
+<h4>Description</h4>
+
+The <tt>STAFLogViewer</tt> class provides a Java GUI that can display any STAF log
+on any machine currently running STAF.
+A STAF log is a binary log file that has been created by the STAF Log service.
+This Java class submits requests to STAF, so STAF has to be running.
+This Java class can be run as an application via the command line or can be
+run via another Java program.
+<p>
+Note that the STAX Monitor Java application uses the <tt>STAFLogViewer</tt> class
+to display the STAX job logs and the STAX service log.
+<p>
+<b>Since:</b> STAF V3.1.0
+<p>
+<h4>Definition</h4>
+<p>
+To execute and get help from the <tt>STAFLogViewer</tt> class from the command line,
+specify the following:
+<pre>
+java com.ibm.staf.STAFLogViewer -help
+</pre>
+<p>The STAFLogViewer class accepts the following command line options:
+<pre>
+  -queryRequest &lt;LOG QUERY Request>
+  -machine &lt;Log Service Machine Name>
+  -serviceName &lt;Log Service Name>
+  -levelMask &lt;LEVELMASK option>
+  -fontName &lt;Font Name>
+  -saveAsDirectory &lt;Directory Name>
+  -help
+  -version
+</pre>
+You must specify <tt>-queryRequest</tt> or <tt>-help</tt> or <tt>-version</tt>. 
+<p>
+<ul>
+<tt>-queryRequest</tt> specifies the log query options.  This option is
+required (unless you are specifying the <tt>-help</tt> or <tt>-version</tt>
+options).  It should begin with
+the <tt>QUERY</tt> option and include any additional query options, including
+the options to specify whether the log is a GLOBAL, MACHINE, or HANDLE log.  You
+may not specify the <tt>LEVELMASK</tt> option within the <tt>queryRequest</tt>.
+To specify the <tt>LEVELMASK</tt> option, use the <tt>-levelMask</tt>
+option.
+<p>
+<tt>-machine</tt> specifies the name of the machine where the STAF log is located.
+This optiontis optional.  The default is <tt>local</tt>.
+<p>
+<tt>-serviceName</tt> specifies the name of the log service.  This option
+is optional.  The default is <tt>LOG</tt>.
+<p>
+<tt>-levelMask</tt> specifies the log levels to be initially displayed.  This
+option is optional.  The default is to display all log levels.
+Only level names are supported (for example
+<tt>"ERROR DEBUG"</tt>.); use of the 32 byte bit string to represent
+the log mask is not supported.  These are the log levels that will be displayed
+when the initial STAFLogViewer is displayed.  The user can then change the
+log levels to be displayed via the "Levels" menu.
+<p>
+<tt>-fontName</tt> specifies the name of the font to use when displaying the
+STAF log. This option is optional.  The default is <tt>Monospaced</tt>.
+Examples of other fonts are <tt>Dialog</tt> and <tt>TimesRoman</tt>.
+<p>
+<tt>-saveAsDirectory</tt> specifies the initial directory path that will
+be used if you select the "File->Save As Text..." or "File->Save As Html..."
+menu item to save the log query output in a file.
+If not specified, it defaults to user's default directory which is typically
+the "My Documents" folder on Windows or the user's home directory on Unix.
+<p>
+<tt>-help</tt> displays help information for the STAFLogViewer.
+This option is optional.
+<p>
+<tt>-version</tt> displays the version of the STAFLogViewer.
+This option is optional.
+</ul>
+<p>You may also call the <tt>STAFLogViewer</tt> class from a Java application.  The
+following constructors for STAFLogViewer are provided:
+<ul>
+<font color="darkblue">
+<pre>
+public STAFLogViewer(Component parent,
+                     STAFHandle handle,
+                     String queryRequest)
+
+public STAFLogViewer(Component parent,
+                     STAFHandle handle,
+                     String machine,
+                     String queryRequest
+
+public STAFLogViewer(Component parent,
+                     STAFHandle handle,
+                     String machine,
+                     String serviceName,
+                     String queryRequest)
+
+public STAFLogViewer(Component parent,
+                     STAFHandle handle,
+                     String machine,
+                     String serviceName,
+                     String queryRequest,
+                     String levelMask)
+
+public STAFLogViewer(Component parent,
+                     STAFHandle handle,
+                     String machine,
+                     String serviceName,
+                     String queryRequest,
+                     String levelMask,
+                     String fontName)
+
+public STAFLogViewer(Component parent,
+                     STAFHandle handle,
+                     String machine,
+                     String serviceName,
+                     String queryRequest,
+                     String levelMask,
+                     String fontName,
+                     String saveAsDirectory)
+</pre>
+</font>
+</ul>
+<p>Here is an example of the Java GUI that is displayed for the following
+command:
+<pre>
+java com.ibm.staf.STAFLogViewer -machine staf1f.austin.ibm.com -queryRequest "QUERY machine {STAF/Config/MachineNickname} logname email all"
+</pre>
+<p>
+<img src="STAFLogViewer.bmp" alt="STAFLogViewer">
+<p>
+<p>The STAFLogViewer's menu bar provides the following menus:
+<ul>
+<li>File</li>
+<ul>
+<li>Save As Text... - Displays a dialog that allows you to select
+    a file name where the formatted output will be saved and formats
+    the log as text, where the timestamp, level, and message fields
+    for each log record are printed in a single line with the fields
+    separated by a space. </li>
+<li>Save As Html... - Displays a dialog that allows you to select
+    a file name where the formatted output will be saved and formats
+    the log as html.  The html document will have a title containing
+    the STAF LOG QUERY request that was submitted and will contain a
+    table with three columns (timestamp, level, and message) where
+    each row contains a log record.  It will use the font specified
+    for the Log Viewer.</li>
+<li>Exit - Exits the STAFLogViewer application</li>
+</ul>
+<li>View</li>
+<ul>
+<li>Refresh - Executes the LOG QUERY request again
+<li>Change Font... - Displays a dialog that allows you to change the font for
+the log records
+</ul>
+<li>Levels (the LOG QUERY will be refreshed after any changes are
+made to the log levels)</li>
+<ul>
+<li>All - Selects all log options (this will toggle on/off all of the below
+levels)</li>
+<li>Fatal</li>
+<li>Error</li>
+<li>Warning</li>
+<li>Info</li>
+<li>Trace</li>
+<li>Trace2</li>
+<li>Trace3</li>
+<li>Debug</li>
+<li>Debug2</li>
+<li>Debug3</li>
+<li>Start</li>
+<li>Stop</li>
+<li>Pass</li>
+<li>Fail</li>
+<li>Status</li>
+<li>User1</li>
+<li>User2</li>
+<li>User3</li>
+<li>User4</li>
+<li>User5</li>
+<li>User6</li>
+<li>User7</li>
+<li>User8</li>
+</ul>
+</ul>
+
+<h4>Examples</h4>
+<ul>
+<li>
+From the command line, display the last 20 records of the "eventmanager" machine log where the log is located
+on the local machine:
+<ul>
+<font color="darkblue">
+<pre>
+java com.ibm.staf.STAFLogViewer -queryRequest "QUERY machine {STAF/Config/MachineNickname} logname eventmanager last 20"
+</pre>
+</font>
+</ul>
+</li>
+<li>
+From a Java program, display the ERROR and DEBUG records for the "cron" machine log on the local
+machine, if the records contain the string <tt>"ID=5 "</tt>.  The STAFLogViewer will be
+displayed in TimesRoman font.
+<ul>
+<font color="darkblue">
+<pre>
+String queryRequest = " QUERY MACHINE {STAF/Config/MachineNickname}" + 
+    " LOGNAME cron CONTAINS " + STAFUtil.wrapData("ID=5 ");
+
+STAFLogViewer logViewer = new STAFLogViewer(
+    this,     // This is Swing component such as JFrame
+    myHandle, // This is a STAFHandle object                                                 
+    "local",
+    "LOG",
+    queryRequest,
+    "ERROR DEBUG",
+    "TimesRoman");
+</pre>
+</font>
+</ul>
+</li>
+</ul>
+
+
+<h3><a name="Header_STAFJVMLogViewer" href="#ToC_STAFJVMLogViewer">3.6.2 Class STAFJVMLogViewer</a></h3>
+
+<h4>Description</h4>
+
+The <tt>STAFJVMLogViewer</tt> class provides a Java GUI that can display a
+JVM Log for any STAF Java service that is currently registered.
+Each Java service that is registered with STAF runs in a JVM (Java Virtual Machine).
+A JVM Log is a text log file that is asociated with each JVM created by STAF.
+Note that more than one Java service may use the same JVM (and thus share the same
+JVM Log file) depending on the options used when registering the service.
+Section <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREGCFG">
+4.4 Service Registration</a> in the STAF User's Guide provides more
+information on registering STAF Java services using the JSTAF library.
+<p>
+A JVM Log file contains JVM start information such as the date/time when the JVM
+was created, the JVM executable, and the J2 options used to start the JVM.
+It also any other information logged by the JVM.  This includes any
+errors that may have occurred while the JVM was running and any debug information
+output by a Java service.  Also, the JVM Log for the STAX service contains the
+output from any print statements that are used within a <tt>&lt;script></tt> element
+in a STAX xml job file which is useful when debugging Python code contained in
+a <tt>&lt;script></tt> element.  When a problem occurs with a STAF Java service,
+you should always check it's JVM Log as it may contain information to help debug
+the problem.
+<p>
+STAF stores JVM Log files in the <tt>{STAF/DataDir}/lang/java/jvm/&lt;JVMName></tt>
+directory.   STAF retains a configurable number of JVM Logs (five by default) for each
+JVM.  The current JVM log file is named <tt>JVMLog.1</tt> and older saved JVM log files,
+if any, are named <tt>JVMLog.2</tt> to <tt>JVMLog.&lt;MAXLOGS></tt>.  When a JVM is
+started, if the size of the <tt>JVMLog.1</tt> file exceeds the maximum configurable
+size (1M by default), the <tt>JVMLog.1</tt> file is copied to <tt>JVMLog.2</tt> and
+so on for any older JVM Logs, and a new <tt>JVMLog.1</tt> file will be created.
+<p>
+When using the <tt>STAFJVMLogViewer</tt>, you can specify the machine where the STAF
+JVM log resides (e.g. where the Java service is registered) and you can
+specify/select the name of the STAF service whose JVM Log you want to display.
+This Java class submits requests to STAF, so STAF has to be running. 
+This Java class can be run as an application via the command line or can be
+run via another Java program.
+<p>
+Note that the STAX Monitor Java application uses the <tt>STAFJVMLogViewer</tt> class
+to display the JVM log for the STAX service and for other services.
+<p>
+<b>Since:</b> STAF V3.2.1
+<p>
+<h4>Definition</h4>
+
+To execute and get help for the <tt>STAFJVMLogViewer</tt> class from the command line,
+specify the following:
+<ul>
+<font color="darkblue">
+<pre>
+java com.ibm.staf.STAFJVMLogViewer -help
+</pre>
+</font>
+</ul>
+<p>The <tt>STAFJVMLogViewer</tt> class accepts the following command line options:
+<pre>
+  -machine &lt;Machine where the STAF Java service is registered>
+  -serviceName &lt;Java Service Name>
+  -displayAll
+  -fontName &lt;Font Name>
+  -help
+  -version
+</pre>
+<p>
+All of the options are optional.  If specifying the <tt>-help</tt> or
+<tt>-version</tt> option, this option must be the first (and only) option
+specified.
+<ul>
+<tt>-machine</tt> specifies the endpoint for the machine where the STAF JVM
+    log is located.  This option is optional.  The default is <tt>local</tt>.
+<p>
+<tt>-serviceName</tt> specifies the name of a Java service that is currently
+    registered whose JVM Log you want to display.
+    This option is optional.  If it is not specified, you'll be prompted
+    to select a service registered on the specified machine whose JVM Log
+    you want to display.
+<p>
+<tt>-displayAll</tt> specifies to display all of the entries in the JVM Log.
+    This option is optional.   The default is to display only the entries
+    in the JVM Log from the last time the JVM was created.
+<p>
+<tt>-fontName</tt> specifies the name of the font to use when displaying the
+STAF JVM Log. This option is optional.  The default is <tt>Monospaced</tt>.
+Examples of other fonts are <tt>Dialog</tt> and <tt>TimesRoman</tt>.
+<p>
+<tt>-help</tt> displays help information for the <tt>STAFJVMLogViewer</tt>.
+This option is optional.
+<p>
+<tt>-version</tt> displays the version of the <tt>STAFJVMLogViewer</tt>.
+This option is optional.
+</ul>
+<p>
+You may also call the STAFJVMLogViewer class from a Java application.  The
+following constructors for STAFJVMLogViewer are provided:
+<ul>
+<font color="darkblue">
+<pre>
+public STAFJVMLogViewer(Component parent,
+                        STAFHandle handle,
+                        String serviceName)
+
+public STAFJVMLogViewer(Component parent,
+                        STAFHandle handle,
+                        String machine,
+                        String serviceName)
+
+public STAFJVMLogViewer(Component parent,
+                        STAFHandle handle,
+                        String machine,
+                        String serviceName,
+                        boolean displayAll,
+                        String fontName)
+</pre>
+</font>
+</ul>
+<p>Here is an example of the Java dialogs that are displayed for the following
+command:
+<ul>
+<font color="darkblue">
+<pre>
+java com.ibm.staf.STAFJVMLogViewer -machine staf1a
+</pre>
+</font>
+</ul>
+If you don't specify the -service &lt;Java Service Name> option, the following
+dialog is displayed which shows a list of Java services currently registered
+on machine staf1a. 
+<p>
+<img src="STAFJVMLogViewer1.gif" alt="STAFJVMLogViewer 1">
+<p>
+Click on the drop-down list to see all of the Java services registered on
+this machine.  Select a Java service, and then select the OK button to display
+the JVM Log for this Java service. 
+<p>
+Here is an example of the dialog that is shown when the JVM Log is displayed.
+<p>
+<img src="STAFJVMLogViewer2.gif" alt="STAFJVMLogViewer 2">
+<p>
+<p>The STAFJVMLogViewer's menu bar provides the following menus:
+<ul>
+<li>File</li>
+  <ul>
+  <li>Exit - Exits the STAFJVMLogViewer application</li>
+  </ul>
+<li>View</li>
+  <ul>
+  <li><b>Refresh</b> - This option refreshes the JVM Log (i.e. the latest JVM
+       Log information will be displayed) and scrolls down to the end of
+       the JVM Log.
+  <li><b>Show Current</b> - This option displays only the entries in the
+      JVM Log from the "current" JVM (the JVM that is currently running).
+  <li><b>Show All</b> - This option displays all of the entries in the JVM Log
+      This includes logs from any previous times the JVM was created,
+      instead of just the entries from the current JVM.
+  <li><b>Select JVM Log Name...</b> - This option displays a dialog which allows
+      you to select a different JVM Log to display if older saved JVM Logs are
+      available.
+  <li><b>Change Font</b> - This option displays a dialog which allows you
+      change the font used when displaying the JVM Log file. 
+      The default font used is the Monospaced font.
+      Changing the font also refreshes the JVM Log (i.e. the latest JVM Log
+      information will be displayed) and scrolls down to the end of the JVM Log.
+  </ul>
+</ul>
+
+<h4>Examples</h4>
+<ul>
+<li>
+From the command line, display the current JVM Log for the Cron service on
+the local machine:
+<ul>
+<font color="darkblue">
+<pre>
+java com.ibm.staf.STAFJVMLogViewer -serviceName Cron
+</pre>
+</font>
+</ul>
+</li>
+<li>
+From the command line, display the current JVM Log for the STAX service on
+machine client1.company.com:
+<ul>
+<font color="darkblue">
+<pre>
+java com.ibm.staf.STAFJVMLogViewer -serviceName STAX -machine server1.company.com
+</pre>
+</font>
+</ul>
+</li>
+<li>
+From the command line, display a list of all of the Java services currently
+registered on machine server1.company.com so that you can select the service
+whose JVM Log you want to display:
+<ul>
+<font color="darkblue">
+<pre>
+java com.ibm.staf.STAFJVMLogViewer -machine server1.company.com
+</pre>
+</font>
+</ul>
+</li>
+<li>
+From a Java program, display the current JVM Log for the STAX service on the
+local machine.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+
+...
+
+STAFJVMLogViewer logViewer = new STAFJVMLogViewer(
+    this,      // This is Swing component such as JFrame
+    myHandle,  // This is a STAFHandle object that you're already created                                                 
+    "local",
+    "STAX");
+</pre>
+</font>
+</ul>
+</li>
+<li>
+From a Java program, display the JVM Log for the Cron service on
+machine server1.company.com.  Display the contents of the entire log
+using the "Dialog" font name.
+<ul>
+<font color="darkblue">
+<pre>
+import com.ibm.staf.*;
+
+...
+
+boolean displayAll = true;
+String cronServiceMachine = "server1.company.com";
+String cronServiceName = "CRON";
+String fontName = "Dialog";
+
+STAFJVMLogViewer logViewer = new STAFJVMLogViewer(
+    this,     // This is Swing component such as JFrame
+    fHandle,  // This is a STAFHandle object that you're already created                                                 
+    cronServiceMachine,
+    cronServiceName,
+    displayAll,
+    fontName);
+</pre>
+</font>
+</ul>
+</li>
+</ul>
+
+<h3><a name="Header_STAFLogFormatter" href="#ToC_STAFLogFormatter">3.6.3 Class STAFLogFormatter</a></h3>
+
+<h4>Description</h4>
+
+The <tt>STAFLogFormatter</tt> class allows you to format a STAF log (which
+is a binary file that has been created by the STAF Log service) as html
+or text.  
+<p>
+This Java class can be run as an application via the command line or can be
+run via another Java program.  When run as an application, it submits the
+specified Log query request to query a STAF log on any machine currently
+running STAF and then formats the output as either html or text.
+Or, when run via a Java program that has already submitted a LOG QUERY request,
+you can use the <tt>STAFLogFormatter</tt> class to format the log query result
+as either html or text.  You can specify various options including whether you
+want the formatted output written to a file.
+<p>
+Two format types are supported:
+<ul>
+<li><b>text</b> - Formats the log as text.  For each log record, the
+timestamp, level, and message fields are written in a single line with
+the fields separated by a space.  If a title is specified, the title is
+written on the first line followed by a blank line before the log output.
+For example, if title "STAF local LOG QUERY GLOBAL LOGNAME test1 LAST 3"
+is specified, the log output formatted as text could look like:
+<pre>
+STAF local LOG QUERY GLOBAL LOGNAME test1 LAST 3
+
+20081205-13:54:42 Info Step 1 of ScenarioB completed
+20081205-13:54:45 Info Step 2 of ScenarioB completed
+20081205-13:54:54 Pass Scenario completed
+</pre>
+</li>
+<p>
+<li><b>html</b> - Formats the log as html.  A html document is created
+with the body containing a table with three columns (timestamp, level,
+and message).  Each row in the table contains the timestamp, level, and
+message for a log record.  The courier font is used for the html document
+unless you set a different font.  If a title is provided, a header
+with the title will be written at the beginning of the html document.
+For example, if title "STAF local LOG QUERY GLOBAL LOGNAME test1 LAST 3"
+is specified, the log output formatted as html when displayed by a browser
+could look like:
+<p>
+<img src="STAFLogFormatter1.gif" alt="STAFLogFormatter 1">
+<p>
+</li>
+</ul>
+<p>
+Note that the <tt>STAFLogViewer</tt> class uses the <tt>STAFLogFormatter</tt> class
+when you select <tt>File->Save As Text...</tt> or <tt>File->Save As Html...</tt>.
+<p>
+<b>Since:</b> STAF V3.3.2
+<p>
+<h4>Definition (when run as an application)</h4>
+<p>
+To execute and get help from the <tt>STAFLogFormatter</tt> class from the command line,
+specify the following:
+<pre>
+java com.ibm.staf.STAFLogFormatter -help
+</pre>
+<p>The STAFLogFormatter class accepts the following command line options:
+<pre>
+  -queryRequest &lt;LOG QUERY Request>
+  -fileName &lt;File Name>
+  -type &lt;html | text>
+  -fontName &lt;Font Name>
+  -title &lt;Title>
+  -machine &lt;Log Service Machine Name>
+  -serviceName &lt;Log Service Name>
+  -help
+  -version
+</pre>
+You must specify one of the following options:  
+<tt>-queryRequest</tt> or <tt>-help</tt> or <tt>-version</tt>. 
+If specifying the <tt>-help</tt> or <tt>-version</tt> option, it must be the first and only
+option specified.  All of the other options require the <tt>-queryRequest</tt> option
+to be specified.
+<p>
+Here's a description of all of the options:
+<p>
+<ul>
+<tt>-queryRequest</tt> specifies the QUERY request to submit to the Log
+service.  This option is required unless you specified -help or -version.
+It should begin with the <tt>QUERY</tt> option and include any additional
+query options, including the options to specify whether the log is a
+GLOBAL, MACHINE, or HANDLE log.  You may not specify the <tt>TOTAL</tt>
+or <tt>STATS</tt> option within the <tt>queryRequest</tt>.
+<p>
+<tt>-fileName</tt> specifies the fully-qualified name of a file
+where the formatted log output will be written.  This option is optional.
+If not specified, the formatted log output is written to Stdout.
+<p>
+<tt>-type</tt> specifies the format type.  Valid values are: <tt>html</tt>
+or <tt>text</tt>.  This option is optional.  If not specified, it
+defaults to <tt>html</tt>.
+<p>
+<tt>-fontName</tt> specifies the name of the font to use when formatting the
+STAF log.  It does not have an effect if formatting the log as text.
+This option is optional.  If not specified, it defaults to <tt>courier</tt>
+(which is a Monospaced font).  Examples of other valid font names are
+<tt>dialog</tt> and <tt>timesRoman</tt>.
+<p>
+<tt>-title</tt> specifies a title for the log output.  This option is
+optional.  If not specified, it defaults to the actual log query request
+submitted if using type html or to no title if using type text.
+<p>
+<tt>-machine</tt> specifies the name of the machine where the STAF log
+is located.  This option is optional.  If not specified, it defaults to
+<tt>local</tt>.
+<p>
+<tt>-serviceName</tt> specifies the name of the Log service to which
+the query request will be submitted.  This option is optional.
+If not specified, it defaults to <tt>LOG</tt>.
+<p>
+<tt>-help</tt> displays help information for the STAFLogFormatter.
+This option is optional, but if specified, it must be the first and
+only option specified.
+<p>
+<tt>-version</tt> displays the version of the STAFLogFormatter.
+This option is optional, but if specified, it must be the first and
+only option specified.
+</ul>
+<p>
+<h4>Definition (when constructed and used from a Java application)</h4>
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+package com.ibm.staf;
+ 
+public class STAFLogFormatter
+{
+    public STAFLogFormatter(STAFMarshallingContext context) throws STAFException
+
+    public void setFileName(String fileName)
+    public void setFontName(String fontName)
+    public void setTitle(String title)
+    public String format(String typeString) throws IOException, STAFException
+}
+</pre>
+</font>
+</ul>
+<p>
+When constructing a new <tt>STAFLogFormatter</tt> object, the
+required argument <i>context</i> must be a STAFMarshallingContext object
+containing a LOG QUERY result's marshalling context.
+>A STAFException is thrown if an invalid STAFMarshallingContext object
+is specified.
+<p>
+Class <tt>STAFLogFormatter</tt> defines the following methods:
+<p>
+<ul>
+<dl>
+<dt><b><tt>setFileName</tt></b>(<i>fileName</i>)
+<dd>Sets the fully-qualified name of a file to where the formatted log output
+should be written.
+<p>The required argument <i>fileName</i> is a <tt>String</tt>
+containing the file name.
+<p>
+<dt><b><tt>setFontName</tt></b>(<i>fontName</i>)
+<dd>Sets the name of a font to use.   If not set, the courier font
+will be used when formatting the output to html.
+<p>The required argument <i>fileName</i> is a <tt>String</tt> containing
+the font name. 
+<p>
+<dt><b><tt>setTitle</tt></b>(<i>title</i>)
+<dd>Sets a title for the formatted output.   If not set, the formatted
+log output will not contain a title.
+<p>The required argument <i>title</i> is a <tt>String</tt> containing
+the title for the formatted log output. 
+<p>
+<dt><b><tt>format</tt></b>(<i>typeString</i>)
+<dd>Formats the log query output into either html or text.
+<p>The required argument <i>typeString</i> must be a <tt>String</tt>
+   containing the format type <tt>html</tt> or <tt>text</tt>, case-insensitive.
+<p>This method returns a string as follows:
+   <ul compact>
+   <li>Returns an empty string if a fileName is set.
+   <li>Returns a string containing the formatted output if a fileName is set.
+   </ul>
+<p>A STAFException is thrown if an invalid STAFMarshallingContext object
+was specified when constructing the STAFLogFormatter.
+<p>A IOException is thrown if a fileName is set and there is a problem
+writting the formatted log output to the specified fileName.
+</dl>
+</ul>
+
+<h4>Examples</h4>
+<ul>
+<li>
+From the command line, format the last 5 records of global log test1 located on machine
+client1.company.com as text and write to stdout:
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+C:\>java com.ibm.staf.STAFLogFormatter -type text -machine client1.company.com -queryRequest "QUERY GLOBAL LOGNAME test1 LAST 7"
+20081205-13:53:57 Info Step 1 of ScenarioA completed
+20081205-13:54:06 Info Step 2 of ScenarioA completed
+20081205-13:54:12 Info Step 3 of ScenarioA completed
+20081205-13:54:27 Pass ScenarioA completed
+20081205-13:54:42 Info Step 1 of ScenarioB completed
+20081205-13:54:45 Info Step 2 of ScenarioB completed
+20081205-13:54:54 Pass Scenario completed
+</pre>
+</font>
+</ul>
+</li>
+<p>
+<li>
+From the command line, format the entire "STAX_Job_1" machine log located on the local machine as html
+and store in file C:\logs\stax_job_1.html:
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+C:\>java com.ibm.staf.STAFLogFormatter -fileName C:\logs\job1.html -queryRequest "QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME STAX_Job_1 ALL"
+</pre>
+</font>
+</ul>
+</li>
+<p>
+<li>
+From a Java program, query the entire STAX_Job_1 machine log located on the local machine
+and then format the log query result's marshalling context as html and store the
+formatted result in file /logs/STAX_Job_1.html.
+<ul>
+<font color="darkblue">
+<pre>
+String logName = "STAX_Job_1";
+String queryRequest = "QUERY MACHINE {STAF/Config/MachineNickname} " + 
+    "LOGNAME " + logName + " ALL";
+
+STAFResult queryResult = fHandle.submit2("local", "LOG", queryRequest);
+           
+if ((queryResult.rc != STAFResult.Ok) && (queryResult.rc != 4010))
+{
+    System.out.println(
+        "Log query request failed with RC=" + queryResult.rc +
+        ", Result=" + queryResult.result);
+    return;
+}
+
+try
+{
+    STAFLogFormatter logFormatter = new STAFLogFormatter(
+        queryResult.resultContext);
+
+    logFormatter.setFileName("/logs/" + logName + ".html");
+    logFormatter.setTitle(logName + " Log");
+    logFormatter.setFontName("courier");
+    logFormatter.format("html");
+}
+catch (Exception e)
+{
+    System.out.println(
+        "Formatting/saving the log as html failed.\n" + e.toString());
+    return;
+}
+</pre>
+</font>
+</ul>
+</li>
+</ul>
+
+<hr>
+<p>
+<h2><a name="Header_Examples" href="#ToC_Examples">4.0 Java Program Examples</a></h2>
+
+<h3><a name="Header_Example1" href="#ToC_Example1">4.1 Example 1</a></h3>
+
+This Java example program is a multi-threaded STAF PING test.  
+The syntax to run this program is:
+<font color="darkblue">
+<pre>
+C:\>java JPing
+
+Usage: java JPing <Where> [# Threads] [# Loops per thread] [Display Modulus]
+
+Defaults:
+
+  # Threads          = 5
+  # Loops per thread = 10000
+  Display Modulus    = 250
+
+Examples:
+
+java JPing local
+java JPing SomeServer 3 1000 100
+</pre>
+</font>
+For each thread specified by the "# Threads" parameter), this program submits
+a PING request to the PING service to ping the machine specified by the
+"Where" parameter, repeating the request the number of times
+specified by the "# Loops per thread" parameter.
+ A status message is displayed each time a number of loops
+have completed based on the "Display Modulus" parameter.
+When complete, an average number of pings per seconds is printed.
+
+<font color="darkblue">
+<pre>
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+//===========================================================================
+// JPing - A multi-threaded STAF PING test
+//===========================================================================
+// Accepts: Where to PING
+//          Optionally, the number of threads to use (default = 5)
+//          Optionally, the number of loops per thread (default = 10000)
+//          Optionally, the display modulus (default = 250)
+//
+// Returns: 0 , on success
+//          >0, if an error is encountered
+//===========================================================================
+// Date        Who           Comment
+// ----------  ------------  ------------------------------------------
+// 04/25/1998  C. Rankin     File Created
+//===========================================================================
+
+import com.ibm.staf.*;
+import java.util.Date;
+import java.util.Calendar;
+import java.text.DateFormat;
+
+public class JPing implements Runnable
+{
+    // Constructor
+
+    public JPing(int numLoops, int displayModulus, int myThreadNum)
+    {
+        loopCount = numLoops;
+        modulus = displayModulus;
+        threadNum = myThreadNum;
+        errors = 0;
+    }
+
+    // This is the main command line entry point
+
+    public static void main(String [] argv)
+    {
+        // Verify the command line arguments
+
+        if ((argv.length &lt; 1) || (argv.length > 4))
+        {
+            System.out.println();
+            System.out.println("Usage: java JPing &lt;Where> [# Threads] " +
+                               "[# Loops per thread] [Display Modulus]");
+            System.out.println();
+            System.out.println("Defaults:");
+            System.out.println();
+            System.out.println("  # Threads          = 5");
+            System.out.println("  # Loops per thread = 10000");
+            System.out.println("  Display Modulus    = 250");
+            System.out.println();
+            System.out.println("Examples:");
+            System.out.println();
+            System.out.println("java JPing local");
+            System.out.println("java JPing SomeServer 3 1000 100");
+            System.exit(1);
+        }
+
+        // Register with STAF
+
+        try
+        {
+            handle = new STAFHandle("Java_Ping_Test");
+        }
+        catch (STAFException e)
+        {
+            System.out.println("Error registering with STAF, RC: " + e.rc);
+            System.exit(1);
+        }
+
+        // Initialize variables
+
+        timeFormatter = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+
+        where = argv[0];
+        int numThreads = 5;
+        int numLoops = 10000;
+        int displayModulus = 250;
+
+        if (argv.length > 1) numThreads = Integer.parseInt(argv[1]);
+        if (argv.length > 2) numLoops = Integer.parseInt(argv[2]);
+        if (argv.length > 3) displayModulus = Integer.parseInt(argv[3]);
+
+        JPing [] pingers = new JPing[numThreads];
+        Thread [] threads = new Thread[numThreads];
+
+        System.out.println("(0)" + timeFormatter.format(new Date()) +
+                           " - Started");
+        long startSecs = (new Date()).getTime();
+
+        // Start the threads
+
+        for(int i = 0; i &lt; numThreads; ++i)
+        {
+            pingers[i] = new JPing(numLoops, displayModulus, i + 1);
+            threads[i] = new Thread(pingers[i]);
+            threads[i].start();
+        }
+
+        // Wait for all the threads to finish
+
+        for(int i = 0; i &lt; numThreads; ++i)
+        {
+            try
+            {
+                threads[i].join();
+            }
+            catch (Exception e)
+            {
+                System.out.println("Exception: " + e);
+                System.out.println(e.getMessage());
+            }
+        }
+
+        // Output final pings/sec
+
+        long stopSecs = (new Date()).getTime();
+        System.out.println("(0)" + timeFormatter.format(new Date()) +
+                           " - Ended");
+
+        System.out.println("Average: " + ((numLoops * numThreads * 1000) /
+                           (stopSecs - startSecs)) + " pings/sec");
+
+        // Unregister with STAF
+
+        try
+        {
+            handle.unRegister();
+        }
+        catch (STAFException e)
+        {
+            System.out.println("Error unregistering with STAF, RC: " + e.rc);
+            System.exit(1);
+        }
+    }
+
+    // This is the method called when each thread starts
+
+    public void run()
+    {
+        for(int i = 1; i &lt;= loopCount; ++i)
+        {
+            STAFResult result = handle.submit2(where, "PING", "PING");
+
+            // If we get a non-zero return code, or a response of something
+            // other than "PONG", display an error
+
+            if (result.rc != 0)
+            {
+                System.out.println("(" + threadNum + ")" +
+                                   timeFormatter.format(new Date()) +
+                                   " - Loop #" + i + ", Error #" +
+                                   ++errors + ", RC: " + result.rc);
+            }
+            else if (result.result.compareTo("PONG") != 0)
+            {
+                System.out.println("(" + threadNum + ")" +
+                                   timeFormatter.format(new Date()) +
+                                   " - Loop #" + i + ", Error #" +
+                                   ++errors + ", RESULT = " + result.result);
+            }
+
+            // If we are at our display modulus display a status message
+
+            if ((i % modulus) == 0)
+            {
+                System.out.println("(" + threadNum + ")" +
+                                   timeFormatter.format(new Date()) +
+                                   " - Ended Loop #" + i + ", Errors = " +
+                                   errors);
+            }
+        }
+    }
+
+    private static STAFHandle handle;
+    private static String where;
+    private static DateFormat timeFormatter;
+
+    private int loopCount;
+    private int modulus;
+    private int threadNum;
+    private int errors;
+}
+</pre>
+</font>
+
+Sample results could be:
+<font color="darkblue">
+<pre>
+C:\>java JPing local
+(0)4:20:49 PM - Started
+(1)4:20:50 PM - Ended Loop #250, Errors = 0
+(3)4:20:50 PM - Ended Loop #250, Errors = 0
+(2)4:20:50 PM - Ended Loop #250, Errors = 0
+(5)4:20:50 PM - Ended Loop #250, Errors = 0
+(4)4:20:50 PM - Ended Loop #250, Errors = 0
+(3)4:20:51 PM - Ended Loop #500, Errors = 0
+(1)4:20:51 PM - Ended Loop #500, Errors = 0
+(2)4:20:51 PM - Ended Loop #500, Errors = 0
+(5)4:20:51 PM - Ended Loop #500, Errors = 0
+(4)4:20:51 PM - Ended Loop #500, Errors = 0
+(3)4:20:52 PM - Ended Loop #750, Errors = 0
+(1)4:20:52 PM - Ended Loop #750, Errors = 0
+(2)4:20:52 PM - Ended Loop #750, Errors = 0
+(5)4:20:52 PM - Ended Loop #750, Errors = 0
+(4)4:20:52 PM - Ended Loop #750, Errors = 0
+...
+
+(2)4:21:19 PM - Ended Loop #9500, Errors = 0
+(1)4:21:19 PM - Ended Loop #9500, Errors = 0
+(3)4:21:19 PM - Ended Loop #9500, Errors = 0
+(4)4:21:20 PM - Ended Loop #9500, Errors = 0
+(5)4:21:20 PM - Ended Loop #9500, Errors = 0
+(2)4:21:20 PM - Ended Loop #9750, Errors = 0
+(1)4:21:20 PM - Ended Loop #9750, Errors = 0
+(3)4:21:20 PM - Ended Loop #9750, Errors = 0
+(4)4:21:20 PM - Ended Loop #9750, Errors = 0
+(5)4:21:20 PM - Ended Loop #9750, Errors = 0
+(2)4:21:21 PM - Ended Loop #10000, Errors = 0
+(1)4:21:21 PM - Ended Loop #10000, Errors = 0
+(3)4:21:21 PM - Ended Loop #10000, Errors = 0
+(4)4:21:21 PM - Ended Loop #10000, Errors = 0
+(5)4:21:21 PM - Ended Loop #10000, Errors = 0
+(0)4:21:21 PM - Ended
+Average: 1566 pings/sec
+
+C:\>
+</pre>
+</font>
+
+<h3><a name="Header_Example2" href="#ToC_Example2">4.2 Example 2</a></h3>
+
+This Java example program shows how you can use the MONITOR service to  
+log a message to update the status of the test.  
+The syntax to run this program is:
+<font color="darkblue">
+<pre>
+C:\>java com.ibm.staf.service.stax.TestProcess
+Usage: java TestProcess loopCount incrementSeconds returnCode
+</pre>
+</font>
+where:
+<ul compact>
+<li>loopCount is the number of loops to repeat
+<li>incrementSeconds is the number of seconds to wait between each loop
+<li>returnCode is the return code the TestProcess program should return
+</ul>
+This program submits a LOG request to the MONITOR service stating which loop
+it is currently running. It submits a MONITOR LOG request at the beginning
+of each loop and then sleeps the specified number of incrementSeconds.
+When complete, it returns the specified returnCode.
+
+<font color="darkblue">
+<pre>
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2002                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+import com.ibm.staf.*;
+import java.util.*;
+
+public class TestProcess implements Runnable
+{    
+    private STAFHandle handle = null;    
+    private int counter;
+    private int loopCounter;
+    private int incrementSeconds;
+    private int returnCode;
+            
+    public static void main(String[] args)
+    {
+        if (args.length &lt; 3)
+        {
+            System.out.println("Usage: java TestProcess loopCount" +
+                               " incrementSeconds returnCode");
+            System.exit(1);
+        }
+        
+        try
+        {
+            int loopCounter = (new Integer(args[0])).intValue();
+            int incrementSeconds = (new Integer(args[1])).intValue();
+            int returnCode = (new Integer(args[2])).intValue();
+            TestProcess testProcess = new TestProcess(loopCounter,
+                                                      incrementSeconds,
+                                                      returnCode);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public TestProcess(int loopCounter, int incrementSeconds, 
+                       int returnCode)    
+    {
+        this.loopCounter = loopCounter;
+        this.incrementSeconds = incrementSeconds;
+        this.returnCode = returnCode;
+        this.run();
+    }
+
+    public void run()
+    {
+        try
+        {
+            // register with STAF
+            handle = new STAFHandle("TestProcess");
+            System.out.println("STAF handle: " + handle.getHandle());
+
+            STAFResult res = handle.submit2(
+                "local", "VAR",
+                "RESOLVE STRING {STAF/Config/MachineNickname}");
+
+            if (res.rc != 0)
+            {
+                System.out.println(
+                    "Error resolving {STAF/Config/MachineNickname}." +
+                    " RC: " + res.rc + " Result: " + res.result);                
+                terminate();
+            }
+
+            System.out.println(
+                "STAF/Config/MachineNickname: " + res.result);
+        }
+        catch(STAFException e)
+        {
+            System.out.println("Error registering with STAF");
+            terminate();
+        }        
+        
+        for (int i=0; i &lt; loopCounter; i++)
+        {
+            STAFResult result = handle.submit2(
+                "local", "monitor", "log message " + 
+                STAFUtil.wrapData("Loop #" + String.valueOf(i)));
+
+            System.out.println("Loop #" + String.valueOf(i));
+           
+            try
+            {
+                Thread.sleep(incrementSeconds * 1000);
+            }
+            catch(InterruptedException e)
+            {
+                e.printStackTrace();
+            }                    
+        }
+        
+        terminate();
+    }      
+
+    public void terminate()
+    {
+        try
+        {
+            if (handle != null)
+            {                
+                handle.submit2("local", "monitor", "log message " +
+                               STAFUtil.wrapData("Terminating "));                
+
+                // unregister
+                handle.unRegister();
+            }
+        }
+        catch(STAFException e)
+        {
+            /* do nothing */
+        }
+        finally
+        {
+            System.exit(returnCode);
+        }
+    }
+}
+</pre>
+</font>
+
+Here's an example of running the sample program:
+<font color="darkblue">
+<pre>
+C:\dev\sf\src\staf\test>java TestProcess 3 2 0
+STAF handle: 127
+STAF/Config/MachineNickname: sharon
+Loop #0
+Loop #1
+Loop #2
+C:\>
+</pre>
+</font>
+
+While this program is running, you can query the MONITOR
+service to see get the latest message that the TestProcess
+program logged.  For example:
+<font color="darkblue">
+<pre>
+C:\>staf local monitor query machine sharon handle 118
+Response
+--------
+Date-Time: 20050516-17:08:44
+Message  : Loop #0
+
+
+C:\>staf local monitor query machine sharon handle 118
+Response
+--------
+Date-Time: 20050516-17:08:49
+Message  : Loop #1
+
+C:\>staf local monitor query machine sharon handle 118
+Response
+--------
+Date-Time: 20050516-17:08:54
+Message  : Loop #2
+
+C:\>staf local monitor query machine sharon handle 118
+Response
+--------
+Date-Time: 20050516-17:08:59
+Message  : Terminating
+</pre>
+</font>
+
+<p><p>
+
+<p>
+<h2><a name="Header_TestSTAFJavaSupport" href="#ToC_TestSTAFJavaSupport">5.0 How to Test STAF Java Support</a></h2>
+
+<h3><a name="Header_TestJSTAF" href="#ToC_TestJSTAF">5.1 Class TestJSTAF</a></h3>
+
+<p><h4>Definition</h4>
+
+<p>The <tt>TestJSTAF</tt> class allows you to submit a command-line STAF
+request using the STAF Java support.  This class is useful if you want to verify
+that the STAF Java support is working correctly, without requiring a GUI display
+or any modifications to the CLASSPATH.
+<p>The syntax of this class is:
+<pre>
+Usage: java com.ibm.staf.TestJSTAF &lt;Endpoint | LOCAL> &lt;Service> &lt;Request>
+</pre>
+
+<h4>Examples</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+C:\> java com.ibm.staf.TestJSTAF LOCAL MISC VERSION
+TestJSTAF using STAF handle 15
+RC=0
+Result=3.2.1
+
+C:\> c:\jdk1.5.0_02\jre\bin\java com.ibm.staf.TestJSTAF LOCAL PING PING
+TestJSTAF using STAF handle 19
+RC=0
+Result=PONG
+
+C:\> java com.ibm.staf.TestJSTAF machineA.company.com VAR RESOLVE STRING {STAF/Config/OS/Name}
+TestJSTAF using STAF handle 27
+RC=0
+Result=WinXP
+</pre>
+</font>
+</ul>
+
+<h4>*** End of Document ***</h4>
+</body>
+</html>

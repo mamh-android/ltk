@@ -1,0 +1,4930 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<!--
+  File name:    STAFUpgradeUtil.xml
+  
+  This library of STAX functions are for upgrading STAF to a new version on a
+  remote machine.
+
+-->
+
+<stax>
+  
+  <function name="STAFUpgrade" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Upgrades the version of STAF running on a remote target machine.
+        The target machine where STAF will be upgraded to a new version must
+        already have STAF running.</p>
+        <p>
+        Note that this version of STAFUpgradeUtil.xml only supports upgrading
+        target machine(s) to STAF V3.3.0 or later.</p>
+        <p>
+        The minimum version of STAF that must be running on the target 
+        machine is:</p>
+        <ul compact>
+        <li>3.0.0 if the target machine is a Windows machine
+        <li>3.1.3 if the target machine is a Unix machine
+        </ul>
+        <p>
+        The STAX machine must be running STAF V3.1.0 or later.</p>
+        <p>
+        The target machine(s) must give the STAX machine trust level 5
+        and must give the installer machine trust level 4 or higher.</p>
+        <p>
+        The installer machine must give the STAX machine trust level
+        4 or higher.</p>
+        <p>
+        The STAF installer files must be downloaded to a single directory on
+        the installer machine so that this function can copy the appropriate
+        STAF installer file from the installer machine to the remote target
+        machine.  Note that only the InstallAnywhere Bundled JVM installer
+        files (e.g. STAFxxxx-setup-linux.bin, STAFxxxx-setup-win32.exe) and
+        GNU zipped tar installer files (e.g. STAFxxxx-linux-tar.gz) are
+        supported by this function.  The InstallAnywhere NoJVM installer files
+        (e.g. STAFxxxx-setup-linux-NoJVM.bin) are not supported.</p>
+        <p>
+        A STAF upgrade doesn't automatically use the same settings that were
+        selected by the previous STAF install.  Also, this function doesn't
+        support every STAF installation option, such as overriding the version
+        of STAF Python, Perl, or Tcl support installed by default.</p>
+        <p></p>
+        <h4>Notes:</h4>
+        <ol>
+        <li>This is the function you call to upgrade STAF.  All of the other
+        functions in this library are just "helper" functions and are not
+        intended to by called by other functions.</li>
+        <li>You must import all of the functions in this library file to use
+        this function.</li>
+        <li>This function also requires that you import functions from the
+        STAXUtil.xml library file.</li>
+        </ol>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing the return code and result from upgrading STAF
+      on the target machine.</p>
+      <p>
+        If it was successful, the return is 0 and the result contains a message
+        with the location where STAF was upgraded on the target machine,
+        the STAF installer file used, and the new STAF version.
+        If it failed, a non-zero return code and an error message will be returned.
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's an example that requests to upgrade STAF on target machine
+        'client1.company.com' using machine 'server1.company.com' as the
+        machine where the STAF installer files reside in directory
+        '/STAFInstallFiles/330':
+        <pre>
+  &lt;call function="'STAFUpgrade'">
+    {
+      'machine': 'client1.company.com',
+      'installerMachine': 'server1.company.com',
+      'installerDirectory': '/STAFInstallFiles/330
+    }
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script></pre>
+        </li>
+        <p></p>
+        <li>Here's an example that requests to upgrade STAF on target machine
+        'client1' and specifies to use STAF installer file
+        '/STAFInstallFiles/330/STAF330-linux.tar.gz' on machine 'server1':
+        <pre>
+  &lt;script>
+    installerMachine = 'server1.company.com'
+    linuxInstallFile = '/STAFInstallFiles/330/STAF330-linux.tar.gz'
+  &lt;/script>
+          
+  &lt;call function="'STAFUpgrade'">
+    { 'machine': 'client1', 'installerMachine': installerMachine,
+      'installerFile': linuxInstallFile }
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine on which you want to upgrade STAF.
+        If your target machine does not have a STAF interface listening on the
+        same port as your STAX machine and Installer machine, then you will
+        need to specify the port explicitly, e.g. mysystem.company.com@6500.
+        Or, if your target machine is running multiple instances of STAF, then you will 
+
+        need to specify the port explicitly to be sure to communicate with the 
+
+        instance of STAF that you want to upgrade.
+      </function-required-arg>
+      <function-required-arg name="installerMachine">
+        The endpoint for the machine where the STAF installer files reside
+      </function-required-arg>
+      <function-optional-arg name="installerDirectory" default="None">
+        The directory on the installerMachine where the STAF installer file(s)
+        reside.  The function will then automatically determine the STAF
+        installer file to use to upgrade STAF.  It does this by determining
+        the os/architecture, etc. of the target machine and chooses a
+        .bin/.exe file over a tar.gz file if both exist in the installer directory.
+        Note that only the InstallAnywhere Bundled JVM installer files (e.g.
+        STAFxxxx-setup-linux.bin, STAFxxxx-setup-win32.exe) and GNU zipped tar
+        installer files (e.g. STAFxxxx-linux.tar.gz) are supported by this
+        function.  The InstallAnywhere NoJVM installer files (e.g.
+        STAFxxxx-setup-linux-NoJVM.bin) are not supported by this function.
+        You must specify the installerDirectory argument OR the installerFile
+        argument, but not both.
+      </function-optional-arg>
+      <function-optional-arg name="installerFile" default="None">
+        The fully-qualified name of the STAF installer file that resides
+        on the installerMachine.  This file will be used to upgrade STAF on
+        the target machine.
+        Note that you should specify either the name of an InstallAnywhere
+        Bundled JVM installer file or the name of a GNU zipped tar installer
+        file.
+        You must specify the installerDirectory argument OR the installerFile
+        argument, but not both.
+      </function-optional-arg>
+      <function-optional-arg name="preferredProcessorType" default="'64-bit'">
+        Indicates whether you would prefer to use a 64-bit over a 32-bit STAF installer
+        file if one is available for the target machine's operating system,
+        or vice versa.  This argument is only used if you specified the installer
+        directory so that the function automatically determines the STAF
+        installer file to use to upgrade STAF. Valid values are '32-bit' or '64-bit'.
+      </function-optional-arg>
+      <function-optional-arg name="preferredFileType" default="1">
+        Indicates the type of installer file you would prefer to use to install STAF
+        if it is available for the target machine's operating system:
+        1=InstallAnywhere .bin or .exe file, 2=tar.gz or tar.Z file (STAFInst).
+        This argument is only used if you specified the installer directory so
+        that the function automatically determines the STAF installer file to
+        use to upgrade STAF.
+      </function-optional-arg>
+      <function-optional-arg name="installShieldTempDir" default="None">
+        The directory on the target machine to use for storing temporary
+        files created by InstallAnywhere.  This argument is only used if an
+        InstallAnywhere file (e.g. .bin or .exe) is used to upgrade STAF.
+        If the install fails because InstallAnywhere does not have enough
+        space to extract temporary files, you will either need to make
+        free up space in the default temporary directory for InstallAnywhere
+        or use this argument to specify a different temporary directory.
+      </function-optional-arg>
+      <function-optional-arg name="port" default="6599">
+        A port number to be used to communicate to a temporary
+        STAFProc instance that will be started during the STAF upgrade
+        process.  This port must not currently be used by any instance of
+        STAF running on the target machine.
+      </function-optional-arg>
+      <function-optional-arg name="installType" default="'Full'">
+        Indicates whether to a 'Full' or 'Minimal' install.
+        Note that a 'Full' install type installs all STAF files including all
+        supported codepages. 
+      </function-optional-arg>
+      <function-optional-arg name="updateEnvVars" default="'System'">
+        Indicates the type of environment variables to update.
+        This argument is only used if an InstallAnywhere file (e.g. .bin or .exe)
+        is used to upgrade STAF.
+        The valid values are "System", "User", and "None".
+        "System" specifies to update the system environment variables
+        and the start menu (if on Windows).
+        "User" specifies to update the user's environment variables.
+        "None" specifies to not update the environment.
+      </function-optional-arg>
+      <function-optional-arg name="tcpipVersion" default="'IPv4 only'">
+        Indicates whether to install support for IPv4 only or for IPv4 and
+        IPv6.  The valid values are "IPv4 only" and "IPv4 and IPv6".
+        Note that the target machine must support IPv6 in order to install
+        support for IPv4 and IPv6.
+      </function-optional-arg>
+      <function-optional-arg name="importMachine" default="'local'">
+        The endpoint for the machine where the STAXUtil.xml file resides.
+        This function imports and uses functions in the STAXUtil.xml file
+        provided with STAX.
+      </function-optional-arg>
+      <function-optional-arg name="importDirectory"
+        default="'{STAF/Config/STAFRoot}' + '/services/stax/libraries'">
+        The directory where the STAXUtil.xml file resides on the
+        importMachine.
+      </function-optional-arg>
+      <function-optional-arg name="verifyOnly" default="0">
+        A flag that indicates whether you just want to verify if the target
+        machine meets the pre-requisites checks to be able to have STAF
+        upgraded (but not actually perform the STAF upgrade).
+        A value that evaluates via Python to true (e.g. 1) indicates to only
+        perform a pre-req check and not to perform the upgrade.
+        A value that evaluates via Python to false (e.g. 0) indicates to
+        perform the STAF upgrade (assuming it passes pre-req checking).
+      </function-optional-arg>
+    </function-map-args>
+
+    <sequence>
+           
+      <script>
+        import time
+        starttime = time.time(); # record starting time    
+
+        sendToMonitor = 1
+        recordStatus = 0
+
+        # Turn on the flag to also send a message to the STAX Monitor whenever
+        # a message is logged via a log element.
+        #STAXMessageLog = 1
+        #STAXLogMessage = 1
+
+        logPrefix = '[%s][VerifyArguments] ' % (targetMachine)
+        rc = 0
+        result = ''
+
+        # Verify the arguments specified are valid
+
+        if ((installerDirectory == None and installerFile == None) or
+            (installerDirectory != None and installerFile != None)):
+          rc = 1
+          result = "Function UpdateSTAF requires that you specify either " + \
+            "argument 'installerDirectory' or 'installerFile', but not both."
+
+        if rc == 0:
+          if preferredProcessorType not in [ '32-bit', '64-bit' ]:
+            rc = 1
+            result = "Invalid value for the 'preferredProcessorType' argument: %s" % \
+              (preferredProcessorType) + \
+              "\nThe 'preferredProcessorType' argument value must be '32-bit' or '64-bit'"
+       
+        if rc == 0:
+          if preferredFileType not in [ 1, 2 ]:
+            rc = 1
+            result = "Invalid value for the 'preferredFileType' argument: %s" % \
+              (preferredFileType) + \
+              "\nThe 'preferredFileType' argument value must be 1 or 2"
+
+        if rc == 0:
+          # Verify the port specified is numeric
+          try:
+            numericPort = int(port)
+          except:
+            rc = 1
+            result = "The 'port' argument value must be a string " + \
+              " containing a numeric value,  e.g. '6599'"
+
+        if rc == 0:
+          # Verify that the installType specified is set to either 'Typical',
+          # 'Full', or 'Minimal'
+          if installType not in ['Typical', 'Full', 'Minimal']:
+            rc = 1
+            result = "Invalid value for the 'installType' argument: %s" % \
+              (installType) + \
+              "\nThe 'installType' argument value must be " + \
+              "'Typical', 'Full', or 'Minimal'"
+
+        if rc == 0:
+          # Verify that updateEnvVars is set to either 'System', 'User', or 'None'
+          if updateEnvVars not in ['System', 'User', 'None']:
+            rc = 1
+            result = "Invalid value for the 'updateEnvVars' argument: %s" % \
+              (updateEnvVars) + \
+              "\nThe 'updateEnvVars' argument value must be " + \
+              "'System', 'User',  or 'None'"
+
+        if rc == 0:
+          # Verify that tcpipVersion is set to either 'IPv4 only' or 'IPv4 and IPv6'
+          if tcpipVersion not in ['IPv4 only', 'IPv4 and IPv6']:
+            rc = 1
+            result = "Invalid value for the 'tcpipVersion' argument: %s" % \
+              (tcpipVersion) + \
+              "\nThe 'tcpipVersion' argument value must be " + \
+              "'IPv4 only' or 'IPv4 and IPv6'"
+      </script>
+
+      <if expr="rc != 0">
+        <return>[ rc, '%s%s' % (logPrefix, result) ]</return>
+      </if>
+
+      <log>
+      """%sSTAFUpgrade Function Arguments:
+        machine               : %s
+        verifyOnly            : %s
+        installerMachine      : %s
+        installerDirectory    : %s
+        installerFile         : %s
+        preferredProcessorType: %s
+        preferredFileType     : %s
+        installShieldTempDir  : %s
+        port                  : %s
+        installType          : %s
+        updateEnvVars         : %s
+        tcpipVersion          : %s
+        importMachine         : %s
+        importDirectory       : %s""" % (logPrefix, targetMachine, verifyOnly,
+          installerMachine, installerDirectory, installerFile,
+          preferredProcessorType, preferredFileType,
+          installShieldTempDir, port, installType, updateEnvVars,
+          tcpipVersion, importMachine, importDirectory)
+      </log>
+
+      <script>
+        logPrefix = '[%s][GatherInfo] ' % (targetMachine)
+      </script>
+
+      <!-- Import STAXUtil.xml -->
+      <call function="'STAFUpgrade_ImportSTAXUtil'">
+        { 'importMachine': importMachine, 'importDirectory': importDirectory }
+      </call>
+      <script>[rc, result] = STAXResult</script>
+      <if expr="rc != 0">
+        <return>[rc, result]</return>
+      </if>
+
+      <!-- Gather information about the STAX Machine -->
+      <call function="'STAFUpgrade_GetSTAXMachineInfo'">
+        { 'installerMachine': installerMachine}
+      </call>
+      <script>[rc, result] = STAXResult</script>
+      <if expr="rc != 0">
+        <return>[rc, result]</return>
+      </if>
+     <script>STAXMachInfo = result</script>
+
+      <!-- Verify that can perform a STAF upgrade on the target machine and
+            get information about the machine -->
+
+      <call function="'STAFUpgrade_GetTargetMachineInfo'">
+        { 'targetMachine': targetMachine, 'port': port,
+          'STAXMachInfo': STAXMachInfo }
+      </call>
+      <script>[rc, result] = STAXResult</script>
+      <if expr="rc != 0">
+        <return>[rc, result]</return>
+      </if>
+      <script>machineInfo = result</script>
+
+      <if expr="installerDirectory != None">
+        <sequence>
+          <!-- Automatically determine the installer file name -->
+          <call function="'STAFUpgrade_GetInstallerFile'">
+           {
+             'machine': targetMachine,
+             'installerMachine': installerMachine,
+             'installerDirectory': installerDirectory,
+             'preferredProcessorType': preferredProcessorType,
+             'preferredFileType': preferredFileType,
+             'machineInfo': machineInfo
+           }
+          </call>
+          <script>[rc, result] = STAXResult</script>
+          <if expr="rc == 0">
+            <script>installerInfo =result</script>
+            <else>
+              <return>[rc, result]</return>
+            </else>
+          </if>
+        </sequence>
+        <else>
+          <sequence>
+            <!-- installerFile argument was specified -->
+
+            <!-- Verify the installer file exists on the installer machine -->
+
+            <script>request = 'QUERY ENTRY %s' % (installerFile)</script>
+            <stafcmd name="'STAF %s FS %s' % (installerMachine, request)">
+              <location>installerMachine</location>
+              <service>'FS'</service>
+              <request>request</request>
+            </stafcmd>
+
+            <if expr="RC != STAFRC.Ok">
+              <return>
+                [ 1, 'Installer file %s does not exist on machine %s' % \
+                  (installerFile, installerMachine) ]
+              </return>
+            </if>
+
+            <!-- Verify the installer file does not have a .jar extension as
+                  STAF InstallAnywhere .jar files are not supported -->
+            <if expr="installerFile.endswith('.jar')">
+              <return>
+                [ 1, 'Installer file %s is not supported ' % (installerFile) + \
+                  'by the STAFUpgrade function because it does not ' + \
+                  'support installing via a .jar file.\nPlease specify ' + \
+                  'another installer file (e.g. .bin, .exe, .tar.gz)' ]
+              </return>
+            </if>
+
+            <!-- Verify the installer file specified is valid for the operating
+                system on the target machine -->
+            <script>
+              errMsg = ''
+              if machineInfo['osName'].find('Win') == 0:
+                if not installerFile.endswith('exe'):
+                  errMsg = "Invalid installer file '%s'." % (installerFile) + \
+                    "\nMust have extension '.exe' to be used to install " + \
+                    "STAF on a machine with operating system %s." % \
+                    (machineInfo['osName'])
+              elif machineInfo['osName'] == 'OS/390':
+                if not installerFile.endswith('.tar.Z'):
+                  errMsg = "Invalid installer file '%s'." % (installerFile) + \
+                    "\nMust have extension '.tar.Z' to be used to install " + \
+                    "STAF on a machine with operating system %s." % \
+                    (machineInfo['osName'])
+              else:
+                if (not installerFile.endswith('.tar.gz') and
+                    not installerFile.endswith('.bin')):
+                  errMsg = "Invalid installer file '%s'." % (installerFile) + \
+                    "\nMust have extension '.bin' or '.tar.gz' to be used " + \
+                    "to install STAF on a machine with operating system %s." % \
+                    (machineInfo['osName'])
+            </script>
+
+            <if expr="errMsg != ''">
+              <return>
+                [ 1, errMsg ]
+              </return>
+            </if>
+
+            <script>
+              installerInfo = {}
+              installerInfo['installerFile'] = installerFile
+
+              if (installerFile.endswith('.bin') or
+                  installerFile.endswith('.exe')):
+                installerInfo['installType'] = 1  # InstallAnywhere install
+              else:
+                installerInfo['installType'] = 2  # STAFInst install
+
+              # Determine the file name (e.g. without the path)
+              import os.path
+              installerInfo['installerFileName'] = os.path.basename(installerFile)
+            </script>
+          </sequence>
+        </else>
+      </if>
+
+      <script>
+        # Determine the STAF version based on the installerFileName which
+        # should have format STAFnnn-xxxxxxxxxx where nnn (or nnnn) is
+        # the version.
+        hyphenIndex =  installerInfo['installerFileName'].find('-')
+        if hyphenIndex > 0:
+          installerInfo['version'] = installerInfo['installerFileName'][0:hyphenIndex]
+          validInstallerName = 1
+        else:
+          errMsg = 'Invalid format for installerFileName: %s.  ' \
+            % (installerInfo['installerFileName']) + \
+            'Expected format: STAFnnn-xxxxxxxx, where nnn is the version ' + \
+            'and is followed by a hythen and then any characters'
+          validInstallerName = 0
+      </script>
+
+      <if expr="not validInstallerName">
+        <return>[1, errMsg]</return>
+      </if>
+
+      <script>
+        installerInfo['toFile'] = '%s%s%s' % \
+          (machineInfo['tmpDataDir'], machineInfo['fileSep'], 
+           installerInfo['installerFileName'])
+        installerInfo['tmpSTAFRoot'] = '%s%s%s' %  \
+          (machineInfo['tmpDataDir'], machineInfo['fileSep'],
+           installerInfo['version'])
+      </script>
+      
+      <log>
+        """%sInstaller File Information:
+          installerMachine  : %s
+          installerFile     : %s
+          toFile            : %s
+          version           : %s 
+          tmpSTAFRoot       : %s""" % (logPrefix, installerMachine, 
+            installerInfo['installerFile'], installerInfo['toFile'], installerInfo['version'],
+            installerInfo['tmpSTAFRoot'])
+      </log>
+      
+      <if expr="installerInfo['installType'] == 1 and installShieldTempDir != None">
+        <sequence>
+
+          <!-- An InstallAnywhere install will be performed and a temporary
+               directory was specified to use when doing the InstallAnywhere
+               install, so check if the temporary directory exists on the
+               target machine. If it doesn't exist, create it.  If can't
+               create the directory, return an error. -->
+
+          <log>
+            '%sVerifying if the installShieldTempDir value specified is valid... ' % (logPrefix)
+          </log>
+
+          <call function="'STAFUpgrade_CreateDirectoryIfDoesNotExist'">
+            { 'directory': installShieldTempDir, 'machine': targetMachine }
+          </call>
+
+          <script>[rc, result] = STAXResult</script>
+
+          <if expr="rc != 0">
+            <sequence>
+              <script>
+                errMsg = 'Invalid installShieldTempDir: %s\n%s' % (installShieldTempDir, result)
+              </script>
+              <return>[rc, errMsg]</return>
+            </sequence>
+          </if>
+        </sequence>
+      </if>
+
+      <!-- Verify that the installer machine can copy a file to the target
+          machine where STAF is to be upgraded.
+          To verify this, copy a small file from the STAX machine to the
+          installer machine and then try to copy it to the target machine.
+          -->
+      <log>
+        '%sVerifying if can copy a file from installer ' % (logPrefix) + \
+        'machine %s to target machine %s...' % \
+        (installerMachine, targetMachine)
+      </log>
+
+      <script>
+        cfgFile = '{STAF/Config/ConfigFile}'
+        testFile = '{STAF/Config/STAFRoot}/installTest_%s.txt' % (targetMachine)
+        request = 'COPY FILE %s ' % (STAFUtil.wrapData(cfgFile)) + \
+          'TOFILE %s TOMACHINE %s' % (STAFUtil.wrapData(testFile), installerMachine)
+      </script>
+
+      <stafcmd name="'STAF local FS %s' % (request)">
+        <location>'local'</location>
+        <service>'FS'</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC == STAFRC.Ok">
+        <sequence>
+
+          <script>
+            request = 'COPY FILE %s TOMACHINE %s' % \
+              (STAFUtil.wrapData(testFile), targetMachine)
+          </script>
+
+          <stafcmd name="'STAF %s FS %s' % (installerMachine, request)">
+            <location>installerMachine</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+          <!-- Delete the test file that was copied to verify the trust list -->
+          <script>
+            copyRC = RC
+            copyResult = STAFResult
+            request = 'DELETE ENTRY %s CONFIRM' % (STAFUtil.wrapData(testFile))
+          </script>
+
+          <stafcmd name="'STAF %s FS %s' % (installerMachine, request)">
+            <location>installerMachine</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+          <script>
+            if copyRC == STAFRC.NoPathToMachine:
+              errMsg = '%sCannot copy the installer file ' % (logPrefix) + \
+                'from machine %s to target ' % (installerMachine) + \
+                'machine %s. RC=%s Result=%s ' % \
+                (targetMachine, copyRC, copyResult) + \
+                '\n\nVerify the following:\n' + \
+                '- If you did not explicitly specify a port for the target ' + \
+                'machine, verify that the default ports used by the ' + \
+                'installer machine and the target machine are the same.' + \
+                '  If the default ports are different, you must explicitly ' + \
+                'specify the port to use for the target machine ' + \
+                '(e.g. mysystem@6500).\n' + \
+                '- Are there any firewalls to go through? If so, do they ' + \
+                'allow traffic via this port?  Is the installer machine ' + \
+                'authorized to access the target machine (e.g. BSO)?'
+            elif copyRC == STAFRC.AccessDenied:
+              errMsg = '%sCannot copy the installer file ' % (logPrefix) + \
+                'from machine %s to target ' % (installerMachine) + \
+                'machine %s due to insufficient trust level.' % (targetMachine) + \
+                '  RC=%s\n%s' % (copyRC, copyResult)
+            elif copyRC != STAFRC.Ok:
+              errMsg = '%sCannot copy the installer file ' % (logPrefix) + \
+                'from machine %s to target ' % (installerMachine) + \
+                'machine %s. RC=%s Result=%s ' % \
+                (targetMachine, copyRC, copyResult)
+          </script>
+
+          <if expr="copyRC != STAFRC.Ok">
+            <return>[copyRC, errMsg]</return>
+          </if>
+
+          <!-- Delete the test file that was copied to verify the trust list -->
+          <stafcmd name="'STAF %s FS %s' % (targetMachine, request)">
+            <location>targetMachine</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+        </sequence>
+      </if>
+      
+      <log>
+        '%sVerification checking completed for machine %s' % \
+        (logPrefix, targetMachine)
+      </log>
+      
+      <if expr="verifyOnly">
+        <sequence>
+          <script>
+            successMsg = 'Machine %s passed the verification checks.\n' % \
+              (targetMachine) + \
+              'Ready to begin STAF upgrade using installer file %s' % \
+              (installerInfo['installerFileName'])
+          </script>
+          <return>
+            [ 0, successMsg]
+         </return>
+        </sequence>
+      </if>
+
+      <log>
+        '%sReady to begin STAF upgrade using installer file %s' % \
+        (logPrefix, installerInfo['installerFileName'])
+      </log>
+
+      <!-- Create command to install temporary version of STAF -->
+
+      <!-- Install using InstallAnywhere Executable -->
+      <if expr="installerInfo['installType'] == 1">
+        <sequence>
+
+          <script>
+            installLogFile = '%s/STAFInstall.log' % machineInfo['stafRoot']
+          </script>
+
+          <log>
+            '%sCreate a response file for the InstallAnywhere silent temp install of STAF on %s' % \
+             (logPrefix, machineInfo['machine'])
+          </log>
+
+          <!-- Create a response file for the InstallAnywhere silent install of STAF in a
+                temporary location on the STAX (local) machine and copy it to the
+                targetMachine -->
+
+          <script>
+            myTmpRspFileName = '%s/tmp/STAFTmpInstallRspFile_%s' % \
+                (STAXMachInfo['STAFDataDir'], machineInfo['machine'])
+
+            # Open the file in write ('w') and text('t') mode.
+            # Text mode means the appropriate line-endings with be set by Python.
+            rspFile = open(myTmpRspFileName, 'wt')
+
+            rspFile.writelines(
+              [
+                'USER_INSTALL_DIR=%s\n' % (installerInfo['tmpSTAFRoot'].replace('\\', '/')),
+                'ACCEPT_LICENSE=1\n',
+                'CHOSEN_INSTALL_SET=Minimal\n',
+                'INSTALLER_UI=silent\n',
+                'UPDATE_ENVIRONMENT=None\n',
+                'START_ON_LOGIN=0\n',
+                'CREATE_START_MENU_ICONS=0\n',
+                'USER_REQUESTED_RESTART=NO\n',
+                'REGISTER=0\n'
+              ])
+
+            # Assign any additional options to the install command that apply
+
+            # To do a minimal install with codepage support:
+            #if installType == 'Full':
+            #  rspFile.writelines(
+            #    [
+            #      '-W setupTypes.active="false"\n',
+            #      '-P optionalCodepageSupport.active="True"\n'
+            #    ])
+
+            #if tcpipVersion == 'IPv4 and IPv6':
+            #  rspFile.write( '-W stafOptions.defaultIPvVersion="IPv4 and IPv6"\n' )
+
+            rspFile.close()
+
+            tmpRspFileName = '%s/STAFTmpInstallRspFile.txt' % (machineInfo['tmpDataDir'])
+            request = 'COPY FILE %s TOFILE %s TOMACHINE %s TEXT' % \
+                      (STAFUtil.wrapData(myTmpRspFileName),
+                       STAFUtil.wrapData(tmpRspFileName), targetMachine)
+          </script>
+
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+          <if expr="RC != STAFRC.Ok">
+            <sequence>
+              <script>
+                errMsg = '%sCannot copy the response file ' % (logPrefix) + \
+                  'from machine %s to target ' % (installerMachine) + \
+                  'machine %s.\nSTAF local FS %s\nRC=%s Result=%s ' % \
+                  (targetMachine, request, RC, STAFResult)
+              </script>
+              <return>[RC, errMsg]</return>
+            </sequence>
+          </if>
+
+          <log>
+            '%sCreate a response file for the InstallAnywhere silent upgrade of STAF on %s' % \
+             (logPrefix, machineInfo['machine'])
+          </log>
+
+          <script>
+            # Create STAF tmp install command to do a silent install of STAF using the
+            # response file just generated
+            #tmpInstallCmd = '"%s" -is:log "%s" -silent' % (installerInfo['toFile'], installLogFile) + \
+            #   ' -options "%s"' % (tmpRspFileName)
+            tmpInstallCmd = '"%s"' % (installerInfo['toFile']) + \
+              ' -f "%s"' % (tmpRspFileName)
+
+            #if installShieldTempDir != None:
+            #   tmpInstallCmd = '%s -is:tempdir "%s"' % (tmpInstallCmd, installShieldTempDir)
+          </script>
+
+          <!-- Create a response file for the InstallAnywhere silent upgrade of STAF 
+                and copy the response file to the targetMachine -->
+
+          <script>
+            myRspFileName = '%s/tmp/STAFInstallRspFile_%s' % \
+                (STAXMachInfo['STAFDataDir'], machineInfo['machine'])
+
+            # Open the file in write ('w') and text('t') mode.
+            # Text mode means the appropriate line-endings with be set by Python.
+            rspFile = open(myRspFileName, 'wt')
+
+            rspFile.writelines(
+              [
+                'USER_INSTALL_DIR=%s\n' % (machineInfo['stafRoot'].replace('\\', '\\\\')),
+                'ACCEPT_LICENSE=1\n',
+                'INSTALLER_UI=silent\n',
+                'USER_REQUESTED_RESTART=NO\n'
+              ])
+
+            # Assign any additional options to the upgrade command that apply
+
+            if installType != 'Full':
+              rspFile.write( 'CHOSEN_INSTALL_SET=%s\n' % (installType) )
+            if updateEnvVars != 'System':
+              rspFile.write( 'UPDATE_ENVIRONMENT=%s\n' % (updateEnvVars) )
+            if tcpipVersion == 'IPv4 and IPv6':
+              rspFile.write( 'USE_TCP_VERSION=IPv4_IPv6\n' )
+
+            rspFile.close()
+
+            rspFileName = '%s/STAFUpgradeRspFile.txt' % (machineInfo['tmpDataDir'])
+            request = 'COPY FILE %s TOFILE %s TOMACHINE %s TEXT' % \
+                      (STAFUtil.wrapData(myRspFileName),
+                       STAFUtil.wrapData(rspFileName), targetMachine)
+          </script>
+
+          <stafcmd name="'STAF local FS %s' % (request)">
+            <location>'local'</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+          <if expr="RC != STAFRC.Ok">
+            <sequence>
+              <script>
+                errMsg = '%sCannot copy the response file ' % (logPrefix) + \
+                  'from machine %s to target ' % (installerMachine) + \
+                  'machine %s.\nSTAF local FS %s\nRC=%s Result=%s ' % \
+                  (targetMachine, request, RC, STAFResult)
+              </script>
+              <return>[RC, errMsg]</return>
+            </sequence>
+          </if>
+
+          <script>
+            # Create STAF upgrade command to do a silent install of STAF using the
+            # response file just generated
+            #upgradeCmd = '"%s" -is:log "%s" -silent' % (installerInfo['toFile'], installLogFile) + \
+            #   ' -options "%s"' % (rspFileName)
+            upgradeCmd = '"%s"' % (installerInfo['toFile']) + \
+              ' -f "%s"' % (rspFileName)
+
+            #if installShieldTempDir != None:
+            #  upgradeCmd = '%s -is:tempdir "%s"' % (upgradeCmd, installShieldTempDir)
+          </script>
+        </sequence>
+
+        <!-- Install using STAFInst after untarring the tar.gz or .Z file -->
+        <elseif expr="installerInfo['installType'] == 2">
+          <script>
+            installLogFile = ''
+
+            # Create command to install STAF in a temporary location
+
+            # Run tmpInstallCmd in '%s%sstaf' % (machineInfo['tmpDataDir'], machineInfo['fileSep'])
+            tmpInstallCmd = './STAFInst -target %s -acceptlicense' % (installerInfo['tmpSTAFRoot'])
+
+            if installType == 'Full':
+              # Do a full install in case need additional codepages
+              tmpInstallCmd = '%s -type f' % (tmpInstallCmd)
+            else:
+              # Do a minimal install for the temporary STAF version
+              tmpInstallCmd = '%s -type m' % (tmpInstallCmd)
+
+            if tcpipVersion == 'IPv4 and IPv6':
+              tmpInstallCmd = '%s -option TCP=IPV4_IPV6' % (tmpInstallCmd)
+
+            # Create command to upgrade existing STAF
+
+            upgradeCmd = './STAFInst -target %s -acceptlicense' % (machineInfo['stafRoot'])
+            
+            # Assign any additional options for the upgrade command
+            if installType == 'Full':
+              upgradeCmd = '%s -type f' % (upgradeCmd)
+            elif installType == 'Minimal':
+              upgradeCmd = '%s -type m' % (upgradeCmd)
+            if tcpipVersion == 'IPv4 and IPv6':
+              upgradeCmd = '%s -option TCP=IPV4_IPV6' % (upgradeCmd)
+          </script>
+        </elseif>
+
+        <!-- Unsupported STAF install file.  Log an error.  -->
+        <else>
+          <sequence>
+            <script>
+              errMsg = '%sNo support for STAF install file %s' % (logPrefix, installerInfo['installerFileName']) + \
+              '\nOnly STAF InstallAnywhere executable files (e.g. .exe, .bin) or STAF tar.gz files are supported'
+            </script>
+            <return>[1, errMsg]</return>
+          </sequence>
+        </else>
+
+      </if>
+
+      <script>
+        UpdateSTAFStepList = [
+          'STAFUpgrade_Step1',  # Install temporary STAF
+          'STAFUpgrade_Step2',  # Start STAFProc for temporary STAF instance
+          'STAFUpgrade_Step3',  # Shutdown original STAF instance
+          'STAFUpgrade_Step4',  # Upgrade original STAF
+          'STAFUpgrade_Step5',  # Start STAFProc for upgraded STAF
+          'STAFUpgrade_Step6',  # Shutdown temporary STAF instance
+        ]
+
+        # Note that the temporary version of STAF installed gets deleted
+        # automatically when STAF in the upgrade location is restarted since
+        # the temporary version of STAF is installed into the tmp directory
+        # for the upgraded STAF location and the STAF tmp directory gets
+        # deleted each time the upgraded STAF is started.
+
+      </script>
+
+      <iterate var="step" in="UpdateSTAFStepList">
+        <sequence>
+
+          <script>logPrefix = '[%s] ' % (targetMachine)</script>
+          
+          <call function="step">targetMachine</call>
+          
+          <script>rc = STAXResult</script>
+
+          <if expr="rc != STAFRC.Ok">
+            <sequence>
+              <script>
+                errMsg = '%sERROR:  Step %s failed on machine %s.\n' % \
+                  (logPrefix, step, targetMachine) + \
+                  'Terminating STAF upgrade for this machine.'
+              </script>
+              <return>[rc, errMsg]</return>
+            </sequence>
+          </if>
+
+        </sequence>
+      </iterate>
+
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ targetMachine, 'MISC', 'VERSION' ]
+      </call>
+      <script>
+        [rc, result] = STAXResult
+        successMsg = 'STAF Root:            : %s' % (machineInfo['stafRoot']) + \
+          '\nSTAF Installer File   : %s' % (installerInfo['installerFileName'])
+        if rc == STAFRC.Ok:
+          successMsg = '%s\nInstalled STAF Version: %s' % (successMsg, result)
+        
+        logPrefix = '[%s][Complete] ' % (targetMachine)
+        stoptime = time.time() # record ending time
+        elapsedMins = (stoptime - starttime) / 60
+        elapsedSecs = (stoptime - starttime) % 60
+      </script>
+
+      <log>
+        '%s*** Elapsed time for STAF upgrade: ' % (logPrefix) + \
+        '%s minutes %s seconds' % (int(elapsedMins), int(elapsedSecs))
+      </log>
+      
+      <return>[0, successMsg]</return>
+
+    </sequence>
+
+  </function>
+ 
+
+  <function name="STAFUpgrade_Step1" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Performs Step 1 in the STAF Upgrade process where it installs a
+        temporary version of STAF.  It does this as follows:</p>
+        <ol>
+          <li>Copy installFile to target machine
+          <li>If target machine is Unix, give execution permissions 
+               to the installFile
+         <li>Delete the install directory on the target machine if it exists
+               and delete the install log file on the target machine if it exists
+         <li>Start a process to execute the installFile
+        </ol>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If this step is successful, the return code is 0.
+      If the step failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+      <function-required-arg name="targetMachine">
+        The target machine where STAF is to be upgraded
+      </function-required-arg>
+      <!--
+      <function-required-arg name="machineInfo"/>
+      <function-required-arg name="installerFile"/>
+      <function-required-arg name="installerInfo"/>
+      <function-required-arg name="installCommand"/>
+      <function-required-arg name="installLogFile"/>
+      -->
+    </function-list-args>
+
+    <block name="'STEP1: Install Temp STAF'">
+      <sequence>
+       
+        <script>logPrefix = '[%s][STEP 1] ' % (targetMachine)</script>
+
+        <log>'%s*** Install temporary STAF on machine %s' % (logPrefix, targetMachine)</log>
+         
+        <!-- Copy installFile to target machine -->
+
+        <script>
+          request = 'COPY FILE %s TOFILE %s TOMACHINE %s' % \
+                    (STAFUtil.wrapData(installerInfo['installerFile']),
+                     STAFUtil.wrapData(installerInfo['toFile']), targetMachine)
+        </script>
+
+        <call function="'STAFUpgrade_RunSTAFCmd'">
+          [ installerMachine, 'FS', request ]
+        </call>
+
+        <script>[rc, result] = STAXResult</script>
+       
+        <if expr="rc != STAFRC.Ok">
+          <return>rc</return>
+         </if>
+
+        <!-- If the target machine is Unix, give execution permissions to the installFile -->
+
+        <if expr="machineInfo['osName'].find('Win') != 0">
+          <sequence>
+
+            <script>
+              cmd = 'chmod 777 %s' % (installerInfo['toFile'])
+              processDuration = '5m'
+            </script>
+            <log>
+              '%sSTAF %s PROCESS START SHELL COMMAND %s' % \
+               (logPrefix, targetMachine, STAFUtil.wrapData(cmd)) + \
+              ' STDERRTOSTDOUT RETURNSTDOUT WAIT'
+            </log>
+
+            <timer duration="processDuration">
+              <sequence>
+
+                <process name="'Change permissions on STAF install file'">
+                  <location>targetMachine</location>
+                  <command mode="'shell'">cmd</command>
+                  <title>'Change permissions on STAF install file'</title>
+                  <stderr mode="'stdout'"/>
+                  <returnstdout/>
+                </process>
+                  
+                <if expr="RC != STAFRC.Ok">
+                  <sequence>
+                    <script>
+                      saveRC = RC
+                      failMsg = '%sCommand %s on machine %s failed.' % \
+                       (logPrefix, cmd, targetMachine) + \
+                       '  RC=%s Result=%s\nSTAXResult=%s' % \
+                       (RC, STAFResult, STAXResult)
+                    </script>
+                    <call function="'STAXUtilCheckSuccess'">
+                      { 'result': 0, 'failMsg': failMsg,
+                        'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+                    </call>
+                    <return>saveRC</return>
+                  </sequence>
+                </if>
+
+              </sequence>
+            </timer>
+
+            <!-- Check if the process didn't complete within the timer duration -->
+            <if expr="RC == 1">
+              <sequence>
+                <script>
+                  failMsg = '%sThe process running command "%s" on machine %s did not complete within %s.  ' % \
+                    (logPrefix, cmd, targetMachine, processDuration) + \
+                    'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                    'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                    'to send a process completion message.  ' + \
+                    'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                    ' and make sure there are no firewall issues for the port being used by STAF.'
+                </script>
+                <call function="'STAXUtilCheckSuccess'">
+                  { 'result': 0, 'failMsg': failMsg,
+                    'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+                </call>
+                <return>1</return>
+              </sequence>
+            </if>
+
+          </sequence>
+        </if>
+
+        <call function="'STAFUpgrade_InstallSTAF'">
+         {
+            'targetMachine': targetMachine,
+            'osName': machineInfo['osName'],
+            'installLocation': installerInfo['tmpSTAFRoot'],
+            'installCommand': tmpInstallCmd,
+            'installLogFile': installLogFile,
+            'deleteInstallLocation': 1
+          }
+        </call>
+          
+        <script>installRC = STAXResult</script>
+
+        <if expr="installRC != STAFRC.Ok">
+          <return>installRC</return>
+        </if>
+
+        <log>
+          '%s*** Completed installing temporary STAF on machine %s' % \
+          (logPrefix, targetMachine)
+        </log>
+
+        <return>STAFRC.Ok</return>
+
+      </sequence>
+    </block>
+ </function>
+  
+
+  <function name="STAFUpgrade_Step2" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Performs Step 2 in the STAF Upgrade process where it starts
+        the temporary instance of STAF that it just installed.  It does
+        this as follows::</p>
+        <ol>
+          <li>Create a STAF config file to use when starting the
+            temporary instance of STAF that uses a TCP interface
+            with the specified port and gives the STAX machine trust
+            level 5.
+          <li>Start STAFProc for the temporary STAF instance.
+        </ol>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If this step is successful, the return code is 0.
+      If the step failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+      <function-required-arg name="targetMachine">
+        The target machine where STAF is to be upgraded
+      </function-required-arg>
+      <!--
+      <function-required-arg name="machineInfo['osName']"/>
+      <function-required-arg name="STAXMachInfo['STAFDataDir']"/>
+      <function-required-arg name="STAXMachInfo['machine']"/>
+      <function-required-arg name="port"/>
+      <function-required-arg name="tcpInterface2"/>
+      <function-required-arg name="installerInfo['version']"/>
+      <function-required-arg name="installerInfo['tmpSTAFRoot']"/>
+      <function-required-arg name="machineInfo['instanceName']"/>
+      -->
+    </function-list-args>
+    
+    <block name="'STEP2: Start Temp STAF'">
+      <sequence>
+
+        <script>logPrefix = '[%s][STEP 2] ' % (targetMachine)</script>
+
+        <log>
+          '%s*** Start STAFProc for temporary STAF on %s' % \
+           (logPrefix, machineInfo['tmpMachine'])
+        </log>
+
+        <!-- Set up a STAF.cfg file for the new STAF version that has
+             the correct trusts and provides support for a TCP interface
+             using the specified port and copy it to the targetMachine -->
+
+        <script>
+          # Create a STAF .cfg file on the STAX (local) machine
+          myStafCfgFileName = '%s/tmp/STAFTmp_%s.cfg' % \
+             (STAXMachInfo['STAFDataDir'], machineInfo['machine'])
+
+          # Open the file in write ('w') and text('t') mode.
+          # Text mode means the appropriate line-endings with be set by Python.
+          cfgFile = open(myStafCfgFileName, 'wt')
+
+          # XXX: May need to change default trust level to 5 to handle DHCP problems
+          cfgFile.writelines(
+            [
+              '#Default STAF Configuration File for STAF 3\n',
+              '\n',
+              '# Turn on tracing of internal errors\n',
+              'trace enable tracepoints "error deprecated"\n',
+              '\n',
+              '# Enable TCP/IP connections\n',
+              'interface tcp library STAFTCP option Port=%s option Secure=No\n' % \
+                (port),
+              '\n',
+              'trust machine local://local level 5\n',
+              'trust default level 3\n',
+              '# Give trust level 5 to STAX Machine logical and physical IDs\n',
+              'trust machine %s level 5\n' % (STAXMachInfo['machine']),
+              'trust machine %s level 5\n' % (machineInfo['STAXMachPhysicalID']),
+              'trust machine %s level 5\n' % (machineInfo['machine']),
+              '\n',
+              'serviceloader library STAFDSLS\n'
+            ])
+
+          cfgFile.close()
+        </script>
+
+        <script>
+          stafprocOutFile = '%s/STAFProc.out' % (machineInfo['tmpDataDir'])
+          tmpCfgFileName = '%s/bin/STAFTmpNew.cfg' % (installerInfo['tmpSTAFRoot'])
+
+          request = 'COPY FILE %s TOFILE %s TOMACHINE %s TEXT' % \
+              (STAFUtil.wrapData(myStafCfgFileName),
+               STAFUtil.wrapData(tmpCfgFileName), targetMachine)
+        </script>
+
+        <call function="'STAFUpgrade_RunSTAFCmd'">
+          [ 'local', 'FS', request ]
+        </call>
+
+        <script>[rc, result] = STAXResult</script>
+
+        <if expr="rc != STAFRC.Ok">
+          <return>rc</return>
+        </if>
+          
+        <!-- 
+          Start temporarySTAF via a stafcmd PROCESS START request with no
+          WAIT and specify the correct environment variables for the new
+          STAF install
+          -->
+             
+        <call function="'STAFUpgrade_StartSTAF'">
+          {
+            'testMach': targetMachine,
+            'newTestMach': machineInfo['tmpMachine'],
+            'osName': machineInfo['osName'],
+            'installLocation': installerInfo['tmpSTAFRoot'],
+            'configFile': tmpCfgFileName,
+            'stafprocOutFile': stafprocOutFile,
+            'instanceName': 'STAFTmp',
+            'waitTime': 120
+          }
+        </call>
+
+        <if expr="STAXResult != STAFRC.Ok">
+          <return>STAXResult</return>
+        </if>
+
+        <log>
+          '%s*** Completed starting STAFProc for temporary STAF on %s' % \
+           (logPrefix, machineInfo['tmpMachine'])
+        </log>
+
+        <return>STAFRC.Ok</return>
+
+      </sequence>
+    </block>
+
+  </function>
+  
+
+  <function name="STAFUpgrade_Step3" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Performs Step 3 in the STAF Upgrade process where it shuts down
+        the instance of STAF to be upgraded.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If this step is successful, the return code is 0.
+      If the step failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+      <function-required-arg name="targetMachine"/>
+    </function-list-args>
+
+    <!-- Step 3:  Shutdown existing STAF -->
+
+    <block name="'STEP3: Shutdown STAF'">
+      <sequence>
+
+        <script>logPrefix = '[%s][STEP 3] ' % (targetMachine)</script>
+
+        <log>
+          '%s*** Shutdown original STAF on machine %s' % (logPrefix, targetMachine)
+        </log>
+
+        <call function="'STAFUpgrade_RunSTAFCmd'">
+          [ targetMachine, 'SHUTDOWN', 'SHUTDOWN' ]
+        </call>
+
+        <script>[rc, result] = STAXResult</script>
+          
+        <if expr="rc != STAFRC.Ok">
+          <return>rc</return>
+        </if>
+
+        <!--
+          Wait until STAF PING fails to verify that STAFProc has shutdown
+          -->
+
+        <script>
+          timerDuration = '150s'
+          maxWaitTime = 120  # Must be less than timer duration
+        </script>
+
+        <log>
+          '%sWaiting for up to %s seconds for STAFProc to shutdown on machine %s...' % \
+           (logPrefix, maxWaitTime, targetMachine)
+        </log>
+
+        <!-- Added timer to prevent PING hang after STAF shuts down on Unix -->
+        <timer duration="timerDuration">
+          <sequence>
+
+            <call function="'STAFUpgrade_WaitForSTAFShutdown'">
+              [ [targetMachine], maxWaitTime ]
+            </call>
+
+            <script>[rc, result] = STAXResult</script>
+
+            <if expr="rc != 0">
+              <sequence>
+                <log>
+                  '%sSTAFUpgrade_WaitForSTAFShutdown failed. RC=%s Result=%s' % \
+                    (logPrefix, rc, result)
+                </log>
+                <return>rc</return>
+              </sequence>
+            </if>
+
+          </sequence>
+        </timer>
+
+        <if expr="RC == 1">
+          <log>
+            '%sTimer expired waiting for STAF to shutdown on machine %s' % \
+             (logPrefix, targetMachine)
+          </log>
+        </if>
+          
+        <log>
+          '%s*** Completed - Original STAF is shutdown on %s' % (logPrefix, targetMachine)
+        </log>
+
+        <return>STAFRC.Ok</return>
+
+      </sequence>
+    </block>
+  </function>
+
+
+  <function name="STAFUpgrade_Step4" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Performs Step 4 in the STAF Upgrade process where it upgrades
+        STAF (communicating to the target machine using the temporary
+        instance of STAF).</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If this step is successful, the return code is 0.
+      If the step failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+      <function-required-arg name="targetMachine"/>
+      <!--
+      <function-required-arg name="port"/>
+      <function-required-arg name="machineInfo['osName']"/>
+      <function-required-arg name="machineInfo['stafRoot']"/>
+      <function-required-arg name="upgradeCmd"/>
+      <function-required-arg name="installLogFile"/>
+        -->      
+    </function-list-args>
+
+    <!-- Step 4:  Use temporary STAF to upgrade STAF on top of old STAF --> 
+
+    <block name="'STEP4: Upgrade STAF'">
+      <sequence>
+
+        <script>logPrefix = '[%s][STEP 4] ' % (targetMachine)</script>
+
+        <log>
+          '%s*** Upgrade original STAF on %s' % (logPrefix, targetMachine)
+        </log>
+
+        <call function="'STAFUpgrade_UpgradeSTAF'">
+          {
+            'targetMachine'       : machineInfo['tmpMachine'],
+            'installLocation': machineInfo['stafRoot'],
+            'installCommand' : upgradeCmd,
+            'installLogFile' : installLogFile
+          }
+        </call>
+
+        <if expr="STAXResult != STAFRC.Ok">
+          <return>STAXResult</return>
+        </if>
+
+        <log>
+          '%s*** Completed - Upgraded STAF on machine %s' % \
+           (logPrefix, targetMachine)
+        </log>
+
+        <return>STAFRC.Ok</return>
+
+      </sequence>
+    </block>
+
+  </function>
+
+
+  <function name="STAFUpgrade_Step5" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Performs Step 5 in the STAF Upgrade process where it starts
+        the instance of STAF that it just upgraded.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If this step is successful, the return code is 0.
+      If the step failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+      <function-required-arg name="targetMachine">
+        The target machine where STAF is to be upgraded
+      </function-required-arg>
+      <!-- 
+      <function-required-arg name="machineInfo['osName']"/>
+      <function-required-arg name="port"/>
+      <function-required-arg name="machineInfo['configFile']"/>
+      <function-required-arg name="installerInfo['version']"/>
+      <function-required-arg name="machineInfo['stafRoot']"/>
+      <function-required-arg name="machineInfo['tmpDataDir']"/>
+      <function-required-arg name="machineInfo['instanceName']"/>
+        -->
+    </function-list-args>
+
+    <!-- Step 5:  Use temporary STAF to start upgraded STAF -->
+
+    <block name="'STEP5: Start Upgraded STAF'">
+      <sequence>
+
+        <script>logPrefix = '[%s][STEP 5] ' % (targetMachine)</script>
+
+        <log>
+          '%s*** Start STAFProc for upgraded STAF on machine %s' % \
+          (logPrefix, targetMachine)
+        </log>
+
+        <!-- Start upgraded STAF via a stafcmd PROCESS START request with no
+             WAIT and specify the correct environment variables for the 
+             upgraded STAF install -->
+             
+        <call function="'STAFUpgrade_StartSTAF'">
+          {
+            'testMach'       : machineInfo['tmpMachine'],
+            'newTestMach'    : targetMachine,
+            'osName' : machineInfo['osName'],
+            'installLocation': machineInfo['stafRoot'],
+            'configFile'     : machineInfo['configFile'],
+            'stafprocOutFile': '%s%sSTAFProc.out' % \
+              (machineInfo['stafRoot'], machineInfo['fileSep']),
+            'instanceName'   : machineInfo['instanceName'] 
+          }
+        </call>
+          
+        <if expr="STAXResult != STAFRC.Ok">
+          <return>STAXResult</return>
+        </if>
+
+        <!-- Verify the version of STAF started is at least the upgraded version -->
+
+        <call function="'STAFUpgrade_RunSTAFCmd'">
+          [ targetMachine, 'MISC', 'VERSION' ]
+        </call>
+          
+        <script>[rc, result] = STAXResult</script>
+
+        <if expr="rc == STAFRC.Ok">
+          <sequence>
+            <log>
+              '%s*** Completed - STAFProc V%s ' % (logPrefix, result) + \
+              'started for upgraded STAF on machine %s' % (targetMachine)
+            </log>
+            <!-- XXX: Don't know what version upgraded to so can't verify
+            <script>
+              from com.ibm.staf import STAFVersion
+              newVersion = STAFVersion(result)
+              minReqVersion = STAFVersion(upgradeSTAFVersion)
+
+              if newVersion.compareTo(minReqVersion) >= 0:
+                validSTAFVersion = 1
+              else:
+                validSTAFVersion = 0
+            </script>
+
+            <if expr="validSTAFVersion">
+             <sequence>
+                <log>
+                  '%s*** Completed - STAFProc V%s ' % (logPrefix, result) + \
+                  'started for upgraded STAF on machine %s' % (targetMachine)
+                </log>
+              </sequence>
+              <else>
+                <sequence>
+                  <log level="'error'">
+                    '%sERROR:  After upgrade, STAF version is %s instead of %s' % \
+                    (logPrefix, result, upgradeSTAFVersion)
+                  </log>
+                  <script>rc = 1</script>
+                </sequence>
+              </else>
+            </if>
+            -->
+          </sequence>
+        </if>
+
+        <return>rc</return>
+
+      </sequence>
+    </block>
+
+  </function>
+
+
+  <function name="STAFUpgrade_Step6" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Performs Step 6 in the STAF Upgrade process where it shuts
+        down the temporary instance of STAF.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If this step is successful, the return code is 0.
+      If the step failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+      <function-required-arg name="targetMachine">
+        The target machine where STAF is to be upgraded
+      </function-required-arg>
+    </function-list-args>
+
+    <!-- Step 6:  Shutdown temporary STAF using upgraded STAF -->
+       
+    <block name="'STEP6: Shutdown Temp STAF'">
+      <sequence>
+          
+        <script>logPrefix = '[%s][STEP 6] ' % (targetMachine)</script>
+
+        <log>
+          '%s*** Shutdown temporary STAF on %s' % (logPrefix, machineInfo['tmpMachine'])
+        </log>
+
+        <call function="'STAFUpgrade_RunSTAFCmd'">
+          [ machineInfo['tmpMachine'], 'SHUTDOWN', 'SHUTDOWN' ]
+        </call>
+
+        <script>[rc, result] = STAXResult</script>
+
+        <!-- If the shutdown request worked, or if the temporary STAF is
+             already shutdown, continue on -->
+        <if expr="rc != STAFRC.Ok and rc != STAFRC.NoPathToMachine">
+          <return>rc</return>
+        </if>
+ 
+        <!-- 
+          Wait until STAF PING fails to verify that STAFProc has shutdown 
+          -->
+
+        <script>maxWaitTime = 90</script>
+        <log>
+          '%sWaiting for up to %s seconds for STAFProc to shutdown on machine %s...' % \
+           (logPrefix, maxWaitTime, machineInfo['tmpMachine'])
+        </log>
+
+        <call function="'STAFUpgrade_WaitForSTAFShutdown'">
+          [ [machineInfo['tmpMachine']], maxWaitTime ]
+        </call>
+
+        <script>[rc, result] = STAXResult</script>
+
+        <if expr="rc != 0">
+          <sequence>
+            <log level="'fail'">
+              '%sSTAFUpgrade_WaitForSTAFShutdown failed. RC=%s Result=%s' % \
+              (logPrefix, rc, result)
+            </log>
+            <return>rc</return>
+          </sequence>
+        </if>
+  
+        <log>
+          '%s*** Completed - Shutdown temporary STAF on machine %s' % \
+           (logPrefix, machineInfo['tmpMachine'])
+        </log>
+
+        <return>STAFRC.Ok</return>
+
+      </sequence>
+    </block>
+
+  </function>
+
+
+  <function name="STAFUpgrade_InstallSTAF" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Installs STAF on the target machine.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If the install is successful, the return code is 0.
+      If the install failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine where STAF is to be installed
+      </function-required-arg>
+      <function-required-arg name="osName">
+        The operating system of the target machine
+      </function-required-arg>
+      <function-required-arg name="installLocation">
+        The target directory to install STAF
+      </function-required-arg>
+      <function-required-arg name="installCommand">
+        The command to install STAF
+      </function-required-arg>
+      <function-required-arg name="installLogFile">
+        The fully-qualified name of the log file to use when installing STAF
+      </function-required-arg>
+      <function-optional-arg name="deleteInstallLocation" default="1">
+        A flag indicating whether to delete the target directory to install STAF
+      </function-optional-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <!-- 
+        If deleteInstallLocation evaluates to true, delete the installLocation
+        directory on the targetMachine if it exists.
+        Otherwise, delete the STAFProc executable in the installLocation/bin
+        directory 
+        -->
+
+      <script>
+        exe_STAFProc = '%s/bin/STAFProc' % (installLocation)
+
+        if osName.find('Win') == 0:
+          # If Windows, the STAFProc executable has extension '.exe' 
+          exe_STAFProc = '%s.exe' % (exe_STAFProc)
+
+        if deleteInstallLocation:
+          request = 'DELETE ENTRY %s RECURSE CONFIRM' % \
+            (STAFUtil.wrapData(installLocation))
+        else:
+          request = 'DELETE ENTRY %s CONFIRM' % \
+            (STAFUtil.wrapData(exe_STAFProc))
+
+        validRCList = [ STAFRC.Ok, STAFRC.DoesNotExist ]
+
+        if osName.find('Win') != 0:
+          # If Unix, the STAF lib directory contains one or more softlinks which 
+          # currently cannot be deleted by the FS DELETE command so check if the
+          # STAFProc executable was deleted from the STAF bin directory as the
+          # success criteria
+          validRCList.append(STAFRC.DirectoryNotEmpty)
+      </script>
+
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ targetMachine, 'FS', request, validRCList ]
+      </call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <!-- 
+        Verify that the STAFProc executable no longer exists in the
+        installLocation/bin directory on the targetMachine
+        -->
+ 
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [
+          targetMachine, 'FS',
+          'GET ENTRY %s TYPE' % (STAFUtil.wrapData(exe_STAFProc)),
+          [ STAFRC.DoesNotExist ]
+        ]
+      </call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != STAFRC.DoesNotExist">
+        <return>1</return>
+      </if>
+
+      <if expr="installerInfo['installType'] == 2">
+        <sequence>
+
+         <!-- If tar.gz install file, gunzip and untar the installFile to a temporary location -->
+         <script>
+            # Remove .gz or /Z from end of tar.gz or tar.Z file name
+            if installerInfo['installerFileName'].endswith('.tar.gz'):
+              tmpGunzipCmd = 'gunzip %s' % (installerInfo['installerFileName'])
+              tarInstallFileName = installerInfo['installerFileName'][0:(len(installerInfo['installerFileName']) - len('.gz'))]
+            elif installerInfo['installerFileName'].endswith('.tar.Z'):
+              tmpGunzipCmd = 'gzip -d %s' % (installerInfo['installerFileName'])
+              tarInstallFileName = installerInfo['installerFileName'][0:(len(installerInfo['installerFileName']) - len('.Z'))]
+            else:
+              tmpGunzipCmd = None
+              tarInstallFileName = installerInfo['installerFileName']
+
+            tarInstallFile = '%s%s%s' % \
+              (machineInfo['tmpDataDir'], machineInfo['fileSep'], tarInstallFileName)
+
+            # Run tmpUntarCmd in machineInfo['tmpDataDir']
+            tmpUntarCmd = 'tar xf %s' % (tarInstallFileName)
+
+            processDuration = '5m'
+         </script>
+
+          <!-- Delete the tar file on the targetMachine if it exists -->
+
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [
+              targetMachine, 'FS',
+              'DELETE ENTRY %s CONFIRM' % (STAFUtil.wrapData(tarInstallFile)), 
+              [ STAFRC.Ok, STAFRC.DoesNotExist ]
+            ]
+          </call>
+
+          <if expr="tmpGunzipCmd != None">
+            <sequence>
+              <!-- Gunzip the install file -->
+
+              <log>
+                '%sSTAF %s PROCESS START SHELL COMMAND %s WORKDIR %s' % \
+                (logPrefix, targetMachine, tmpGunzipCmd, machineInfo['tmpDataDir'])
+              </log>
+
+              <script>processDuration = '5m'</script>
+
+              <timer duration="processDuration">
+                <sequence>
+
+                  <process name="'Gunzip installFile'">
+                    <location>targetMachine</location>
+                    <command mode="'shell'">tmpGunzipCmd</command>
+                    <workdir>machineInfo['tmpDataDir']</workdir>
+                    <title>tmpGunzipCmd</title>
+                    <stderr mode="'stdout'"/>
+                    <returnstdout/>
+                  </process>
+
+                  <if expr="RC != STAFRC.Ok">
+                    <sequence>
+                     <script>
+                       saveRC = RC
+                       failMsg = '%sCommand %s on machine %s failed.' % \
+                         (logPrefix, tmpGunzipCmd, targetMachine) + \
+                         '  RC=%s Result=%s\nSTAXResult=%s' % \
+                        (RC, STAFResult, STAXResult)
+                      </script>
+                      <call function="'STAXUtilCheckSuccess'">
+                        { 'result': 0, 'failMsg': failMsg,
+                          'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+                      </call>
+                      <return>saveRC</return>
+                    </sequence>
+                  </if>
+
+                </sequence>
+              </timer>
+
+              <!-- Check if the process didn't complete within the timer duration -->
+              <if expr="RC == 1">
+                <sequence>
+                  <script>
+                    failMsg = '%sThe process running command "%s" on machine %s did not complete within %s.  ' % \
+                      (logPrefix, tmpGunzipCmd, targetMachine, processDuration) + \
+                      'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                      'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                      'to send a process completion message.  ' + \
+                      'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                      ' and make sure there are no firewall issues for the port being used by STAF.'
+                  </script>
+                  <call function="'STAXUtilCheckSuccess'">
+                    { 'result': 0, 'failMsg': failMsg,
+                      'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+                  </call>
+                  <return>1</return>
+                </sequence>
+              </if>
+
+            </sequence>
+          </if>
+
+          <!-- Untar the install tar file -->
+
+          <log>
+            '%sSTAF %s PROCESS START SHELL COMMAND %s WORKDIR %s' % \
+            (logPrefix, targetMachine, tmpUntarCmd, machineInfo['tmpDataDir'])
+          </log>
+
+          <script>processDuration = '5m'</script>
+
+          <timer duration="processDuration">
+            <sequence>
+
+              <process name="'Untar STAF Install File'">
+                <location>targetMachine</location>
+                <command mode="'shell'">tmpUntarCmd</command>
+                <workdir>machineInfo['tmpDataDir']</workdir>
+                <title>tmpUntarCmd</title>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+              </process>
+
+              <if expr="RC != STAFRC.Ok">
+                <sequence>
+                  <script>
+                    untarRC = RC
+                    failMsg = '%sCommand %s on machine %s failed.' % \
+                     (logPrefix, tmpUntarCmd, targetMachine) + \
+                     '  RC=%s Result=%s\nSTAXResult=%s' % \
+                     (RC, STAFResult, STAXResult)
+                  </script>
+                  <call function="'STAXUtilCheckSuccess'">
+                    { 'result': 0, 'failMsg': failMsg,
+                      'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+                  </call>
+                  <return>untarRC</return>
+                </sequence>
+              </if>
+
+            </sequence>
+          </timer>
+
+          <!-- Check if the process didn't complete within the timer duration -->
+          <if expr="RC == 1">
+            <sequence>
+              <script>
+                failMsg = '%sThe process running command "%s" on machine %s did not complete within %s.  ' % \
+                  (logPrefix, tmpUntarCmd, targetMachine, processDuration) + \
+                  'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                  'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                  'to send a process completion message.  ' + \
+                  'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                  ' and make sure there are no firewall issues for the port being used by STAF.'
+              </script>
+              <call function="'STAXUtilCheckSuccess'">
+                { 'result': 0, 'failMsg': failMsg,
+                  'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+              </call>
+              <return>1</return>
+            </sequence>
+          </if>
+
+          <!-- Start a process to execute STAFInst in the untarred directory to install STAF -->
+
+          <script>
+            installWorkDir = '%s%sstaf' % (machineInfo['tmpDataDir'], machineInfo['fileSep'])
+          </script>
+
+          <log>
+            '%sSTAF %s PROCESS START SHELL' % (logPrefix, targetMachine) + \
+            ' COMMAND %s' % (STAFUtil.wrapData(installCommand)) + \
+            ' WORKDIR %s' % (installWorkDir) + \
+            ' STDERRTOSTDOUT RETURNSTDOUT WAIT'
+          </log>
+
+          <log if="installShieldTempDir != None and  machineInfo['osName'].find('Win') == -1">
+            '%s  IATEMPDIR=%s' % (logPrefix, installShieldTempDir)
+          </log>
+          
+          <log if="installShieldTempDir != None and  machineInfo['osName'].find('Win') != -1">
+            '%s  TEMP=%s %s' % (logPrefix, installShieldTempDir, machineInfo['osName'])
+          </log>
+
+          <script>processDuration = '30m'</script>
+
+          <timer duration="processDuration">
+            <sequence>
+
+              <process name="'Installing temporary %s' % (installerInfo['version'])">
+                <location>targetMachine</location>
+                <command mode="'shell'">installCommand</command>
+                <workdir>installWorkDir</workdir>
+                <title>'Installing temporary %s' % (installerInfo['version'])</title>
+                <env if="installShieldTempDir != None and  machineInfo['osName'].find('Win') == -1">
+                  ['IATEMPDIR=%s' % installShieldTempDir]
+                </env>
+                <env if="installShieldTempDir != None and  machineInfo['osName'].find('Win') != -1">
+                  ['TEMP=%s' % installShieldTempDir]
+                </env>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+              </process>
+
+              <log>
+                '%sSTAF Install finished with RC=%s STAFResult=%s STAXResult=%s' % \
+                (logPrefix, RC, STAFResult, STAXResult)
+              </log>
+
+              <if expr="RC != STAFRC.Ok">
+                <sequence>
+                  <script>
+                    installRC = RC
+                    failMsg = '%sCommand %s on machine %s failed.' % \
+                      (logPrefix, installCommand, targetMachine) + \
+                      '  RC=%s Result=%s\nSTAXResult=%s' % \
+                      (RC, STAFResult, STAXResult)
+                  </script>
+                  <call function="'STAXUtilCheckSuccess'">
+                    { 'result': 0, 'failMsg': failMsg,
+                      'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus  }
+                  </call>
+                  <log>'Returning bad installRC'</log>
+                  <return>installRC</return>
+                </sequence>
+              </if>
+
+            </sequence>
+          </timer>
+
+          <!-- Check if the process didn't complete within the timer duration -->
+          <if expr="RC == 1">
+            <sequence>
+              <script>
+                failMsg = '%sThe process running command "%s" on machine %s did not complete within %s.  ' % \
+                  (logPrefix, installCommand, targetMachine, processDuration) + \
+                  'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                  'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                  'to send a process completion message.  ' + \
+                  'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                  ' and make sure there are no firewall issues for the port being used by STAF.'
+              </script>
+              <call function="'STAXUtilCheckSuccess'">
+                { 'result': 0, 'failMsg': failMsg,
+                  'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+              </call>
+              <return>1</return>
+            </sequence>
+          </if>
+
+        </sequence>
+      
+      <elseif expr="installerInfo['installType'] == 1">
+        <sequence>
+                
+          <!-- Delete the installLogFile on the targetMachine if it exists -->
+
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [
+              targetMachine, 'FS',
+              'DELETE ENTRY %s CONFIRM' % (STAFUtil.wrapData(installLogFile)), 
+              [ STAFRC.Ok, STAFRC.DoesNotExist ]
+            ]
+          </call>
+
+          <!-- Start a process to execute the installFile to install STAF -->
+
+          <log>
+            '%sSTAF %s PROCESS START SHELL' % (logPrefix, targetMachine) + \
+            ' COMMAND %s' % (STAFUtil.wrapData(installCommand)) + \
+            ' STDERRTOSTDOUT RETURNSTDOUT WAIT'
+          </log>
+
+          <log if="installShieldTempDir != None and  machineInfo['osName'].find('Win') == -1">
+            '%s  IATEMPDIR=%s' % (logPrefix, installShieldTempDir)
+          </log>
+          
+          <log if="installShieldTempDir != None and  machineInfo['osName'].find('Win') != -1">
+            '%s  TEMP=%s %s' % (logPrefix, installShieldTempDir, machineInfo['osName'])
+          </log>
+
+          <script>processDuration = '1h'</script>
+
+          <timer duration="processDuration">
+            <sequence>
+
+              <process name="'Installing temporary %s' % (installerInfo['version'])">
+                <location>targetMachine</location>
+                <command mode="'shell'">installCommand</command>
+                <title>'Installing temporary %s' % (installerInfo['version'])</title>
+                <env if="installShieldTempDir != None and  machineInfo['osName'].find('Win') == -1">
+                  ['IATEMPDIR=%s' % installShieldTempDir]
+                </env>
+                <env if="installShieldTempDir != None and  machineInfo['osName'].find('Win') != -1">
+                  ['TEMP=%s' % installShieldTempDir]
+                </env>            
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+                <console use="'same'"/>
+              </process>
+      
+              <log>
+                '%sSTAF Install finished with RC=%s STAFResult=%s STAXResult=%s' % \
+                (logPrefix, RC, STAFResult, STAXResult)
+              </log>
+
+              <if expr="RC != STAFRC.Ok">
+                <return>RC</return>
+              </if>
+      
+            </sequence>
+          </timer>
+
+          <!-- Check if the process didn't complete within the timer duration -->
+          <if expr="RC == 1">
+            <sequence>
+              <script>
+                failMsg = '%sThe STAF Install process running on machine %s did not complete within %s.  ' % \
+                  (logPrefix, targetMachine, processDuration) + \
+                  'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                  'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                  'to send a process completion message.  ' + \
+                  'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                  ' and make sure there are no firewall issues for the port being used by STAF.'
+              </script>
+              <call function="'STAXUtilCheckSuccess'">
+                { 'result': 0, 'failMsg': failMsg,
+                  'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+              </call>
+              <return>1</return>
+            </sequence>
+          </if>
+
+        </sequence>
+      </elseif>
+      </if>
+
+      <log>
+        '%sSuccessful STAF Install on machine %s.  Command=%s' % \
+        (logPrefix, targetMachine, installCommand)
+      </log>
+
+      <return>STAFRC.Ok</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_GetInstallMethod" scope="local">
+    
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Determines if STAF was installed on the target machine in the installLocation
+        using InstallAnywhere, InstallShield or STAFInst.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A a list containing a return code and a result.
+           If no errors occurred, the return code will be 0 and the result will contain
+           the install method which will be one of the following:</p>
+           <ul compact> 
+           <li>'IA' if InstallAnywhere was used to install STAF
+           <li>'STAFInst' if STAFInst was used to install STAF
+           <li>'ISMP' if InstallShield MultiPlatform was used to install STAF
+           </ul>
+           <p>If an error occurred, the return code will be non-zero and the result will contain
+           an error message.</p>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine
+      </function-required-arg>
+      <function-required-arg name="installLocation">
+        The directory on the target machine where STAF is to be upgraded
+      </function-required-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <!-- Check the install.properties file to determine if STAF was previously
+            installed using InstallAnywhere or STAFInst.  -->
+
+      <script>
+        installPropsFile = '%s/install.properties' % (installLocation)
+        request = 'GET FILE %s TEXT' % (STAFUtil.wrapData(installPropsFile))
+      </script>
+
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ targetMachine, 'FS', request ]
+      </call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != STAFRC.Ok and rc != STAFRC.DoesNotExist">
+        <sequence>
+           <script>
+            failMsg = '"STAF %s FS %s" failed with RC=%s Result=%s' % (targetMachine, rc, result)
+          </script>
+          <return>[rc, failMsg]</return>
+        </sequence>
+      </if>
+
+      <if expr="rc == STAFRC.Ok">
+        <sequence>
+          <!-- A install.properties file exists so check if its contents to see if it contains:
+                installer=STAFInst
+                If so, STAF was installed using STAFInst.  If not STAF was installed
+                using InstallAnywhere..
+              -->
+          <script>
+            # Verify that the result contains "installer=STAFInst"
+            if result.find('installer=STAFInst') != -1:
+              installMethod = 'STAFInst'
+            else:
+              installMethod = 'IA'
+          </script>
+
+          <return>[0, installMethod]</return>
+        </sequence>
+      </if>
+       
+      <!-- No install.properties file exists so the version of STAF installed is earlier
+            than V3.3.0.  So check the contents of the STAFUninst file to determine
+            if InstallShield or STAFInst was used to install STAF -->
+     <script>
+        stafuninstFile = '%s/STAFUninst' % (installLocation)
+        request = 'GET FILE %s TEXT' % (STAFUtil.wrapData(stafuninstFile))
+      </script>
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ targetMachine, 'FS', request ]
+      </call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != STAFRC.Ok">
+        <sequence>
+          <script>
+            failMsg = '"STAF %s FS %s" failed with RC=%s Result=%s' % \
+              (targetMachine, request, rc, result)
+          </script>
+          <return>[rc, failMsg]</return>
+        </sequence>
+      </if>
+
+      <!-- Check if STAF was previously installed using InstallShield or STAFInst
+            by checking the contents of STAFUninst to see if it contains
+            '.../_uninst/uninstaller.bin'.  If so, STAF was installed using InstallShield.
+            Otherwise, STAF was installed using STAFInst.
+        -->
+      <script>
+        # Verify that the result contains .../_uninst/uninstaller.bin
+        if result.find('/_uninst/uninstaller.bin') != -1:
+           installMethod = 'ISMP'
+        else:
+          installMethod = 'STAFInst'
+      </script>
+
+      <return>[0, installMethod]</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_UpgradeSTAF" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Upgrades STAF on the target machine.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If the upgrade is successful, the return code is 0.
+      If the upgrade failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine
+      </function-required-arg>
+      <function-required-arg name="installLocation">
+        The directory on the target machine where STAF is to be upgraded
+      </function-required-arg>
+      <function-required-arg name="installCommand">
+        The command to use to install STAF
+      </function-required-arg>
+      <function-required-arg name="installLogFile">
+        The log file name to use when installing STAF
+      </function-required-arg>
+    </function-map-args>
+
+    <sequence>
+     
+      <!-- Save the current STAF.cfg file to a safe location before running installing
+            because if using installType 2, STAFInst will overwrite the STAF.cfg
+            file and if installing using installType 1, InstallAnywhere will not restore the
+            STAF.cfg file if not doing an upgrade (e.g. if STAF was previously
+            installed using STAFInst).  Then the STAF.cfg file can be restored after
+            the new version of STAF is installed. -->
+
+      <script>
+        savedSTAFCfgFile = '%s/bin/STAF_updateSTAF.cfg' % (installLocation)
+        request = 'COPY FILE %s TOFILE %s TOMACHINE local TEXT' % \
+          (STAFUtil.wrapData(machineInfo['configFile']),
+           STAFUtil.wrapData(savedSTAFCfgFile))
+      </script>
+
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ targetMachine, 'FS', request, [ STAFRC.Ok ] ]
+      </call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != STAFRC.Ok">
+        <return>1</return>
+      </if>
+
+      <script>
+        # Need to assign a value so that if set in following if/else, the value
+        # set will be available after the if/else element.
+        installMethod = ''
+      </script>
+
+      <if expr="installerInfo['installType'] == 1">
+        <sequence>
+
+          <!-- Delete the installLogFiles on the targetMachine if it exists -->
+
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [
+              targetMachine, 'FS', 'DELETE ENTRY %s CONFIRM' % \
+                (STAFUtil.wrapData(installLogFile)),
+              [ STAFRC.Ok, STAFRC.DoesNotExist ]
+            ]
+          </call>
+
+          <script>
+            installLogFile2 = '%s/log.txt' % (machineInfo['stafRoot'])
+          </script>
+
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [
+              targetMachine, 'FS', 'DELETE ENTRY %s CONFIRM' % \
+                (STAFUtil.wrapData(installLogFile2)),
+              [ STAFRC.Ok, STAFRC.DoesNotExist ]
+            ]
+          </call>
+
+          <!-- XXX Workaround for InstallAnywhere problem where it will
+               not update files if a symbolic link exists to the file
+               (such as if the current version of STAF was installed
+               via STAFInst).  Must run the STAFUninst file if
+               the existing STAF was installed via STAFInst -->
+
+          <if expr="machineInfo['osName'].find('Win') == -1">
+            <sequence>
+
+              <!-- Get the installMethod (e.g. 'IA', 'ISMP', or 'STAFInst') -->
+
+              <log>
+                '%sChecking what install method was previously used to install STAF...' % (logPrefix)
+              </log>
+
+              <call function="'STAFUpgrade_GetInstallMethod'">
+                { 'targetMachine': targetMachine, 'installLocation': installLocation }
+              </call>
+
+              <script>[rc, installMethod] = STAXResult</script>
+              
+              <if expr="rc == STAFRC.Ok">
+                <log>
+                  '%sSTAF was previously installed to %s using install method %s' % \
+                 (logPrefix, installLocation, installMethod)
+                </log>
+                <else>
+                  <log>
+                    '%sCould not determine the install method that was previously used to install STAF to %s' % \
+                    (logPrefix, installLocation)
+                  </log>
+                </else>
+              </if>
+
+              <if expr="rc == STAFRC.Ok and installMethod == 'STAFInst'">
+                <sequence>
+
+                  <!-- STAF was installed via STAFInst, so save the STAF.cfg
+                     file, run STAFUninst, and restore the STAF.cfg file.
+                     Also need to restore the bin/STAFProc file so that
+                     IA will do an upgrade and update the STAF.cfg. -->
+ 
+                  <log>
+                    '%sWorking around an InstallAnywhere problem if ' % (logPrefix) + \
+                    'a symbolic link exists by saving the STAFProc and STAF.cfg, ' + \
+                    'running STAFUninst, and restoring STAFProc and STAF.cfg...'
+                  </log>
+
+                  <script>
+                    savedSTAFCfgFile = '%s/bin/STAF_updateSTAF.cfg' % (installLocation)
+                    originalSTAFProcFile = '%s/bin/STAFProc' % (installLocation)
+                    savedSTAFProcFile = '%s/bin/STAF_updateSTAFProc' % (installLocation)
+
+                    # Use cp instead of FS COPY to retain file permissions
+                    cmd1  = 'cp -f "%s" "%s"' % (machineInfo['configFile'], savedSTAFCfgFile)
+                    cmd2  = 'cp -f "%s" "%s"' % (originalSTAFProcFile, savedSTAFProcFile)
+                    cmd = '%s ; %s' % (cmd1, cmd2)
+
+                    processDuration = '2m'
+                  </script>
+
+                  <timer duration="processDuration">
+                    <sequence>
+
+                      <process name="'Backup the STAF.cfg and STAFProc files'">
+                        <location>targetMachine</location>
+                        <command mode="'shell'">cmd</command>
+                      </process>
+
+                      <if expr="RC != STAFRC.Ok">
+                        <log level="'warning'">
+                          '%sWarning: Process command %s failed with RC=%s STAFResult=%s STAXResult=%s' % \
+                          (logPrefix, cmd, RC, STAFResult, STAXResult)
+                        </log>
+                      </if>
+
+                    </sequence>
+                  </timer>
+                  <if expr="RC == 1">
+                    <log level="'warning'">
+                      '%sWarning: Process command %s did not complete within %s' % \
+                      (logPrefix, cmd, processDuration)
+                    </log>
+                  </if>
+
+                  <script>processDuration = '30m'</script>
+
+                  <timer duration="processDuration">
+                    <sequence>
+
+                      <process name="'Running STAFUninst'">
+                        <location>targetMachine</location>
+                        <command mode="'shell'">'%s/STAFUninst' % (installLocation)</command>
+                        <stderr mode="'stdout'"/>
+                        <returnstdout/>
+                      </process>
+
+                      <log>
+                        '%sSTAF %s PROCESS START SHELL COMMAND %s/STAFUninst RC=%s, STAFResult=%s, STAXResult=%s' % \
+                        (logPrefix, targetMachine, installLocation, RC, STAFResult, STAXResult)
+                      </log>
+
+                    </sequence>
+                  </timer>
+                  
+                  <!-- Check if the process didn't complete within the timer duration -->
+                  <if expr="RC == 1">
+                    <log message="1" level="'Warning'">
+                      '%sThe process running STAFUninst on machine %s did not complete within %s.  ' % \
+                      (logPrefix, targetMachine, processDuration) + \
+                      'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                      'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                      'to send a process completion message.  ' + \
+                      'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                      ' and make sure there are no firewall issues for the port being used by STAF.'
+                    </log>
+                  </if>
+                  
+                  <script>
+                    # Use cp instead of FS COPY to retain file permissions
+                    cmd1  = 'cp -f "%s" "%s"' % (savedSTAFCfgFile, machineInfo['configFile'])
+                    cmd2  = 'cp -f "%s" "%s"' % (savedSTAFProcFile, originalSTAFProcFile)
+                    cmd3 = 'rm -f "%s"' % (savedSTAFProcFile)
+                    cmd  = '%s ; %s ; %s' % (cmd1, cmd2, cmd3)
+
+                    processDuration = '2m'
+                  </script>
+
+                  <timer duration="processDuration">
+                    <sequence>
+
+                      <process name="'Restore the STAF.cfg and STAFProc files'">
+                        <location>targetMachine</location>
+                        <command mode="'shell'">cmd</command>
+                      </process>
+
+                      <if expr="RC != STAFRC.Ok">
+                        <log level="'warning'">
+                          '%sWarning: Process command %s failed with RC=%s STAFResult=%s STAXResult=%s' % \
+                          (logPrefix, cmd, RC, STAFResult, STAXResult)
+                        </log>
+                      </if>
+
+                    </sequence>
+                  </timer>
+                  <if expr="RC == 1">
+                    <log level="'warning'">
+                      '%sWarning: Process command %s did not complete within %s' % \
+                      (logPrefix, cmd, processDuration)
+                    </log>
+                  </if>
+ 
+                </sequence>
+              </if>
+
+            </sequence>
+          </if>
+
+          <!-- Start a process to execute the installFile to install STAF -->
+
+          <log>
+            '%sSTAF %s PROCESS START SHELL' % (logPrefix, targetMachine) + \
+            ' COMMAND %s' % (STAFUtil.wrapData(installCommand)) + \
+             ' STDERRTOSTDOUT RETURNSTDOUT WAIT'
+          </log>
+
+          <log if="installShieldTempDir != None and  machineInfo['osName'].find('Win') == -1">
+            '%s  IATEMPDIR=%s' % (logPrefix, installShieldTempDir)
+          </log>
+
+          <log if="installShieldTempDir != None and  machineInfo['osName'].find('Win') != -1">
+            '%s  TEMP=%s %s' % (logPrefix, installShieldTempDir, machineInfo['osName'])
+          </log>
+
+          <script>processDuration = '1h'</script>
+
+          <timer duration="processDuration">
+            <sequence>
+
+              <process name="'Upgrading STAF to %s' % (installerInfo['version'])">
+                <location>targetMachine</location>
+                <command mode="'shell'">installCommand</command>
+                <title>'Upgrading STAF'</title>
+                <env if="installShieldTempDir != None and  machineInfo['osName'].find('Win') == -1">
+                  ['IATEMPDIR=%s' % installShieldTempDir]
+                </env>
+                <env if="installShieldTempDir != None and  machineInfo['osName'].find('Win') != -1">
+                  ['TEMP=%s' % installShieldTempDir]
+                </env>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+                <console use="'same'"/>
+              </process>
+
+              <script>installRC = RC</script>
+
+              <if expr="installRC != STAFRC.Ok">
+                <sequence>
+
+                  <script>
+                    failMsg = '%sERROR:  STAF Upgrade failed on machine %s.' % \
+                      (logPrefix, targetMachine) + \
+                      '\n%s' % (installCommand) + \
+                      '\nRC=%s Result=%s STAXResult=%s' % \
+                      (RC, STAFResult, STAXResult)
+                  </script>
+                  <log level="'error'">failMsg</log>
+
+                  <if expr="STAXResult != None">
+                    <sequence>
+                      <!-- The process actually started.  Check the InstallAnywhere
+                         log files for more information on the error.  -->
+
+                      <call function="'STAFUpgrade_RunSTAFCmd'">
+                        [ targetMachine, 'FS', 'GET FILE %s TEXT' % \
+                          (STAFUtil.wrapData(installLogFile)),
+                          [STAFRC.Ok, STAFRC.DoesNotExist ] ]
+                      </call>
+                      <script>[rc, result] = STAXResult</script>
+                      <if expr="rc == STAFRC.Ok">
+                        <sequence>
+                          <log>
+                            '%sContents of install log (%s) on %s:\n%s' % \
+                            (logPrefix, installLogFile, targetMachine, result)
+                          </log>
+                          <if expr="result.find('Installation: Successfulwith errors.') > -1">
+                            <sequence>
+                              <log>
+                                '%sInstall was successful but had non-fatal errors.  See STAFInstall.log for more information.  Continuing the upgrade' % logPrefix
+                              </log>
+                              <script>installRC = 0</script>
+                            </sequence>
+                          </if>
+                        </sequence>
+                      </if>
+                    </sequence>
+                  </if>
+
+                </sequence>
+              </if>
+
+            </sequence>
+          </timer>
+
+          <!-- Check if the process didn't complete within the timer duration -->
+          <if expr="RC == 1">
+            <sequence>
+              <script>installRC = 1</script>
+              <log message="1" level="'error'">
+                '%sERROR:  The process running the STAF Upgrade on machine %s did not complete within %s.  ' % \
+                (logPrefix, targetMachine, processDuration) + \
+                'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                'to send a process completion message.  ' + \
+                'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                ' and make sure there are no firewall issues for the port being used by STAF.'
+              </log>
+            </sequence>
+          </if>
+
+          <!-- Restore the saved STAF.cfg file -->
+          <!-- As of STAF 3.3.0 do not restore the saved STAF.cfg file -->
+
+          <!--<script>
+            request = 'COPY FILE %s TOFILE %s TOMACHINE local' % \
+               (STAFUtil.wrapData(savedSTAFCfgFile),
+                STAFUtil.wrapData(machineInfo['configFile']))
+          </script>
+
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [ targetMachine, 'FS', request, [ STAFRC.Ok ] ]
+          </call>
+
+          <script>[rc, result] = STAXResult</script>
+
+          <if expr="rc != STAFRC.Ok">
+            <return>1</return>
+          </if>-->
+
+          <if expr="installRC != STAFRC.Ok">
+            <return>installRC</return>
+          </if>
+
+        </sequence>
+
+        <elseif expr="installerInfo['installType'] == 2">
+          <sequence>
+            
+            <!-- STAFInst does not support "upgrading".  That is, you must uninstall STAF
+                  first and then use STAFInst to install STAF. -->
+           
+            <script>exe_STAFProc = '%s/bin/STAFProc' % (installLocation)</script>
+
+            <!-- Check how STAF was previously installed.  -->
+            
+            <log>
+              '%sChecking what install method was previously used to install STAF...' % (logPrefix)
+            </log>
+
+            <call function="'STAFUpgrade_GetInstallMethod'">
+              { 'targetMachine': targetMachine, 'installLocation': installLocation }
+            </call>
+
+            <script>[rc, result] = STAXResult</script>
+
+            <if expr="rc == STAFRC.Ok">
+              <script>installMethod = result</script>
+              <else>
+                <sequence>
+                  <script>installMethod = 'Unknown' </script>
+                  <log message="1">
+                    '%sCannot uninstall STAF because cannot ' % (logPrefix) + \
+                      'determine the install method because %s ' % (result)
+                  </log>
+                </sequence>
+              </else>
+            </if>
+
+            <log>
+              '%sSTAF was previously installed to %s using install method %s' % \
+             (logPrefix, installLocation, installMethod)
+            </log>
+
+            <log>
+              '%sNeed to uninstall STAF before running STAFInst since cannot upgrade using STAFInst.' % (logPrefix)
+            </log>
+
+            <!-- Assign the command to use to uninstall STAF based on the install method -->
+            <script>
+              if installMethod == 'IA':
+                uninstallCmd = '%s/Uninstall_STAF/Uninstall_STAF -i silent' % (installLocation)
+              elif installMethod == 'STAFInst':
+                uninstallCmd = '%s/STAFUninst' % (installLocation)
+              elif installMethod == 'ISMP':
+                uninstallCmd = '%s/_uninst/uninstaller.bin ' % (installLocation) + \
+                  ' -silent -is:log %s/uninstaller.log' % (installLocation) + \
+                  ' -G replaceExistingResponse="yesToAll"' + \
+                  ' -G replaceNewerResponse="yesToAll"' + \
+                  ' -G removeExistingResponse="yesToAll"' + \
+                  ' -G removeModifiedResponse="yesToAll"'
+              else:
+                # Can't uninstall, so try to remove the STAFProc executable so that
+                # STAFInst thinks STAF isn't installed
+                uninstallCmd = 'rm %s' % (exe_STAFProc)
+            </script>
+
+            <!-- Uninstall STAF -->
+
+            <log>
+              '%sSTAF %s PROCESS START SHELL' % (logPrefix, targetMachine) + \
+              ' COMMAND %s' % (STAFUtil.wrapData(uninstallCmd)) + \
+              ' WORKDIR %s TITLE "Uninstalling STAF"' % \
+              (STAFUtil.wrapData(installLocation)) + \
+              ' STDERRTOSTDOUT RETURNSTDOUT WAIT'
+            </log>
+
+            <script>processDuration = '30m'</script>
+
+            <timer duration="processDuration">
+              <sequence>
+
+                <process name="'Uninstalling STAF from %s' % (installLocation)">
+                  <location>targetMachine</location>
+                  <command mode="'shell'">uninstallCmd</command>
+                  <workdir>installLocation</workdir>
+                  <title>'Uninstalling STAF'</title>
+                  <stderr mode="'stdout'"/>
+                  <returnstdout/>
+                </process>
+                
+                <script>
+                  uninstallRC = RC
+
+                  if uninstallRC != STAFRC.Ok:
+                    failMsg = '%sRunning process command "%s" on machine %s failed.' % \
+                      (logPrefix, uninstallCmd, targetMachine)  + \
+                      '  RC=%s Result=%s\nSTAXResult=%s' % \
+                      (uninstallRC, STAFResult, STAXResult)
+                  else:
+                    failMsg = '%sProcess command "%s" on machine %s completed with RC 0 ' % \
+                      (logPrefix, uninstallCmd, targetMachine) + \
+                      'but it did NOT succeed because the STAFProc executable still exists.\n'
+                </script>
+
+              </sequence>
+            </timer>
+
+            <if expr="RC == 1">
+              <script>
+                uninstallRC = 0
+                failMsg = '%sThe process running command "%s" on machine %s did not complete within %s ' % \
+                  (logPrefix, uninstallCmd, targetMachine, processDuration) + \
+                  'and it did NOT succeed because the STAFProc executable still exists.\n'
+              </script>
+            </if>
+
+            <!-- Verify that bin/STAFProc no longer exists.
+                  It's possible for "uninstaller.bin -silent" to complete with RC 0 but it may not
+                  have worked.
+                  Or, if STAFUninstall fails with RC != 0 or, it really may have worked, but
+                  just couldn't remove everything in the STAF directory because the
+                  user has added more files/directories, etc. -->
+                
+            <log>
+              '%sVerifying that %s has been deleted...' % (logPrefix, exe_STAFProc)
+            </log>
+            <script>request = 'QUERY ENTRY %s' % (exe_STAFProc)</script>
+
+            <call function="'STAFUpgrade_RunSTAFCmd'">
+              [ targetMachine, 'FS', request, [ STAFRC.DoesNotExist ] ]
+            </call>
+
+            <script>[rc, result] = STAXResult</script>
+
+            <if expr="rc != STAFRC.DoesNotExist">
+              <sequence>  
+
+                <!-- Uninstall failed.  Cannot proceed with install until the STAFProc
+                      executable no longer exists.  Try to delete the STAFProc 
+                      executable. -->
+                <log>
+                  '%sDeleting file %s...' % (logPrefix, exe_STAFProc)
+                </log>
+                <script>
+                  request = 'DELETE ENTRY %s CONFIRM' % (exe_STAFProc)
+                </script>
+                <call function="'STAFUpgrade_RunSTAFCmd'">
+                  [ targetMachine, 'FS', request, [ STAFRC.Ok ] ]
+                </call>
+                <script>[rc, result] = STAXResult</script>
+
+                <if expr="rc != STAFRC.Ok">
+                  <sequence>
+                    <log level="'fail'">
+                      '%sSTAF Uninstall failed, so cannot proceed with install.' % (logPrefix)
+                    </log>
+                    <call function="'STAXUtilCheckSuccess'">
+                      { 'result': 0, 'failMsg': failMsg,
+                        'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+                    </call>
+                    <return>1</return>
+                  </sequence>
+                </if>
+
+              </sequence>
+            </if>
+
+            <!-- The version of STAF has already been untarred so it's ready to have STAFInst run -->
+            <!-- Start a process to execute STAFInst in the untarred directory to upgrade STAF -->
+
+            <script>
+              installWorkDir = '%s%sstaf' % (machineInfo['tmpDataDir'], machineInfo['fileSep'])
+            </script>
+
+            <!-- Specify environment variable 'PWD=%s' % (installWorkDir) to ensure that the current directory
+                  won't be the same as the target directory and so that STAFInst won't fail with error:
+                  STAFInst: Source and target directories are the same. -->
+            
+            <log>
+              '%sSTAF %s PROCESS START SHELL COMMAND %s' % \
+              (logPrefix, targetMachine, installCommand) + \
+              ' ENV PWD=%s WORKDIR %s STDERRTOSTDOUT RETURNSTDOUT WAIT' % (installWorkDir, installWorkDir)
+            </log>
+
+            <script>processDuration = '1h'</script>
+
+            <timer duration="processDuration">
+              <sequence>
+
+                <process name="'Upgrading STAF to %s' % (installerInfo['version'])">
+                  <location>targetMachine</location>
+                  <command mode="'shell'">installCommand</command>
+                  <workdir>installWorkDir</workdir>
+                  <title>'Upgrading STAF'</title>
+                  <env>'PWD=%s' % (installWorkDir)</env>
+                  <stderr mode="'stdout'"/>
+                  <returnstdout/>
+                </process>
+
+                <log>
+                  '%sSTAF Install: RC=%s STAFResult=%s STAXResult=%s' % \
+                   (logPrefix, RC, STAFResult, STAXResult)
+                </log>
+
+                <script>
+                  installRC = RC
+
+                  # STAFInst can return RC 1 even though the install is successful if the
+                  # links for lib/libSTAF.so, libSTAFTCP.so, etc. failed as they will in STAF V3.1.3
+                  # or earlier because STAFUninst doesn't force the removal if these link files already
+                  # exist.  So, need to check STAFInst's stout for message "Installation successful"
+                  # instead of checking for RC 0 if want to support STAF V3.1.3. -->
+
+                  if (RC == STAFRC.Ok or
+                      (STAXResult != None and len(STAXResult) >= 1 and
+                       len(STAXResult[0]) >= 2 and
+                       STAXResult[0][1].find('Installation successful') != -1)):
+                    installRC = STAFRC.Ok
+                </script>
+
+                <if expr="installRC != STAFRC.Ok">
+                  <script>
+                    failMsg = '%sCommand %s on machine %s failed.' % \
+                      (logPrefix, installCommand, targetMachine) + \
+                      '  RC=%s Result=%s\nSTAXResult=%s' % \
+                      (installRC, STAFResult, STAXResult)
+                  </script>
+                </if>
+
+              </sequence>
+            </timer>
+
+            <if expr="RC == 1">
+              <script>
+                installRC = 1
+                failMsg = '%sThe process running command "%s" on machine %s did not complete within %s.' % \
+                  (logPrefix, installCommand, targetMachine, processDuration)
+              </script>
+            </if>
+
+            <if expr="installRC != STAFRC.Ok">
+              <call function="'STAXUtilCheckSuccess'">
+                { 'result': 0, 'failMsg': failMsg,
+                  'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+              </call>
+            </if>
+
+          </sequence>
+        </elseif>
+      </if>
+      
+      <!-- Restore the saved STAF.cfg file -->
+
+      <!-- XXX: In the future, if upgrading to a new version of STAF that requires changes
+            to the STAF.cfg file, may need to make additional updates to the STAF.cfg file
+            if the install succeeded. -->
+
+      <if expr="installerInfo['installType'] != 1">
+        <sequence>
+          <script>
+            savedSTAFCfgFile = '%s/bin/STAF_updateSTAF.cfg' % (installLocation)
+            request = 'COPY FILE %s TOFILE %s TOMACHINE local' % \
+               (STAFUtil.wrapData(savedSTAFCfgFile),
+                STAFUtil.wrapData(machineInfo['configFile']))
+          </script>
+
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [ targetMachine, 'FS', request, [ STAFRC.Ok ] ]
+          </call>
+
+          <script>[rc, result] = STAXResult</script>
+
+          <if expr="installRC == STAFRC.Ok and rc != STAFRC.Ok">
+            <sequence>
+              <script>
+                failMsg = '%sRestoring original STAF.cfg file on machine %s failed.' % \
+                   (logPrefix, targetMachine)
+              </script>
+              <call function="'STAXUtilCheckSuccess'">
+                { 'result': 0, 'failMsg': failMsg,
+                  'sendToMonitor': sendToMonitor, 'recordStatus': recordStatus }
+              </call>
+              <return>1</return>
+            </sequence>
+          </if>
+
+          <if expr="installRC != STAFRC.Ok">
+            <return>installRC</return>
+          </if>
+        </sequence>
+      </if>
+
+      <log>
+        '%sSuccessful STAF Upgrade on machine %s.  Command=%s' % \
+         (logPrefix, targetMachine, installCommand)
+      </log>
+
+      <if expr="installerInfo['installType'] == 2 and (installMethod in ['STAFInst', 'Unknown'])">
+        <sequence>
+          <!-- STAFUninst and STAFInst are so fast, need to delay for 4
+                minutes so that won't get a socket binding error when starting
+                STAFProc (especially on some Solaris Sparc machines). -->
+          <log>
+            '%sDelaying 4 minutes before starting ' % (logPrefix) + \
+            'upgraded STAF to avoid a socket binding error'
+          </log>
+          <block name="'Delay 4 minutes to avoid a socket binding error starting STAF'">
+            <stafcmd name="'Delay 4 minutes'">
+              <location>'local'</location>
+              <service>'DELAY'</service>
+              <request>'DELAY 240000'</request>
+            </stafcmd>
+          </block>
+        </sequence>
+      </if>
+      
+      <return>STAFRC.Ok</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_StartSTAF" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Starts STAF via a PROCESS START request with no WAIT option
+        specified, redirecting stdout/stderr to a file.
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If STAF starts successfully, the return code is 0.
+      If fails to start STAF, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="testMach">
+        The endpoint for the STAFProc instance that already is running
+        on the target machine
+      </function-required-arg>
+      <function-required-arg name="newTestMach">
+        The endpoint for the STAFProc instance to be started on the
+        target machine
+      </function-required-arg>
+      <function-required-arg name="osName">
+        The operating system type for the target machine
+      </function-required-arg>
+      <function-required-arg name="installLocation">
+        The location where STAF is installed for the STAFProc instance to be started
+      </function-required-arg>
+      <function-required-arg name="configFile">
+        The STAF configuration file name to use when starting STAF
+      </function-required-arg>
+      <function-required-arg name="stafprocOutFile">
+        The name of the file to redirect stdout/stderr for starting STAFProc
+      </function-required-arg>
+      <function-required-arg name="instanceName">
+        The STAF instance name to use when starting STAF
+      </function-required-arg>
+      <function-optional-arg name="waitTime" default="120">
+        The number of seconds to wait for STAFPro to be started
+      </function-optional-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <script>
+        # Prevent single backslashes are used as escape characters by
+        # converting to a forward slash
+        stafprocOutFile = stafprocOutFile.replace('\\', '/')
+        configFile = configFile.replace('\\', '/')
+
+        cmd = 'STAFProc "%s"' % (configFile)
+        
+        stafPath = '%s{STAF/Config/Sep/File}bin' % (installLocation)
+        setPath = 'PATH=%s{STAF/Config/Sep/Path}%s' % (stafPath, machineInfo['path'])
+        setInstanceName = 'STAF_INSTANCE_NAME=%s' % (instanceName)
+
+        if osName.find('Win') == 0:
+          JSTAFjar = '%s{STAF/Config/Sep/File}bin{STAF/Config/Sep/File}JSTAF.jar' % \
+                     (installLocation)
+          setClassPath = 'CLASSPATH=%s;%s' % (JSTAFjar, machineInfo['libPath'])
+        else:
+          # TestMach is Unix
+
+          cmd = '%s/bin/%s &amp;' % (installLocation, cmd)
+
+          JSTAFjar     = '%s/lib/JSTAF.jar' % (installLocation)
+          setClassPath = 'CLASSPATH=%s:%s' % (JSTAFjar, machineInfo['classpath'])
+
+          stafLibPath      = '%s/lib' % (installLocation)
+
+          if osName == 'AIX' or osName == 'OS/390' or osName == 'OS400':
+            setLibpath = 'LIBPATH=%s:%s' % (stafLibPath, machineInfo['libPath'])
+          elif osName == 'HP-UX':
+            setLibpath = 'SHLIB_PATH=%s:%s' % (stafLibPath, machineInfo['libPath'])
+          # Check if Mac OS X (aka Darwin)
+          elif osName == 'Darwin':
+            setLibpath = 'DYLD_LIBRARY_PATH=%s:%s' % \
+                         (stafLibPath, machineInfo['libPath'])
+          else:
+            setLibpath = 'LD_LIBRARY_PATH=%s:%s' % \
+                         (stafLibPath, machineInfo['libPath'])
+ 
+        setSTAFConvDir = 'STAFCONVDIR=%s{STAF/Config/Sep/File}codepage' % \
+          (installLocation)
+        
+        request = 'START SHELL'
+
+        title = 'STAFProc for %s' % (installLocation)   # cmd
+        # Prevent single backslashes are used as escape characters by
+        # converting to a forward slash
+        title = title.replace('\\', '/')
+
+        request = '%s TITLE %s' % (request, STAFUtil.wrapData(title))
+
+        # When starting STAFProc, redirect stdout/stderr
+        request = '%s STDOUT %s ' % \
+          (request, STAFUtil.wrapData(stafprocOutFile)) + \
+          'STDERRTOSTDOUT RETURNSTDOUT'
+      </script>
+
+      <if expr="osName.find('Win') == 0">
+        <sequence>
+          <!-- Redirect stdin to a existing file to avoid a problem that
+                occurs if you don't redirect all three in/out streams.
+                So, create a file that's not in use to the stdin file. -->
+          <script>
+            cfgFile = '{STAF/Config/ConfigFile}'
+            stdinFile = '%s/%s_stdin.txt' % \
+              (machineInfo['stafRoot'], instanceName)
+          </script>
+          <call function="'STAFUpgrade_RunSTAFCmd'">
+            [ testMach, 'FS',
+              'COPY FILE %s TOFILE %s ' % \
+              (STAFUtil.wrapData(cfgFile), STAFUtil.wrapData(stdinFile)) + \
+              'TOMACHINE local TEXT' ]
+          </call>
+          <script>[rc, result] = STAXResult</script>
+          <if expr="rc != STAFRC.Ok">
+           <return>rc</return>
+          </if>
+          <script>
+            request = '%s STDIN %s' % (request, STAFUtil.wrapData(stdinFile))
+          </script>
+        </sequence>
+      </if>
+
+      <script>
+        request = '%s ENV %s' % (request, STAFUtil.wrapData(setPath))
+
+        if osName.find('Win') != 0:
+          request = '%s ENV %s' % (request, STAFUtil.wrapData(setLibpath))
+
+        request = '%s ENV %s' % (request, STAFUtil.wrapData(setClassPath))
+        request = '%s ENV %s' % (request, STAFUtil.wrapData(setInstanceName))
+        request = '%s ENV %s' % (request, STAFUtil.wrapData(setSTAFConvDir))
+
+        if osName.find('OS/390') == 0:
+          request = "%s ENV _CEE_RUNOPTS='posix(on)'" % (request)
+        
+        request = '%s COMMAND %s' % (request, STAFUtil.wrapData(cmd))
+      </script>
+
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ testMach, 'PROCESS', request ]
+      </call>
+
+      <script>[startProcessRC, startProcessResult] = STAXResult</script>
+      
+      <if expr="startProcessRC != STAFRC.Ok">
+        <return>startProcessRC</return>
+      </if>
+      
+      <script>
+        installProcessHandle = startProcessResult
+      </script>
+      
+      <!-- 
+        Started STAFProc on newTestMach.  Wait until can do a STAF PING of it.
+        -->
+
+      <log>
+        '%sWaiting for up to %s seconds for STAFProc to start on machine %s...' % \
+          (logPrefix, waitTime, newTestMach)
+      </log>
+
+      <call function="'STAXUtilWaitForSTAF'">[ [newTestMach], waitTime ]</call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <sequence>
+          <log>
+            '%sSTAXUtilWaitForSTAF failed for machine %s. RC=%s Result=%s' % \
+            (logPrefix, newTestMach, rc, result)
+          </log>
+          <script>saveRC = rc</script>
+          
+          <!-- Get contents of STAFProc output to get more information for
+                why STAFProc failed to start -->
+
+          <script>
+            request = 'GET FILE %s TEXT' % \
+              (STAFUtil.wrapData(stafprocOutFile))
+          </script>
+          <call function="'STAFUpgrade_RunSTAFCmd'">[ testMach, 'FS', request ]</call>
+
+          <script>[rc, result] = STAXResult</script>
+
+          <if expr="rc == STAFRC.Ok">
+            <log>
+              '%sSTAFProc output file (%s) on %s contains:\n%s' % \
+              (logPrefix, stafprocOutFile, testMach, result)
+            </log>
+            <else>
+              <log>
+                'STAF %s FS %s failed with RC=%s Result=%s' \
+                (testMach, request, rc, result)
+              </log>
+            </else>
+          </if>
+
+          <return>saveRC</return>
+        </sequence>
+      </if>
+
+      <log>
+        '%sSTAFProc started successfully on machine %s' % (logPrefix, newTestMach)
+      </log>
+ 
+      <return>0</return>     
+
+    </sequence>
+  </function>
+
+  
+  <function name="STAFUpgrade_ImportSTAXUtil">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Imports the STAFUtil.xml file.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A return code.  If the import is successful, the return code is 0.
+      If the import failed, the return code is non-zero.</p>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="importMachine">
+        The endpoint for the machine where the STAXUtil.xml file resides.
+      </function-required-arg>
+      <function-required-arg name="importDirectory">
+        The directory where the STAXUtil.xml file resides on the import machine.
+      </function-required-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <!-- Resolve any STAF variables in ImportDirectory -->
+
+      <script>request = 'RESOLVE STRING %s' % (importDirectory)</script>
+
+      <stafcmd name="'STAF %s VAR %s' % (importMachine, request)">
+        <location>importMachine</location>
+        <service>'VAR'</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC != STAFRC.Ok">
+        <sequence>
+          <script>
+            errMsg = 'STAF %s VAR %s failed.  ' % (importMachine, request) + \
+              'RC=%s Result=%s' % (RC, STAFResult)
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+
+      <script>
+        importDirectory = STAFResult
+        importFile = '%s/STAXUtil.xml' % (importDirectory)
+      </script>
+
+      <log>
+        '%sImporting file %s from machine %s...' % (logPrefix, importFile, importMachine) 
+      </log>
+
+      <import machine="importMachine" file="importFile"/>
+
+      <return>[0, '']</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_GetSTAXMachineInfo" scope="local">
+    <function-prolog>
+      <![CDATA[
+      <p>Gathers information about the STAX machine.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing a return code and result.</p>
+      <p>
+        If successful, the return code will be 0 and the result will contain
+        a map with the following keys: 'version', 'STAFDataDir', 'osType, 'machine'
+        For example:
+        <pre>  [0, {'version': '3.1.1', 'STAFDataDir': 'C:\STAF',
+           'osType': 'Win2003', 'machine': 'server1.company.com'}]</pre>
+      </p>
+      <p>
+        If an error occurred, the return code with be non-zero and the result will
+        contain an error message.</p>
+      <h4>Examples:</h4>
+      <pre>
+  &lt;call function="'STAFUpgrade_GetSTAXMachineInfo'">
+    { 'installerMachine': 'server2.company.com' }
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script></pre>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+        <function-required-arg name="installerMachine">
+          The endpoint for the installer machine (the machine where the STAF installer files reside)
+        </function-required-arg>
+      </function-map-args>
+    <sequence>
+
+      <script>
+        STAXMachInfo = {}
+      </script>
+
+      <!-- Determine the version of STAF currently running on STAX Machine -->      
+
+        <stafcmd name="'STAF local MISC VERSION'">
+          <location>'local'</location>
+          <service>'MISC'</service>
+          <request>'VERSION'</request>
+        </stafcmd>
+
+        <if expr="RC == STAFRC.Ok">
+          <script>STAXMachInfo['version'] = STAFResult</script>
+          <else>
+           <sequence>
+              <script>
+                errMsg = 'STAF local MISC VERSION' % (logPrefix) + \
+                  ' failed with RC=%s Result=%s' % (RC, STAFResult)
+              </script>
+              <log level="'error'">errMsg</log>
+              <return>[RC, errMsg]</return>
+            </sequence>
+          </else>
+        </if>
+        
+        <!-- Make sure that the local STAX service machine is running STAF V3.1.0 or later -->
+
+         <script>
+          error = 0
+
+          try:
+            from com.ibm.staf import STAFVersion
+
+            version = STAFVersion(STAXMachInfo['version'])
+            minReqVersion = STAFVersion("3.1.0")
+
+            if version.compareTo(minReqVersion) >= 0:
+              validSTAFVersion = 1
+            else:
+              validSTAFVersion = 0
+          except ImportError:
+            # The STAFVersion Java class was not added to JSTAF.jar until STAF V3.1.0
+            validSTAFVersion = 0  
+        </script>
+
+        <if expr="not validSTAFVersion">
+          <sequence>
+            <script>
+              errMsg = 'STAX service machine must be running STAF V3.1.0 ' + \
+                'or later.  It is running STAF V%s.' % \
+                (STAXMachInfo['version'])
+            </script>
+            <log level="'error'">errMsg</log>
+            <return>[1, errMsg]</return>
+          </sequence>
+        </if>
+      
+      <!-- Resolve various STAF configuration variables on local machine -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        [
+          {
+            'STAF/DataDir'          : 'STAXMachDataDir',
+            'STAF/Config/OS/Name'   : 'STAXMachOSType',
+            'STAF/Config/Machine'   : 'STAXMachine'
+          },
+          'local'
+        ]
+      </call>
+
+      <script>[rc, errorList] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <sequence>
+          <script>
+            errMsg = 'Could not resolve one or more STAF variables on ' + \
+              'the local STAX machine.  Error list: %s' % (errorList)
+          </script>
+          <log>errMsg</log>
+          <return>[rc, errMsg]</return>
+        </sequence>
+      </if>
+
+      <script>
+        STAXMachInfo['STAFDataDir'] = STAXMachDataDir
+        STAXMachInfo['osType'] = STAXMachOSType
+        STAXMachInfo['machine'] = STAXMachine
+      </script>
+
+      <log>
+        """%sSTAX Machine Information:
+          Logical ID         : %s
+          OS Type            : %s
+          STAF Version       : %s
+          STAF Data Directory: %s""" % \
+          (logPrefix, STAXMachInfo['machine'], STAXMachInfo['osType'],
+           STAXMachInfo['version'], STAXMachInfo['STAFDataDir'])
+      </log>
+
+      <!-- Verify that the STAX machine has trust level 4 or higher on the
+          installer machine so it can submit a FS COPY request -->
+
+      <stafcmd name="'STAF %s MISC WHOAMI' % (installerMachine)">
+        <location>installerMachine</location>
+        <service>'MISC'</service>
+        <request>'WHOAMI'</request>
+      </stafcmd>
+
+      <if expr="RC != STAFRC.Ok">
+        <sequence>
+          <script>
+            if RC == STAFRC.InvalidRequestString:
+              errMsg = 'Installer machine %s must be running ' % \
+                (installerMachine) + 'STAF V3.0.0 or later to be upgraded.'
+            elif RC == STAFRC.NoPathToMachine:
+              errMsg = 'Cannot communicate to installer machine' + \
+                ' %s ' % (installerMachine) + \
+                'via STAF.  Verify the following:\n' + \
+                '- Is STAF running on the installer machine?\n' + \
+                '- Can the specified port be used to communicate via STAF ' + \
+                'from the STAX machine to the installer machine?\n' + \
+                '- Are there any firewalls to go through? If so, do they ' + \
+                'allow traffic via this port?  Is the STAX machine ' + \
+                'authorized to access the installer machine (e.g. BSO)?'
+            else:
+              errMsg = 'Communicating to installer machine ' + \
+                '%s via STAF failed with RC=%s Result=%s.' % \
+                (installerMachine, RC, STAFResult)
+          </script>
+          <return>[RC, errMsg]</return>
+        </sequence>
+      </if>
+
+      <script>whoamiMap = STAFResult</script>
+
+      <if expr="int(whoamiMap['trustLevel']) &lt; 4">
+        <sequence>
+          <script>
+            errMsg = 'Installer machine %s only ' % (installerMachine) + \
+              'gives trust level %s to STAX ' % (whoamiMap['trustLevel']) + \
+              'machine %s.  Trust level 4 is required.' % \
+              (STAXMachInfo['machine'])
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+
+      <return>[0, STAXMachInfo]</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_GetTargetMachineInfo" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>Gathers information about the target machine where STAF is to
+      be upgraded.</p>
+      ]]>
+    </function-prolog>
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing a return code and result.</p>
+      <p>
+        If successful, the return code will be 0 and the result will contain
+        a map with the following keys containing information about the target
+        machine:  'dataDir', 'version', 'osName', 'osRevision', 'osMajorVersion',
+        'osMinorVersion', 'fileSep', 'stafRoot', 'configFile', 'intanceName',
+        'processorArchitecture', 'path', 'classpath', 'libPath', 'tmpDatDir',
+        'tmpMachine'
+      </p>
+      <p>
+        If an error occurred, the return code with be non-zero and the result
+        will contain an error message.</p>
+      <h4>Examples:</h4>
+      <pre>
+  &lt;call function="'STAFUpgrade_GetTargetMachineInfo'">
+    { 'machine': 'client1.company.com',
+      'port': '6500',
+      'STAXMachInfo': {'version': '3.1.1', 'STAFDataDir': 'C:\STAF',
+                      'osType': 'Win2003', 'machine': 'server1.company.com'}
+    }
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script></pre>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="targetMachine">
+        The endpoint for the target machine
+      </function-required-arg>
+      <function-required-arg name="port">
+        The port to use for the temporary STAFProc instance
+      </function-required-arg>
+      <function-required-arg name="STAXMachInfo">
+        A map containing information about the STAX machine.  The map has
+        keys:  'version', 'STAFDataDir', 'osType', and 'machine'
+      </function-required-arg>
+    </function-map-args>
+    <sequence>
+
+      <script>logPrefix = '[%s][GatherInfo] ' % (targetMachine)</script>
+
+      <!-- Make sure STAF is running on the target machine to be upgraded -->
+
+      <stafcmd name="'STAF %s MISC WHOAMI' % (targetMachine)">
+        <location>targetMachine</location>
+        <service>'MISC'</service>
+        <request>'WHOAMI'</request>
+      </stafcmd>
+
+      <if expr="RC != STAFRC.Ok">
+        <sequence>
+          <script>
+            if RC == STAFRC.InvalidRequestString:
+              errMsg = 'Machine %s must be running ' % (targetMachine) + \
+                'STAF V3.0.0 or later to be upgraded.'
+            elif RC == STAFRC.NoPathToMachine:
+              errMsg = 'Cannot communicate to machine %s ' % (targetMachine) + \
+                'via STAF.  Verify the following:\n' + \
+                '- Is STAF running on the target machine?\n' + \
+                '- Can the specified port be used to communicate via STAF ' + \
+                'from the STAX machine to the target machine?\n' + \
+                '- Are there any firewalls to go through? If so, do they ' + \
+                'allow traffic via this port?  Is the STAX machine ' + \
+                'authorized to access the target machine (e.g. BSO)?'
+            else:
+              errMsg = 'STAF %s MISC WHOAMI failed with RC=%s Result=%s.' % \
+                (targetMachine, RC, STAFResult)
+          </script>
+          <return>[RC, errMsg]</return>
+        </sequence>
+      </if>
+
+      <!-- Verify that the STAX machine has trust level 5 on the target machine
+            to be upgraded -->
+      <script>
+        whoamiMap = STAFResult
+        STAXMachPhysicalID = whoamiMap['physicalID']
+      </script>
+      <if expr="int(whoamiMap['trustLevel']) &lt; 5">
+        <sequence>
+          <script>
+            errMsg = 'Machine %s only gives trust level ' % (targetMachine) + \
+              '%s to STAX machine ' % (whoamiMap['trustLevel']) + \
+              '%s.  Trust level 5 is required.' % (STAXMachInfo['machine'])
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+
+      <!-- Verify that the target machine can communicate back to the STAX
+            service machine by running any process on it via the process
+            element which needs to send a ProcessComplete message to the
+            STAX service machine when done.  If this process times out, then
+            the STAX service machine never got the ProcessComplete message -->
+
+      <timer duration="'5m'">
+        <process name="'Verify communication from %s to STAX machine works' % (targetMachine)">
+          <location>targetMachine</location>
+          <command mode="'shell'">'STAF local PING PING'</command>
+          <title>'Verify communication to STAX machine %s works' % (STAXMachInfo['machine'])</title>
+          <stderr mode="'stdout'"/>
+          <returnstdout/>
+        </process>
+      </timer>
+
+      <if expr="RC == 1">
+        <sequence>
+          <script>
+            errMsg = 'Machine %s cannot communicate to STAX machine %s via STAF ' % \
+              (targetMachine, STAXMachInfo['machine']) + \
+              'to send a process completion message.  ' + \
+              'Check TCP DNS settings for machine %s' % (targetMachine) + \
+              ' and make sure there are no firewall issues for the port being used by STAF.'
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+
+      <log message="1">
+        '%sVerified target machine %s can communicate to ' % (logPrefix, targetMachine) + \
+        'STAX machine %s to send a process completion message.' % (STAXMachInfo['machine'])
+      </log>
+
+      <!-- Resolve various STAF configuration variables on the target machine
+            to be upgraded -->
+
+      <call function="'STAXUtilImportSTAFVars'">
+        [
+          {
+            'STAF/DataDir'            : 'TestMachDataDir',
+            'STAF/Version'            : 'TestMachVersion',
+            'STAF/Config/OS/Name'     : 'TestMachOSType',
+            'STAF/Config/OS/Revision' : 'TestMachOSRevision',
+            'STAF/Config/OS/MajorVersion': 'TestMachOSMajorVersion',
+            'STAF/Config/OS/MinorVersion': 'TestMachOSMinorVersion',
+            'STAF/Config/Sep/File'    : 'TestMachFileSep',
+            'STAF/Config/STAFRoot'    : 'TestMachSTAFRoot',
+            'STAF/Config/ConfigFile'  : 'TestMachConfigFile',
+            'STAF/Config/InstanceName': 'TestMachInstanceName',
+            'STAF/Config/Machine'     : 'TestMachine'
+          },
+          targetMachine
+        ]
+      </call>
+
+      <script>[rc, errorList] = STAXResult</script>
+
+      <if expr="rc != 0">
+        <sequence>
+          <script>
+            errMsg = '%sERROR: ' % (logPrefix) + \
+              'Could not resolve one or more STAF variables on ' + \
+              ' machine %s.  Error List=%s' % (targetMachine, errorList)
+          </script>
+          <return>[rc, errMsg]</return>
+        </sequence>
+      </if>
+
+      <!-- Get value of the PATH, CLASSPATH and PROCESSOR_ARCHITECTURE
+            environment variables on the target machine, if they exist.
+            On Windows, also get the value of the PROCESSOR_ARCHITEW6432
+            environment variable.
+            On Unix, also get the value of the appropriate library path environment
+            variable. -->
+
+      <script>
+          request = 'RESOLVE SYSTEM STRING {STAF/Env/PATH}' + \
+                         ' STRING {STAF/Env/CLASSPATH}' + \
+                         ' STRING {STAF/Env/PROCESSOR_ARCHITECTURE}'
+
+          if TestMachOSType.find('Win') == 0:
+            # Windows
+            request = '%s STRING {STAF/Env/PROCESSOR_ARCHITEW6432}' % (request)
+          else:
+            # Unix
+            if (TestMachOSType == 'AIX' or
+                TestMachOSType == 'OS/390' or
+                TestMachOSType == 'OS400'):
+              request = '%s STRING {STAF/Env/LIBPATH}' % (request)
+            elif TestMachOSType == 'HP-UX':
+              request = '%s STRING {STAF/Env/SHLIB_PATH}' % (request)
+            # Check if Mac OS X (aka Darwin)
+            elif TestMachOSType == 'Darwin':
+              request = '%s STRING {STAF/Env/DYLD_LIBRARY_PATH}' % (request)
+            else:
+              request = '%s STRING {STAF/Env/LD_LIBRARY_PATH}' % (request)
+      </script>
+
+      <stafcmd name="'STAF %s VAR %s' % (targetMachine, request)">
+        <location>targetMachine</location>
+        <service>'VAR'</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC not in [ STAFRC.Ok, STAFRC.VariableDoesNotExist ]">
+        <sequence>
+          <script>
+            errMsg = 'STAF %s VAR %s failed with RC=%s Result=%s' % \
+              (targetMachine, request, RC, STAFResult)
+          </script>
+          <return>[RC, errMsg]</return>
+        </sequence>
+      </if>
+
+      <script>
+        resolvedVarList = STAFResult
+
+        if resolvedVarList[0]['rc'] == '0':
+          TestMachEnvVar_PATH = resolvedVarList[0]['result']
+        else:
+          TestMachEnvVar_PATH = ''
+
+        if resolvedVarList[1]['rc'] == '0':
+          TestMachEnvVar_CLASSPATH = resolvedVarList[1]['result']
+        else:
+          TestMachEnvVar_CLASSPATH = ''
+
+        if resolvedVarList[2]['rc'] == '0':
+          TestMachProcessorArchitecture = resolvedVarList[2]['result']
+        else:
+          TestMachProcessorArchitecture = ''
+
+        if len(resolvedVarList) == 4 and  resolvedVarList[3]['rc'] == '0':
+          if TestMachOSType.find('Win') == 0:
+            TestMachProcessorArchitecture = resolvedVarList[3]['result']
+            TestMachEnvVar_LIBPATH = ''
+          else:
+            TestMachEnvVar_LIBPATH = resolvedVarList[3]['result']
+        else:
+          TestMachEnvVar_LIBPATH = ''
+      </script>
+      
+      <!-- For Linux machines, try to get more information about which release,
+            e.g. Red Hat, SuSE  -->
+     
+      <script>TestMachOSRelease = ''</script>
+
+      <if expr="TestMachOSType == 'Linux'">
+        <sequence>
+
+          <if expr="TestMachOSRelease == ''">
+            <sequence>
+              <!-- Determine if the target machine is a Red Hat Linux release -->
+              <script>request = 'GET FILE /etc/redhat-release'</script>
+              <call function="'STAFUpgrade_RunSTAFCmd'">
+                [ targetMachine, 'FS', request, [ STAFRC.Ok, STAFRC.DoesNotExist ] ]
+              </call>
+              <script>[rc, result] = STAXResult</script>
+              <if expr="rc == STAFRC.Ok">
+                <script>
+                  # Get the Red Hat release from file /etc/redhat-release.
+                  # Here are some examples of what this file can contain:
+                  # Red Hat Linux release 8.0 (Psyche)
+                  # Red Hat Enterprise Linux AS release 4 (Nahant Update 1)
+                  # Red Hat Enterprise Linux AS release 4 (Nahant Update 3)
+                  # Red Hat Enterprise Linux AS release 3 (Taroon Update 7)
+                  endReleaseIndex = result.find(' (')
+                  if endReleaseIndex > 0:
+                    TestMachOSRelease = result[0:endReleaseIndex]
+                </script>
+              </if>
+            </sequence>
+          </if>
+          
+          <if expr="TestMachOSRelease == ''">
+            <sequence>
+              <!-- Determine if the target machine is a SuSE Linux release -->
+              <script>request = 'GET FILE /etc/SuSE-release'</script>
+              <call function="'STAFUpgrade_RunSTAFCmd'">
+                [ targetMachine, 'FS', request, [ STAFRC.Ok, STAFRC.DoesNotExist ] ]
+              </call>
+              <script>[rc, result] = STAXResult</script>
+              <if expr="rc == STAFRC.Ok">
+                <script>
+                  # Get the SuSE release from file /etc/SuSE-release.
+                  # Here are some examples of what the first line in this file
+                  # can contain:
+                  # SuSE SLES-8 (PPC)
+                  # SuSE SLES-8 (S/390)
+                  # SuSE SLES-8 (S/390X)
+                  # SUSE LINUX Enterprise Server 9 (s390x)
+                  # SUSE Linux Enterprise Server 10 (s390x)
+                  # SUSE LINUX Enterprise Server 9 (i586)
+                  endReleaseIndex = result.find(' (')
+                  if endReleaseIndex > 0:
+                    TestMachOSRelease = result[0:endReleaseIndex]
+                </script>
+              </if>
+            </sequence>
+          </if>
+        </sequence>
+      
+        <elseif expr="TestMachOSType == 'SunOS' and TestMachOSRevision == 'i86pc'">
+          <sequence>
+
+            <!-- For i86pc Solaris machines (e.g, determine if 32-bit or 64-bit
+                On x86 32-bit (aka x86) Solaris machines:
+                  Command "isainfo" returns:  i386
+                  Command "isainfo -b" returns:  32
+                On x86-64 (aka x64, amd64) Solaris machines:
+                  Command "isainfo" returns:  amd64 i386
+                  Command "isainfo -b" returns:  64
+                      
+                So, we'll run command "isainfo -b" to determine the processor type (32 or 64).   
+             -->
+              
+            <script>TestMachProcessorArchitecture = '32'</script>
+
+            <!-- Determine if the target Solaris x86 machine has a 32-bit or 64-bit processor type -->
+
+            <script>
+              cmd = 'isainfo -b'
+              processDuration = '5m'
+            </script>
+
+            <timer duration="processDuration">
+              <sequence>
+
+                <process name="'Determine processor type on Solaris x86 target machine'">
+                  <location>targetMachine</location>
+                  <command mode="'shell'">cmd</command>
+                  <title>'Determine processor type'</title>
+                  <stderr mode="'stdout'"/>
+                  <returnstdout/>
+                </process>
+
+                <if expr="RC != STAFRC.Ok">
+                  <sequence>
+                    <script>
+                      errMsg = 'Command %s on machine %s failed.' % \
+                        (cmd, targetMachine) + \
+                        '  RC=%s Result=%s\nSTAXResult=%s' % \
+                        (RC, STAFResult, STAXResult)
+                    </script>
+                    <return>[1, errMsg]</return>
+                  </sequence>
+                </if>
+              
+                <script>[stdoutRC, stdoutData] = STAXResult[0]</script>
+             
+                <if expr="stdoutRC == 0">
+                  <script>
+                    stdoutSplitList = stdoutData.split()
+                    TestMachProcessorArchitecture = stdoutSplitList[0]
+                  </script>
+                  <else>
+                    <sequence>
+                      <script>
+                        errMsg = 'Command %s on machine %s worked but the stdout file RC=%s.' % \
+                          (cmd, targetMachine, stdoutRC) + '\nSTAXResult=%s' % (STAXResult)
+                      </script>
+                      <return>[1, errMsg]</return>
+                    </sequence>
+                  </else>
+                </if>
+            
+              </sequence>
+            </timer>
+
+            <!-- Check if the process didn't complete within the timer duration -->
+            <if expr="RC == 1">
+              <sequence>
+                <script>
+                  errMsg = 'The process running command "%s" on machine %s did not complete within %s.  ' % \
+                    (cmd, targetMachine, processDuration) + \
+                    'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                    'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                    'to send a process completion message.  ' + \
+                    'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                    ' and make sure there are no firewall issues for the port being used by STAF.'
+                </script>
+                <return>[1, errMsg]</return>
+              </sequence>
+            </if>
+
+          </sequence>
+        </elseif>
+      
+        <elseif expr="TestMachOSType == 'AIX'">
+          <sequence>
+              
+            <script>
+              # Default to 32-bit kernel on AIX 4.3.3
+              TestMachProcessorArchitecture = '32'
+            </script>
+
+            <if expr="TestMachOSMinorVersion != '4'">
+              <sequence>
+
+                <script>
+                  # Check if target AIX 5.1+ machine is currently running 32-bit or 64-bit kernel
+                  # Run command "prtconf -k" to determine the kernel type (32-bit or 64-bit).
+                  #  - On AIX 5.1+ machines running 32-bit kernel, returns:  Kernel Type: 32-bit
+                  #  - On AIX 5.1+  machines running 64-bit kernel, returns:  Kernel Type: 64-bit
+                  #  (Don't use "bootinfo -K" because it requires to be run under a root login)
+                  cmd = 'prtconf -k'
+                  processDuration = '5m'
+                </script>
+                
+                <timer duration="processDuration">
+                  <sequence>
+
+                    <process name="'Determine if 32-bit or 64-bit kernel is running on AIX target machine'">
+                      <location>targetMachine</location>
+                      <command mode="'shell'">cmd</command>
+                      <title>'Determine which kernel is running'</title>
+                      <stderr mode="'stdout'"/>
+                      <returnstdout/>
+                    </process>
+
+                    <if expr="RC != STAFRC.Ok">
+                      <log level="'warning'">
+                        'WARNING: Could not determine if 32-bit or 64-bit kernel running, so defaulting to 32-bit.\n' + \
+                        'Command %s on machine %s failed.' % (cmd, targetMachine) + \
+                        '  RC=%s Result=%s\nSTAXResult=%s' % (RC, STAFResult, STAXResult)
+                      </log>
+                      <else>
+                        <sequence>
+                          <script>[stdoutRC, stdoutData] = STAXResult[0]</script>
+            
+                          <if expr="stdoutRC == 0">
+                            <script>
+                              if stdoutData.find('64-bit') >= 0:
+                                TestMachProcessorArchitecture = '64'
+                            </script>
+                            <else>
+                              <log level="'warning'">
+                                'WARNING: Could not determine if 32-bit or 64-bit kernel running, so defaulting to 32-bit.\n' + \
+                                'Command %s on machine %s worked but the stdout file RC=%s.' % \
+                                (cmd, targetMachine, stdoutRC) + '\nSTAXResult=%s' % (STAXResult)
+                              </log>
+                            </else>
+                          </if>
+                        </sequence>
+                      </else>
+                    </if>
+
+                  </sequence>
+                </timer>
+
+                <!-- Check if the process didn't complete within the timer duration -->
+                <if expr="RC == 1">
+                  <log level="'warning'">
+                    'WARNING: Could not determine if 32-bit or 64-bit kernel running, so defaulting to 32-bit.\n' + \
+                    'The process running command "%s" on machine %s did not complete within %s.  ' % \
+                    (cmd, targetMachine, processDuration) + \
+                    'This usually means that machine %s cannot communicate ' % (targetMachine) + \
+                    'to STAX machine %s via STAF ' % (STAXMachInfo['machine']) + \
+                    'to send a process completion message.  ' + \
+                    'Check TCP DNS settings for machine %s' % (targetMachine) + \
+                    ' and make sure there are no firewall issues for the port being used by STAF.'
+                  </log>
+                </if>
+
+              </sequence>
+            </if>
+          </sequence>
+        </elseif>
+
+      </if>
+
+      <!-- Assign Data Directory and machine name to use for the temporary
+            STAF install -->
+
+      <script>
+        TestMachTmpDataDir = '%s%stmp' % (TestMachDataDir, TestMachFileSep)
+
+        # Assign the endpoint to use for communicating with the temporary
+        # version of STAFProc (using the specified port)
+        pos = targetMachine.find("@")
+        if pos >= 0:
+          TmpTestMach = '%s@%s' % (targetMachine[:pos], port)
+        else:
+          TmpTestMach = '%s@%s' % (targetMachine, port) 
+            </script>
+      
+      <log>
+        """%sTarget Machine Information:
+          Target Machine           : %s
+          Machine Logical ID       : %s
+          OS Type                  : %s
+          OS Revision              : %s
+          OS Release               : %s
+          OS Major Version         : %s
+          OS Minor Version         : %s
+          Processor Architecture   : %s
+          STAF Version             : %s
+          STAF Root                : %s
+          STAF Instance Name       : %s
+          PATH Environment Var     : %s
+          CLASSPATH Environment Var: %s
+          Lib Path Environment Var : %s
+          Temporary Endpoint       : %s
+          Temporary Data Directory : %s
+          STAX Machine Physical ID : %s""" % \
+          (logPrefix, targetMachine, TestMachine, TestMachOSType,
+           TestMachOSRevision, TestMachOSRelease,
+           TestMachOSMajorVersion, TestMachOSMinorVersion,
+           TestMachProcessorArchitecture, TestMachVersion, TestMachSTAFRoot,
+           TestMachInstanceName, TestMachEnvVar_PATH,
+           TestMachEnvVar_CLASSPATH, TestMachEnvVar_LIBPATH,
+           TmpTestMach, TestMachTmpDataDir, STAXMachPhysicalID)
+      </log>
+      
+      <if expr="TestMachine == STAXMachInfo['machine']">
+        <sequence>
+          <script>
+            errMsg = """%sERROR: Target machine %s is the same as the STAX machine. 
+              You cannot upgrade STAF on the STAX machine while it is running jobs.
+              Terminating the job.""" % (logPrefix, TestMachine)
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+      
+      <script>
+        machineInfo = {}
+        machineInfo['machine'] = TestMachine
+        machineInfo['dataDir'] = TestMachDataDir
+        machineInfo['version'] = TestMachVersion
+        machineInfo['osName'] = TestMachOSType
+        machineInfo['osRevision'] = TestMachOSRevision
+        machineInfo['osRelease'] = TestMachOSRelease
+        machineInfo['osMajorVersion'] = TestMachOSMajorVersion
+        machineInfo['osMinorVersion'] = TestMachOSMinorVersion
+        machineInfo['fileSep'] = TestMachFileSep
+        machineInfo['stafRoot'] = TestMachSTAFRoot
+        machineInfo['configFile'] = TestMachConfigFile
+        machineInfo['instanceName'] = TestMachInstanceName
+        machineInfo['processorArchitecture'] = TestMachProcessorArchitecture
+        machineInfo['path'] = TestMachEnvVar_PATH
+        machineInfo['classpath'] = TestMachEnvVar_CLASSPATH
+        machineInfo['libPath'] = TestMachEnvVar_LIBPATH
+        machineInfo['tmpDataDir'] = TestMachTmpDataDir
+        machineInfo['tmpMachine'] = TmpTestMach
+        machineInfo['STAXMachPhysicalID'] = STAXMachPhysicalID
+      </script>
+
+      <!-- Make sure that the version of STAF running on the test machine is
+            V3.0.0 or later on Windows machines and V3.1.3 or later on Unix
+            machines -->
+      <script>
+        from com.ibm.staf import STAFVersion
+        version = STAFVersion(machineInfo['version'])
+
+        if machineInfo['osName'].find('Win') != 0:
+          # Unix machine
+          minReqVersion = STAFVersion("3.1.3")
+
+          if version.compareTo(minReqVersion) >= 0:
+            validSTAFVersion = 1
+          else:
+            validSTAFVersion = 0
+            errMsg = 'STAF V3.1.3 or later is required to upgrade ' + \
+              'STAF on Unix machines.  ' + \
+              'STAF V%s is running on machine %s' % \
+              (machineInfo['version'], targetMachine)
+
+        else:
+          # Windows machine
+          minReqVersion = STAFVersion("3.0.0")
+
+          if version.compareTo(minReqVersion) >= 0:
+            validSTAFVersion = 1
+          else:
+            validSTAFVersion = 0
+            errMsg = 'STAF V3.0.0 or later is required to upgrade ' + \
+              'STAF on Windows machines.  ' + \
+              'STAF V%s is running on machine %s' % \
+              (machineInfo['version'], targetMachine)
+      </script>
+
+      <if expr="not validSTAFVersion">
+        <return>[1, errMsg]</return>
+      </if>
+        
+      <!-- Verify that STAF is not already running on the target machine using the 
+            specified port that we will use for the temporary STAFProc instance
+         --> 
+
+      <log>
+        '%sVerifying STAF is not already running using ' % (logPrefix) + \
+        'port %s on machine %s...' % (port, targetMachine)
+      </log>
+
+      <call function="'STAFUpgrade_RunSTAFCmd'">
+        [ machineInfo['tmpMachine'], 'PING', 'PING', [ STAFRC.NoPathToMachine ] ]
+      </call>
+      <script>[rc, result] = STAXResult</script>
+
+      <if expr="rc != STAFRC.NoPathToMachine">
+        <sequence>
+          <script>
+            errMsg = 'STAF is already running on machine ' + \
+              '%s using port %s.  ' % (targetMachine, port) + \
+              'Specify a different port for this machine, or shutdown the ' + \
+              'instance of STAF using this port.'
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+      
+      <return>[0, machineInfo]</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_GetInstallerFile" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>Determines the name of the installer file to use based on the
+      operating system, type, architecture, etc. of the target machine to be
+      upgraded.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing a return code and result.</p>
+      <p>
+        If successful, the return code will be 0 and the result will contain
+        a map with the following keys:
+        <pre>
+  installType       # 1=InstallAnywhere 2=STAFInst (tar.gz file)
+  installerFile     # Fully-qualified installer file path and name
+  installFileName   # Installer file name</pre>
+        For example:
+        <pre>  [0, {'installType': 1, 'installerFile': '/STAFBuilds/3.1.3',
+           'installFileName': 'STAF313-setup-win32.exe'}]</pre>
+      </p>
+      <p>
+        If an error occurred, the return code with be non-zero and the result will
+        contain an error message.</p>
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-required-arg name="machine">
+        The endpoint for the target machine
+      </function-required-arg>
+      <function-required-arg name="installerMachine">
+        The endpoint for the installer machine (where the STAF installer files reside)
+      </function-required-arg>
+      <function-required-arg name="installerDirectory">
+        The directory on the installer machine where the STAF installer files reside
+      </function-required-arg>
+      <function-required-arg name="preferredProcessorType">
+        The preferred processor type to use when choosing a STAF installer file
+      </function-required-arg>
+      <function-required-arg name="preferredFileType">
+        The preferred type of STAF installer file (e.g. 1=InstallAnywgere file, 2=Tar file)
+      </function-required-arg>
+      <function-required-arg name="machineInfo">
+        A map containing information about the target machine
+      </function-required-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <script>
+        # Need to determine the STAF install file name based on the
+        # operating system (OS) information on the test machine and
+        # based on the preferred processor type and file type.
+
+        supportedOS = 1
+
+        if machineInfo['osName'] == 'Linux':
+
+          if (machineInfo['osRevision'].startswith('i') and
+                machineInfo['osRevision'].endswith('86')):
+            # Linux i386, i586, i686, etc.
+            if preferredFileType == 1:
+              # Choose InstallAnywhere file over tar file
+              patternList = [
+                { 'type': 1, 'name': 'STAF*-setup-linux', 'ext': 'bin' },
+                { 'type': 2, 'name': 'STAF*-linux.tar', 'ext': 'gz' } ]
+            else:
+              # Choose tar file over InstallAnywhere file
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-linux.tar', 'ext': 'gz' },
+                { 'type': 1, 'name': 'STAF*-setup-linux', 'ext': 'bin' } ]
+
+          elif machineInfo['osRevision'] == 'ppc64':
+            # Linux PPC64
+            if preferredProcessorType == '64-bit':
+              # Choose 64-bit installer file over 32-bit installer file
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                 patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-linux-ppc64-64', 'ext': 'bin' },
+                  { 'type': 1, 'name': 'STAF*-setup-linux-ppc64-32', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-64.tar', 'ext': 'gz' },
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-32.tar', 'ext': 'gz' } ]
+              else:
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-64.tar', 'ext': 'gz' },
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-32.tar', 'ext': 'gz' } ]
+            else:
+              # Choose 32-bit installer file over 64-bit installer file
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-linux-ppc64-32', 'ext': 'bin' },
+                  { 'type': 1, 'name': 'STAF*-setup-linux-ppc64-64', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-32.tar', 'ext': 'gz' },
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-64.tar', 'ext': 'gz' } ]
+              else:
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-32.tar', 'ext': 'gz' },
+                  { 'type': 2, 'name': 'STAF*-linux-ppc64-64.tar', 'ext': 'gz' } ]
+
+          elif machineInfo['osRevision'] == 'ia64':
+            # Linux IA64
+            if preferredFileType == 1:
+              # Choose InstallAnywhere file over tar file
+              patternList = [
+                { 'type': 1, 'name': 'STAF*-setup-linux-ia64', 'ext': 'bin' },
+                { 'type': 2, 'name': 'STAF*-linux-ia64.tar', 'ext': 'gz' } ]
+            else:
+              # Choose tar file over InstallAnywhere file
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-linux-ia64.tar', 'ext': 'gz' },
+                { 'type': 1, 'name': 'STAF*-setup-linux-ia64', 'ext': 'bin' } ]
+
+          elif machineInfo['osRevision'] == 'x86_64':
+            # Linux AMD 64
+            if preferredFileType == 1:
+              # Choose InstallAnywhere file over tar file
+              patternList = [
+                { 'type': 1, 'name': 'STAF*-setup-linux-amd64', 'ext': 'bin' },
+                { 'type': 2, 'name': 'STAF*-linux-amd64.tar', 'ext': 'gz' } ]
+            else:
+              # Choose tar file over InstallAnywhere file
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-linux-amd64.tar', 'ext': 'gz' },
+                { 'type': 1, 'name': 'STAF*-setup-linux-amd64', 'ext': 'bin' } ]
+
+          elif machineInfo['osRevision'] == 's390':
+            # zLinux-32
+            if machineInfo['osRelease'] == 'SuSE SLES-8':
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-zlinux-32', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-zlinux-32.tar', 'ext': 'gz' } ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-zlinux-32.tar', 'ext': 'gz' },
+                  { 'type': 1, 'name': 'STAF*-setup-zlinux-32', 'ext': 'bin' } ]
+            #elif machineInfo['osRelease'] == 'SUSE LINUX Enterprise Server 9':
+            #  patternList = [
+            #    { 'type': 2, 'name': 'STAF*-zlinux-sles9-32.tar', 'ext': 'gz' } ]
+            #elif machineInfo['osRelease'] == 'Red Hat Enterprise Linux AS release 4':
+            #  patternList = [
+            #    { 'type': 2, 'name': 'STAF*-zlinux-rhel4-32.tar', 'ext': 'gz' } ]
+            else:
+              supportedOS = 0  # Unsupported OS
+
+          elif machineInfo['osRevision'] == 's390x':
+            # zLinux-64
+            if machineInfo['osRelease'] == 'Red Hat Enterprise Linux AS release 4':
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-zlinux-rhel4-64.tar', 'ext': 'gz' } ]
+            elif machineInfo['osRelease'] == 'SUSE LINUX Enterprise Server 9':
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-zlinux-sles9-64.tar', 'ext': 'gz' } ]
+            elif machineInfo['osRelease'] == 'SUSE Linux Enterprise Server 10':
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-zlinux-sles10-64.tar', 'ext': 'gz' } ]
+            elif machineInfo['osRelease'] == 'SuSE SLES-8':
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-zlinux-64', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-zlinux-64.tar', 'ext': 'gz' } ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-zlinux-64.tar', 'ext': 'gz' },
+                  { 'type': 1, 'name': 'STAF*-setup-zlinux-64', 'ext': 'bin' } ]
+            else:
+              supportedOS = 0  # Unsupported OS
+
+        elif machineInfo['osName'].find('Win') == 0:
+          if machineInfo['processorArchitecture'] == 'IA64':
+            patternList = [
+              { 'type': 1, 'name': 'STAF*-setup-win64', 'ext': 'exe' } ]
+          elif machineInfo['processorArchitecture'] == 'AMD64':
+            if preferredProcessorType == '64-bit':
+              # Choose 64-bit over  32-bit
+              patternList = [
+                { 'type': 1, 'name': 'STAF*-setup-winamd64', 'ext': 'exe' },
+                { 'type': 1, 'name': 'STAF*-setup-win32', 'ext': 'exe' } ]
+            else:
+              # Choose 32-bit over  64-bit
+              patternList = [
+                { 'type': 1, 'name': 'STAF*-setup-win32', 'ext': 'exe' },
+                { 'type': 1, 'name': 'STAF*-setup-winamd64', 'ext': 'exe' } ]
+          else:
+            patternList = [
+              { 'type': 1, 'name': 'STAF*-setup-win32', 'ext': 'exe' } ]
+
+        elif machineInfo['osName'] == 'SunOS':
+          if machineInfo['osRevision'] == 'i86pc':
+            # osRevision i86pc on Solaris machines indicates x86 architecture
+            if machineInfo['processorArchitecture'] == '64':
+              # Solaris x86 64bit (aka AMD64, x86-64, x64)
+              if preferredProcessorType == '32-bit':
+                # Choose 32-bit over  64-bit
+                if preferredFileType == 1:
+                  # Choose InstallAnywhere file over tar file
+                  patternList = [
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-x64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64-64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-x64-64.tar', 'ext': 'gz' } ]
+                else:
+                  # Choose tar file over InstallAnywhere file
+                  patternList = [
+                    { 'type': 2, 'name': 'STAF*-solaris-x64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-x64-64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64-64', 'ext': 'bin' } ]
+              else:
+                # Choose 64-bit over  32-bit
+                if preferredFileType == 1:
+                  # Choose InstallAnywhere file over tar file
+                  patternList = [
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64-64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-x64-64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-x64.tar', 'ext': 'gz' } ]
+                else:
+                  # Choose tar file over InstallAnywhere file
+                  patternList = [
+                    { 'type': 2, 'name': 'STAF*-solaris-x64-64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64-64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-x64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-x64', 'ext': 'bin' } ]
+            else:
+              # machineInfo['processorArchitecture'] == '32'
+              # Solaris x86 32-bit
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-solaris-x86', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-solaris-x86.tar', 'ext': 'gz' } ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-solaris-x86.tar', 'ext': 'gz' },
+                  { 'type': 1, 'name': 'STAF*-setup-solaris-x86', 'ext': 'bin' } ]
+          else:
+            # SPARC is indicated by osRevision sun4u (and maybe others)
+            if machineInfo['osMajorVersion'] == '5.6':
+              # InstallAnywhere does not support Solaris 5.6 
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz' } ]
+            elif machineInfo['osMajorVersion'] == '5.10':
+              if preferredProcessorType == '64-bit':
+                # Choose 64-bit over 32-bit
+                if preferredFileType == 1:
+                  # Choose InstallAnywhere file over tar file
+                  patternList = [
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz' } ]
+                else:
+                  # Choose tar file over InstallAnywhere file
+                  patternList = [
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc', 'ext': 'bin' } ]
+              else:
+                # Choose 32-bit over  64-bit
+                if preferredFileType == 1:
+                  # Choose InstallAnywhere file over tar file
+                  patternList = [
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc64.tar', 'ext': 'gz' } ]
+                else:
+                  # Choose tar file over InstallAnywhere file
+                  patternList = [
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-solaris-sparc64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-solaris-sparc64', 'ext': 'bin' } ]
+            else:
+              # InstallAnywhere does support Solaris 5.7, 8-10
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-solaris-sparc', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz'} ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-solaris-sparc.tar', 'ext': 'gz' },
+                  { 'type': 1, 'name': 'STAF*-setup-solaris-sparc', 'ext': 'bin' } ]
+       
+        elif machineInfo['osName'] == 'AIX':
+          if machineInfo['osMinorVersion'] == '4':
+            if preferredFileType == 1:
+              # Choose InstallAnywhere file over tar file
+              patternList = [
+                { 'type': 1, 'name': 'STAF*-setup-aix433', 'ext': 'bin' },
+                { 'type': 2, 'name': 'STAF*-aix433.tar', 'ext': 'gz'} ]
+            else:
+              # Choose tar file over InstallAnywhere file
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-aix433.tar', 'ext': 'gz'},
+                { 'type': 1, 'name': 'STAF*-setup-aix433', 'ext': 'bin' } ]
+          else:
+            # AIX Version 5 or later - Supports 64-bit
+            if machineInfo['processorArchitecture'] == '64':
+              # 64-bit kernel
+              if preferredProcessorType == '64-bit':
+                # Choose 64-bit over 32-bit
+                if preferredFileType == 1:
+                  # Choose InstallAnywhere file over tar file
+                  patternList = [
+                    { 'type': 1, 'name': 'STAF*-setup-aix64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-aix64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-aix', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' } ]
+                else:
+                  # Choose tar file over InstallAnywhere file
+                  patternList = [
+                    { 'type': 2, 'name': 'STAF*-aix64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-aix64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-aix', 'ext': 'bin' } ]
+              else:
+                # Choose 32-bit over 64-bit
+                if preferredFileType == 1:
+                  # Choose InstallAnywhere file over tar file
+                  patternList = [
+                    { 'type': 1, 'name': 'STAF*-setup-aix', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-aix64', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-aix64.tar', 'ext': 'gz' } ]
+                else:
+                  # Choose tar file over InstallAnywhere file
+                  patternList = [
+                    { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-aix', 'ext': 'bin' },
+                    { 'type': 2, 'name': 'STAF*-aix64.tar', 'ext': 'gz' },
+                    { 'type': 1, 'name': 'STAF*-setup-aix64', 'ext': 'bin' } ]
+            else:
+              # 32-bit kernel - Choose 32-bit
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-aix', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' } ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' },
+                  { 'type': 1, 'name': 'STAF*-setup-aix', 'ext': 'bin' } ]
+
+        elif machineInfo['osName'] == 'HP-UX':
+          if machineInfo['osRevision'] == 'ia64':
+            if preferredProcessorType == '64-bit':
+              # Choose 64-bit over 32-bit
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-64', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-64.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-32', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-32.tar', 'ext': 'gz'} ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-64.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-64', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-32.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-32', 'ext': 'bin'} ]
+            else:
+              # Choose 32-bit over 64-bit
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-32', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-32.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-64', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-64.tar', 'ext': 'gz'} ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-32.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-32', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-ia64-64.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-ia64-64', 'ext': 'bin'} ]
+          else:
+            # HPUX PA-RISC 32-bit/64-bit operating system
+            if preferredProcessorType == '64-bit':
+              # Choose 64-bit over 32-bit
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-parisc64', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-parisc64.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux.tar', 'ext': 'gz'} ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-hpux-parisc64.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-parisc64', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux', 'ext': 'bin'} ]
+            else:
+              # Choose 32-bit over 64-bit
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-hpux', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-parisc64', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-parisc64.tar', 'ext': 'gz'} ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-hpux.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux', 'ext': 'bin'},
+                  { 'type': 2, 'name': 'STAF*-hpux-parisc64.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-hpux-parisc64', 'ext': 'bin'} ]
+
+        elif machineInfo['osName'] == 'OS400':
+          if preferredProcessorType == '32-bit':
+            # Choose 32-bit over 64-bit
+            patternList = [ 
+              { 'type': 2, 'name': 'STAF*-aix.tar', 'ext': 'gz' },
+              { 'type': 2, 'name': 'STAF*-as400.tar', 'ext': 'gz' }]
+          else:
+            # Choose 64-bit over 32-bit
+             patternList = [ 
+              { 'type': 2, 'name': 'STAF*-aix64.tar', 'ext': 'gz' } ]
+
+        elif machineInfo['osName'] == 'OS/390':
+          if preferredProcessorType == '32-bit':
+            # Choose 32-bit over 64-bit
+            patternList = [ 
+              { 'type': 2, 'name': 'STAF*-zos.tar', 'ext': 'Z' } ]
+          else:
+            # Choose 64-bit over 32-bit
+             patternList = [ 
+              { 'type': 2, 'name': 'STAF*-zos64.tar', 'ext': 'Z' } ]
+
+        elif machineInfo['osName'] == 'FreeBSD':
+          useFreeBSD410 = 0
+
+          if (machineInfo['osRevision'].startswith('i') and
+                machineInfo['osRevision'].endswith('86')):
+            # FreeBSD i386, i586, i686, etc.
+            if machineInfo['osMajorVersion'].startswith('4') or machineInfo['osMajorVersion'].startswith('5'):
+              useFreeBSD410 = 1
+            
+            if useFreeBSD410:
+              # Use STAF installer file built on FreeBSD 4.10
+              patternList = [ 
+                { 'type': 2, 'name': 'STAF*-freebsd410.tar', 'ext': 'gz' } ]
+            else:
+              # Use STAF installer file built on FreeBSD V6.1
+              if preferredFileType == 1:
+                # Choose InstallAnywhere file over tar file
+                patternList = [
+                  { 'type': 1, 'name': 'STAF*-setup-freebsd-NoJVM', 'ext': 'bin' },
+                  { 'type': 2, 'name': 'STAF*-freebsd.tar', 'ext': 'gz'} ]
+              else:
+                # Choose tar file over InstallAnywhere file
+                patternList = [
+                  { 'type': 2, 'name': 'STAF*-freebsd.tar', 'ext': 'gz'},
+                  { 'type': 1, 'name': 'STAF*-setup-freebsd-NoJVM', 'ext': 'bin' } ]
+          else:
+            # STAF does not currently provide FreeBSD builds for other
+            # architectures like amd64, etc.
+            supportedOS = 0 # Unsupported OS
+                   
+        # Check if Mac OS X (aka Darwin)
+        elif machineInfo['osName'] == 'Darwin':
+          if preferredProcessorType == '32-bit':
+            # Choose 32-bit over 64-bit
+            # Mac OS X i386
+            if (machineInfo['osRevision'].startswith('i') and
+                  machineInfo['osRevision'].endswith('86')):
+              # Mac OS X i386, i586, i686, etc.
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-macosx-i386.tar', 'ext': 'gz' } ]
+            else:
+              # Mac OS X PowerPC
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-macosx-ppc.tar', 'ext': 'gz' } ]
+          else:
+            # Choose 64-bit over 32-bit
+            # Mac OS X Universal binary
+              patternList = [
+                { 'type': 2, 'name': 'STAF*-macosx-universal.tar', 'ext': 'gz' } ]
+
+        else:
+          supportedOS = 0  # Unsupported OS
+      </script>
+      
+      <if expr="not supportedOS">
+        <sequence>
+          <script>
+            errMsg = 'Cannot determine a STAF installer file to use ' + \
+              'on machine %s because STAFUpgrade does not ' % (machine) + \
+              'support upgrading STAF on operating system: %s ' % \
+              (machineInfo['osName']) 
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+ 
+      <iterate var="pattern" in="patternList">
+        <sequence>
+
+          <script>
+            installType = pattern['type']
+            namePattern = pattern['name']
+            extPattern = pattern['ext']
+
+            request = 'LIST DIRECTORY %s NAME %s EXT %s' % \
+              (STAFUtil.wrapData(installerDirectory), namePattern, extPattern)
+
+            matchFound = 0
+            errMsg = ''
+          </script>
+
+          <stafcmd name="'STAF %s FS %s' % (installerMachine, request)">
+            <location>installerMachine</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+          <script>
+            # Successful if FS LIST DIRECTORY command succeeded with
+            # one entry returned in the result list
+
+            breakFlag = 1
+
+            if RC == STAFRC.Ok:
+              if len(STAFResult) == 1:
+                matchFound = 1
+                installerFile = '%s/%s' % (installerDirectory, STAFResult[0])
+                installInfo = {
+                  'installType': installType,
+                  'installerFileName': STAFResult[0],
+                  'installerFile': installerFile
+                }
+              elif len(STAFResult) == 0:
+                if errMsg != '':
+                  errMsg = '%s\n' % (errMsg)
+                errMsg = '%sNo files in directory %s on installer machine %s' % \
+                  (errMsg, installerDirectory, installerMachine) + \
+                  ' match name pattern %s.%s' % (namePattern, extPattern)
+                breakFlag = 0
+              else:
+                errMsg = 'More than one file in directory ' + \
+                  '%s on installer machine ' % (installerDirectory) + \
+                  '%s matches name pattern ' % (installerDirectory) + \
+                  '%s.%s\nMatching file list: ' % (namePattern, extPattern) + \
+                  '%s' % (STAFResult)
+            elif RC == STAFRC.DoesNotExist:
+              errMsg = 'Directory %s does not exist on installer machine %s' % \
+                (installerDirectory, installerMachine)
+            else:
+              errMsg = 'STAF %s FS %s failed with ' % (installerMachine, request) + \
+                'RC=%s Result=%s' % (RC, STAFResult)
+          </script>
+
+          <if expr="breakFlag">
+            <break/>
+          </if>
+
+        </sequence>
+      </iterate>
+
+      <if expr="matchFound">
+        <return>[ 0, installInfo ]</return>
+      </if>
+
+      <return>[ 1, errMsg ]</return>
+      
+    </sequence>
+  </function>
+  
+  <function name="STAFUpgrade_CreateDirectoryIfDoesNotExist" scope="local">
+    <function-prolog>
+      <![CDATA[
+      <p>
+      Checks if the specified directory exists on the specified machine.
+      If the directory doesn't exist, then it creates the directory on the
+      specified machine.
+      </p>
+      ]]>
+    </function-prolog>
+    <function-epilog>
+       <![CDATA[
+       <h4>Returns:</h4>
+       <p>A list containing a return code and result.</p>
+       <p>
+         If successful, the return code will be 0 and the result will be blank.
+         For example:
+         <pre>  [0, '']</pre>
+       </p>
+       <p>
+         If an error occurred, the return code with be non-zero and the result
+         will contain an error message.</p>
+       ]]>
+    </function-epilog>
+ 
+    <function-map-args>
+      <function-required-arg name="directory">
+        The name of a directory to create if it doesn't exist
+      </function-required-arg>
+      <function-required-arg name="machine">
+        The machine where the directory should reside
+      </function-required-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <!-- Check if the directory exists on the machine. -->
+
+      <script>
+        request = 'GET ENTRY %s TYPE' % (directory)
+      </script>
+
+      <stafcmd name="'STAF %s FS %s' % (machine, request)">
+        <location>machine</location>
+        <service>'FS'</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC == 0">
+        <sequence>
+          <if expr="STAFResult != 'D'">
+            <return>
+              [1, 'This is not a directory.  Type: %s' % (STAFResult)]
+            </return>
+          </if>
+        </sequence>
+
+        <elseif expr="RC == STAFRC.DoesNotExist">
+          <sequence>
+            <!-- Directory does not exist, so create it -->
+
+            <script>
+              request = 'CREATE DIRECTORY %s FULLPATH' % (directory)
+            </script>
+
+            <stafcmd name="'STAF %s FS %s' % (machine, request)">
+              <location>machine</location>
+              <service>'FS'</service>
+              <request>request</request>
+            </stafcmd>
+
+            <if expr="RC != 0">
+              <sequence>
+                <script>
+                  errMsg = 'Cannot create directory %s' % (directory) + \
+                    '\nSTAF %s FS %s failed with RC: %s, Result: %s' % \
+                    (machine, request, RC, STAFResult)
+                </script>
+                <return>[1, errMsg]</return>
+              </sequence>
+            </if>
+          </sequence>
+        </elseif>
+
+        <else>
+          <sequence>
+            <script>
+              errMsg = 'Error getting the type for the directory.' + \
+                '\nSTAF %s FS %s failed with RC: %s, Result: %s' % \
+                (machine, request, RC, STAFResult)
+            </script>
+            <return>[1, errMsg]</return>
+          </sequence>
+        </else>
+      </if>
+
+      <return>[0, '']</return>
+
+    </sequence>
+  </function>
+
+  <function name="STAFUpgrade_RunSTAFCmd" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+        Logs a message about the STAF command being run, runs the specified
+        STAF command (by submitting the specified request to the specified
+        service on the specified machine).  If the STAF command fails (e.g.
+        it's return code is not in the list of valid return codes), records a fail
+        testcase status and logs and sends a failure message to the STAX
+        Monitor, and checks if the terminateJobFlag evaluates to true and, if so,
+        terminates the job.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing the return code and result from the STAF command.</p>
+      <p>
+        If the STAF command was successful and the result buffer is '', returns:
+        <pre>  [0, None]</pre>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's an example that submits a PING request to the PING service
+        on the local machine and assigns the STAF command's RC and STAFResult
+        to variables rc and result.
+        <pre>
+  &lt;call function="'STAFUpgrade_RunSTAFCmd'">
+    [ 'local', 'PING', 'PING' ]
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script></pre>
+        </li>
+        <p></p>
+        <li>Here's an example that submits a DELETE ENTRY request to the FS
+        service on machine client1.austin.ibm.com and assignes the STAF
+        command's RC and STAFResult to variables rc and result:
+        <pre>
+  &lt;script>
+    location = 'client1.austin.ibm.com'
+    service = 'FS'
+    request = 'DELETE ENTRY %s CONFIRM' % (installLogFile)
+  &lt;/script>
+
+  &lt;call function="'STAFUpgrade_RunSTAFCmd'">
+    [ location, service, request, [ STAFRC.Ok, STAFRC.DoesNotExist ] ]
+  &lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="location">
+        The machine to run the STAF command on
+      </function-required-arg>
+
+      <function-required-arg name="service">
+        The service to submit the request to
+      </function-required-arg>
+
+      <function-required-arg name="request">
+        The request to submit to the service
+      </function-required-arg>
+
+      <function-optional-arg name="validRCList" default="[ STAFRC.Ok ]">
+        A list of the valid return codes for this request
+      </function-optional-arg>
+
+      <function-optional-arg name="terminateJobFlag" default="0">
+        A flag indicating whether to terminate the job if the
+        STAF command's RC is not in the validRCList.
+        The default is 0 which indicates not to terminate the job.
+        Setting the flag to 1 indicates to terminate the job.
+      </function-optional-arg>
+
+      <function-optional-arg name="name"
+        default="'STAF %s %s %s' % (location, service, request)">
+        The name to use to identify the staf command in the STAX Monitor
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <script>
+        stafCommand = 'STAF %s %s %s' % (location, service, request)
+      </script>
+
+      <log>'%s%s' % (logPrefix, stafCommand)</log>
+
+      <stafcmd name="name">
+        <location>location</location>
+        <service>service</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC not in validRCList">
+        <sequence>
+
+          <script>
+            failMsg = '%s%s failed.  RC=%s Result=%s' % \
+            (logPrefix, stafCommand, RC, STAFResult)
+          </script>
+             
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': 0, 'failMsg': failMsg, 'sendToMonitor': sendToMonitor,
+              'recordStatus': 0 }
+          </call>
+
+          <if expr="terminateJobFlag">
+            <sequence>
+              <script>
+                if locals().has_Key('termBlockName'):
+                  termBlock = termBlockName
+                else:
+                  termBlock = 'STAFUpgrade'
+              </script>
+              <log>'%sTerminating block %s' % (logPrefix, termBlock)</log>
+              <terminate block="termBlock"/>
+            </sequence>
+          </if>
+
+        </sequence>
+      </if>
+
+      <return>[RC, STAFResult]</return>
+
+    </sequence>
+  </function>
+
+
+  <function name="STAFUpgrade_WaitForSTAFShutdown" scope="local">
+
+    <function-prolog>
+      <![CDATA[
+      <p>
+        Waits for STAF to become unavailable (that is, for the STAFProc daemon
+        to be shutdown) on one or more machines.  A maximum wait time can be
+        specified, overriding the default maximum wait time of 5 minutes.
+        If one or more machines are available, and the maximum wait time
+        has not been exceeded, delays 5 seconds and then retries.
+        This function can be useful after shutting down STAF one or more
+        systems to verify that shutdown is complete.
+      </p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>A list containing a return code and result.</p>
+      <p>
+        If the machine(s) all have STAF unavailable within the maximum wait
+        time, returns a return code of 0 and None for the result.  That is,
+        STAXResult would be:
+        <pre>  [0, None]</pre>
+      </p>
+      <p>
+        If the maximum wait time is exceeded, returns a return code of 1 and
+        a list of machines that are available.  For example, if machines
+        'machA' and 'machB' are still running STAF, STAXResult would be:
+        <pre>  [1, ['machA', 'machB']]</pre>
+      </p>
+      <p>
+        If an invalid (non-integer) maxWaitTime value is specified,
+        returns a return code of -1 and None for the result.  That is,
+        STAXResult would be:
+        <pre>  [-1, None]</pre>
+      </p>
+      <h4>Examples:</h4>
+      <ol>
+        <li>Here's an example that waits for STAF to become unavailable on machA
+        for the default time of 5 minutes:
+        <pre>
+  &lt;call function="'STAFUpgrade_WaitForSTAFShutdown'">'machA'&lt;/call></pre>
+        </li>
+        <p></p>
+        <li>Here's an example that waits for STAF to become unavailable on
+        three systems for a maximum of 60 seconds.  If STAF is not unavailable
+        on all three systems within 60 seconds, a failure message is logged
+        and sent to the STAX Monitor.
+        <pre>
+  &lt;script>machList = [ 'machA', 'machB', 'machC' ]&lt;/script>
+
+  &lt;call function="'STAFUpgrade_WaitForSTAFShutdown'">[ machList, 60 ]&lt;/call>
+
+  &lt;script>[rc, result] = STAXResult&lt;/script>
+
+  &lt;if expr="rc != 0">
+    &lt;call function="'STAXUtilLogAndMsg'">
+      'STAXUtilWaitForSTAF failed. RC=%s Result=%s' % (rc, result)
+    &lt;/call>
+  &lt;/if></pre>
+        </li>
+      </ol>
+      ]]>
+    </function-epilog>
+
+    <function-list-args>
+
+      <function-required-arg name="machineList">
+        A single machine or a list of machines for which you want to wait
+        for STAF to become unavailable
+      </function-required-arg>
+
+      <function-optional-arg name="maxWaitTime" default="300">
+        The maximum length of time in seconds you want to wait for STAF to
+        become unavailable on the specified machine(s).  The default is 5
+        minutes (300 seconds).
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <!-- Check if maxWaitTime is numeric -->
+      <if expr="not type(maxWaitTime) in [type(1)]">
+        <return>[-1, None]</return>
+      </if>
+
+      <script>gPingWorkList = STAXGlobal([])</script>
+
+      <script>
+        import time
+        starttime = time.time() # record starting time
+      </script>
+
+      <loop until="time.time() - starttime >= maxWaitTime">
+        <sequence>
+
+          <script>gPingWorkList = STAXGlobal([])</script>
+
+          <paralleliterate var="machName" in="machineList">
+            <sequence>
+
+              <stafcmd name="'STAF %s PING PING' % (machName)">
+                <location>machName</location>
+                <service>'PING'</service>
+                <request>'PING'</request>
+              </stafcmd>
+
+              <if expr="RC != STAFRC.NoPathToMachine">
+                <script>
+                  gPingWorkList.append(machName)
+                </script>
+              </if>
+
+            </sequence>
+          </paralleliterate>
+
+          <if expr="len(gPingWorkList) == 0">
+            <return>[0, None]</return>
+          </if>
+
+          <stafcmd name="'Delay for 5 seconds'">
+            <location>'local'</location>
+            <service>'DELAY'</service>
+            <request>'DELAY 5000'</request>
+          </stafcmd>
+
+        </sequence>
+      </loop>
+
+      <return>[1, gPingWorkList.get()]</return>
+
+    </sequence>
+  </function>
+</stax>

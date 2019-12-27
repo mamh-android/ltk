@@ -1,0 +1,753 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : QueueSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Queue Service
+.*  Detail:
+.*
+.*     This file describes the STAF Queue Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.queue service
+:ih1.services
+:i2.queue service
+:h2 id=queuesrv.Queue Service
+:h3.Description
+:p.The QUEUE service is one of the internal STAF services.  It provides the
+following commands to manipulate the contents of a handle's queue:
+:ul compact.
+:li.QUEUE - Queues a message to a handle's queue
+:li.GET - Retrieves and removes element(s) from the queue of the handle
+submitting the GET request to the QUEUE service
+:li.PEEK - Retrieves element(s) from the queue of the handle
+submitting the PEEK request to the QUEUE service
+:li.DELETE - Deletes a set of elements from a handle's queue
+:li.LIST - Retrieves the entire contents of a handle's queue
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUEUE
+:i3.queue service
+:h3.QUEUE
+:p.QUEUE allows you to queue a message to a given process handle or to any
+process registered with a given name.
+:h4.Syntax
+:xmp.
+QUEUE MESSAGE <Message>
+      &lbrk.HANDLE <Handle> | NAME <Name>&rbrk. &lbrk.PRIORITY <Priority>&rbrk. &lbrk.TYPE <Type>&rbrk.
+:exmp.
+:p.:xph.MESSAGE:exph. specifies the message to be queued.
+This option will not resolve variables.
+:p.:xph.HANDLE:exph. specifies the process handle to which the message should
+be queued.  If the request is made locally, the default is the handle which
+originated the request. &varres.
+:p.:xph.NAME:exph. specifies the registered name of the process(es) to which
+the message should be queued. &varres.
+:note.If the request is made to a remote machine then you must specify either
+:xph.HANDLE:exph. or :xph.NAME:exph..
+:p.:xph.PRIORITY:exph. specifies the priority of the message to be queued.  The
+default is 5. &varres.
+:p.:xph.TYPE:exph. specifies the type for the message to be queued.  The
+default is no type. &varres.
+
+:h4.Security
+:p.&seclvl. 3.
+:h4.Return Codes
+:p.All return codes from QUEUE are documented in :hdref refid=retcode..
+:p.If a message is attempted to be queued to a handle whose queue already
+contains the maximum number of messages allowed, the message will not be
+queued to that handle and return code 28 (Queue Full) will be returned.
+
+:h4.Results
+:p.On successful return:
+:ul.
+:li.If :xph.HANDLE:exph. was specified, or defaulted to, the result buffer will
+contain no data upon return from the submit call.
+:li.If :xph.NAME:exph. was specified, the result buffer will contain the number
+of processes to which the message was queued.
+:eul.
+
+:p.If unsuccessful due to attempting to queue a message to a handle whose queue
+already contains the maximum number of messages allowed, the message will not
+be sent to that handle's queue and return code 28 (Queue full) will be returned
+and the result buffer will be set as follows:
+:p.
+:ul.
+:li.If :xph.HANDLE:exph. was specified, or defaulted to, the result buffer will
+contain the number of messages the handle's queue contains.
+:p.
+:li.If :xph.NAME:exph. was specified, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Queue/Error>:exph., providing more information about
+the number of handles, if any, that the message was successfully queued to, and
+the handles that the message could not be successfully queued to because their
+queues are full.  The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Queue/Error
+:tnote text='Description'.This map class represents error information when a
+message is attempted to be sent to all handles with a specified name and at
+least one handle's queue is full.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.numberQueued
+:c.Number Queued
+:c.&stringObj.
+:c.
+:row.
+:c.fullQueueList
+:c.Handles with Full Queues
+:c.<List> of <Map&colon.STAF/Service/Queue/FullInfo> 
+:c.
+:tnote text='Notes'.
+The "Handles with Full Queues" value will contain a list of information
+about the handles whose queues are full.
+:etnote.
+:etable.
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Queue/FullInfo
+:tnote text='Description'.This map class represents error information
+for a handle whose queue is full.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.queueSize
+:c.Queue Size
+:c.&stringObj. 
+:c.
+:tnote text='Notes'.
+The "Handle" value will contain the handle number of a handle whose
+queue is full and the "Queue Size" value will contain the number of messages
+that the handle's queue contains.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Queue the message "Hello World" to your own handle's queue on
+the local machine.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUEUE MESSAGE "Hello World":exph.
+:p.
+:li.:hp2.Goal::ehp2. Queue priority 1 message "CONTROL/STAGE2" to handle 50.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUEUE HANDLE 50 PRIORITY 1 MESSAGE "CONTROL/STAGE2":exph.
+:p.
+:li.:hp2.Goal::ehp2. Queue the message "Success" with type "Build/Complete" to handle 17.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUEUE HANDLE 17 TYPE "Build/Complete" MESSAGE "Success":exph.
+:p.
+:li.:hp2.Goal::ehp2. Queue the message "Success" to all handles on machine
+test1.company.com whose handle name is "MyProduct/Test".
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.STAF test1.company.com QUEUE QUEUE NAME "MyProduct/Test" MESSAGE "Success":exph.
+:p.:hp2.Results:ehp2.
+:ul.
+:li.If one handle exists on machine test1.company.com with name "MyProduct/Test"
+and the message was successfully queued to its handle, return code 0 would be
+returned and the result would contain "1".
+:li.If three handles exist on machine test1.company.com with name "MyHandle"
+and the message was successfully queued to all three handles, return code 0
+would be returned and the result would contain "3".
+:li.If no handles exist on machine test1.company.com with name "MyHandle",
+return code 5 (Handle does not exist) will be returned.
+:li.If one handle exists on machine test1.company.com with name "MyHandle"
+and its queue is full, return code 28 (Queue full) would be returned and, if the
+command was submitted via the command line, the result in verbose format could
+look like:
+:xmp.
+{
+  Number Queued           : 0
+  Handles with Full Queues: [
+    {
+      Handle    : 37
+      Queue Size: 100
+    }
+  ]
+}
+:exmp.
+:li.If three handles exist on machine test1.company.com with name "MyHandle"
+and two of the handles' queues are full and one handle's queue is not full,
+return code 28 (Queue full) would be returned and, if the command was submitted
+via the command line, the result in verbose format could look like:
+:xmp.
+{
+  Number Queued           : 1
+  Handles with Full Queues: [
+    {
+      Handle    : 37
+      Queue Size: 100
+    }
+    {
+      Handle    : 41
+      Queue Size: 100
+    }
+  ]
+}
+:exmp.
+:eul.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.GET
+:i3.queue service
+:ih1.service commands
+:ih2.PEEK
+:i3.queue service
+:h3.GET/PEEK
+:p.GET allows you to retrieve and remove one or more elements from the queue of
+the handle submitting the GET request to the QUEUE service.
+:p.PEEK allows you to retrieve one or more elements from the queue of
+the handle submitting the PEEK request without removing the element(s) from the queue.
+:p.
+By default, only one element will be retrieved/removed from the queue if you don't
+specify the :xph.ALL:exph. or :xph.FIRST:exph. option.
+:p.
+For security reasons, you are only allowed to retrieve messages from your own
+handle's queue, not from any other handle's queue.  So, a GET/PEEK request only
+retrieves messages from the queue of the handle that submitted the GET/PEEK
+request to the QUEUE service.  Note that you can use the LIST request to
+list messages that are in another handle's queue.
+
+:h4.Syntax
+:xmp.
+GET  &lbrk.PRIORITY <Priority>&rbrk.... &lbrk.MACHINE <Endpoint>&rbrk.... &lbrk.NAME <Name>&rbrk....
+     &lbrk.HANDLE <Handle>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.TYPE <Type>&rbrk....
+     &lbrk.CONTAINS <String>&rbrk.... &lbrk.ICONTAINS <String>&rbrk....
+     &lbrk.FIRST <Number> | ALL&rbrk.
+     &lbrk.WAIT &lbrk.<Number>[s|m|h|d|w]&rbrk. &rbrk.
+
+PEEK &lbrk.PRIORITY <Priority>&rbrk.... &lbrk.MACHINE <Endpoint>&rbrk.... &lbrk.NAME <Name>&rbrk....
+     &lbrk.HANDLE <Handle>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.TYPE <Type>&rbrk....
+     &lbrk.CONTAINS <String>&rbrk.... &lbrk.ICONTAINS <String>&rbrk....
+     &lbrk.FIRST <Number> | ALL&rbrk.
+     &lbrk.WAIT &lbrk.<Number>[s|m|h|d|w]&rbrk. &rbrk.
+:exmp.
+:p.:xph.PRIORITY:exph. specifies that you want to retrieve/remove message(s)
+with the given priority. The default is the highest priority message (i.e.,
+the one with the lowest priority number). You may specify this option multiple
+times.  &varres.
+:p.:xph.MACHINE:exph. specifies that you want to retrieve/remove message(s)
+originating from the given machine's endpoint.  The default is any machine.  You may
+specify this option multiple times.  &varres.
+The format for a machine's endpoint is:
+:xmp.
+  <Interface>&colon.//<System Identifier>&lbrk.@<Port>&rbrk.
+:exmp.
+where a case-insensitive match is performed.
+You can specify match patterns (e.g. wild cards) for a machine's endpoint.
+These patterns recognize two special characters, '*' and '?', where '*'
+matches a string of characters (including an empty string) and '?' matches
+any single character (the empty string does not match).   
+For example, if you want to match on messages from a machine with system
+identifier client1.mycompany.com, no matter what interface or port is in
+the machine's endpoint, you could specify "*://client1.mycompany.com*"
+which would match machines such as "tcp://client1.mycompany.com@6500" and
+"tcp2://client1.mycompany.com".
+:p.:xph.NAME:exph. specifies that you want to retrieve/remove message(s)
+originating from a process with the given registered name. The default is any
+name. You may specify this option multiple times.  &varres.
+Note that this option does not specify the handle name for the handle whose
+queue you want to retrieve messages from as you can only retrieve messages
+from the queue of the handle that submitted the GET/PEEK request to the
+QUEUE service.
+:p.:xph.HANDLE:exph. specifies that you want to retrieve/remove message(s)
+originating from a process with the given handle number. The default is any handle.
+You may specify this option multiple times.  &varres.
+Note that this option does not specify the handle number for the handle whose
+queue you want to retrieve messages from as you can only retrieve messages
+from the queue of the handle that submitted the GET/PEEK request to the
+QUEUE service.
+:p.:xph.USER:exph. specifies that you want to retrieve/remove a message
+originating from a process with a handle that has been authenticated
+with the specified user.  The format for <User> is:
+:xmp.
+  <Authenticator>&colon.//<User Identifier>
+:exmp.
+where a case-insensitive match is performed on the <Authenticator> value and a
+case-sensitive match is performed on the User Identifier.
+The default is any user.
+You may specify this option multiple times.  &varres.
+:p.:xph.TYPE:exph. specifies that you want to retrieve/remove message(s)
+with the given type.   The match is case insensitive.
+You may specify this option multiple times.  &varres.
+:p.:xph.CONTAINS:exph. specifies that you want to retrieve/remove message(s)
+containing the given string.  The search is case sensitive.  The default is any
+message.  You may specify this option multiple times.  &varres.
+:p.:xph.ICONTAINS:exph. specifies that you want to retrieve/remove message(s)
+containing the given string.  The search is case insensitive.  The default is any
+message.  You may specify this option multiple times.  &varres.
+:p.:xph.ALL:exph. specifies that you want to retrieve/remove all appropriate
+messages that meet the specified criteria.
+If you don't specify the :xph.ALL:exph. or :xph.FIRST:exph. option,
+the default is to retrieve/remove one appropriate message.
+:p.:xph.FIRST:exph. specifies that you want to retrieve/remove the first <Number>
+of appropriate messages that meet the specified criteria, where <Number>
+must be an integer greater than 0.
+If there are fewer appropriate messages on the queue that meet the
+specified criteria than the number you specified for the :xph.FIRST:exph. option,
+then fewer messages will be returned than the number you specified.
+If you don't specify the :xph.ALL:exph. or :xph.FIRST:exph. option,
+the default is to retrieve/remove one appropriate message.  &varres.
+:p.:xph.WAIT:exph. specifies that the request should not return until an
+appropriate message is available.  You may specify an optional time duration
+after which the request should return.  If no time duration is specified,
+the request will wait indefinitely until an appropriate message is available.
+&varres.
+The time duration may be expressed in milliseconds, seconds, minutes,
+hours, days, weeks, or years.  Its format is <Number>[s|m|h|d|w],
+where <Number> is an integer >= 0 and indicates milliseconds unless one
+of the following case-insensitive suffixes is specified:
+:ul compact.
+:li.s (for seconds)
+:li.m (for minutes)
+:li.h (for hours)
+:li.d (for days)
+:li.w (for weeks).
+:eul.
+Note that the calculated timeout cannot exceed 4294967294 milliseconds.
+So, the maximum values in each time category that can be specified are:
+:ul compact.
+:li.4294967294 (4294967294 milliseconds)
+:li.4294967s (4294967 seconds)
+:li.71582m (71582 minutes)
+:li.1193h (1193 hours)
+:li.49d (49 days)
+:li.7w (7 weeks)
+:eul.
+
+:h4.Security
+:p.These commands are only valid with respect to the submitting process' queue
+and if submitted to the local machine.
+
+:h4.Return Codes
+:p.All return codes from GET/PEEK are documented in :hdref refid=retcode..
+:p.For example:
+:ul.
+:li.If the queue is empty or no elements that meet the specified criteria
+are in the queue, the return code will be set to 29 (No Queue Element).
+:li.If the request times out while the queue is empty or before an element
+that meets the specified criteria is sent to the queue, the return code
+will be set to 37 (Timeout).
+:eul.
+
+:h4.Results
+:ul.
+:li.On successful return when you don't specify the :xph.ALL:exph. or :xph.FIRST:exph.
+option, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Queue/Entry>:exph., representing the
+appropriate first element from the queue that meets the specified criteria.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Queue/Entry
+:tnote text='Description'.This map class represents an entry from the queue.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.priority
+:c.Priority
+.br
+(P)
+:c.&stringObj.
+:c.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+.br
+(Name)
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.message
+:c.Message
+:c.<Any>
+:c.
+:etable.
+:p.
+For example, if a :xph.GET:exph. or :xph.PEEK:exph. request
+is submitted from the command line (without the :xph.ALL:exph. or
+:xph.FIRST:exph. option), the result, in default format,
+could look like the following:
+:xmp.
+Priority   : 3
+Date-Time  : 20040912-16:49:11
+Machine    : tcp://client2.austin.ibm.com@6500
+Handle Name: STAF_Process
+Handle     : 17
+User       : none://anonymous
+Type       : STAF/Start
+Message    : 
+:exmp.
+:p.
+:li.On successful return when you specify the :xph.ALL:exph. or :xph.FIRST:exph.
+option, the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Queue/Entry>:exph., representing the
+appropriate element(s) from the queue that meet the specified criteria.
+:p.
+For example, if a :xph.GET ALL:exph. or :xph.PEEK ALL:exph. request
+is submitted from the comand line using a static handle and that
+handle's queue contains 5 elements, the result would contain a list of
+all 5 elements, and, in default format, could look like the following:
+:xmp.
+P Date-Time Machine       Name     H#  User             Type Message
+- --------- ------------- -------- --- ---------------- ---- ------------------
+5 20090324- local://local MyHandle 150 none://anonymous A    This is message #1
+  15:48:55
+5 20090324- local://local MyHandle 150 none://anonymous A    This is message #2
+  15:48:56
+5 20090324- local://local MyHandle 150 none://anonymous B    This is message #3
+  15:48:59
+5 20090324- local://local MyHandle 150 none://anonymous A    This is message #4
+  15:49:05
+5 20090324- local://local MyHandle 150 none://anonymous B    This is message #5
+  15:49:11
+:exmp.
+:p.
+For example, if a :xph.GET FIRST 3:exph. or :xph.PEEK FIRST 3:exph. request
+is submitted from the comand line using a static handle and that
+handle's queue contains 5 elements, the result would contain a list of the
+first 3 elements, and, in default format, could look like the following:
+:xmp.
+P Date-Time Machine       Name     H#  User             Type Message
+- --------- ------------- -------- --- ---------------- ---- ------------------
+5 20090324- local://local MyHandle 150 none://anonymous A    This is message #1
+  15:48:55
+5 20090324- local://local MyHandle 150 none://anonymous A    This is message #2
+  15:48:56
+5 20090324- local://local MyHandle 150 none://anonymous B    This is message #3
+  15:48:59
+:exmp.
+:p.
+For example, if a :xph.GET TYPE B FIRST 2:exph. or :xph.PEEK TYPE B FIRST 2:exph.
+request is submitted from the comand line using a static handle and that
+handle's queue contains the 5 elements from the first example, the result would
+contain a list of the first 2 elements with type B, and, in default format,
+could look like the following:
+:xmp.
+P Date-Time Machine       Name     H#  User             Type Message
+- --------- ------------- -------- --- ---------------- ---- ------------------
+5 20090324- local://local MyHandle 150 none://anonymous B    This is message #3
+  15:48:59
+5 20090324- local://local MyHandle 150 none://anonymous B    This is message #5
+  15:49:11
+:exmp.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove the highest priority message
+in my handle's queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET WAIT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for and retrieve, but do not remove, the highest priority
+message from machine tcp://server1.company.com@6500 in my handle's queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PEEK WAIT MACHINE "tcp://server1.company.com@6500":exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove the highest priority message
+with type STAF/Start in my handle's queue.  Wait a maximum of 30 seconds.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET WAIT 30s TYPE STAF/Start:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve a priority 3 message in my handle's queue from a
+machine whose endpoint contains system identifier client3.company.com (with any
+interface or port as indicated by wildcard *) and registered process name JavaTest1
+containing the message referenced by variable TestString.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PEEK PRIORITY 3 MACHINE "*://client3.company.com*" NAME JavaTest1 CONTAINS {TestString}:exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove the highest priority message
+in my handle's queue with a type of either STAF/Start or STAF/Shutdown from
+machines tcp://client1.company.com@6500 or tcp://client2.company.com@6500
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET WAIT TYPE STAF/Start TYPE STAF/Shutdown MACHINE tcp://client1.company.com@6500 MACHINE tcp://client2.company.com@6500:exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove the highest priority message
+in my handle's queue containing either CONTROL or "Hi there"
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET WAIT CONTAINS CONTROL CONTAINS "Hi there":exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove the highest priority message
+in my handle's queue containing type "MyProduct/Build/Complete" and containing
+the string "Version=1.2.0" from a machine whose endpoint contains system
+identifier buildserver.company.com (with any interface or port as indicated by
+wildcard *).  Wait a maximum of 1 minute.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET WAIT 1m TYPE "MyProduct/Build/Complete" CONTAINS "Version=1.2.0" MACHINE "*://buildserver.company.com*":exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve, but do not remove, all the messages in my handle's
+queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PEEK ALL:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve and remove all the messages in my handle's queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET ALL:exph.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve and remove the first 5 messages in my handle's queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET FIRST 5 WAIT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove all messages in my handle's queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET ALL WAIT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Wait for, retrieve, and remove all messages in my handle's queue
+with type "STAF/Process/Complete".
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.GET ALL TYPE "STAF/Process/Complete" WAIT:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.queue service
+:h3.DELETE
+:p.DELETE allows you to delete a set of messages from a queue.
+:h4.Syntax
+:xmp.
+DELETE &lbrk.PRIORITY <Priority>&rbrk.... &lbrk.MACHINE <Endpoint>&rbrk.... &lbrk.NAME <Name>&rbrk....
+       &lbrk.HANDLE <Handle>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.TYPE <Type>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.ICONTAINS <String>&rbrk....
+:exmp.
+:p.:xph.PRIORITY:exph. specifies that you want to delete messages with the
+given priority. The default is any priority.  You may specify this option
+multiple times. &varres.
+:p.:xph.MACHINE:exph. specifies that you want to delete messages originating
+from the given machine's endpoint.  The default is any machine.  You may
+specify this option multiple times.  &varres.
+The format for a machine's endpoint is:
+:xmp.
+  <Interface>&colon.//<System Identifier>&lbrk.@<Port>&rbrk.
+:exmp.
+where a case-insensitive match is performed.
+You can specify match patterns (e.g. wild cards) for a machine's endpoint.
+These patterns recognize two special characters, '*' and '?', where '*'
+matches a string of characters (including an empty string) and '?' matches
+any single character (the empty string does not match).   
+For example, if you want to match on messages from a machine with system
+identifier client1.mycompany.com, no matter what interface or port is in
+the machine's endpoint, you could specify "*://client1.mycompany.com*"
+which would match machines such as "tcp://client1.mycompany.com@6500" and
+"tcp2://client1.mycompany.com".
+:p.:xph.NAME:exph. specifies that you want to delete messages originating from
+a process with the given registered name. The default is any name.  You may
+specify this option multiple times. &varres.
+:p.:xph.HANDLE:exph. specifies that you want to delete messages originating
+from a process with the given handle. The default is any handle.  You may
+specify this option multiple times. &varres.
+:p.:xph.USER:exph. specifies that you want to delete messages originating
+from a process with a handle that has been authenticated
+with the specified user.  The format for <User> is:
+:xmp.
+  <Authenticator>&colon.//<User Identifier>
+:exmp.
+where a case-insensitive match is performed on the <Authenticator> value and a
+case-sensitive match is performed on the <User Identifier> value.
+The default is any user.
+You may specify this option multiple times.  &varres.
+:p.:xph.TYPE:exph. specifies that you want to delete messages
+with the given type.  The match is case insensitive.
+You may specify this option multiple times.  &varres.
+:p.:xph.CONTAINS:exph. specifies that you want to delete messages containing
+the given string.  The search is case sensitive.  The default is any
+message.  You may specify this option multiple times.  &varres.
+:p.:xph.ICONTAINS:exph. specifies that you want to delete messages containing
+the given string.  The search is case insensitive.  The default is any
+message.  You may specify this option multiple times.  &varres.
+:h4.Security
+:p.This command is only valid with respect to the submitting process' queue
+and if submitted to the local machine.
+
+:h4.Return Codes
+:p.All return codes from DELETE are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain the number of messages deleted.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete all messages from the local machine.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MACHINE "local://local":exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all priority 3 messages from processes with registered
+name JavaTest1
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE PRIORITY 3 NAME JavaTest1:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all priority 3 and 4 messages from the machines
+referenced by variables Mach1 and Mach2 containing the string Stage2 or
+containing the string referenced by variable StringTest1.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE PRIORITY 3 PRIORITY 4 MACHINE {Mach1} MACHINE {Mach2} CONTAINS Stage2 CONTAINS {StringTest1}:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all messages containing the string "Version=1.2.0" with
+type "MyProduct/Build/Complete" from a machine whose endpoint contains
+system identifier buildserver.company.com (with any interface or port
+as indicated by wildcard *).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE TYPE "MyProduct/Build/Complete"
+CONTAINS "Version=1.2.0" MACHINE "*://buildserver.company.com*":exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete all messages in the queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.queue service
+:h3.LIST
+:p.LIST allows you to retrieve the contents of the queue of a given handle.
+
+:h4.Syntax
+:xmp.
+LIST &lbrk.HANDLE <Handle>&rbrk.
+:exmp.
+:p.:xph.HANDLE:exph. specifies the handle of the process for which you want
+the queue contents.  The default is the handle of the submitting process.  This
+option will only default if the request was submitted locally. &varres.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+On successful return, the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Queue/Entry>:exph., representing
+the queued messages, sorted in ascending order by priority.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Queue/Entry
+:tnote text='Description'.This map class represents a queued message.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.priority
+:c.Priority
+:c.&stringObj.
+:c.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.type
+:c.Type
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.message
+:c.Message
+:c.<Any>
+:c.&maskPrivate.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve the contents of the submitting process' queue.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST:exph.
+:p.:hp2.Result::ehp2.&nbsp; If the request is submitted from the
+command line, the result, in table format, could look like the following:
+:xmp.
+P Date-Time Machine        Name   H# User     Type       Message
+- --------- -------------- ------ -- -------- ---------- ------------------------
+1 20040912- tcp://client1. STAF_P 1  none://a STAF/Start 
+  13:56:10  austin.ibm.com rocess    nonymous         
+            @6500
+3 20040912- tcp://client3. JavaTe 36 none://a FVTTest    CONTROL/STAGE2
+  14:01:52  austin.ibm.com st1       nonymous
+3 20040912- tcp://client2. STAF_P 1  none://a STAF/Start
+  14:02:17  austin.ibm.com rocess    nonymous
+            @6500
+5 20040912- tcp://client3. JavaTe 36 none://a <None>     This is a test message f
+  13:57:36  austin.ibm.com st1       nonymous            rom Test1.  Phase 2 has
+            @6500                                             completed.
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Retrieve the contents of the process with handle 37.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST HANDLE 37:exph.
+:p.:hp2.Result::ehp2.&nbsp; If the request is issued from the command line, the result,
+in verbose format, could look like: 
+:xmp.
+[
+  {
+    Priority   : 5
+    Date-Time  : 20050222-16:50:12
+    Machine    : tcp://client1.austin.ibm.com@6500
+    Handle Name: STAF_Process
+    Handle     : 1
+    User       : none://anonymous
+    Type       : STAF/Process/End
+    Message    : {
+      endTimestamp: 20050222-16:50:12
+      fileList    : []
+      handle      : 30
+      key         :
+      rc          : 0
+    }
+  }
+]
+:exmp.
+:eul.

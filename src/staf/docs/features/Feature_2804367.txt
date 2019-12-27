@@ -1,0 +1,272 @@
+Feature ID  : 2804367 & 2638614
+Title       : Provide the ability to limit the result from FS GET FILE
+              Provide the ability to limit the output buffer for a process
+
+Description
+-----------
+
+Provide the ability to limit the results from STAF service requests that
+return the contents of file(s), such as a FS GET FILE request or a
+PROCESS START request that uses the RETURNSTDOUT/RETURNSTDERR/RETURNFILE
+options because if the file being returned is very large (e.g. 50M), a
+lot of memory will be used up (> 50M).  Many times, people should be
+using other means to access the data in these files (e.g. reading text
+files line by line instead of having the entire file contents in memory
+at one time), or they may really only need the last nnn bytes of data in
+the file (like you can get using the Unix tail function) or the first
+nnn bytes of data in the file (like you can get using the Unix head
+function).
+
+Want to be able to have a STAF service, or an application set a limit
+for all FS GET FILE requests and PROCESS START RETURNSTDOUT/
+RETURNSTDERR/RETURNFILE requests that it submits.
+
+
+Problem(s) Solved
+-----------------
+
+STAX is a good example of a STAF service that can be severely impacted
+if a STAX job submits a FS GET FILE request or a PROCESS START request
+that returns large files.  If if a STAX job consumes too much memory,
+it can cause an OutOfMemory exception in STAF or STAX, or slow down the
+performance significantly, impacting all STAX jobs that are running.
+Many STAX service administrators would like to impose limits for these
+STAF requests that can return too much data.
+
+
+Related Features/Patches
+------------------------
+
+None
+
+
+External Changes
+----------------
+
+a) New Operational Parameter
+
+   Add the following new operational parameter for the STAF.cfg file:
+
+   - MAXRETURNFILESIZE specifies the maximum size of a file that can
+     be returned by a PROCESS START request or by a FS GET FILE request
+     For the PROCESS service, this applies when using the RETURNSTDOUT,
+     RETURNSTDERR, and/or RETURNFILE options on a PROCESS START request.
+     For the FS service, this applies to the result from a FS GET FILE
+     request.  The default is 0 which indicates not to limit the maximum
+     size of returned files.
+
+     The format of the value for each of these maxsize variables is:
+
+       <MaxSize>[K | M]
+   
+     where <MaxSize> must be an integer >= 0.  Note that specifying 0
+     indicates to not limit size of the data returned.
+     - If <MaxSize> is not followed by "K" or "M" (case-insensitive),
+       then it specifies the maximum number of characters in the file
+       to be returned.
+     - If <MaxSize> is followed by "K" (case-insensitive), then it
+       specifies the maximum number of characters in kilobytes in the
+       file to be returned.
+     - If <MaxSize> is followed by "M" (case-insensitive), then it
+       specifies the maximum number of characters in megabytes in the
+       file to be returned.
+
+b) Add a new STAF return code, 58, to indicate the maximum size
+   was exceeded.
+
+   C:\>STAF local HELP ERROR 58
+   Response
+   --------
+   Description: Maximum Size Exceeded
+   Details    : This indicates that the size of a file exceeded the
+   maximum size allowed (e.g. per the MAXRETURNFILESIZE operational
+   parameter or per the MAXRETURNFILESIZE setting for the STAX
+   service). A maximum file size is usually set to prevent the
+   creation of result strings that require more memory than is
+   available which can cause errors or crashes.
+
+   Note: Additional information specifying why this error occurred
+   may be provided in the result passed back from the submit call.
+
+c) Changes to the FS GET FILE request:
+
+   The FS GET FILE request will check if the MAXRETURNFILESIZE
+   operational parameter is set in its STAF.cfg file.  And, it
+   will check if a STAF/MaxReturnFileSize handle variable is set
+   in the handle variable pool by the machine that submitted the
+   request.  It will choose the lowest non-zero value specified
+   for the maximum size and use it to determine the maximum number
+   of bytes that can be returned in the specified file.
+   If neither is specified, there is no size limit.
+
+   Results:
+
+   If the size of a returned file exceeds the maximum allowed size,
+   the return code is set to 58 (Maximum Size Exceeded).
+
+
+d) Changes to the PROCESS START request:
+
+   The PROCESS START request will check if one or more of the
+   RETURNSTDOUT, RETURNSTDERR, and/or RETURNFILE options were
+   specified in the request.  If so, it will check if the
+   MAXRETURNFILESIZE operational parameter is set in its STAF.cfg
+   file.  And, it will check if a STAF/MaxReturnFileSize handle
+   variable is set in the handle variable pool by the machine
+   that submitted the request.  It will choose the lowest
+   non-zero value specified for the maximum size and use it to
+   determine the maximum number of bytes that can be returned
+   in the file(s).  If neither is specified, there is no size
+   limit.
+
+   Results:
+
+   If the size of a returned file exceeds the maximum allowed
+   size, the return code for the returned file in the 'fileList'
+   is set to 58 (Maximum Size Exceeded).
+
+e) New STAX Service Parameter
+
+   Add the following optional parameter when registering the STAX
+   service:
+
+   - MAXRETURNFILESIZE: specifies the maximum size of a file that
+     can be returned by a <stafcmd> element that submits a
+     "GET FILE" request to the FS service, as well as the maximum
+     size of files that can be returned by a <process> element that
+     uses the <returnstdout>, <returnstderr>, and/or <returnfile>
+     sub-elements.  Its format is the same as described for the
+     MAXRETURNFILESIZE operational parameter.  
+
+     If the STAX service sets the MAXRETURNFILESIZE setting, it
+     will be provided to the machines where <stafcmd> and <process>
+     elements are run.  To do this, for each handle the STAX
+     service creates (e.g. for each STAX job), it would automatically
+     set a STAF/MaxReturnFileSize handle variable to the value
+     specified by the MAXRETURNFILESIZE setting.  STAF's FS and
+     PROCESS services will be changed to check if this handle
+     variable has been set and use whichever is smaller -- the
+     maximum size as set via the handle variable, or the
+     MAXRETURNFILESIZE operational parameter if set in the STAF.cfg
+     file on the FS/PROCESS service machine.
+
+     A STAX administrator may want to restrict the maximum size
+     of these returned files to help prevent a STAX job from
+     causing reduced performance because of the memory consumed
+     and/or an OutOfMemory errors.
+
+     While using a handle variable doesn't prevent a STAX job from
+     resetting this variable to another maximum size within a STAX
+     job, it should prevent most accidental egregious errors.
+
+   Example:
+
+   service STAX library JSTAF execute C:/STAF/services/stax/stax.jar \
+                OPTION JVMName=STAX PARMS "MAXRETURNFILESIZE 10M"
+
+f) Add the ability to dynamically set the MAXRETURNFILESIZE setting
+   for the STAX service by updating the SET request for the STAX
+   service as follows:
+
+     SET MAXRETURNFILESIZE <MaxSize>
+
+   Example:
+
+     STAF local STAX SET MAXRETURNFILESIZE 15M
+
+g) Update the LIST SETTINGS request for the STAX service to list
+   the MAXRETURNFILESIZE setting by adding the following new key
+   to the map class:
+
+   Key Name          Display Name         Type     Format / Value
+   ----------------- -------------------- -------- -----------------
+   maxReturnFileSize Max Return File Size <String>
+
+   Note:  The "Max Return File Size" is the maximum number of bytes
+   that can be returned in a file when a <stafcmd> element submits a
+   "FS GET FILE" request or when a <process> uses the <returnstdout>,
+   <returnstderr>, and/or <returnfile> sub-elements.
+
+   Example:
+
+   C:\>STAF local STAX LIST SETTINGS
+   Response
+   --------
+   {
+      Event Machine         : local
+      Event Service Name    : Event
+      Number of Threads     : 5
+      Process Timeout       : 60000
+      File Caching          : Enabled
+      Max File Cache Size   : 20
+      Max Machine Cache Size: 20
+      Max Return File Size  : 10485760
+      Clear Logs            : Disabled
+      Log TC Elapsed Time   : Enabled
+      Log TC Num Starts     : Enabled
+      Log TC Start/Stop     : Disabled
+      Python Output         : JobUserLog
+      Python Log Level      : Info
+      Extensions            : []
+      Extension File        : C:/staf/services/extensions.xml
+   }
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+M stafif/STAFError.h
+M stafif/STAFUtil.h
+M stafif/STAFUtilCommon.cpp
+M stafif/win32/STAF.def
+M stafif/win32/STAF.ia64.def
+M stafif/win32/STAF.x64.def
+M stafproc/STAFConfig.cpp
+M stafproc/STAFFSService.cpp
+M stafproc/STAFHelpService.cpp
+M stafproc/STAFMiscService.cpp
+M stafproc/STAFProc.cpp
+M stafproc/STAFProc.h
+M stafproc/STAFProcessService.cpp
+M stafproc/STAFProcessService.h
+M lang/java/classes/STAFResult.java
+M lang/java/classes/STAFUtil.java
+M lang/jython/STAFJython.py
+M lang/perl/PLSTAF.pm
+M lang/python/PySTAF.py
+M lang/rexx/STAFUtil.rxl
+M lang/tcl/STAFUtil.tcl
+M services/stax/docs/userguide/staxug.htm
+M services/stax/service/STAX.java
+M services/stax/service/STAXJob.java
+M test/STAFTest.xml
+
+Documentation changes:
+
+M docs/STAFJava.htm
+M docs/STAFPerl.htm
+M docs/STAFPython.htm
+M docs/STAFTcl.htm
+M docs/userguide/ErrRef.script
+M docs/userguide/MiscSrv.script
+
+
+Design Considerations
+---------------------
+
+1) If the "typed variables" (e.g. read-only) feature and/or
+the "detecting that a handle is a service's handle" feature
+were implemented, a lot of other options would open up.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+1) Only machines that are running a version of STAF that provides
+these features will actually heed the maximum limits, of course.
+So, a STAX job may want to verify that the remote machines it is
+submitting FS GET FILE requests and PROCESS START RETURNSTDOUT/
+RETURNSTDERR/RETURNFILE requests to are running the latest
+version of STAF.

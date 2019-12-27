@@ -1,0 +1,50 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+sdg_sample_class_targets =\
+  $(O)/services/sdg_sample/STAF-INF/classes/com/ibm/staf/service/sdg_sample/DeviceService.class
+  
+sdg_sample_jar_targets =\
+  $(O)/services/sdg_sample/MANIFEST.MF
+
+sdg_sample_targets += $(sdg_sample_class_targets)\
+                 $(sdg_sample_jar_targets)\
+                 $(REL)/lib/STAFDeviceService.jar
+Targets += $(sdg_sample_targets)
+CleanupTargets += cleanup_sdg_sample
+
+$(sdg_sample_targets): SUBSYS_REL := services/sdg_sample
+SUBSYS_REL := services/sdg_sample
+
+# Include inference rules
+include $(InferenceRules)
+
+$(sdg_sample_targets): $(REL)/lib/JSTAF.zip
+
+sdg_sample_CLASSPATH = $(OS_O)/services/sdg_sample$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+
+define sdg_sample_JAVA_COMPILE_IT
+   @echo "*** Compiling STAFDevice Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/sdg_sample/STAF-INF/classes -classpath '$(sdg_sample_CLASSPATH)' $(OS_SRC)/services/sdg_sample/*.java
+endef
+
+$(O)/services/sdg_sample/STAF-INF/classes/com/ibm/staf/service/sdg_sample/%.class: $(SRC)/services/sdg_sample/%.java
+	$(sdg_sample_JAVA_COMPILE_IT)
+
+# sdg_sample Java targets
+
+$(O)/services/sdg_sample/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+	
+$(REL)/lib/STAFDeviceService.jar: $(sdg_sample_class_targets) $(sdg_sample_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/sdg_sample; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF
+
+cleanup_sdg_sample:
+	-@$(DEL) $(O)/services/sdg_sample/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/JSTAF.zip $(OUT_ERR_TO_DEV_NULL)

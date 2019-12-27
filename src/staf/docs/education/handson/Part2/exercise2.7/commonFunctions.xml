@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <function name="RunSTAFCommand">
+
+    <function-description>
+      Runs the STAF command specified by service and request on the specified machine.
+      Returns the RC and STAFResult in a list.
+    </function-description>
+
+    <function-list-args>
+
+      <function-required-arg name="location">
+        The name of the machine of which you wish to make a request
+      </function-required-arg>
+
+      <function-required-arg name="service">
+        The name of the STAF service to which you are submitting a request 
+      </function-required-arg>
+
+      <function-required-arg name="request">
+        The actual request string that you wish to submit to the STAF service 
+      </function-required-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <stafcmd>
+        <location>location</location>
+        <service>service</service>
+        <request>request</request>
+      </stafcmd>
+ 
+      <return>[RC, STAFResult]</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="CheckSuccess">
+
+    <function-description>
+      Checks if a value meets the specified success criteria. 
+      If not, records a testcase fail result, sends a failure message to the STAX Monitor,
+      and terminates the job.
+    </function-description>
+
+    <function-list-args>
+
+      <function-required-arg name="value">
+        The value to be compared with the specified success criteria. 
+      </function-required-arg>
+
+      <function-required-arg name="successCriteria">
+        A list of values indicating success. 
+      </function-required-arg>
+
+      <function-optional-arg name="result" default="''">
+        The message to be displayed if value does not meet success criteria
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <if expr="value not in successCriteria">
+
+      <sequence> 
+
+        <script>msg = 'Failed with RC=%s, STAFResult=%s' % (value, result)</script>
+        <tcstatus result="'fail'">msg</tcstatus>
+        <message>msg</message>
+        <terminate/>
+
+      </sequence>
+
+    </if>
+
+  </function>
+
+</stax>

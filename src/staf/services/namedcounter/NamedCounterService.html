@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002, 2004
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+<HTML lang="en">
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META name="GENERATOR" content="IBM WebSphere Studio Homepage Builder V6.0.0 for Windows">
+<META http-equiv="Content-Style-Type" content="text/css">
+<TITLE>Named Counter Service</TITLE>
+</HEAD>
+<BODY bgcolor="#ffffff"><A name="Top_Of_Page" title="Top of page"></A>
+<H1>Named Counter Service</H1>
+<P><B>Version 3.0.2</B></P>
+<p><b>Last updated: December 1, 2009</b>
+<HR>
+<H2><A name="ToC" title="Table of contents">Table of Contents</A></H2>
+<A name="ToC_1" href="#NamedCounterMain" title="Named Counter Service">Named Counter Service</A> <BR>
+<UL>
+  <LI><A name="ToC_2" href="#Desc" title="Description">Description</A>
+  <LI><A name=ToC_2a href="#SWReq" >Software Requirements</A>
+  <LI><A name="ToC_3" href="#Reg" title="Registration">Installation and Configuration</A>
+  <LI><A name="ToC_4" href="#Var" title="Variables">Variables</A>
+  <LI><A name="ToC_5" href="#Commands" title="Commands">Request Syntax</A>
+  <UL>
+    <LI><A name="ToC_5.1" href="#Inc" title="INC Command">INC</A>
+    <LI><A name="ToC_5.2" href="#Dec" title="DEC Command">DEC</A>
+    <LI><A name="ToC_5.3" href="#Get" title="GET Command">GET</A>
+    <LI><A name="ToC_5.4" href="#Reset" title="RESET  Command">RESET</A>
+    <LI><A name="ToC_5.5" href="#Delete" title="DELETE Command">DELETE</A>
+    <LI><A name="ToC_5.6" href="#List" title="LIST Command">LIST</A>
+    <LI><A name="ToC_5.7" href="#Version" title="VERSION Command">VERSION</A>
+    <LI><A name="ToC_5.8" href="#Help" title="HELP Command">HELP</A>
+  </UL>
+  <LI><A name="ToC_6" href="#Errors" title="Error Code Reference">Error Code Reference</A>
+</UL>
+<HR>
+<H2><A name="NamedCounterMain" href="#ToC_1" title="Named Counter Service">Named Counter Service</A></H2>
+<H3><A name="Desc" href="#ToC_2" title="Description">Description</A></H3>
+The Named Counter service is an external STAF service that provides the
+ability to dynamically manage counters based on a name.
+
+<h3><A name=SWReq href="#ToC_2a">Software Requirements</A></h3>
+
+This service requires:
+<ul>
+<li>STAF Version 3.0.0 or later
+<li>Java 1.2 or later
+</ul>
+
+<H3><A name="Reg" href="#ToC_3" title="Registration">Installation and Configuration</A></H3>
+
+Install the Named Counter service by downloading the NamedCounterV302.zip/tar file from
+<a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+and extracting its contents to a local directory (e.g. C:\STAF\services or
+/usr/local/staf/services).
+The STAFNamedCounter.jar file is the service jar file needed when
+registering the Named Counter service.
+<p>
+The Named Counter service is written in Java and since it is an external
+service, it must be registered with the SERVICE configuration statement.
+The syntax is:
+<PRE>SERVICE <TT>&lt;ServiceName&gt;</TT> LIBRARY JSTAF EXECUTE <TT>&lt;Service Jar File Name&gt;</TT></PRE>
+<P><TT>&lt;ServiceName&gt;</TT> is the name by which the Named Counter service will be known on this machine.</P>
+<P><TT>&lt;Service Jar File Name&gt;</TT> is the fully-qualified name of the STAFNamedCounter.jar file.</P>
+<H4>Example</H4>
+<PRE>SERVICE NamedCounter LIBRARY JSTAF EXECUTE c:/STAF/services/namedcounter/STAFNamedCounter.jar</PRE>
+<H3><A name="Var" href="#ToC_4" title="Variables">Variables</A></H3>
+The Named Counter service uses a STAF system variable named &quot;STAF/Service/&lt;ServiceName&gt;/Persist&quot;
+which can be set on the server running the service to define whether the
+named counters should be persisted to the filesystem so that they are not lost when
+the STAFProc is stopped and started. As an example, the following statement
+would be added to the STAF configuration file:
+<PRE>SET SYSTEM VAR STAF/Service/NamedCS/Persist=True</PRE>
+The default is NOT to persist the named counters, and as such, if this variable
+isn't set that is the behaviour which is used.
+
+<H3><A name="Commands" href="#ToC_5" title="Commands">Request Syntax</A></H3>
+The Named Counter service provides the following requests:
+<ul>
+<li>INC - Increments (or creates if doesn't exist) the named counter by 1</li>
+<li>DEC - Decrements the named counter by 1</li>
+<li>GET - Gets the value of a named counter</li>
+<li>RESET - Resets the named counter to 0</li>
+<li>DELETE - Deletes the named counter </li>
+<li>LIST - Lists the named counters</li>
+<li>VERSION - Displays the version of the Named Counter service</li>
+<li>HELP - Displays a list of requests for the Named Counter service and how to use
+them.</li>
+</ul>
+
+<H3><A name="Inc" href="#ToC_5.1" title="INC Command">INC</A></H3>
+<P>Increments (or creates if didn't previously exist) the named counter by
+1 .</P>
+<H4>Syntax</H4>
+<PRE>INC &lt;name&gt;</PRE>
+<P><TT>&lt;name&gt;</TT> Specifies the name of the counter to increment.</P>
+<H4>Security</H4>
+<P>Minimum security level of 4 required to do an INC.</P>
+<H4>Return Codes</H4>
+<A name="ToC_8" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The incremented value of the counter specified is returned.</P>
+<H3><A name="Dec" href="#ToC_5.2" title="DEC Command">DEC</A></H3>
+<P>Decrements the named counter by 1 .</P>
+<H4>Syntax</H4>
+<PRE>DEC &lt;name&gt;</PRE>
+<P><TT>&lt;name&gt;</TT> Specifies the name of the counter to decremented.</P>
+<H4>Security</H4>
+<P>Minimum security level of 4 required to do a DEC.</P>
+<H4>Return Codes</H4>
+<A name="ToC_8" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The incremented value of the counter specified is returned.</P>
+<H3><A name="Get" href="#ToC_5.3" title="GET Command">GET</A></H3>
+<P>Gets the value of the named counter.</P>
+<H4>Syntax</H4>
+<PRE>GET &lt;name&gt;</PRE>
+<P><TT>&lt;name&gt;</TT> Specifies the name of the counter.</P>
+<H4>Security</H4>
+<P>Minimum security level of 1 required to do a GET.</P>
+<H4>Return Codes</H4>
+<A name="ToC_8" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The value of the counter specified is returned.</P>
+<H3><A name="Reset" href="#ToC_5.4" title="RESET Command">RESET</A></H3>
+<P>Resets the named counter back to Zero.</P>
+<H4>Syntax</H4>
+<PRE>RESET &lt;name&gt;</PRE>
+<P><TT>&lt;name&gt;</TT> Specifies the name of the counter reset.</P>
+<H4>Security</H4>
+<P>Minimum security level of 4 required to do a RESET.</P>
+<H4>Return Codes</H4>
+<A name="ToC_8" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The zeroed value for the named counter.</P>
+<H3><A name="Delete" href="#ToC_5.5" title="DELETE Command">DELETE</A></H3>
+<P>Delete the named counter.</P>
+<H4>Syntax</H4>
+<PRE>DELETE &lt;name&gt;</PRE>
+<P><TT>&lt;name&gt;</TT> Specifies the name of the counter to delete.</P>
+<H4>Security</H4>
+<P>Minimum security level of 4 required to do a DELETE.</P>
+<H4>Return Codes</H4>
+<A name="ToC_8" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The counter named will no longer exist.</P>
+<H3><A name="List" href="#ToC_5.6" title="LIST Command">LIST</A></H3>
+<P>List all of the named counters, along with their values.</P>
+<H4>Syntax</H4>
+<PRE>LIST</PRE>
+<H4>Security</H4>
+<P>Minimum security level of 1 required to do a LIST.</P>
+<H4>Return Codes</H4>
+<A name="ToC_8" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>A &lt;Map> of &lt;String> representing the counters with the name of the
+counters as the map keys and the counts as the map values.
+</P>
+<p>
+<H4>Examples</H4>
+<p>
+<ul>
+<li><b>Goal:</b> List all of the counters
+<br><b>Syntax:</b>&nbsp; <tt>LIST</tt>
+<br><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the default format, could look like:
+<PRE>
+ActiveClients     : 52
+UnexpectedTimeouts: 4
+Workload/TestType1: 4
+Workload/TestType2: 1
+Workload/TestType3: 7
+Workload/TestType4: 2
+Workload/TestType5: 9</PRE>
+</ul>
+
+<H3><A name="Version" href="#ToC_5.7" title="VERSION Command">VERSION</A></H3>
+<P>Get details of the commands syntax.</P>
+<H4>Syntax</H4>
+<PRE>VERSION</PRE>
+<H4>Security</H4>
+<P>Minimum security level of 1 required to do VERSION.</P>
+<H4>Return Codes</H4>
+<A name="ToC_6" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The version of the Named Counter Service.</P>
+<p>
+<H4>Examples</H4>
+<p>
+<ul>
+<li><b>Goal:</b> Get the version of the Named Counter service
+<br><b>Syntax:</b>&nbsp; <tt>VERSION</tt>
+<br><b>Result:</b>&nbsp; <tt>3.0.2</tt>
+</ul>
+
+<H3><A name="Help" href="#ToC_5.8" title="HELP Command">HELP</A></H3>
+<P>Get details of the commands syntax.</P>
+<H4>Syntax</H4>
+<PRE>HELP</PRE>
+<H4>Security</H4>
+<P>Minimum security level of 0 required to do HELP.</P>
+<H4>Return Codes</H4>
+<A name="ToC_6" href="#Errors" title="See table 1.">See table 1.</A>
+<H4>Results</H4>
+<P>The allowable syntax to access the Named Counter Service.</P>
+<PRE>
+NamedCounter Service Help
+
+INC &lt;name&gt;
+DEC &lt;name&gt;
+GET &lt;name&gt;
+RESET &lt;name&gt;
+DELETE &lt;name&gt;
+LIST
+VERSION
+HELP</PRE>
+<H3><A name="Errors" href="#ToC_6" title="Named Counter Error Code Reference">Named Counter Error Code Reference</A></H3>
+<P>In addition to the common STAF return codes, the following Named Counter
+return codes are defined:</P>
+<TABLE border="1" height="200" summary="Named Counter Service Return Codes">
+  <CAPTION align="left"><B>Table 1. Named Counter Service Return Codes</B></CAPTION>
+  <TBODY>
+    <TR>
+      <TH align="middle" valign="top" width="14%" height="19">Error Code</TH>
+      <TH align="left" valign="top" width="29%" height="19">Meaning</TH>
+      <TH align="left" valign="top" width="57%" height="19">Comment</TH>
+    </TR>
+    <TR>
+      <TD align="middle" valign="top" width="14%" height="19"><B>4001</B></TD>
+      <TD align="left" valign="top" width="29%" height="19">Counter Does Not Exist</TD>
+      <TD align="left" valign="top" width="57%" height="19">The specified named counter could not be found.</TD>
+    </TR>
+    <TR>
+      <TD align="middle" valign="top" width="14%" height="19"><B>4002</B></TD>
+      <TD align="left" valign="top" width="29%" height="19">Counter Already Zero</TD>
+      <TD align="left" valign="top" width="57%" height="19">The named counter is currently at Zero.</TD>
+    </TR>
+    <TR>
+      <TD align="middle" valign="top" width="14%" height="19"><B>4003</B></TD>
+      <TD align="left" valign="top" width="29%" height="19">Counter At Max</TD>
+      <TD align="left" valign="top" width="57%" height="19">The named counter is at its maximum possible value.</TD>
+    </TR>
+  </TBODY>
+</TABLE>
+<A name="Bot_Of_Page"></A></BODY>
+</HTML>

@@ -1,0 +1,67 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002, 2005                                        #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+cron_class_targets =\
+  $(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/CronService.class \
+  $(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/CronUI.class \
+  $(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/CronPythonInterpreter.class \
+  $(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/CronData.class \
+  $(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/CronData1.class \
+  $(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/CronData2.class
+
+cron_jar_targets =\
+  $(O)/services/cron/MANIFEST.MF \
+  $(O)/services/cron/STAF-INF/jars/jython.jar
+
+cron_targets += $(cron_class_targets)\
+                $(cron_jar_targets)\
+                $(REL)/lib/STAFCron.jar
+Targets += $(cron_targets)
+CleanupTargets += cleanup_cron
+
+$(cron_targets): SUBSYS_REL := services/cron
+SUBSYS_REL := services/cron
+
+# Include inference rules
+include $(InferenceRules)
+
+JYTHON_JAR ?= $(REL)/lib/jython/jython.jar
+OS_JYTHON_JAR ?= $(OS_REL)/lib/jython/jython.jar
+JYTHON_LIB_PATH = $(REL)/lib/jython/Lib
+
+$(cron_targets): $(REL)/lib/JSTAF.jar $(JYTHON_JAR)
+
+CRON_CLASSPATH = $(OS_O)/services/cron$(OS_PS)$(OS_REL)/lib/JSTAF.jar$(OS_PS)$(JAVA_CLASSPATH)$(OS_PS)$(OS_JYTHON_JAR)
+
+define CRON_JAVA_COMPILE_IT
+   @echo "*** Compiling Cron Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/cron/STAF-INF/classes -classpath '$(CRON_CLASSPATH)' $(OS_SRC)/services/cron/*.java
+   @$(JAVAC) -d $(OS_O)/services/cron -classpath '$(CRON_CLASSPATH)' $(OS_SRC)/services/cron/CronUI.java
+endef
+
+$(O)/services/cron/STAF-INF/classes/com/ibm/staf/service/cron/%.class: $(SRC)/services/cron/%.java
+	$(CRON_JAVA_COMPILE_IT)
+
+# CRON Java targets
+
+$(O)/services/cron/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(O)/services/cron/STAF-INF/jars/jython.jar: $(JYTHON_JAR)
+	$(COPY_FILE)
+	@$(MAKE_PATH) $(O)/services/cron/JYTHON-INF/Lib
+	@echo "*** Copying Jython libraries ***"
+	@$(RECURSIVE_COPY) $(JYTHON_LIB_PATH) $(O)/services/cron/JYTHON-INF
+
+$(REL)/lib/STAFCron.jar: $(cron_class_targets) $(cron_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/cron; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF JYTHON-INF com
+
+cleanup_cron:
+	-@$(DEL) $(O)/services/cron/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/JSTAF.jar $(OUT_ERR_TO_DEV_NULL)

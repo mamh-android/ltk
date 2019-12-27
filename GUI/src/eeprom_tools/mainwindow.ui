@@ -1,0 +1,1569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>673</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>EEPROM Tool</string>
+  </property>
+  <property name="toolTip">
+   <string>eeprom</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QCheckBox" name="checkBox_board_type">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>52</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string>board_type</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_board_type">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>52</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_board_id">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>77</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>board_id</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_chip_name">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>340</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>chip_name</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_board_register_date">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>102</y>
+      <width>191</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>board_register_date</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_chip_stepping">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>364</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>chip_stepping </string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_board_eco">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>223</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>board_eco</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_current_user">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>200</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>board_owner</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_user_team">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>174</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>user_team</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_board_status">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>150</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>board_status</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_lcd_resolution">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>264</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>lcd_resolution</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_lcd_screensize">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>291</y>
+      <width>151</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>lcd_screensize</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_ddr_type">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>388</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>ddr_type</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_ddr_size">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>412</y>
+      <width>151</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>ddr_size_freq</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_emmc_type">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>436</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>emmc_type</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_emmc_size">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>460</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>emmc_size</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_rf_type">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>524</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>rf_type</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_rf_name">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>500</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>rf_name</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_board_id">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>76</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_chip_name">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>340</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_chip_stepping">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>364</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_board_register_date">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>100</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_board_status">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>150</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_user_team">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>174</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_board_eco">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>222</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_current_user">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>198</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_lcd_resolution">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>267</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_lcd_screensize">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>291</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ddr_type">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>388</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_ddr_size">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>412</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_emmc_size">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>460</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_emmc_type">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>436</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_rf_name">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>500</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_rf_type">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>524</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_read">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>160</y>
+      <width>81</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Read</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_config">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>360</y>
+      <width>181</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_save">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>400</y>
+      <width>81</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Save</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_load">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>400</y>
+      <width>81</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Load</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_select_all">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>111</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Select All</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>490</y>
+      <width>451</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>461</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>320</y>
+      <width>451</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_lcd_resolution">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>267</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_write">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>160</y>
+      <width>81</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Write</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_lcd_screensize">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>291</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>327</y>
+      <width>201</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Load/Save Configs</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>120</y>
+      <width>201</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Read/Write EEPROM</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_4">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>130</y>
+      <width>451</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_5">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>250</y>
+      <width>451</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_chip_name">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>340</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_chip_stepping">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>364</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_ddr_type">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>388</y>
+      <width>65</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_ddr_size">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>412</y>
+      <width>65</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Andale Mono</family>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_emmc_type">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>436</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_emmc_size">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>460</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_clear">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>490</y>
+      <width>181</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Clear</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_6">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>40</y>
+      <width>20</width>
+      <height>511</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_7">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>230</y>
+      <width>211</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_8">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>310</y>
+      <width>211</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_9">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>470</y>
+      <width>211</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_10">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>100</y>
+      <width>211</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_11">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>40</y>
+      <width>20</width>
+      <height>511</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_12">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>30</y>
+      <width>211</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_read_all">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>250</y>
+      <width>181</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Read All</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="textEdit">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>50</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAsNeeded</enum>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAsNeeded</enum>
+    </property>
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:24pt; font-weight:600;&quot;&gt;MARVELL&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="textEdit_log">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>560</y>
+      <width>671</width>
+      <height>71</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_ddr_freq">
+    <property name="geometry">
+     <rect>
+      <x>404</x>
+      <y>412</y>
+      <width>57</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_ddr_lp_type">
+    <property name="geometry">
+     <rect>
+      <x>404</x>
+      <y>388</y>
+      <width>57</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+     </font>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <zorder>lineEdit_lcd_resolution</zorder>
+   <zorder>comboBox_lcd_resolution</zorder>
+   <zorder>checkBox_board_type</zorder>
+   <zorder>lineEdit_board_type</zorder>
+   <zorder>checkBox_board_id</zorder>
+   <zorder>checkBox_chip_name</zorder>
+   <zorder>checkBox_board_register_date</zorder>
+   <zorder>checkBox_chip_stepping</zorder>
+   <zorder>checkBox_board_eco</zorder>
+   <zorder>checkBox_current_user</zorder>
+   <zorder>checkBox_user_team</zorder>
+   <zorder>checkBox_board_status</zorder>
+   <zorder>checkBox_lcd_resolution</zorder>
+   <zorder>checkBox_lcd_screensize</zorder>
+   <zorder>checkBox_ddr_type</zorder>
+   <zorder>checkBox_ddr_size</zorder>
+   <zorder>checkBox_emmc_type</zorder>
+   <zorder>checkBox_emmc_size</zorder>
+   <zorder>checkBox_rf_type</zorder>
+   <zorder>checkBox_rf_name</zorder>
+   <zorder>lineEdit_board_id</zorder>
+   <zorder>lineEdit_chip_name</zorder>
+   <zorder>lineEdit_chip_stepping</zorder>
+   <zorder>lineEdit_board_register_date</zorder>
+   <zorder>lineEdit_board_status</zorder>
+   <zorder>lineEdit_user_team</zorder>
+   <zorder>lineEdit_board_eco</zorder>
+   <zorder>lineEdit_current_user</zorder>
+   <zorder>lineEdit_lcd_screensize</zorder>
+   <zorder>lineEdit_ddr_type</zorder>
+   <zorder>lineEdit_ddr_size</zorder>
+   <zorder>lineEdit_emmc_size</zorder>
+   <zorder>lineEdit_emmc_type</zorder>
+   <zorder>lineEdit_rf_name</zorder>
+   <zorder>lineEdit_rf_type</zorder>
+   <zorder>pushButton_read</zorder>
+   <zorder>comboBox_config</zorder>
+   <zorder>pushButton_save</zorder>
+   <zorder>pushButton_load</zorder>
+   <zorder>checkBox_select_all</zorder>
+   <zorder>line</zorder>
+   <zorder>line_2</zorder>
+   <zorder>line_3</zorder>
+   <zorder>pushButton_write</zorder>
+   <zorder>comboBox_lcd_screensize</zorder>
+   <zorder>label</zorder>
+   <zorder>label_2</zorder>
+   <zorder>line_4</zorder>
+   <zorder>line_5</zorder>
+   <zorder>comboBox_chip_name</zorder>
+   <zorder>comboBox_chip_stepping</zorder>
+   <zorder>comboBox_ddr_type</zorder>
+   <zorder>comboBox_ddr_size</zorder>
+   <zorder>comboBox_emmc_type</zorder>
+   <zorder>comboBox_emmc_size</zorder>
+   <zorder>pushButton_clear</zorder>
+   <zorder>line_6</zorder>
+   <zorder>line_7</zorder>
+   <zorder>line_8</zorder>
+   <zorder>line_9</zorder>
+   <zorder>line_10</zorder>
+   <zorder>line_11</zorder>
+   <zorder>line_12</zorder>
+   <zorder>pushButton_read_all</zorder>
+   <zorder>textEdit</zorder>
+   <zorder>textEdit_log</zorder>
+   <zorder>comboBox_ddr_freq</zorder>
+   <zorder>comboBox_ddr_lp_type</zorder>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>700</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButton_save</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>save_config()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>650</x>
+     <y>433</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>435</x>
+     <y>283</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_load</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>load_config()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>509</x>
+     <y>448</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>347</x>
+     <y>381</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_select_all</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>select_choose()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>63</x>
+     <y>47</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>395</x>
+     <y>216</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineEdit_board_id</sender>
+   <signal>returnPressed()</signal>
+   <receiver>lineEdit_board_id</receiver>
+   <slot>selectAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>280</x>
+     <y>108</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>280</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_lcd_screensize</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>lineEdit_lcd_screensize</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>323</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>326</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_lcd_resolution</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>lineEdit_lcd_resolution</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>393</x>
+     <y>308</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>304</x>
+     <y>308</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_chip_name</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>lineEdit_chip_name</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>381</x>
+     <y>373</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>287</x>
+     <y>377</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_chip_stepping</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>lineEdit_chip_stepping</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>392</x>
+     <y>403</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>300</x>
+     <y>403</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_emmc_type</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>lineEdit_emmc_type</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>470</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>317</x>
+     <y>471</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_emmc_size</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>lineEdit_emmc_size</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>370</x>
+     <y>498</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>496</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_clear</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>663</x>
+     <y>563</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>682</x>
+     <y>317</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_read_all</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>read_all()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>657</x>
+     <y>283</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>695</x>
+     <y>284</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_write</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>write_all()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>634</x>
+     <y>221</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>597</x>
+     <y>168</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_read</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>read_item_ini()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>513</x>
+     <y>197</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>494</x>
+     <y>171</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_ddr_size</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>merge_ddr_size_speed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>370</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>193</x>
+     <y>447</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_ddr_freq</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>merge_ddr_size_speed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>428</x>
+     <y>459</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>160</x>
+     <y>473</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_ddr_type</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>merge_ddr_type_lp()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>367</x>
+     <y>422</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>162</x>
+     <y>365</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_ddr_lp_type</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>merge_ddr_type_lp()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>414</x>
+     <y>424</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>173</x>
+     <y>411</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>select_all()</slot>
+  <slot>read_item()</slot>
+  <slot>write_item()</slot>
+  <slot>unselect_all()</slot>
+  <slot>reflash_config()</slot>
+  <slot>save_config()</slot>
+  <slot>load_config()</slot>
+  <slot>select_choose()</slot>
+  <slot>clear()</slot>
+  <slot>read_all()</slot>
+  <slot>write_all()</slot>
+  <slot>read_item_ini()</slot>
+  <slot>merge_ddr_size_speed()</slot>
+  <slot>merge_ddr_type_lp()</slot>
+ </slots>
+</ui>

@@ -1,0 +1,3328 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <!-- Beginning of job -->
+
+  <defaultcall function="Main"/>
+
+  <!-- Import necessary utilities -->
+
+  <script>
+    from com.ibm.staf import STAFUtil
+    from com.ibm.staf import STAFResult as STAFRetCode
+  </script>
+
+  <!-- Default variables -->
+
+  <script>
+
+    emailAddresses = 'to bdavid@us.ibm.com to lucass@us.ibm.com to rankinc@us.ibm.com'
+
+    debug = 1
+    buildVersion = 'mainline'
+    stafVersionTag = '-D 20100101'
+    buildType = 'retail'
+    
+    useRepositorySrc = 1
+    srcTarMachine = 'staf1f.austin.ibm.com'
+    srcTarFile = 'c:/temp/STAF3201-src.tar'
+    
+    holdAfterExtract = 0
+    
+    import time 
+    from time import strftime
+    startTime = time.strftime("%H:%M")
+  </script>
+
+  <script>
+    <!-- override the buildPlatforms list to build a subset of the platforms -->
+    <!-- buildPlatforms = ['win32', 'linux', 'linuxppc64', 'aix', 'solaris', 'hpux', 'aix421'] -->
+    <!-- buildPlatforms is defined after checking whether building mainline or 2x -->
+
+    PlatformInfo = [                    
+                    #platform[0]  : platform name
+                    #platform[1]  : drive
+                    #platform[2]  : root
+                    #platform[3]  : build machine
+                    #platform[4]  : bash
+                    #platform[5]  : vscommondir
+                    #platform[6]  : msvcdir
+                    #platform[7]  : java_build_v11
+                    #platform[8]  : java_build_v12                    
+                    #platform[9]  : java_v11_root
+                    #platform[10] : java_v12_root
+                    #platform[11] : java_v12_bin_dir
+                    #platform[12] : rexx_root
+                    #platform[13] : rexx_libdirs
+                    #platform[14] : rxpp_root
+                    #platform[15] : b2h_root
+                    #platform[16] : java_default_version
+                    #platform[17] : Project List
+                    #platform[18] : make
+                    #platform[19] : pathSep
+                    #platform[20] : ismpExeSuffix
+                    #platform[21] : OSLIBFILES
+                    #platform[22] : osLibDir
+                    #platform[23] : ismpPlatformNameSuffix
+                    #platform[24] : Build_OSName
+                    #platform[25] : Build ISMP files (0 or 1)
+                    #platform[26] : OS_LIBS
+                    #platform[27] : SAXON_ROOT
+                    #platform[28] : DOCBOOK_ROOT
+                    
+                    ['win32', 
+                     'c', 
+                     'c:', 
+                     'staf1f.austin.ibm.com', 
+                     'c:\\cygwin\\bin\\bash', 
+                     'c:/MVStudio/Common', 
+                     'c:/MVStudio',
+                     '0', 
+                     '1', 
+                     '/cygdrive/c/ibmjava142', 
+                     '/cygdrive/c/ibmjava142',
+                     '/cygdrive/c/ibmjava142/bin',
+                     'C:/Progra~1/ObjREXX',
+                     'C:/Progra~1/ObjREXX/API',
+                     'C:/tools/rxpp',
+                     'C:/tools/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc', 'connprov_tcpssl',
+                      'zip', 'java', 'ant', 'rexx', 'utils', 'docs', 'demo', 'perl', 'tcl', 'python', 
+                     'jython', 'stax', 'eventmanager', 'cron', 'event', 'http', 'sxe', 'timer',
+                     'email', 'namedcounter', 'device', 'fsext', 'namespace' ],
+                     'make',
+                     ';',                     
+                     '.exe',
+                     '',
+                     '',
+                     '',
+                     'win32',
+                     '1',
+                     '',
+                     'c:/tools/saxon',
+                     'c:/tools/docbook'
+                    ],
+                    
+                    ['win64', 
+                     'c', 
+                     'c:', 
+                     'staf1f.austin.ibm.com', 
+                     'c:\\cygwin\\bin\\bash', 
+                     'c:/MVStudio/Common', 
+                     'c:/MVStudio',
+                     '0', 
+                     '1', 
+                     '/cygdrive/c/ibmjava142', 
+                     '/cygdrive/c/ibmjava142',
+                     '/cygdrive/c/ibmjava142/bin',
+                     'C:/Progra~1/ObjREXX',
+                     'C:/Progra~1/ObjREXX/API',
+                     'C:/tools/rxpp',
+                     'C:/tools/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc', 
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'demo'],
+                     'make',
+                     ';',                     
+                     '.exe',
+                     '',
+                     '',
+                     '',
+                     'win32',
+                     '1',
+                     '',
+                     'c:/tools/saxon',
+                     'c:/tools/docbook'
+                    ],
+                    
+                    ['winamd64', 
+                     'c', 
+                     'c:', 
+                     'staf2d.austin.ibm.com', 
+                     'c:\\cygwin\\bin\\bash', 
+                     '', 
+                     'c:/MVStudio8',
+                     '0', 
+                     '1', 
+                     '/cygdrive/c/ibmjava142', 
+                     '/cygdrive/c/ibmjava142',
+                     '/cygdrive/c/ibmjava142/bin',
+                     'C:/Progra~1/ObjREXX',
+                     'C:/Progra~1/ObjREXX/API',
+                     'C:/tools/rxpp',
+                     'C:/tools/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc', 
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'demo'],
+                     'make',
+                     ';',                     
+                     '.exe',
+                     '',
+                     '',
+                     '',
+                     'win32',
+                     '1',
+                     '',
+                     'c:/tools/saxon',
+                     'c:/tools/docbook'
+                    ],
+
+
+                    ['linux', 
+                     '/opt', 
+                     '/opt', 
+                     'staf1a.austin.ibm.com',
+                     'bash', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '',
+                     '/opt/IBMJava2-142',
+                     '/opt/IBMJava2-142/bin',
+                     '/opt/orexx',
+                     '/opt/orexx',
+                     '/usr/local/rxpp',
+                     '/usr/local/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc', 
+                      'connprov_tcpssl', 'zip', 'perl', 'java', 'ant', 'rexx', 'utils',
+                      'docs', 'tcl', 'python'],
+                     'make',
+                     ':',
+                     '.bin',
+                     '',
+                     '',
+                     '',
+                     'linux',
+                     '1',
+                     '',
+                     '/usr/local/saxon',
+                     '/usr/local/docbook'
+                    ],
+
+                    ['linuxppc64', 
+                     '/opt', 
+                     '/opt', 
+                     'ais42.austin.ibm.com', 
+                     'bash', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/local/java/jdk118',
+                     '/usr/IBMJava2-ppc64-141',
+                     '/usr/IBMJava2-ppc64-141/bin',
+                     '/usr/local/orexx',
+                     '/usr/local/orexx',
+                     '/usr/local/rxpp',
+                     '/usr/local/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'demo'],
+                     'make',
+                     ':',
+                     '.bin',
+                     '',
+                     '',
+                     '',
+                     'linuxppc64',
+                     '0',
+                     '',
+                     '',
+                     ''
+                    ],
+
+                    ['aix2x', 
+                     '/opt', 
+                     '/opt', 
+                     'staf5d.austin.ibm.com', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/jdk_base',
+                     '/usr/java_dev2',
+                     '/usr/java_dev2/sh',
+                     '/usr/lpp/orexx',
+                     '/usr/lpp/orexx/lib',
+                     '/usr/local/rxpp',
+                     '/usr/local/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'rexx', 'utils', 'docs'],
+                     '/usr/local/bin/make',
+                     ':',
+                     '.bin',
+                     '',
+                     '',
+                     '',
+                     'aix',
+                     '1',
+                     '',
+                     '/usr/local/saxon',
+                     '/usr/local/docbook'
+                    ],
+                    
+                    ['aix433', 
+                     '/opt', 
+                     '/opt', 
+                     'staf5d.austin.ibm.com', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/jdk_base',
+                     '/usr/java131', # was '/usr/java_dev2'
+                     '/usr/java131/sh', # '/usr/java_dev2/sh'
+                     '/usr/lpp/orexx',
+                     '/usr/lpp/orexx/lib',
+                     '/usr/local/rxpp',
+                     '/usr/local/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'rexx', 'utils', 'docs'],
+                     '/usr/local/bin/make',
+                     ':',
+                     '.bin',
+                     '',
+                     '',
+                     '',
+                     'aix433',
+                     '1',
+                     '',
+                     '/usr/local/saxon',
+                     '/usr/local/docbook'
+                    ],
+                    
+                    ['aix', 
+                     '/opt', 
+                     '/opt', 
+                     'staf4d.austin.ibm.com', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/jdk_base',
+                     '/usr/java14',
+                     '/usr/java14/bin',
+                     '/usr/lpp/orexx',
+                     '/usr/lpp/orexx/lib',
+                     '/usr/local/rxpp',
+                     '/usr/local/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                     'connprov_tcpssl', 'zip', 'java', 'ant', 'rexx', 'utils', 'demo'],
+                     '/usr/local/bin/make',
+                     ':',
+                     '.bin',
+                     '',
+                     '',
+                     '',
+                     'aix',
+                     '1',
+                     '',
+                     '',
+                     ''
+                    ],
+                    
+                    ['aix64', 
+                     '/opt', 
+                     '/opt', 
+                     'staf4d.austin.ibm.com', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/jdk_base',
+                     '/opt/aix64java',
+                     '/opt/aix64java/bin',
+                     '/usr/lpp/orexx',
+                     '/usr/lpp/orexx/lib',
+                     '/usr/local/rxpp',
+                     '/usr/local/b2h',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                     'connprov_tcpssl', 'zip', 'java', 'ant', 'utils', 'demo'],
+                     '/usr/local/bin/make',
+                     ':',
+                     '.bin',
+                     '',
+                     '',
+                     '',
+                     'aix64',
+                     '1',
+                     '',
+                     '',
+                     ''
+                    ],
+                    
+                    ['aix421', 
+                     '/opt', 
+                     '/opt', 
+                     'staf5f', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '1', 
+                     '0',
+                     '/build/java/J1.1.8',
+                     '',
+                     '',
+                     '',
+                     '',
+                     '',
+                     '',
+                     'V11',
+                     ['staf', 'connprov_tcp', 'connprov_localipc'],
+                     '/usr/local/bin/gmake',
+                     ':',
+                     '.bin',
+                     ['libC.a', 'libC_r.a'],
+                     '/usr/lib/',
+                     '',
+                     'aix421',
+                     '0',
+                     'OS_LIBS=pthreads',
+                     '',
+                     ''
+                    ],
+
+                    ['solaris', 
+                     '/opt', 
+                     '/opt', 
+                     'staf4f.austin.ibm.com', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/java1.1',
+                     '/opt/jdk1.3.1',
+                     '/opt/jdk1.3.1/bin',
+                     '',
+                     '',
+                     '',
+                     '',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'ant'],
+                     'make',
+                     ':',
+                     '.bin',
+                     ['libstdc++.so.2.10.0'],
+                     '/usr/lib/',
+                     '-sparc',
+                     'solaris',
+                     '1',
+                     '',
+                     '',
+                     ''
+                    ],
+                                        
+                    ['hpux', 
+                      '/opt', 
+                     '/opt', 
+                     'svthp11.austin.ibm.com', 
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '/usr/local/java/jdk118',
+                     '/opt/java1.3',
+                     '/opt/java1.3/bin',
+                     '',
+                     '',
+                     '',
+                     '',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'demo'],
+                     '/opt/make/bin/gmake',
+                     ':',
+                     '.bin',
+                     [],
+                     '/usr/lib/',
+                     '',
+                     'hpux',
+                     '1',
+                     '',
+                     '',
+                     ''
+                    ],
+                    
+                    ['hpux-ia64-32', 
+                      '/opt', 
+                     '/opt', 
+                     'rajhp64a',
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '',
+                     '/opt/java1.3',
+                     '/opt/java1.3/bin',
+                     '',
+                     '',
+                     '',
+                     '',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'demo'],
+                     '/usr/local/bin/gmake',
+                     ':',
+                     '.bin',
+                     [],
+                     '/usr/lib/',
+                     '',
+                     'hpux',
+                     '1',
+                     '',
+                     '',
+                     ''
+                    ],
+                    
+                    ['hpux-ia64-64', 
+                      '/opt', 
+                     '/opt', 
+                     'rajhp64a',
+                     'sh', 
+                     '', 
+                     '', 
+                     '0', 
+                     '1',
+                     '',
+                     '/opt/java1.3',
+                     '/opt/java1.3/bin',
+                     '',
+                     '',
+                     '',
+                     '',
+                     'V12',
+                     ['staf', 'connprov_tcp', 'connprov_localipc',
+                      'connprov_tcpssl', 'zip', 'java', 'ant', 'demo'],
+                     '/usr/local/bin/gmake',
+                     ':',
+                     '.bin',
+                     [],
+                     '/usr/lib/',
+                     '',
+                     'hpux',
+                     '1',
+                     '',
+                     '',
+                     ''
+                    ]
+                   ]
+
+    serviceJarFiles = ['STAX.jar', 'STAXMon.jar', 'STAFEvent.jar', 'STAFEventManager.jar',
+                       'STAFCron.jar', 'STAFEmail.jar', 'STAFSXE.jar', 'STAFFSExt.jar',
+                       'STAFHTTP.jar', 'STAFTimer.jar', 'STAFNamedCounter.jar',
+                       'STAFDeviceService.jar']
+                   
+    cvsRoot = ':pserver:anonymous@cvs.sourceforge.net:/cvsroot/staf'
+    extractMach = 'staf1f.austin.ibm.com'
+
+    extractRoot = 'c:/dev/autobuild'
+    extractPath = '%s/extract' % extractRoot 
+    extractLogPath = '%s/extract_logs' % extractRoot 
+
+    cygwinBashShell = 'c:\\cygwin\\bin\\bash'
+    cygwinPath = '/cygdrive/c/cygwin'
+    cygwinBinPath = 'c:\\cygwin\\bin'
+
+    ismpMach = 'staf1f.austin.ibm.com'
+    ismpInputPath = "c:/STAF_ISMP_InputFiles"
+    ismpOutputPath = "c:/STAF_Installers"
+
+    ftpMach = 'staf1e.austin.ibm.com'
+       
+    startClean = 1
+    failMessage = 'No failure'
+
+    platform = ''
+    OSName = ''
+
+    STAFResult = ''
+    RC = 0
+    
+    binaryFiles = STAXGlobal([])
+    
+    buildRoot = 'c:/dev/autobuild/build'
+    
+    serviceReleaseRoot = 'c:/serviceReleases'
+    
+    javaServiceReleases = [
+                            [
+                                'eventmanager',
+                                'EventManagerV321',
+                                [
+                                  ['STAFEventManager.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/eventmanager' % buildRoot],
+                                  ['eventmanager.pdf', 'c:/staxug']
+                                ]
+                            ],
+                                
+                            [   
+                                'event', 
+                                'EventV310',
+                                [
+                                  ['STAFEvent.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/event' % buildRoot],
+                                  ['event.htm', '%s/src/staf/services/event' % buildRoot]
+                                ]
+                            ],
+                                 
+                            [
+                                'cron',
+                                'CronV321',
+                                [
+                                  ['STAFCron.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/cron' % buildRoot],
+                                  ['cron.pdf', 'c:/staxug']
+                                ]
+                            ],
+                            
+                            [
+                                'email',
+                                'EmailV320',
+                                [
+                                  ['STAFEmail.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/email' % buildRoot],
+                                  ['email.html', '%s/src/staf/services/email' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'http',
+                                'HTTPV300Beta12',
+                                [
+                                  ['STAFHTTP.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/http' % buildRoot],
+                                  ['Http.html', '%s/src/staf/services/http' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'namespace',
+                                'NamespaceV100',
+                                [
+                                  ['Namespace.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/namespace' % buildRoot],
+                                  ['Namespace.pdf', 'c:/staxug']
+                                ]
+                            ],
+                            
+                            [
+                                'fsext',
+                                'FSExtV300',
+                                [
+                                  ['STAFFSExt.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/fsext' % buildRoot],
+                                  ['FSExt.html', '%s/src/staf/services/fsext' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'timer',
+                                'TimerV302',
+                                [
+                                  ['STAFTimer.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/timer' % buildRoot],
+                                  ['Timer.html', '%s/src/staf/services/timer' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'sxe',
+                                'SXEV302',
+                                [
+                                  ['STAFSXE.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/sxe' % buildRoot],
+                                  ['sxe.html', '%s/src/staf/services/sxe' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'namedcounter',
+                                'NamedCounterV300',
+                                [
+                                  ['STAFNamedCounter.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/namedcounter' % buildRoot],
+                                  ['NamedCounterService.html', '%s/src/staf/services/namedcounter' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'stax',
+                                'STAXV315',
+                                [
+                                  ['STAX.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['STAXMon.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['STAFEvent.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['STAXDoc.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/stax' % buildRoot, 'docs/History'],
+                                  ['samples/sample1.xml', '%s/src/staf/services/stax' % buildRoot],
+                                  ['samples/FunctionList.xsl', '%s/src/staf/services/stax' % buildRoot],
+                                  ['samples/UpgradeSTAF.xml', '%s/src/staf/services/stax' % buildRoot],
+                                  ['libraries/STAXUtil.xml', '%s/src/staf/services/stax' % buildRoot],
+                                  ['libraries/STAFUpgradeUtil.xml', '%s/src/staf/services/stax' % buildRoot],
+                                  ['libraries/docs/index.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/overview-summary.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/overview-frame.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/allfiles-frame.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/libraries/package-overview.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/libraries/package-frame.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/libraries/STAXUtil.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['libraries/docs/libraries/STAFUpgradeUtil.html', '%s/rel/win32/staf/retail/services/stax' % buildRoot],
+                                  ['ext/stax-extensions.dtd', '%s/src/staf/services/stax' % buildRoot],
+                                  ['docs/staxug.pdf', 'c:/staxug'],
+                                  ['docs/staxgs.pdf', 'c:/staxug'],
+                                  ['docs/STAXDoc.pdf', 'c:/staxug'],
+                                  ['readme.1st', 'c:/staxug']
+                                ]
+                            ]
+                          ]
+                          
+  javaServiceReleases2x = [
+                            [
+                                'eventmanager',
+                                'EventManagerV127',
+                                [
+                                  ['STAFEventManager.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/eventmanager' % buildRoot],
+                                  ['eventmanager.pdf', 'c:/staxug']
+                                ]
+                            ],
+                                
+                            [   
+                                'event', 
+                                'EventV135',
+                                [
+                                  ['STAFEvent.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/event' % buildRoot],
+                                  ['event.htm', '%s/src/staf/services/event' % buildRoot]
+                                ]
+                            ],
+                                 
+                            [
+                                'cron',
+                                'CronV126',
+                                [
+                                  ['STAFCron.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/cron' % buildRoot],
+                                  ['cron.pdf', 'c:/staxug']
+                                ]
+                            ],
+                            
+                            [
+                                'email',
+                                'EmailV116',
+                                [
+                                  ['STAFEmail.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/email' % buildRoot],
+                                  ['email.html', '%s/src/staf/services/email' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'http',
+                                'HTTPV204',
+                                [
+                                  ['STAFHTTP.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/http' % buildRoot],
+                                  ['Http.html', '%s/src/staf/services/http' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'fsext',
+                                'FSExtV124',
+                                [
+                                  ['STAFFSExt.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/fsext' % buildRoot],
+                                  ['FSExt.html', '%s/src/staf/services/fsext' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'timer',
+                                'TimerV111',
+                                [
+                                  ['STAFTimer.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/timer' % buildRoot],
+                                  ['Timer.html', '%s/src/staf/services/timer' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'sxe',
+                                'SXEV213',
+                                [
+                                  ['STAFSXE.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/sxe' % buildRoot],
+                                  ['sxe.html', '%s/src/staf/services/sxe' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'namedcounter',
+                                'NamedCounterV121',
+                                [
+                                  ['STAFNamedCounter.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/namedcounter' % buildRoot],
+                                  ['NamedCounterService.html', '%s/src/staf/services/namedcounter' % buildRoot]
+                                ]
+                            ],
+                            
+                            [
+                                'stax',
+                                'STAXV1510',
+                                [
+                                  ['STAX.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['STAXMon.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['STAFEvent.jar', '%s/rel/win32/staf/retail/lib' % buildRoot],
+                                  ['History', '%s/src/staf/services/stax' % buildRoot],
+                                  ['samples/sample1.xml', '%s/src/staf/services/stax' % buildRoot],
+                                  ['samples/FunctionList.xsl', '%s/src/staf/services/stax' % buildRoot],
+                                  ['libraries/STAXUtil.xml', '%s/src/staf/services/stax' % buildRoot],
+                                  ['libraries/STAXUtil.html', '%s/src/staf/services/stax' % buildRoot],
+                                  ['ext/stax-extensions.dtd', '%s/src/staf/services/stax' % buildRoot],
+                                  ['staxug.pdf', 'c:/staxug'],
+                                  ['readme.1st', 'c:/staxug']
+                                ]
+                            ]
+                          ]                          
+  </script>
+
+  <!-- Start function definitions -->
+
+  <!-- ================================================================= -->
+  <!-- check-stafcmd - This function determines whether an arbitrary     -->
+  <!--                 staf command worked.  If not, it generates some   -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-stafcmd">
+    <if expr="RC != 0">
+      <sequence>
+      
+        <script>
+          from com.ibm.staf import STAFUtil
+          message = 'STAXJobID: %s\n\nFailed %s (RC=%d): %s, Result: %s' % (STAXJobID, OSName, RC, failMessage, STAFResult)
+          message = STAFUtil.wrapData(message)
+          emailsubject = "STAF%s automated build failed" % (STAFVersion)
+          emailsubject = STAFUtil.wrapData(emailsubject)
+        </script>
+      
+        <message>message</message>
+        
+        <log level="'error'">message</log>
+        
+        <stafcmd name="'Emailing failure notification'">
+          <location>'local'</location>
+          <service>'email'</service>
+          <request>'send %s subject %s message %s' %(emailAddresses, emailsubject, message)</request>
+        </stafcmd>
+      
+        <stafcmd name="'Releasing STAF-AutoBuild semaphore'">
+          <location>ismpMach</location>
+          <service>'SEM'</service>
+          <request>'release mutex STAF-AutoBuild force'</request>
+        </stafcmd>
+        
+        <!-- Logout of CVS via pserver -->
+
+        <message>"Logging out of CVS via pserver"</message>
+        <log>"Logging out of CVS via pserver"</log>
+
+        <process name="'CVS Logout'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'echo | cvs -d %s logout'" % cvsRoot</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/cvs_logout.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/cvs_logout.err' % extractLogPath</stderr>
+        </process>
+      
+        <terminate/>
+      </sequence>
+    </if>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- check-process - This function determines whether an arbitrary     -->
+  <!--                 process worked.  If not, it generates some        -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-process">
+    <if expr="RC != 0">
+      <sequence>
+        
+        <script>
+          from com.ibm.staf import STAFUtil
+          message = 'STAXJobID: %s\n\nFailed %s (RC=%d): %s' % (STAXJobID, OSName, RC, failMessage)
+          message = STAFUtil.wrapData(message)
+          emailsubject = "STAF%s automated build failed" % (STAFVersion)
+          emailsubject = STAFUtil.wrapData(emailsubject)
+        </script>
+      
+        <message>message</message>
+        
+        <log level="'error'">message</log>
+        
+        <stafcmd name="'Emailing failure notification'">
+          <location>'local'</location>
+          <service>'email'</service>
+          <request>'send %s subject %s message %s' %(emailAddresses, emailsubject, message)</request>
+        </stafcmd>
+      
+        <stafcmd name="'Releasing STAF-AutoBuild semaphore'">
+          <location>ismpMach</location>
+          <service>'SEM'</service>
+          <request>'release mutex STAF-AutoBuild force'</request>
+        </stafcmd>
+        
+        <!-- Logout of CVS via pserver -->
+
+        <message>"Logging out of CVS via pserver"</message>
+        <log>"Logging out of CVS via pserver"</log>
+
+        <process name="'CVS Logout'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'echo | cvs -d %s logout'" % cvsRoot</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/cvs_logout.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/cvs_logout.err' % extractLogPath</stderr>
+        </process>
+
+        <terminate/>
+      </sequence>
+    </if>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- check-win-bash-process - This function determines whether a bash  -->
+  <!--                          process running on win32 worked.         -->
+  <!-- ================================================================= -->
+
+  <function name="check-win-bash-process">
+    <sequence>
+      <script>
+        if (RC > 130000): RC = 131072 - RC
+      </script>
+      <call function="'check-process'"/>
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- GetSystemType - This function is responsible for determining the  -->
+  <!--                 type of a specified system.                       -->
+  <!-- ================================================================= -->
+
+  <function name="GetSystemType">
+    <nop/>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- ExportSource -  This function is responsible for extracting the   -->
+  <!--                 source from CVS and generating a source tarball.  -->
+  <!--                 It will also archive the CVS repository if the    -->
+  <!--                 daily archive has not yet been created.           -->
+  <!--                 It is currently hard coded to work on win32.      -->
+  <!-- ================================================================= -->
+
+  <function name="ExportSource">
+    <testcase name="'ExportSource'">
+      <sequence>
+
+        <!-- Delete the extraction path if requested -->
+
+        <message>"Setting up extraction directory"</message>
+        <log>"Setting up extraction directory"</log>
+
+        <if expr="startClean">
+          <sequence>
+
+            <stafcmd name="'Delete extraction path'">
+              <location>extractMach</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s children recurse confirm' % (
+                  STAFUtil.wrapData(extractPath))
+              </request>
+            </stafcmd>
+
+            <if expr="RC != STAFRetCode.DoesNotExist">
+              <sequence>
+                <script>failMessage = 'Deleting extraction path'</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+              </sequence>
+            </if>
+
+            <stafcmd name="'Delete extraction log path'">
+              <location>extractMach</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s children recurse confirm' % (
+                  STAFUtil.wrapData(extractLogPath))
+              </request>
+            </stafcmd>
+
+            <if expr="RC != STAFRetCode.DoesNotExist">
+              <sequence>
+                <script>failMessage = 'Deleting extraction log path'</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+              </sequence>
+            </if>
+
+          </sequence>
+        </if>   
+
+        <!-- Create the extraction and extraction_log path -->
+
+        <stafcmd name="'Create extraction path'">
+          <location>extractMach</location>
+          <service>'FS'</service>
+          <request>
+            'create directory %s fullpath' % STAFUtil.wrapData(extractPath)
+          </request>
+        </stafcmd>
+
+        <script>failMessage = 'Creating extraction path'</script>
+        <call function="'check-stafcmd'"/>        
+        <tcstatus result="'Pass'"/>
+
+        <if expr="debug">
+          <sequence>
+
+            <stafcmd name="'Create extraction log path'">
+              <location>extractMach</location>
+              <service>'FS'</service>
+              <request>
+                'create directory %s fullpath' % (
+                  STAFUtil.wrapData(extractLogPath))
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Creating extraction log path'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+
+          </sequence>
+        </if>
+        
+        <if expr="useRepositorySrc">
+          <sequence>
+             <!-- pserver login/export 
+             Login to CVS via pserver
+
+            <message>"Logging in to CVS via pserver"</message>
+            <log>"Logging in to CVS via pserver"</log>
+
+            <process name="'CVS Login'">
+              <location>extractMach</location>
+              <command>cygwinBashShell</command>
+              <parms>"-c 'echo | cvs -d %s login'" % cvsRoot</parms>
+              <workdir>extractPath</workdir>
+              <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+              <stdout if="debug">'%s/cvs_login.out' % extractLogPath</stdout>
+              <stderr if="debug">'%s/cvs_login.err' % extractLogPath</stderr>
+            </process>
+        
+             Login RC can sometimes be 1, even though the login was successful,
+               so do not check RC
+
+             Export the source
+        
+            <message>"Exporting STAF source code"</message>
+            <log>"Exporting STAF source code"</log>
+
+            <process name="'CVS Export'">
+              <location>extractMach</location>
+              <command>cygwinBashShell</command>
+              <parms>
+                "-c 'cvs -z3 -d %s export -r %s %s src'" % (cvsRoot, stafBranchTag, stafVersionTag)
+              </parms>
+              <workdir>extractPath</workdir>
+              <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+              <stdout if="debug">'%s/cvs_checkout.out' % extractLogPath</stdout>
+              <stderr if="debug">'%s/cvs_checkout.err' % extractLogPath</stderr>
+            </process>
+
+            <script>failMessage = 'Exporting source'</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/> -->
+            
+            <message>"Checking out STAF source code"</message>
+            <log>"Checking out STAF source code"</log>
+
+            <process name="'CVS Export'">
+              <location>extractMach</location>
+              <command>cygwinBashShell</command>
+              <parms>
+                "-c 'cvs -d :ext:stafautobuild@staf.cvs.sourceforge.net:/cvsroot/staf co %s src'" % stafBranchTag
+              </parms>
+              <workdir>extractPath</workdir>
+              <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+              <env>'CVS_RSH=ssh'</env>
+              <stdout if="debug">'%s/cvs_checkout.out' % extractLogPath</stdout>
+              <stderr if="debug">'%s/cvs_checkout.err' % extractLogPath</stderr>
+            </process>
+
+            <script>failMessage = 'Checking out STAF source code'</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+        
+            <if expr="holdAfterExtract">
+              <hold/>
+            </if>
+          </sequence>
+          <else>
+            <sequence>
+    
+              <message>'Using Src Tar file %s from machine %s' %(srcTarFile, srcTarMachine)</message>
+              <log>'Using Src Tar file %s from machine %s' %(srcTarFile, srcTarMachine)</log>             
+
+              <stafcmd name="'Transfer Src Tar File to extract machine'">
+                <location>srcTarMachine</location>
+                <service>'FS'</service>
+                <request>
+                  'copy file %s tofile %s/src.tar tomachine %s' % (srcTarFile, extractPath, extractMach)
+                </request>
+              </stafcmd>
+        
+              <script>failMessage = 'Transfer Src Tar File to extract machine'</script>
+              <call function="'check-stafcmd'"/>
+              <tcstatus result="'Pass'"/>
+              
+              <!-- Untar it -->
+
+              <process name="'Untar Src Tar File'">
+                <location>extractMach</location>
+                <command>cygwinBashShell</command>
+                <parms>"-c 'tar xf src.tar'"</parms>
+                <workdir>extractPath</workdir>
+                <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+                <stdout if="debug">'%s/tar.out' % extractLogPath</stdout>
+                <stderr if="debug">'%s/tar.err' % extractLogPath</stderr>
+              </process>
+
+              <script>failMessage = 'Untar Src Tar File'</script>
+              <call function="'check-win-bash-process'"/>
+              <tcstatus result="'Pass'"/>
+            </sequence>
+          </else>
+        </if>
+
+        <!-- Update source timestamps -->
+
+        <message>"Updating source timestamps"</message>
+        <log>"Updating source timestamps"</log>
+
+        <process name="'Updating source timestamps'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'find . -name \"*\" -exec touch ^{} \;'"</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/tar.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/tar.err' % extractLogPath</stderr>
+        </process>
+
+        <script>failMessage = 'Updating source timestamps'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+
+        <!-- Tar it up -->
+
+        <message>"Creating source package (tarball)"</message>
+        <log>"Creating source package (tarball)"</log>
+
+        <process name="'Create source package'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'tar cf STAFSource.tar src'"</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/tar.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/tar.err' % extractLogPath</stderr>
+        </process>
+
+        <script>failMessage = 'Creating source package'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <message>"Copying %s source tar file to ftp server" % OSName</message>
+        <log>"Copying %s source tar file to ftp server" % OSName</log>
+
+        <!-- Transfer source tar file to ftp server -->
+
+        <process name="'Copy source tar file'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'cp STAFSource.tar STAF%s-src.tar'" % STAFVersion</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/tar.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/tar.err' % extractLogPath</stderr>
+        </process>
+        
+        <script>failMessage = 'Copy source tar file'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+
+        <process name="'Gzip source tar file'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'gzip STAF%s-src.tar'" % STAFVersion</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/tar.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/tar.err' % extractLogPath</stderr>
+        </process>
+        
+        <script>failMessage = 'Gzip source tar file'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+
+        <stafcmd name="'Transfer source tar.gz file to ftp server'">
+          <location>extractMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/STAF%s-src.tar.gz tofile %s/src/STAF%s-src.tar.gz tomachine %s' % (extractPath, STAFVersion, ftpPath, STAFVersion, ftpMach)
+          </request>
+        </stafcmd>
+        
+        <script>binaryFiles.append('%s/src/STAF%s-src.tar.gz' % (ftpPath, STAFVersion))</script>
+       
+        <script>failMessage = 'Transfer source tar.gz file to ftp server'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <process name="'Create source zip file'">
+          <location>extractMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'zip -r STAF%s-src.zip src'" % STAFVersion</parms>
+          <workdir>extractPath</workdir>
+          <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          <stdout if="debug">'%s/zip.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/zip.err' % extractLogPath</stderr>
+        </process>
+        
+        <script>failMessage = 'Create source Zip file'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Transfer source zip file to ftp server'">
+          <location>extractMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/STAF%s-src.zip tofile %s/src/STAF%s-src.zip tomachine %s' % (extractPath, STAFVersion, ftpPath, STAFVersion, ftpMach)
+          </request>
+        </stafcmd>
+        
+        <script>binaryFiles.append('%s/src/STAF%s-src.zip' % (ftpPath, STAFVersion))</script>
+       
+        <script>failMessage = 'Transfer source zip file to ftp server'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <script>archiveFile = 'staf-cvsroot-%s.tar.gz' % time.strftime("%Y%m%d")</script>
+        
+        <stafcmd name="'Check if the daily archive already exists'">
+          <location>ftpMach</location>
+          <service>'FS'</service>
+          <request>
+            'query entry %s/backup/%s' % (ftpPath, archiveFile)
+          </request>
+        </stafcmd>
+        
+        <!-- Only copy the archive if the file does not already exist on
+             the ftp machine. -->
+        <if expr="RC == 48">
+          <sequence>
+          
+            <stafcmd name="'Transfer source tar.gz file to ftp server'">
+              <location>extractMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/STAF%s-src.tar.gz tofile %s/backup/%s tomachine %s' % (extractPath, STAFVersion, ftpPath, archiveFile, ftpMach)
+              </request>
+            </stafcmd>
+        
+            <script>binaryFiles.append('%s/backup/%s' % (ftpPath, archiveFile))</script>
+       
+            <script>failMessage = 'Transfer %s file to ftp server' % archiveFile</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+          
+          </sequence>
+        </if>
+        
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- TransferSource - This function is responsible for transferring    -->
+  <!--                  the source tarball to the appropriate build      -->
+  <!--                  machine and untarring at the destination.        -->
+  <!-- ================================================================= -->
+
+
+  <function name="TransferSource">
+    <testcase name="'TransferSource'">
+      <sequence>
+
+        <!-- Delete the build path if requested -->
+
+        <message>"Transferring %s source package" % OSName</message>
+        <log>"Transferring %s source package" % OSName</log>
+
+        <if expr="startClean">
+          <sequence>
+
+            <stafcmd name="'Delete build path'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s children recurse confirm' % (
+                  STAFUtil.wrapData(buildPath))
+              </request>
+            </stafcmd>
+
+            <if expr="RC != STAFRetCode.DoesNotExist">
+              <sequence>
+                <script>failMessage = 'Deleting build path'</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+              </sequence>
+            </if>
+            
+            <stafcmd name="'Delete build log path'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s children recurse confirm' % (
+                  STAFUtil.wrapData(buildLogPath))
+              </request>
+            </stafcmd>
+
+            <if expr="RC != STAFRetCode.DoesNotExist">
+              <sequence>
+                <script>failMessage = 'Deleting build log path'</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+              </sequence>
+            </if>
+
+          </sequence>
+        </if>   
+
+        <!-- Create directories -->
+
+        <stafcmd name="'Create build path'">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'create directory %s fullpath' % STAFUtil.wrapData(buildPath)
+          </request>
+        </stafcmd>
+
+        <script>failMessage = 'Creating build path'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+
+        <if expr="debug">
+          <sequence>
+            <stafcmd name="'Create build log path'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'create directory %s fullpath' % STAFUtil.wrapData(buildLogPath)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Creating build log path'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+
+          </sequence>
+        </if>
+
+        <!-- Transfer it -->
+
+        <script>
+          request = 'COPY FILE %s/STAFSource.tar TOFILE %s/STAFSource.tar TOMACHINE %s' % (extractPath, buildPath, buildMach)
+        </script>
+        
+        <stafcmd name="'Transfer source package'">
+          <location>extractMach</location>
+          <service>'FS'</service>
+          <request>request</request>
+        </stafcmd>
+
+        <script>failMessage = 'Transferring source package.  STAF %s FS %s' % (extractMach, request)</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+
+        <!-- Untar it -->
+
+        <process name="'Unpack source package'">
+          <location>buildMach</location>
+          <command mode="'shell'">bashShell</command>
+          <parms>"-c 'tar xf STAFSource.tar'"</parms>
+          <workdir>buildPath</workdir>
+          <envs if="OSName == 'win32' or OSName == 'win64' or OSName == 'winamd64'">'Path=%s;{STAF/Env/Path}' % cygwinBinPath</envs>
+          <stdout if="debug">'%s/tar.out' % buildLogPath</stdout>
+          <stderr if="debug">'%s/tar.err' % buildLogPath</stderr>
+        </process>
+
+        <script>failMessage = 'Unpacking source package'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- BuildIt - This function is responsible for building all the STAF  -->
+  <!--           components.  At the moment it is hard coded for win32.  -->
+  <!-- ================================================================= -->
+
+  <function name="BuildIt">
+    <testcase name="'BuildIt'">
+      <sequence>
+        
+        <iterate var="project" in="ProjectList">   
+          <sequence>
+          
+            <message>
+              'Building %s STAF component: %s' % (OSName, project)
+            </message>
+            <log>
+              'Building %s STAF component: %s' % (OSName, project)
+            </log>
+           
+              <!-- Due to a bug in the AIX compiler, we need to run make twice on AIX -->
+            <if expr="(OSName == 'aix433' or OSName == 'aix2x') and project == 'staf'">
+              <script>attempts = 3</script>
+              <else>
+                <script>attempts = 1</script>
+              </else>
+            </if>
+            
+            <if expr="OSName == 'hpux-ia64-32'">
+              <script>build_arch = 'IA64-32'</script>
+              <elseif expr="OSName == 'hpux-ia64-64'">
+                <script>build_arch = 'IA64-64'</script>
+              </elseif>
+              <elseif expr="OSName == 'hpux'">
+                <script>build_arch = 'PA-RISC'</script>
+              </elseif>
+              <else>
+                <script>build_arch = ''</script>
+              </else>
+            </if>
+            
+            <if expr="OSName == 'aix64'">
+              <script>build_arch = 'PPC64-64'</script>
+            </if>
+            
+            <if expr="OSName == 'win64'">
+              <script>
+                mssdkdir = 'C:/MVC-SDK-IA64'
+                cc_type = 'MVC-SDK-IA64'
+              </script>
+              <elseif expr="OSName == 'winamd64'">
+                <script>
+                  mssdkdir = ''
+                  cc_type = 'MVC8-X64'
+                </script>
+              </elseif>
+              <elseif expr="OSName == 'win32'">
+                <script>
+                  mssdkdir = ''
+                  cc_type = 'MVC6'
+                </script>
+              </elseif>
+              <else>
+                <script>
+                  mssdkdir = ''
+                  cc_type = ''
+                </script>
+              </else>
+            </if>
+            
+            <loop from="1" to="attempts">
+
+              <process name="'Building %s' % project">
+                <location>buildMach</location>
+                <command mode="'shell'">bashShell</command>
+                <parms>"-c '%s'" % make</parms>
+                <workdir>'%s/src/staf' % buildPath</workdir>
+               <envs>
+                  [
+                    'Path=/cygdrive/c/Perl583/bin%s%s%s{STAF/Env/Path}' % (pathSep, cygwinBinPath, pathSep),
+                    'PROJECTS=%s' % project,
+                    'BUILD_TYPE=%s' % buildType,
+                    'OS_NAME=%s' % Build_OSName,
+                    'VSCOMMONDIR=%s' % vscommondir,
+                    'MSVCDIR=%s' % msvcdir,
+                    'JAVA_BUILD_V11=%s' % java_build_v11,
+                    'JAVA_BUILD_V12=%s' % java_build_v12,
+                    'JAVA_V12_ROOT=%s' % java_v12_root,
+                    'JAVA_V11_ROOT=%s' % java_v11_root,
+                    'JAVA_V12_BIN_DIR=%s' % java_v12_bin_dir,
+                    'REXX_ROOT=%s' % rexx_root,
+                    'REXX_LIBDIRS=%s' % rexx_libdirs,
+                    'RXPP_ROOT=%s' % rxpp_root,
+                    'B2H_ROOT=%s' % b2h_root,
+                    'JAVA_DEFAULT_VERSION=%s' % java_default_version,
+                    'XERCES_ROOT=c:/tools/xerces-2_6_2',
+                    'JYTHON_ROOT=c:/jython-2.1',
+                    'SAXON_ROOT=%s' % saxon_root,
+                    'DOCBOOK_ROOT=%s' % docbook_root,
+                    'BUILD_ARCH=%s' % build_arch,
+                    'MSSDKDIR=%s' % mssdkdir,
+                    'CC_TYPE=%s' % cc_type,
+                    '%s' % OS_LIBS,
+                    'STAF_USE_SSL=%s' % staf_use_ssl,
+                    'STAF_DEFINE_SOCKLEN_T=%s' % staf_define_socklen_t
+                  ]            
+                </envs>
+              
+                <!-- The make command does not like output to be redirected.
+                <stdout if="debug">'%s/make.out' % buildLogPath</stdout>
+                <stderr if="debug">'%s/make.err' % buildLogPath</stderr>
+                -->
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+                <console use="'same'"/>
+              </process>
+
+            </loop>
+          
+            <script>failMessage = 'Building %s\n\n%s' % (project, STAXResult[0][1])</script>
+            <!--<script>failMessage = 'Building %s\n\n' % (project)</script>-->
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+          
+          </sequence>
+        </iterate>     
+        
+        <if expr="OSName == 'solaris'">
+          <sequence>
+            <process name="'Stripping solaris binaries'">
+              <location>buildMach</location>
+              <command mode="'shell'">bashShell</command>
+              <parms>"-c 'find . -type f -exec strip ^{} \;'"</parms>
+              <workdir>'%s/rel/%s/staf/retail' % (buildPath, OSName)</workdir>
+              <env>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</env>
+              <stdout if="debug">'%s/strip.out' % buildLogPath</stdout>
+              <stderr if="debug">'%s/strip.err' % buildLogPath</stderr>
+            </process>
+            
+            <script>failMessage = 'Stripping solaris binaries'</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+          </sequence>
+        </if>
+
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- CopyCommonFiles - This function is responsible for copying        -->
+  <!--                   common files which are not buildable on all     -->
+  <!--                   all platforms                                   -->
+  <!-- ================================================================= -->
+
+  <function name="CopyCommonFiles">
+    <testcase name="'CopyCommonFiles'">
+      <sequence>          
+
+        <message>'Copying common files'</message>
+        <log>'Copying common files'</log>
+        
+        <if expr="OSName == 'win32'">
+
+          <sequence>
+            
+            <script>
+              if buildVersion == 'mainline':
+                tarFileName = '../STAF%s-docs.tar' % (STAFVersion) 
+                docsDirectory = '%s/rel/%s/staf/retail/docs/staf' % (buildPath, OSName)
+              else:
+                tarFileName = 'STAF%s-docs.tar' % (STAFVersion)
+                docsDirectory = '%s/rel/%s/staf/retail/docs' % (buildPath, OSName)
+            </script>
+
+            <process name="'Create docs tar file'">
+              <location>buildMach</location>
+              <command mode="'shell'">bashShell</command>
+              <parms>"-c 'tar cf %s *'" % (tarFileName)</parms>
+              <workdir>docsDirectory</workdir>
+              <env>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</env>
+              <returnstdout/>
+              <returnstderr/>
+              <!--  
+              <stdout if="debug">'%s/tar.out' % buildLogPath</stdout>
+              <stderr if="debug">'%s/tar.err' % buildLogPath</stderr>  -->
+            </process>
+ 
+            <script>failMessage = 'Create docs tar file: %s/%s' % (docsDirectory, tarFileName)</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+            
+            <stafcmd name="'Transfer docs tar file to ftp server'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/rel/%s/staf/retail/docs/STAF%s-docs.tar tofile %s/docs/STAF%s-docs.tar tomachine %s' % (buildPath, OSName, STAFVersion, ftpPath, STAFVersion, ftpMach)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Transferring docs tar file to server'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+            
+            <stafcmd name="'Transfer STAFDemo jar file to ftp server'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/rel/%s/staf/retail/samples/demo/STAFDemo.jar tofile %s/demo/STAFDemo.jar tomachine %s' % (buildPath, OSName, ftpPath, ftpMach)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Transferring STAFDemo jar file to ftp server'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+            
+            <message>'Copying service Jar files'</message>
+            <log>'Copying service Jar files'</log>
+            
+            <iterate var="jarFile" in="serviceJarFiles">
+              <sequence>
+                <stafcmd name="'Transfer %s to ftp server' % jarFile">
+                  <location>buildMach</location>
+                  <service>'FS'</service>
+                  <request>
+                    'copy file %s/rel/%s/staf/retail/lib/%s tofile %s/services/%s tomachine %s' % (buildPath, OSName, jarFile, ftpPath, jarFile, ftpMach)
+                  </request>
+                </stafcmd>
+
+                <script>failMessage = 'Transferring %s file to ftp server' % jarFile</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+                
+                <script>binaryFiles.append('%s/services/%s' % (ftpPath, jarFile))</script>
+              </sequence>
+            </iterate>
+            
+          </sequence>          
+        </if>
+        
+
+        <if expr="OSName == 'linux' or OSName == 'aix' or OSName == 'aix64' or OSName == 'aix433' or OSName == 'aix2x' or OSName == 'solaris'">
+          <sequence>
+          
+            <stafcmd name="'Transfer STAFDemo jar file to build machine'">
+              <location>ftpMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/demo/STAFDemo.jar tofile %s/rel/%s/staf/retail/samples/demo/STAFDemo.jar tomachine %s' % (ftpPath, buildPath, Build_OSName, buildMach)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Transferring STAFDemo jar file to build machine'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>            
+            
+          </sequence>
+        </if>
+        
+        <if expr="OSName == 'solaris' or OSName == 'hpux' or OSName == 'aix' or OSName == 'aix64' or OSName == 'linuxppc64' or OSName == 'hpux-ia64-32' or OSName == 'hpux-ia64-64' or OSName == 'win64' or OSName == 'winamd64'">
+          <sequence>
+          
+            <process name="'Create docs directory'">
+              <location>buildMach</location>
+              <command mode="'shell'">bashShell</command>
+              <parms>"-c 'mkdir docs'"</parms>
+              <workdir>'%s/rel/%s/staf/retail/' % (buildPath, Build_OSName)</workdir>
+              <env>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</env>
+              <stdout if="debug">'%s/tar.out' % buildLogPath</stdout>
+              <stderr if="debug">'%s/tar.err' % buildLogPath</stderr>
+            </process>
+            
+            <!-- Don't check for an error as the docs directory may already exist on hpux from building the java project which creates docs/STAFJava.htm
+            <script>failMessage = 'Create docs directory'</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+            -->
+          
+            <stafcmd name="'Transfer docs tar file to build machine'">
+              <location>ftpMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/docs/STAF%s-docs.tar tofile %s/rel/%s/staf/retail/docs/STAF%s-docs.tar tomachine %s' % (ftpPath, STAFVersion, buildPath, Build_OSName, STAFVersion, buildMach)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Transferring docs tar file to build machine'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+            
+            <process name="'Untar docs tar file'">
+              <location>buildMach</location>
+              <command mode="'shell'">bashShell</command>
+              <parms>"-c 'tar xf STAF%s-docs.tar'" % (STAFVersion)</parms>
+              <workdir>'%s/rel/%s/staf/retail/docs' % (buildPath, Build_OSName)</workdir>
+              <env>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</env>          
+              <stdout if="debug">'%s/tar.out' % buildLogPath</stdout>
+              <stderr if="debug">'%s/tar.err' % buildLogPath</stderr>
+            </process>
+            
+            <script>failMessage = 'Untar docs tar file'</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+
+          </sequence>
+        </if>
+        
+      </sequence>
+    </testcase>
+  </function> 
+
+
+  <!-- ================================================================= -->
+  <!-- BuildWin64-CodepageFiles- This function is responsible for        -->
+  <!--                   building the codepage files for the Win64       -->
+  <!--                   platform                                        -->
+  <!-- ================================================================= -->
+
+  <function name="BuildWin64-CodepageFiles">
+    <sequence>
+      
+      <stafcmd name="'Transfer codepage .ucm files from Win32 build machine to Win64 machine'">
+        <location>buildMach</location>
+        <service>'FS'</service>
+        <request>
+          'copy directory c:/dev/autobuild/build/src/staf/codepage ext ucm tomachine staf4c todirectory c:/dev/autobuild/codepage'
+        </request>
+      </stafcmd>
+      
+      <script>failMessage = 'Transfer codepage .ucm files from Win32 build machine to Win64 machine'</script>
+      <call function="'check-stafcmd'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <process name="'Run ucm2bin on WinA64 machine'">
+        <location>'staf4c'</location>
+        <command mode="'shell'">'for %f in (*.ucm) do ucm2bin %f'</command>
+        <workdir>'c:/dev/autobuild/codepage'</workdir>
+        <env>'Path=c:/dev/autobuild/codepage;{STAF/Env/Path}'</env>
+        <stdout if="debug">'c:/dev/autobuild/ucm2bin.out'</stdout>
+        <stderr if="debug">'c:/dev/autobuild/ucm2bin.err'</stderr>
+      </process>
+      
+      <script>failMessage = 'Run ucm2bin on Win64 machine'</script>
+      <call function="'check-win-bash-process'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <stafcmd name="'Transfer codepage .bin files from Win64 machine to Win32 build machine'">
+        <location>'staf4c'</location>
+        <service>'FS'</service>
+        <request>
+          'copy directory c:/dev/autobuild/codepage ext bin tomachine %s todirectory c:/dev/autobuild/build/rel/win32/staf/retail/codepage' % (buildMach)
+        </request>
+      </stafcmd>
+      
+      <script>failMessage = 'Transfer codepage .bin files from Win64 machine to Win32 build machine'</script>
+      <call function="'check-stafcmd'"/>
+      <tcstatus result="'Pass'"/>
+
+    </sequence>
+  </function>
+  
+  <!-- ================================================================= -->
+  <!-- BuildWinAMD64-CodepageFiles- This function is responsible for     -->
+  <!--                   building the codepage files for the WinAMD64    -->
+  <!--                   platform                                        -->
+  <!-- ================================================================= -->
+
+  <function name="BuildWinAMD64-CodepageFiles">
+    <sequence>
+      
+      <stafcmd name="'Transfer codepage .ucm files from Win32 build machine to Win64 machine'">
+        <location>buildMach</location>
+        <service>'FS'</service>
+        <request>
+          'copy directory c:/dev/autobuild/build/src/staf/codepage ext ucm tomachine svtwin33 todirectory c:/dev/autobuild/codepage'
+        </request>
+      </stafcmd>
+      
+      <script>failMessage = 'Transfer codepage .ucm files from Win32 build machine to WinAMD64 machine'</script>
+      <call function="'check-stafcmd'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <process name="'Run ucm2bin on WinA64 machine'">
+        <location>'svtwin33'</location>
+        <command mode="'shell'">'for %f in (*.ucm) do ucm2bin %f'</command>
+        <workdir>'c:/dev/autobuild/codepage'</workdir>
+        <env>'Path=c:/dev/autobuild/codepage;{STAF/Env/Path}'</env>
+        <stdout if="debug">'c:/dev/autobuild/ucm2bin.out'</stdout>
+        <stderr if="debug">'c:/dev/autobuild/ucm2bin.err'</stderr>
+      </process>
+      
+      <script>failMessage = 'Run ucm2bin on WinAMD64 machine'</script>
+      <call function="'check-win-bash-process'"/>
+      <tcstatus result="'Pass'"/>
+      
+      <stafcmd name="'Transfer codepage .bin files from Win64 machine to Win32 build machine'">
+        <location>'svtwin33'</location>
+        <service>'FS'</service>
+        <request>
+          'copy directory c:/dev/autobuild/codepage ext bin tomachine %s todirectory c:/dev/autobuild/build/rel/win32/staf/retail/codepage' % (buildMach)
+        </request>
+      </stafcmd>
+      
+      <script>failMessage = 'Transfer codepage .bin files from WinAMD64 machine to Win32 build machine'</script>
+      <call function="'check-stafcmd'"/>
+      <tcstatus result="'Pass'"/>
+
+    </sequence>
+  </function>
+
+
+  <!-- ================================================================= -->
+  <!-- BuildIPv6 - This function is responsible for building the IPv6    -->
+  <!--             support                                               -->
+  <!-- ================================================================= -->
+
+  <function name="BuildIPv6">
+    <testcase name="'BuildIPv6'">
+      <sequence>
+      
+        <!-- First do the aix433 processing.  We don't build IPv6 for aix433,
+             but we do need to copy the files to the IPv4 directory -->
+
+        <if expr="OSName == 'aix433'">
+          <sequence>
+
+            <script>
+              objDir = '/opt/dev/autobuild/build/obj/aix433/staf/retail'
+              relDir = '/opt/dev/autobuild/build/rel/aix433/staf/retail'
+              STAFlib = 'libSTAF.so'
+              STAFTCPlib = 'libSTAFTCP.so'
+            </script>
+
+            <stafcmd name="'Create IPv4 directory'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'create directory %s/lib/IPv4' % (relDir)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Create IPv4 directory'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+
+            <stafcmd name="'Copy IPv4 %s file' % STAFlib">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/lib/%s tofile %s/lib/IPv4/%s tomachine %s' % (relDir, STAFlib, relDir, STAFlib, buildMach)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Copy IPv4 %s file' % STAFlib</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+
+            <stafcmd name="'Copy IPv4 %s file' % STAFTCPlib">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/lib/%s tofile %s/lib/IPv4/%s tomachine %s' % (relDir, STAFTCPlib, relDir, STAFTCPlib, buildMach)
+              </request>
+            </stafcmd>
+
+            <script>failMessage = 'Copy IPv4 %s file' % STAFTCPlib</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+
+            <return/>
+
+          </sequence>
+        </if>
+
+        <message>'Building IPv6 support for %s ' % OSName</message>
+        <log>'Building IPv6 support for %s' % OSName</log>
+        
+        <if expr="OSName == 'win32'">
+          <script>
+                  objDir = 'c:/dev/autobuild/build/obj/win32/staf/retail'
+                  relDir = 'c:/dev/autobuild/build/rel/win32/staf/retail'
+                  STAFlib = 'STAF.dll'
+                  STAFTCPlib = 'STAFTCP.dll'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.obj' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.obj' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'MSVCDIR=%s' % msvcdir,
+                      'OS_NAME=%s' % Build_OSName,
+                      'MSSDKDIR=C:/MVC-SDK-IA64',
+                      'STAF_USE_IPV6=1',
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'CC_TYPE=MVC6'
+                  ]
+            </script>
+          <elseif expr="OSName == 'win64'">
+            <script>
+                  objDir = 'c:/dev/autobuild/build/obj/win32/staf/retail'
+                  relDir = 'c:/dev/autobuild/build/rel/win32/staf/retail'
+                  STAFlib = 'STAF.dll'
+                  STAFTCPlib = 'STAFTCP.dll'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.obj' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.obj' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'MSVCDIR=%s' % msvcdir,
+                      'BUILD_ARCH=%s' % build_arch,
+                      'MSSDKDIR=C:/MVC-SDK-IA64',
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1',
+                      'CC_TYPE=MVC-SDK-IA64'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'winamd64'">
+            <script>
+                  objDir = 'c:/dev/autobuild/build/obj/win32/staf/retail'
+                  relDir = 'c:/dev/autobuild/build/rel/win32/staf/retail'
+                  STAFlib = 'STAF.dll'
+                  STAFTCPlib = 'STAFTCP.dll'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.obj' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.obj' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'MSVCDIR=%s' % msvcdir,
+                      'BUILD_ARCH=%s' % build_arch,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1',
+                      'CC_TYPE=MVC8-X64'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'linux'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/linux/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/linux/staf/retail'
+                  STAFlib = 'libSTAF.so'
+                  STAFTCPlib = 'libSTAFTCP.so'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'linuxppc64'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/linuxppc64/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/linuxppc64/staf/retail'
+                  STAFlib = 'libSTAF.so'
+                  STAFTCPlib = 'libSTAFTCP.so'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'hpux'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/hpux/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/hpux/staf/retail'
+                  STAFlib = 'libSTAF.sl'
+                  STAFTCPlib = 'libSTAFTCP.sl'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'hpux-ia64-32' or OSName == 'hpux-ia64-64'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/hpux/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/hpux/staf/retail'
+                  STAFlib = 'libSTAF.so'
+                  STAFTCPlib = 'libSTAFTCP.so'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = buildMach
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'BUILD_ARCH=%s' % build_arch,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+              </script>
+            </elseif>
+            <elseif expr="OSName == 'solaris'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/solaris/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/solaris/staf/retail'
+                  STAFlib = 'libSTAF.so'
+                  STAFTCPlib = 'libSTAFTCP.so'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = 'staf5c.austin.ibm.com'
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'BUILD_ARCH=%s' % build_arch,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'aix'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/aix/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/aix/staf/retail'
+                  STAFlib = 'libSTAF.so'
+                  STAFTCPlib = 'libSTAFTCP.so'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = 'staf4d.austin.ibm.com'
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'BUILD_ARCH=%s' % build_arch,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+            </script>
+          </elseif>
+          <elseif expr="OSName == 'aix64'">
+            <script>
+                  objDir = '/opt/dev/autobuild/build/obj/aix64/staf/retail'
+                  relDir = '/opt/dev/autobuild/build/rel/aix64/staf/retail'
+                  STAFlib = 'libSTAF.so'
+                  STAFTCPlib = 'libSTAFTCP.so'
+                  RebuildFiles = [
+                      '%s/connproviders/tcp/STAFTCPConnProvider.d' % objDir,
+                      '%s/connproviders/tcp/STAFTCPConnProvider.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFTCPlib),
+                      '%s/stafif/STAFSocket.d' % objDir,
+                      '%s/stafif/STAFSocket.o' % objDir,
+                      '%s/lib/%s' % (relDir, STAFlib)
+                     ]
+                  ipv6BuildMachine = 'staf4d.austin.ibm.com'
+                  envs = [
+                      'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+                      'BUILD_TYPE=%s' % buildType,
+                      'OS_NAME=%s' % Build_OSName,
+                      'BUILD_ARCH=%s' % build_arch,
+                      'STAF_USE_SSL=%s' % staf_use_ssl,
+                      'STAF_USE_IPV6=1'
+                  ]
+            </script>
+          </elseif>
+          <else>
+            <sequence>
+              <message>'OSName=%s' % OSName</message>
+              <return/>
+            </sequence>
+          </else>
+        </if>
+        
+        <stafcmd name="'Create IPv4 directory'">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'create directory %s/lib/IPv4' % (relDir)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Create IPv4 directory'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Create IPv6 directory'">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'create directory %s/lib/IPv6' % (relDir)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Create IPv6 directory'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Copy IPv4 %s file' % STAFlib">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/lib/%s tofile %s/lib/IPv4/%s tomachine %s' % (relDir, STAFlib, relDir, STAFlib, buildMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Copy IPv4 %s file' % STAFlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Copy IPv4 %s file' % STAFTCPlib">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/lib/%s tofile %s/lib/IPv4/%s tomachine %s' % (relDir, STAFTCPlib, relDir, STAFTCPlib, buildMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Copy IPv4 %s file' % STAFTCPlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <script>failMessage = 'Copy IPv4 %s file' % STAFTCPlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <iterate var="RebuildFile" in="RebuildFiles">
+          <sequence>
+            <stafcmd name="'Delete old IP files'">
+              <location>buildMach</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s confirm' % (RebuildFile)
+              </request>
+            </stafcmd>
+            <script>failMessage = 'Delete old IP files'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+          </sequence>
+        </iterate>
+        
+        <if expr="ipv6BuildMachine == buildMach">
+          <sequence>
+            <process name="'Build IPv6 Files'">
+              <location>buildMach</location>
+              <command>bashShell</command>
+              <parms>"-c '%s'" % make</parms>
+              <workdir>'%s/src/staf' % buildPath</workdir>
+              <envs>
+                envs
+              </envs>    
+              <stderr mode="'stdout'"/>
+              <returnstdout/>
+              <console use="'same'"/>
+            </process>
+            <script>failMessage = 'Build IPv6 Files\n\n%s' % (STAXResult[0][1])</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+          </sequence>
+          <else>
+            <call function="'BuildRemoteIPv6'"/>
+          </else>
+        </if>
+        
+        <stafcmd name="'Copy IPv6 %s file' % STAFlib">
+          <location>ipv6BuildMachine</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/lib/%s tofile %s/lib/IPv6/%s tomachine %s' % (relDir, STAFlib, relDir, STAFlib, buildMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Copy IPv6 %s file' % STAFlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Copy IPv6 %s file' % STAFTCPlib">
+          <location>ipv6BuildMachine</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/lib/%s tofile %s/lib/IPv6/%s tomachine %s' % (relDir, STAFTCPlib, relDir, STAFTCPlib, buildMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Copy IPv6 %s file' % STAFTCPlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Copy IPv4 %s file back to bin directory' % STAFlib">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/lib/IPv4/%s tofile %s/lib/%s tomachine %s' % (relDir, STAFlib, relDir, STAFlib, buildMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Copy IPv4 %s file back to bin directory' % STAFlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Copy IPv4 %s file back to bin directory' % STAFTCPlib">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/lib/IPv4/%s tofile %s/lib/%s tomachine %s' % (relDir, STAFTCPlib, relDir, STAFTCPlib, buildMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Copy IPv4 %s file back to bin directory' % STAFTCPlib</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+      </sequence>
+    </testcase>
+  </function>
+  
+  
+  <!-- ================================================================= -->
+  <!-- BuildRemoteIPv6 - This function is responsible for building the   -->
+  <!--             remote IPv6support                                    -->
+  <!-- ================================================================= -->
+
+  <function name="BuildRemoteIPv6">
+    <testcase name="'BuildRemoteIPv6'">
+      <sequence>
+      
+        <!-- Delete the build path if requested -->
+
+        <message>"Transferring %s source package" % OSName</message>
+        <log>"Transferring %s source package" % OSName</log>
+
+        <if expr="startClean">
+          <sequence>
+
+            <stafcmd name="'Delete build path'">
+              <location>ipv6BuildMachine</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s children recurse confirm' % (
+                  STAFUtil.wrapData(buildPath))
+              </request>
+            </stafcmd>
+
+            <if expr="RC != STAFRetCode.DoesNotExist">
+              <sequence>
+                <script>failMessage = 'Deleting build path'</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+              </sequence>
+            </if>
+            
+            <stafcmd name="'Delete build log path'">
+              <location>ipv6BuildMachine</location>
+              <service>'FS'</service>
+              <request>
+                'delete entry %s children recurse confirm' % (
+                  STAFUtil.wrapData(buildLogPath))
+              </request>
+            </stafcmd>
+
+            <if expr="RC != STAFRetCode.DoesNotExist">
+              <sequence>
+                <script>failMessage = 'Deleting build log path'</script>
+                <call function="'check-stafcmd'"/>
+                <tcstatus result="'Pass'"/>
+              </sequence>
+            </if>
+
+          </sequence>
+        </if>   
+
+        <!-- Create directories -->
+
+        <stafcmd name="'Create build path'">
+          <location>ipv6BuildMachine</location>
+          <service>'FS'</service>
+          <request>
+            'create directory %s fullpath' % STAFUtil.wrapData(buildPath)
+          </request>
+        </stafcmd>
+
+        <script>failMessage = 'Creating build path'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+      
+        <!-- Transfer it -->
+
+        <script>
+          request = 'COPY FILE %s/STAFSource.tar TOFILE %s/STAFSource.tar TOMACHINE %s' % (extractPath, buildPath, ipv6BuildMachine)
+        </script>  
+        
+        <stafcmd name="'Transfer source package'">
+          <location>extractMach</location>
+          <service>'FS'</service>
+          <request>request</request>
+        </stafcmd>
+
+        <script>failMessage = 'Transferring source package to IPv6 machine: STAF %s FS %s' % (extractMach, request)</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+
+        <!-- Untar it -->
+
+        <process name="'Unpack source package'">
+          <location>ipv6BuildMachine</location>
+          <command mode="'shell'">bashShell</command>
+          <parms>"-c 'tar xf STAFSource.tar'"</parms>
+          <workdir>buildPath</workdir>
+        </process>
+
+        <script>failMessage = 'Unpacking source package on IPv6 machine'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <process name="'Build IPv6 Files'">
+          <location>ipv6BuildMachine</location>
+          <command>bashShell</command>
+          <parms>"-c '%s'" % make</parms>
+          <workdir>'%s/src/staf' % buildPath</workdir>
+          <envs>
+            envs
+          </envs>    
+          <stderr mode="'stdout'"/>
+          <returnstdout/>
+          <console use="'same'"/>
+        </process>
+        <script>failMessage = 'Build IPv6 Files\n\n%s' % (STAXResult[0][1])</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <if expr="OSName == 'solaris'">
+          <sequence>
+            <process name="'Stripping solaris binaries'">
+              <location>ipv6BuildMachine</location>
+              <command mode="'shell'">bashShell</command>
+              <parms>"-c 'find . -type f -exec strip ^{} \;'"</parms>
+              <workdir>'%s/rel/%s/staf/retail' % (buildPath, OSName)</workdir>
+            </process>
+            
+            <script>failMessage = 'Stripping solaris binaries'</script>
+            <call function="'check-win-bash-process'"/>
+            <tcstatus result="'Pass'"/>
+          </sequence>
+        </if>
+        
+      </sequence>
+    </testcase>
+  </function>
+  
+  <!-- ================================================================= -->
+  <!-- PackageIt - This function is responsible for packaging the build  -->
+  <!--             so that the installer can be created.                 -->
+  <!-- ================================================================= -->
+
+  <function name="PackageIt">
+    <testcase name="'PackageIt'">
+      <sequence>          
+
+        <message>'Packaging STAF %s build' % OSName</message>
+        <log>'Packaging STAF %s build' % OSName</log>
+        
+        <iterate var="libFile" in="osLibFiles">
+          <stafcmd name="'Copy OS Library File'">
+            <location>buildMach</location>
+            <service>'FS'</service>
+            <request>
+              'copy file %s%s tofile %s/rel/%s/staf/retail/lib/%s tomachine %s' % (osLibDir, libFile, buildPath, Build_OSName, libFile, buildMach)
+            </request>
+          </stafcmd>
+        </iterate>
+        
+        <script>failMessage = 'Copy OS Library File'</script>
+        <call function="'check-stafcmd'"/>
+
+        <tcstatus result="'Pass'"/>
+
+        <if expr="OSName == 'hpux-ia64-32'">
+          <script>build_arch = 'IA64-32'</script>
+          <elseif expr="OSName == 'hpux-ia64-64'">
+            <script>build_arch = 'IA64-64'</script>
+          </elseif>
+          <elseif expr="OSName == 'hpux'">
+            <script>build_arch = 'PA-RISC'</script>
+          </elseif>
+          <else>
+            <script>build_arch = ''</script>
+          </else>
+        </if>
+
+        <process name="'Package build'">
+          <location>buildMach</location>
+          <command>bashShell</command>
+          <parms>"-c '%s'" % make</parms>
+          <workdir>'%s/src/staf' % buildPath</workdir>
+          <envs>
+            [
+              'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep),
+              'PROJECTS=pkg',
+              'BUILD_TYPE=%s' % buildType,
+              'OS_NAME=%s' % Build_OSName,
+              'VSCOMMONDIR=%s' % vscommondir,
+              'MSVCDIR=%s' % msvcdir,
+              'BUILD_ARCH=%s' % build_arch,
+              'MSSDKDIR=%s' % mssdkdir,
+              'STAF_USE_IPV6=1',
+              'CC_TYPE=%s' % cc_type,
+              'STAF_USE_SSL=%s' % staf_use_ssl
+            ]
+          </envs>    
+          <stderr mode="'stdout'"/>
+          <returnstdout/>
+          <console use="'same'"/>
+        </process>
+
+        <script>failMessage = 'Packaging build\n\n%s' % (STAXResult[0][1])</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>                
+
+      </sequence>
+    </testcase>
+  </function> 
+
+
+  <!-- ================================================================= -->
+  <!-- CreateTarGZ - This function is responsible for creating the        -->
+  <!--              files on Unix platforms                             -->
+  <!-- ================================================================= -->
+
+  <function name="CreateTarGZ">
+    <testcase name="'CreateTarGZ'">
+      <sequence>
+
+        <message>'Creating STAF %s tar.gz files' % OSName</message>
+        <log>'Creating STAF %s tar.gz files' % OSName</log>
+
+        <process name="'Copy tar file'">
+          <location>buildMach</location>
+          <command mode="'shell'">bashShell</command>
+          <parms>"-c 'cp stafpkg_%s.tar STAF%s-%s%s.tar'" % (Build_OSName, STAFVersion, OSName, ismpPlatformNameSuffix)</parms>
+          <workdir>'%s/pkg/%s/staf/retail' % (buildPath, Build_OSName)</workdir>
+          <env>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</env>          
+          <stdout if="debug">'%s/targz.out' % buildLogPath</stdout>
+          <stderr if="debug">'%s/targz.err' % buildLogPath</stderr>          
+        </process>
+
+        <script>failMessage = 'Renaming tar file'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <process name="'Gzip file'">
+          <location>buildMach</location>
+          <command mode="'shell'">bashShell</command>
+          <parms>"-c 'gzip STAF%s-%s%s.tar'" % (STAFVersion, OSName, ismpPlatformNameSuffix)</parms>
+          <workdir>'%s/pkg/%s/staf/retail' % (buildPath, Build_OSName)</workdir>
+          <env>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</env>          
+          <stdout if="debug">'%s/targz.out' % buildLogPath</stdout>
+          <stderr if="debug">'%s/targz.err' % buildLogPath</stderr>          
+        </process>
+
+        <script>failMessage = 'Gzip file'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <stafcmd name="'Transfer tar.gz File'">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/pkg/%s/staf/retail/STAF%s-%s%s.tar.gz tofile %s/%s/STAF%s-%s%s.tar.gz tomachine %s' % (buildPath, Build_OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ftpPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ftpMach)
+          </request>
+        </stafcmd>
+        
+        <script>failMessage = 'Transferring tar.gz File'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+        
+        <script>binaryFiles.append('%s/%s/STAF%s-%s%s.tar.gz' % (ftpPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix))</script>
+
+      </sequence>
+    </testcase>
+  </function>
+  
+
+  <!-- ================================================================= -->
+  <!-- TransferToISMP - This function is responsible for transferring    -->
+  <!--                  the package tarball to the ISMP build machine    -->
+  <!--                  and untarring at the destination.                -->
+  <!-- ================================================================= -->
+
+  <function name="TransferToISMP">
+    <testcase name="'TransferToISMP'">
+      <sequence>
+
+        <stafcmd name="'Requesting ISMP Build resource'">
+          <location>ismpMach</location>
+          <service>'SEM'</service>
+          <request>'request mutex ismpBuild'</request>
+        </stafcmd>
+
+        <message>"Transferring %s package file to ISMP machine" % OSName</message>
+        <log>"Transferring %s package file to ISMP machine" % OSName</log>
+
+        <!-- Only 1 platform can run the ISMP Build at a time -->
+
+        <if expr="OSName == 'aix433'">
+          <script>Build_OSName2 = 'aix'</script>
+          <else>
+            <script>Build_OSName2 = Build_OSName</script>
+          </else>
+        </if>
+
+        <!-- Transfer it -->
+
+        <stafcmd name="'Transfer package file'">
+          <location>buildMach</location>
+          <service>'FS'</service>
+          <request>
+            'copy file %s/pkg/%s/staf/retail/stafpkg_%s.tar tofile %s/%s/stafpkg_%s.tar tomachine %s' % (buildPath, Build_OSName, Build_OSName, ismpInputPath, Build_OSName2, Build_OSName, ismpMach)
+          </request>
+        </stafcmd>
+
+        <script>failMessage = 'Transferring source package'</script>
+        <call function="'check-stafcmd'"/>
+        <tcstatus result="'Pass'"/>
+
+        <!-- Untar it -->
+
+        <process name="'Unpack package file'">
+          <location>ismpMach</location>
+          <command>cygwinBashShell</command>
+          <parms>"-c 'tar xf stafpkg_%s.tar'" % (Build_OSName)</parms>
+          <workdir>'%s/%s' % (ismpInputPath, Build_OSName2)</workdir>
+          <envs>'Path=%s%s{STAF/Env/Path}' % (cygwinBinPath, pathSep)</envs>
+          <stdout if="debug">'%s/tar.out' % extractLogPath</stdout>
+          <stderr if="debug">'%s/tar.err' % extractLogPath</stderr>
+        </process>
+
+        <script>failMessage = 'Unpacking package file'</script>
+        <call function="'check-win-bash-process'"/>
+        <tcstatus result="'Pass'"/>
+
+
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- BuildISMP - This function is responsible for                      -->
+  <!-- ================================================================= -->
+
+  <function name="BuildISMP">
+    <testcase name="'BuildISMP'">
+      <sequence>        
+       
+        <message>"Building %s ISMP installers" % Build_OSName</message>
+        <log>"Building %s ISMP installers" % Build_OSName</log>
+
+        <!-- build ismp -->
+
+        <process name="'ISMP Build'">
+
+          <location>ismpMach</location>
+          <command>'%s/build%s-%s.cmd' % (ismpInputPath, buildScriptVersion, OSName)</command>
+          <title>'Building %s ISMP binaries' % Build_OSName</title>
+
+        <statichandlename>'STAF-ISMP-Build'</statichandlename>
+        </process>
+
+        <stafcmd name="'Release ISMP Build resource'">
+          <location>ismpMach</location>
+          <service>'SEM'</service>
+          <request>'release mutex ismpBuild force'</request>
+        </stafcmd>
+        
+        <script>failMessage = 'Build ISMP installers'</script>
+        <call function="'check-process'"/>
+        <tcstatus result="'Pass'"/>        
+        
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- CopyInstallers - This function is responsible for transferring    -->
+  <!--                  the installers to the ftp machine.               -->
+  <!-- ================================================================= -->
+
+  <function name="CopyInstallers">
+    <testcase name="'CopyInstallers'">
+      <sequence>
+        
+        <message>"Copying %s installers to ftp server" % Build_OSName</message>
+        <log>"Copying %s installers to ftp server" % Build_OSName</log>
+
+        <!-- Transfer it -->
+        
+        <if expr="OSName == 'aix2x'">
+          <sequence>
+            <stafcmd name="'Transfer Jar File'">
+              <location>ismpMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/%s/STAF%s-setup-%s%s.jar tofile %s/%s/STAF%s-setup-%s%s.jar tomachine %s' % (ismpOutputPath, Build_OSName, STAFVersion, Build_OSName, ismpPlatformNameSuffix, ftpPath, Build_OSName, STAFVersion, Build_OSName, ismpPlatformNameSuffix, ftpMach)
+              </request>
+            </stafcmd>
+            <script>failMessage = 'Transferring Jar File'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+        
+            <script>binaryFiles.append('%s/%s/STAF%s-setup-%s%s.jar' % (ftpPath, Build_OSName, STAFVersion, Build_OSName, ismpPlatformNameSuffix))</script>
+          </sequence>
+          <else>
+            <sequence>
+              <stafcmd name="'Transfer Jar File'">
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>
+                  'copy file %s/%s/STAF%s-setup-%s%s.jar tofile %s/%s/STAF%s-setup-%s%s.jar tomachine %s' % (ismpOutputPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ftpPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ftpMach)
+                </request>
+              </stafcmd>
+              <script>failMessage = 'Transferring Jar File'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+        
+            <script>binaryFiles.append('%s/%s/STAF%s-setup-%s%s.jar' % (ftpPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix))</script>
+            </sequence>
+          </else>
+        </if>
+
+        <if expr="OSName == 'aix2x'">
+          <sequence>
+            <stafcmd name="'Transfer Executable File'">
+              <location>ismpMach</location>
+              <service>'FS'</service>
+              <request>
+                'copy file %s/%s/STAF%s-setup-%s%s%s tofile %s/%s/STAF%s-setup-%s%s%s tomachine %s' % (ismpOutputPath, Build_OSName, STAFVersion, Build_OSName, ismpPlatformNameSuffix, ismpExeSuffix, ftpPath, Build_OSName, STAFVersion, Build_OSName, ismpPlatformNameSuffix, ismpExeSuffix, ftpMach)
+              </request>
+            </stafcmd>
+            <script>failMessage = 'Transferring Executable File'</script>
+            <call function="'check-stafcmd'"/>
+            <tcstatus result="'Pass'"/>
+        
+            <script>binaryFiles.append('%s/%s/STAF%s-setup-%s%s%s' % (ftpPath, Build_OSName, STAFVersion, Build_OSName, ismpPlatformNameSuffix, ismpExeSuffix))</script>
+          </sequence>
+          <else>
+            <sequence>
+              <stafcmd name="'Transfer Executable File'">
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>
+                  'copy file %s/%s/STAF%s-setup-%s%s%s tofile %s/%s/STAF%s-setup-%s%s%s tomachine %s' % (ismpOutputPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ismpExeSuffix, ftpPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ismpExeSuffix, ftpMach)
+                </request>
+              </stafcmd>
+              <script>failMessage = 'Transferring Executable File'</script>
+              <call function="'check-stafcmd'"/>
+              <tcstatus result="'Pass'"/>
+        
+              <script>binaryFiles.append('%s/%s/STAF%s-setup-%s%s%s' % (ftpPath, OSName, STAFVersion, OSName, ismpPlatformNameSuffix, ismpExeSuffix))</script>
+            </sequence>
+          </else>
+        </if>
+        
+      </sequence>
+    </testcase>
+  </function>
+
+
+  <!-- ================================================================= -->
+
+  <!-- Main - This function is the main function called and drives the   -->
+
+  <!--         overall build process.                                    -->
+  <!-- ================================================================= -->
+
+  <function name="Main">   
+    <sequence>
+    
+      <if expr="buildVersion == 'mainline'">
+        <script>
+          stafBranchTag = ''
+          STAFVersion = '320'
+          ftpPath = '/root/build'
+          buildScriptVersion = ''
+          if not locals().has_key('buildPlatforms'):
+            buildPlatforms = ['win32', 'linux', 'aix', 'aix433', 'solaris', 'hpux', 'linuxppc64']
+        </script>
+        <elseif expr="buildVersion == '2x'">
+          <script>
+            stafBranchTag = '-r BR-2_X'
+            STAFVersion = '2611'
+            ftpPath = '/root/build/2x'
+            buildScriptVersion = '2x'
+            javaServiceReleases = javaServiceReleases2x
+            if not locals().has_key('buildPlatforms'):
+              buildPlatforms = ['win32', 'linux', 'aix2x', 'solaris', 'hpux', 'linuxppc64']
+          </script>
+        </elseif>
+      </if>
+      
+      <message>'Starting build.  Version: %s' %buildVersion</message>
+      
+      <if expr="'win32' in buildPlatforms and 'win64' in buildPlatforms">
+        <sequence>
+          <script>RC = -1</script>
+          <script>failMessage = 'buildPlatforms error: Do not run win32 and win64 builds simultaneously!'</script>
+          <call function="'check-stafcmd'"/>        
+        </sequence>
+      </if>
+    
+      <stafcmd name="'Requesting STAF-AutoBuild semaphore'">
+        <location>ismpMach</location>
+        <service>'SEM'</service>
+
+        <request>'request mutex STAF-AutoBuild'</request>
+      </stafcmd>
+
+      <stafcmd name="'Resetting win32 build complete semaphore'">
+        <location>ismpMach</location>
+        <service>'SEM'</service>
+        <request>'event win32Complete reset'</request>
+      </stafcmd>
+      
+      <stafcmd name="'Release ISMP Build resource'">
+        <location>ismpMach</location>
+        <service>'SEM'</service>
+        <request>'release mutex ismpBuild force'</request>
+      </stafcmd>
+      
+      <stafcmd name="'Delete ISMP Build resource'">
+        <location>ismpMach</location>
+        <service>'SEM'</service>
+        <request>'delete mutex ismpBuild'</request>
+      </stafcmd>
+
+      <call function="'ExportSource'"/>
+        
+      <paralleliterate var="platform" in="PlatformInfo">
+
+        <if expr="platform[0] in buildPlatforms">
+
+          <block name='platform[0]'>
+
+           <testcase name='platform[0]'>
+
+            <sequence>
+
+              <script>
+
+                OSName = platform[0]
+                drive = platform[1]
+                root = platform[2]
+                buildMach = platform[3]
+                bashShell = platform[4]
+                vscommondir = platform[5]
+                msvcdir = platform[6]
+                java_build_v11 = platform[7]
+                java_build_v12 = platform[8]
+                java_v11_root = platform[9]
+                java_v12_root = platform[10]
+                java_v12_bin_dir = platform[11]
+                rexx_root = platform[12]
+                rexx_libdirs = platform[13]
+                rxpp_root = platform[14]
+                b2h_root = platform[15]
+                java_default_version = platform[16]
+                ProjectList = platform[17]
+                make = platform[18]
+                pathSep = platform[19]
+                ismpExeSuffix = platform[20]
+                osLibFiles = platform[21]
+                osLibDir = platform[22]
+                ismpPlatformNameSuffix = platform[23]
+                Build_OSName = platform[24]
+                BuildISMPFiles = platform[25]
+                OS_LIBS = platform[26]
+                saxon_root = platform[27]
+                docbook_root = platform[28]
+              
+                autobuildPath = '%s/dev/autobuild' % root
+                buildPath = "%s/build" % autobuildPath
+                buildLogPath = "%s/build_logs" % autobuildPath
+                
+                staf_use_ssl = '' # Must set to '' to not build OpenSSL support!
+              
+              </script>
+              
+              <if expr="platform[0] == 'solaris'">
+                <script>
+                  staf_define_socklen_t = '1'
+                </script>
+                <else>
+                  <script>
+                    staf_define_socklen_t = ''
+                  </script>
+                </else>
+              </if>
+              
+              <if expr="platform[0] == 'linux' and buildScriptVersion == '2x'">
+                <script>
+                  ProjectList.append('perl50')
+                </script>
+              </if>
+          
+              <call function="'TransferSource'"/>
+              
+              <call function="'BuildIt'"/>
+              
+              <if expr="OSName != 'win32' and 'win32' in buildPlatforms">
+                <sequence>
+                  <stafcmd name="'Waiting for win32 build to complete'">
+                  <location>ismpMach</location>
+                  <service>'SEM'</service>
+                  <request>'event win32Complete wait'</request>
+                </stafcmd>
+                </sequence>
+              </if>
+              
+              <call function="'CopyCommonFiles'"/>
+              
+              <if expr="OSName == 'win64'">
+                <call function="'BuildWin64-CodepageFiles'"/>
+              </if>
+              
+              <if expr="OSName == 'winamd64'">
+                <call function="'BuildWinAMD64-CodepageFiles'"/>
+              </if>
+              
+              <message>'Calling BuildIPv6'</message>
+              <if expr="buildVersion == 'mainline'">
+                <call function="'BuildIPv6'"/>
+              </if>
+              
+              <call function="'PackageIt'"/>
+              
+              <parallel>
+                <sequence>
+                  <script>
+                    unix = ['aix','aix64','aix421','aix433','aix2','linux','linuxppc64','solaris','hpux','hpux-ia64-32','hpux-ia64-64']
+                  </script>
+                  <if expr="OSName in unix">
+                    <call function="'CreateTarGZ'"/>
+                  </if>
+                </sequence>
+
+                <if expr="BuildISMPFiles == '1'">
+                  <sequence>
+                    <call function="'TransferToISMP'"/>              
+
+                    <call function="'BuildISMP'"/>
+
+                    <if expr="OSName == 'win32'">
+                      <sequence>
+                        <stafcmd name="'Post win32 build complete'">
+                          <location>ismpMach</location>
+                          <service>'SEM'</service>
+                          <request>'event win32Complete post'</request>
+                        </stafcmd>
+                      </sequence>
+                    </if>
+    
+                    <call function="'CopyInstallers'"/>
+                  </sequence>
+                </if>
+              </parallel>
+            
+            </sequence>
+
+           </testcase>
+
+          </block>
+          
+        </if>
+
+      </paralleliterate>
+      
+      <message>'STAF Automated Build Completed'</message>
+      <log>'STAF Automated Build Completed'</log>
+      
+      <if expr="'win32' in buildPlatforms">
+        <call function="'CreateJavaServiceReleases'"/>
+      </if>
+
+      <message>binaryFiles</message>
+      
+      <script>
+        binaryFileText = ''        
+      </script>
+      
+      <iterate var="binaryFile" in="binaryFiles.get()">
+        <sequence>
+          <script>
+            binaryFileText = '%s\n%s' % (binaryFileText, binaryFile)
+          </script>
+        </sequence>
+      </iterate>
+      
+      <if expr="useRepositorySrc">
+        <script>
+          srcInfo = 'Built using latest CVS repository source code, branch %s (extracted by stafautobuild)' % stafBranchTag
+        </script>
+        <else>
+          <script>
+            srcInfo = 'Built using src tar file %s from machine %s' %(srcTarFile, srcTarMachine)
+          </script>
+        </else>
+      </if>
+      
+      <script>
+        from com.ibm.staf import STAFUtil
+        emailmessage = "STAXJobID: %s\n\nSTAF V%s Automated Build for %s \n\nStarted at:   %s\nCompleted at: %s\n\n%s\n\nBinary files are available on %s:\n%s" % ( STAXJobID, STAFVersion, buildPlatforms, startTime, time.strftime("%H:%M"), srcInfo, ftpMach, binaryFileText )
+        emailmessage = STAFUtil.wrapData(emailmessage)
+        emailsubject = "STAF%s automated build completed successfully" % (STAFVersion)
+        emailsubject = STAFUtil.wrapData(emailsubject)
+      </script>
+
+      <stafcmd name="'Emailing build notification'">
+        <location>'local'</location>
+        <service>'email'</service>
+        <request>'send %s subject %s message %s' %(emailAddresses, emailsubject, emailmessage)</request>
+      </stafcmd>
+      
+      <stafcmd name="'Releasing STAF-AutoBuild semaphore'">
+        <location>ismpMach</location>
+        <service>'SEM'</service>
+        <request>'release mutex STAF-AutoBuild force'</request>
+      </stafcmd>
+      
+      <!-- Logout of CVS via pserver
+
+      <message>"Logging out of CVS via pserver"</message>
+      <log>"Logging out of CVS via pserver"</log>
+
+      <process name="'CVS Logout'">
+        <location>extractMach</location>
+        <command>cygwinBashShell</command>
+        <parms>"-c 'echo | cvs -d %s logout'" % cvsRoot</parms>
+        <workdir>extractPath</workdir>
+        <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+        <stdout if="debug">'%s/cvs_logout.out' % extractLogPath</stdout>
+        <stderr if="debug">'%s/cvs_logout.err' % extractLogPath</stderr>
+      </process>-->
+      
+    </sequence>
+       
+  </function>
+  
+  <function name="CreateJavaServiceReleases">
+  
+    <sequence>
+    
+      <iterate var="release" in="javaServiceReleases">
+
+        <sequence>
+        
+          <script>
+            serviceName = release[0]
+            serviceRelease = release[1]
+            serviceRoot = ""
+          </script>
+          
+          <if expr="buildVersion == 'mainline'">
+            <script>serviceRoot = '/%s' % serviceName</script>
+          </if>
+          
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s' % (serviceReleaseRoot)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating service release main directory'</script>
+          <call function="'check-stafcmd'"/>
+              
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s/%s' % (serviceReleaseRoot, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating service release %s directory' % serviceRelease</script>
+          <call function="'check-stafcmd'"/>
+              
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s/%s/zip' % (serviceReleaseRoot, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating service release zip directory'</script>
+          <call function="'check-stafcmd'"/>
+                        
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s/%s/tar' % (serviceReleaseRoot, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating service release tar directory'</script>
+          <call function="'check-stafcmd'"/>                    
+                    
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'delete entry %s/%s/zip children recurse confirm' % (serviceReleaseRoot, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Removing contents of service release zip directory'</script>
+          <call function="'check-stafcmd'"/>
+          
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'delete entry %s/%s/tar children recurse confirm' % (serviceReleaseRoot, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Removing contents of service release tar directory'</script>
+          <call function="'check-stafcmd'"/>
+          
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s/%s/zip%s' % (serviceReleaseRoot, serviceRelease, serviceRoot)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating service release zip/root directory'</script>
+          <call function="'check-stafcmd'"/>
+
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s/%s/tar%s' % (serviceReleaseRoot, serviceRelease, serviceRoot)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating service release tar/root directory'</script>
+          <call function="'check-stafcmd'"/>
+                              
+          <if expr="serviceName == 'stax'">
+            <sequence>
+              
+              <script>
+                request = 'CREATE DIRECTORY %s/%s/zip%s/samples' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+              </script>  
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Creating service release directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+              
+              <script>
+                request = 'CREATE DIRECTORY %s/%s/zip%s/libraries' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+              </script>  
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Creating service release directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+              
+              <script>
+                request = 'CREATE DIRECTORY %s/%s/zip%s/ext' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+              </script>  
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Creating service release directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+              
+              <script>
+                request = 'CREATE DIRECTORY %s/%s/tar%s/samples' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+              </script>  
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Creating service release directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+
+              <script>
+                request = 'CREATE DIRECTORY %s/%s/tar%s/libraries' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+              </script>  
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Creating service release directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+              
+              <script>
+                request = 'CREATE DIRECTORY %s/%s/tar%s/ext' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+              </script>  
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Creating service release directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+                            
+              <if expr="buildVersion == 'mainline'">
+                <sequence>
+                
+                  <script>
+                    request = 'CREATE DIRECTORY %s/%s/zip%s/docs FULLPATH' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+                  </script>
+                  <stafcmd>
+                    <location>ismpMach</location>
+                    <service>'FS'</service>
+                    <request>request</request>
+                  </stafcmd>
+                  <script>failMessage = 'Creating service release zip/stax/docs directory: STAF %s FS %s' % (ismpMach, request)</script>
+                  <call function="'check-stafcmd'"/>
+
+                  <script>
+                    request = 'CREATE DIRECTORY %s/%s/tar%s/docs FULLPATH' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+                  </script>
+                  <stafcmd>
+                    <location>ismpMach</location>
+                    <service>'FS'</service>
+                    <request>request</request>
+                  </stafcmd>
+                  <script>failMessage = 'Creating service release tar/stax/docs directory: STAF %s FS %s' % (ismpMach, request)</script>
+                  <call function="'check-stafcmd'"/>
+                  
+                  <script>
+                    request = 'CREATE DIRECTORY %s/%s/zip%s/libraries/docs/libraries FULLPATH' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+                  </script>
+                  <stafcmd>
+                    <location>ismpMach</location>
+                    <service>'FS'</service>
+                    <request>request</request>
+                  </stafcmd>
+                  <script>failMessage = 'Creating service release zip/stax/libraries/docs/libraries directory: STAF %s FS %s' % (ismpMach, request)</script>
+                  <call function="'check-stafcmd'"/>
+
+                  <script>
+                    request = 'CREATE DIRECTORY %s/%s/tar%s/libraries/docs/libraries FULLPATH' % (serviceReleaseRoot, serviceRelease, serviceRoot)
+                  </script>
+                  <stafcmd>
+                    <location>ismpMach</location>
+                    <service>'FS'</service>
+                    <request>request</request>
+                  </stafcmd>
+                  <script>failMessage = 'Creating service release tar/stax/libraries/docs/libraries directory: STAF %s FS %s' % (ismpMach, request)</script>
+                  <call function="'check-stafcmd'"/>
+                </sequence>
+              </if>
+              
+            </sequence>
+          </if>
+          
+          <iterate var="filedata" in="release[2]">
+            <sequence>
+            
+              <script>
+                filename = filedata[0]
+                filepath = filedata[1]
+                targetFilename = filedata[0]
+                
+                if len(filedata) == 3:
+                  targetFilename = filedata[2]
+              </script>
+              
+              <script>
+                request = 'COPY FILE %s/%s TOMACHINE %s TOFILE %s/%s/zip%s/%s' % \
+                  (filepath, filename, ismpMach, serviceReleaseRoot, serviceRelease, serviceRoot, targetFilename)
+              </script>
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Copying service release file to zip directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>
+              
+              <script>
+                request = 'COPY FILE %s/%s TOMACHINE %s TOFILE %s/%s/tar%s/%s' % \
+                  (filepath, filename, ismpMach, serviceReleaseRoot, serviceRelease, serviceRoot, targetFilename)
+              </script>
+              <stafcmd>
+                <location>ismpMach</location>
+                <service>'FS'</service>
+                <request>request</request>
+              </stafcmd>
+              <script>failMessage = 'Copying service release file to tar directory: STAF %s FS %s' % (ismpMach, request)</script>
+              <call function="'check-stafcmd'"/>              
+              
+            </sequence>
+          </iterate>
+          
+          <process name="'Create service release tar'">
+            <location>ismpMach</location>
+            <command>cygwinBashShell</command>
+            <parms>"-c 'tar cf %s.tar *'" % serviceRelease</parms>
+            <workdir>'%s/%s/tar' %(serviceReleaseRoot, serviceRelease)</workdir>
+            <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          </process>
+
+          <script>failMessage = 'Create service release tar'</script>
+          <call function="'check-win-bash-process'"/>
+          <tcstatus result="'Pass'"/>
+          
+          <process name="'Create service release zip'">
+            <location>ismpMach</location>
+            <command>cygwinBashShell</command>
+            <parms>"-c 'zip -r %s.zip *'" % serviceRelease</parms>
+            <workdir>'%s/%s/zip' %(serviceReleaseRoot, serviceRelease)</workdir>
+            <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+          </process>
+
+          <script>failMessage = 'Create service release zip'</script>
+          <call function="'check-win-bash-process'"/>
+          <tcstatus result="'Pass'"/>
+          
+          <stafcmd>
+            <location>ftpMach</location>
+            <service>'fs'</service>
+            <request>'create directory %s/%s' % (ftpPath, serviceName)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Creating ftpMach service release main directory'</script>
+          <call function="'check-stafcmd'"/>
+          
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'copy file %s/%s/tar/%s.tar tomachine %s tofile %s/%s/%s.tar' % (serviceReleaseRoot, serviceRelease, serviceRelease, ftpMach, ftpPath, serviceName, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Copying service release tar file to ftp server'</script>
+          <call function="'check-stafcmd'"/> 
+          
+          <script>binaryFiles.append('%s/%s/%s.tar' % (ftpPath, serviceName, serviceRelease))</script>
+          
+          <stafcmd>
+            <location>ismpMach</location>
+            <service>'fs'</service>
+            <request>'copy file %s/%s/zip/%s.zip tomachine %s tofile %s/%s/%s.zip' % (serviceReleaseRoot, serviceRelease, serviceRelease, ftpMach, ftpPath, serviceName, serviceRelease)</request>
+          </stafcmd>
+              
+          <script>failMessage = 'Copying service release zip file to ftp server'</script>
+          <call function="'check-stafcmd'"/> 
+          
+          <script>binaryFiles.append('%s/%s/%s.zip' % (ftpPath, serviceName, serviceRelease))</script>
+
+        </sequence>      
+
+      </iterate>
+      
+    </sequence>
+    
+  </function>
+
+</stax>

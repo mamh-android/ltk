@@ -1,0 +1,67 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002, 2005                                        #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+eventmanager_class_targets =\
+  $(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/EventManagerService.class \
+  $(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/EventManagerUI.class \
+  $(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/EventManagerPythonInterpreter.class \
+  $(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/EventManagerData.class \
+  $(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/EventManagerData1.class \
+  $(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/EventManagerData2.class
+  
+eventmanager_jar_targets =\
+  $(O)/services/eventmanager/MANIFEST.MF \
+  $(O)/services/eventmanager/STAF-INF/jars/jython.jar
+  
+eventmanager_targets += $(eventmanager_class_targets)\
+                $(eventmanager_jar_targets)\
+                $(REL)/lib/STAFEventManager.jar
+Targets += $(eventmanager_targets)
+CleanupTargets += cleanup_eventmanager
+
+$(eventmanager_targets): SUBSYS_REL := services/eventmanager
+SUBSYS_REL := services/eventmanager
+
+# Include inference rules
+include $(InferenceRules)
+
+JYTHON_JAR ?= $(REL)/lib/jython/jython.jar
+OS_JYTHON_JAR ?= $(OS_REL)/lib/jython/jython.jar
+JYTHON_LIB_PATH = $(REL)/lib/jython/Lib
+
+$(eventmanager_targets): $(REL)/lib/JSTAF.jar $(JYTHON_JAR)
+
+EVENTMANAGER_CLASSPATH = $(OS_O)/services/eventmanager$(OS_PS)$(OS_REL)/lib/JSTAF.jar$(OS_PS)$(JAVA_CLASSPATH)$(OS_PS)$(OS_JYTHON_JAR)
+  
+define EVENTMANAGER_JAVA_COMPILE_IT
+   @echo "*** Compiling EventManager Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/eventmanager/STAF-INF/classes -classpath '$(EVENTMANAGER_CLASSPATH)' $(OS_SRC)/services/eventmanager/*.java
+   @$(JAVAC) -d $(OS_O)/services/eventmanager -classpath '$(EVENTMANAGER_CLASSPATH)' $(OS_SRC)/services/eventmanager/EventManagerUI.java
+endef
+
+$(O)/services/eventmanager/STAF-INF/classes/com/ibm/staf/service/eventmanager/%.class: $(SRC)/services/eventmanager/%.java
+	$(EVENTMANAGER_JAVA_COMPILE_IT)
+
+# EVENTMANAGER Java targets
+
+$(O)/services/eventmanager/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(O)/services/eventmanager/STAF-INF/jars/jython.jar: $(JYTHON_JAR)
+	$(COPY_FILE)
+	@$(MAKE_PATH) $(O)/services/eventmanager/JYTHON-INF/Lib
+	@echo "*** Copying Jython libraries ***"
+	@$(RECURSIVE_COPY) $(JYTHON_LIB_PATH) $(O)/services/eventmanager/JYTHON-INF
+
+$(REL)/lib/STAFEventManager.jar: $(eventmanager_class_targets) $(eventmanager_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/eventmanager; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF JYTHON-INF com
+
+cleanup_eventmanager:
+	-@$(DEL) $(O)/services/eventmanager/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/JSTAF.jar $(OUT_ERR_TO_DEV_NULL)

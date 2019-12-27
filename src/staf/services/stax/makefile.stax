@@ -1,0 +1,396 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002, 2005                                        #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stax_class_targets =\
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXInvalidXMLAttributeException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXInvalidXMLElementException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXInvalidXMLElementCountException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXInvalidXMLNodeTypeException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXInvalidStartFunctionException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXInvalidFunctionArgumentException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXExtensionInitException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXPythonEvaluationException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXPythonCompileException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXXMLParseException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionImportException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXExceedsMaxThreadsException.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXElementInfo.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXJobCompleteListener.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXThreadCompleteListener.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSTAFRequestCompleteListener.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSTAFQueueListener.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSTAFMessage.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXProcessCompleteListener.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimedEventListener.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXRequestSettings.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXGenericRequestHandler.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXListRequestHandler.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXQueryRequestHandler.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXJobManagementHandler.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXUtil.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXJobCompleteNotifiee.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionImport.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXParser.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXXMLTransformer.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXActionDefaultImpl.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionArgument.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionArgumentProperty.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionArgumentPropertyData.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXCallAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXCallActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXCallWithListActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXCallWithMapActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXReturnAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXReturnActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSequenceAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSequenceActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXParallelAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXParallelActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSignalHandlerAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSignalHandlerActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSignalExecutionAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXRaiseAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXRaiseActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXProcessAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXProcessActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSTAFCommandAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSTAFCommandActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXLogAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXLogActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXMessageAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXMessageActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXImportAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXImportActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXScriptAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXScriptActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXPythonInterpreter.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXElseIf.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXIfAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXIfActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXJobAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXJobActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXSubmitResult.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXNopAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXNopActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXParallelIterateAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXParallelIterateActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXIterateAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXIterateActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBlockAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBlockActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXHoldAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXHoldActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXReleaseAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXReleaseActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTerminateAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTerminateActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTestcaseAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTestcaseActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTestcaseStatusAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTestcaseStatusActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXLoopAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXLoopActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBreakAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBreakActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXContinueAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXContinueActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTryAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTryActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXThrowAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXThrowActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXRethrowAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXRethrowActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXCatchAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFinallyAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimerAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimerActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBreakpointAction.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBreakpointActionFactory.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXHoldThreadCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXHardHoldThreadCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTerminateBlockCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTerminateThreadCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXBreakCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXContinueCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXExceptionCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXRethrowExceptionCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXReturnCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimerExpiredCondition.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTestcase.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXMonitorUtil.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXPythonOutput.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXThread.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXThreadQueue.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimedEvent.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimedEventQueue.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXExtension.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXExtensionFileParser.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXExtensionClassLoader.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXJob.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXParser.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXVisitor.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXVisitorHelper.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAX.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXVersion.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXTimestamp.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXMachineCache.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFileCache.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXDocument.class \
+  $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXObjectComparator.class
+
+stax_jar_targets =\
+  $(O)/services/stax/service/MANIFEST.MF \
+  $(O)/services/stax/service/STAF-INF/jars/xercesImpl.jar \
+  $(O)/services/stax/service/STAF-INF/jars/xmlParserAPIs.jar \
+  $(O)/services/stax/service/STAF-INF/jars/jython.jar \
+  $(O)/services/stax/service/STAF-INF/jars/xalan.jar \
+  $(O)/services/stax/service/STAF-INF/jars/serializer.jar
+  
+stax_resource_targets =\
+  $(O)/services/stax/service/STAF-INF/classes/resources/STAXGetLineNumber.xsl
+  
+staxmonitor_class_targets =\
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/TestProcess.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitor.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorUtil.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorFrame.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorExecuteResult.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorLogViewer.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorWaitDialog.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTableCellRenderer.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTreeCellRenderer.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTreeNode.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTableModel.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTableMap.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTableSorter.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorExtension.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorExtensionClassLoader.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorProcessExtension.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorSTAFCmdExtension.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorSubjobExtension.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorTestcaseExtension.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorDebugExtension.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXVersion.class \
+  $(O)/services/stax/monitor/com/ibm/staf/service/stax/STAXMonitorFileFilter.class
+  
+staxmonitor_manifest_target =\
+  $(O)/services/stax/monitor/MANIFEST.MF  
+  
+staxmonitor_image_targets =\
+  $(O)/services/stax/monitor/images/process.gif \
+  $(O)/services/stax/monitor/images/greenblk.gif \
+  $(O)/services/stax/monitor/images/redblk.gif \
+  $(O)/services/stax/monitor/images/yellwblk.gif \
+  $(O)/services/stax/monitor/images/command.gif \
+  $(O)/services/stax/monitor/images/grnball.gif \
+  $(O)/services/stax/monitor/images/greenball.gif \
+  $(O)/services/stax/monitor/images/redball.gif \
+  $(O)/services/stax/monitor/images/subjob.gif \
+  $(O)/services/stax/monitor/images/ascending.gif \
+  $(O)/services/stax/monitor/images/descending.gif \
+  $(O)/services/stax/monitor/images/splash.gif
+
+staxdoc_class_targets =\
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/Main.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/HtmlWriter.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/Options.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/Packagehandler.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/ResourceHandler.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/StaxFile.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/StaxPackage.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/StaxSource.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterAllFilesFrame.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterMainFrame.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterOverviewFrame.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterOverviewSummary.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterPackageFrame.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterPackageOverview.class \
+  $(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/WriterStaxDoc.class
+
+staxdoc_manifest_target =\
+  $(O)/services/stax/staxdoc/MANIFEST.MF  
+  
+staxdoc_resource_targets =\
+  $(O)/services/stax/staxdoc/resources/GsxDoc1.xsl \
+  $(O)/services/stax/staxdoc/resources/GsxDoc1a.xsl \
+  $(O)/services/stax/staxdoc/resources/GsxDoc2.xsl \
+  $(O)/services/stax/staxdoc/resources/staxdoc.properties
+
+stax_doc_targets =\
+  $(O)/services/stax/docs/gettingstarted/STAXGS.html
+
+staxutil_targets =\
+  $(REL)/services/stax/libraries/docs/index.html \
+  $(REL)/services/stax/libraries/docs/overview-summary.html \
+  $(REL)/services/stax/libraries/docs/overview-frame.html \
+  $(REL)/services/stax/libraries/docs/libraries/STAXUtil.html \
+  $(REL)/services/stax/libraries/docs/libraries/STAFUpgradeUtil.html \
+  $(REL)/services/stax/libraries/docs/libraries/package-overview.html \
+  $(REL)/services/stax/libraries/docs/libraries/package-frame.html
+ 
+stax_targets += $(stax_class_targets) \
+		$(stax_resource_targets) \
+		$(staxmonitor_class_targets) \
+		$(staxdoc_class_targets) \
+		$(staxdoc_resource_targets) \
+		$(stax_doc_targets) \
+		$(staxutil_targets) \
+		$(REL)/lib/STAX.jar \
+		$(REL)/lib/STAXMon.jar \
+		$(REL)/lib/STAXDoc.jar
+
+Targets += $(stax_targets)
+CleanupTargets += cleanup_stax
+
+$(stax_targets): SUBSYS_REL := services/stax
+SUBSYS_REL := services/stax
+
+# Include inference rules
+include $(InferenceRules)
+
+JYTHON_JAR = $(REL)/lib/jython/jython.jar
+OS_JYTHON_JAR = $(OS_REL)/lib/jython/jython.jar
+JYTHON_LIB_PATH = $(REL)/lib/jython/Lib
+
+$(stax_targets): $(REL)/lib/JSTAF.jar $(JYTHON_JAR)
+
+ifndef XERCES_ROOT
+  $(error You must set XERCES_ROOT to the full pathname containing xercesImpl.jar and xmlParserAPIs.jar)
+endif
+
+ifndef XALAN_ROOT
+  $(error You must set XALAN_ROOT to the full pathname containing xalan.jar and serializer.jar)
+endif
+
+# Compile Java sources 
+
+STAX_CLASSPATH = $(OS_O)/services/stax/service$(OS_PS)$(OS_REL)/lib/JSTAF.jar$(OS_PS)$(JAVA_CLASSPATH)$(OS_PS)$(XERCES_ROOT)/xercesImpl.jar$(OS_PS)$(XERCES_ROOT)/xmlParserAPIs.jar$(OS_PS)$(OS_JYTHON_JAR)$(OS_PS)$(XALAN_ROOT)/xalan.jar$(OS_PS)$(XALAN_ROOT)/serializer.jar
+
+define STAX_JAVA_STAXMON_COMPILE_IT
+    @echo "*** Compiling STAX Monitor Java Sources ***"
+    @$(CREATE_PATH)
+    @$(JAVAC) -d $(OS_O)/services/stax/monitor -classpath '$(STAX_CLASSPATH)' $(OS_SRC)/services/stax/monitor/*.java $(OS_SRC)/services/stax/service/STAXVersion.java
+endef
+
+define STAX_JAVA_SERVICE_COMPILE_IT
+    @echo "*** Compiling STAX Service Java Sources ***"
+    @$(CREATE_PATH)
+    @$(JAVAC) -deprecation -d $(OS_O)/services/stax/service/STAF-INF/classes -classpath '$(STAX_CLASSPATH)' $(OS_SRC)/services/stax/service/*.java $(OS_SRC)/services/stax/monitor/STAXMonitorUtil.java
+endef
+
+define STAX_JAVA_STAXDOC_COMPILE_IT
+    @echo "*** Compiling STAXDoc Java Sources ***"
+    @$(CREATE_PATH)
+    @$(JAVAC) -d $(OS_O)/services/stax/staxdoc -classpath '$(STAX_CLASSPATH)' $(OS_SRC)/services/stax/staxdoc/*.java
+endef
+
+$(O)/services/stax/monitor/com/ibm/staf/service/stax/%.class: $(SRC)/services/stax/monitor/%.java
+	$(STAX_JAVA_STAXMON_COMPILE_IT)
+        
+$(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/%.class: $(SRC)/services/stax/service/%.java
+	$(STAX_JAVA_SERVICE_COMPILE_IT)
+ 
+$(O)/services/stax/staxdoc/com/ibm/staf/service/stax/staxdoc/%.class: $(SRC)/services/stax/staxdoc/%.java
+	$(STAX_JAVA_STAXDOC_COMPILE_IT)
+        
+# Copy STAX Service objects
+
+$(O)/services/stax/service/MANIFEST.MF: $(SR_SRC)/service/MANIFEST.MF
+	$(COPY_FILE)
+
+$(O)/services/stax/service/STAF-INF/jars/xercesImpl.jar: $(XERCES_ROOT)/xercesImpl.jar
+	$(COPY_FILE)
+        
+$(O)/services/stax/service/STAF-INF/jars/xmlParserAPIs.jar: $(XERCES_ROOT)/xmlParserAPIs.jar
+	$(COPY_FILE)
+        
+$(O)/services/stax/service/STAF-INF/jars/xalan.jar: $(XALAN_ROOT)/xalan.jar
+	$(COPY_FILE)
+        
+$(O)/services/stax/service/STAF-INF/jars/serializer.jar: $(XALAN_ROOT)/serializer.jar
+	$(COPY_FILE)
+        
+$(O)/services/stax/service/STAF-INF/jars/jython.jar: $(JYTHON_JAR)
+	$(COPY_FILE)
+	@$(MAKE_PATH) $(O)/services/stax/service/JYTHON-INF/Lib
+	@echo "*** Copying Jython libraries ***"
+	@$(RECURSIVE_COPY) $(JYTHON_LIB_PATH) $(O)/services/stax/service/JYTHON-INF
+
+$(O)/services/stax/service/STAF-INF/classes/resources/%.xsl: $(SRC)/services/stax/service/resources/%.xsl
+	$(COPY_FILE)
+
+# Copy STAX Monitor objects
+
+$(O)/services/stax/monitor/MANIFEST.MF: $(SR_SRC)/monitor/MANIFEST.MF
+	$(COPY_FILE)
+        
+$(O)/services/stax/monitor/images/%.gif: $(SRC)/services/stax/monitor/images/%.gif
+	$(COPY_FILE)
+
+# Copy STAXDoc objects
+
+$(O)/services/stax/staxdoc/MANIFEST.MF: $(SR_SRC)/staxdoc/MANIFEST.MF
+	$(COPY_FILE)
+        
+$(O)/services/stax/staxdoc/resources/%.xsl: $(SRC)/services/stax/staxdoc/resources/%.xsl
+	$(COPY_FILE)
+        
+$(O)/services/stax/staxdoc/resources/%.properties: $(SRC)/services/stax/staxdoc/resources/%.properties
+	$(COPY_FILE)
+
+# Create STAX.jar and STAXMon.jar and STAXDoc.jar
+
+$(REL)/lib/STAX.jar: $(stax_class_targets) $(stax_jar_targets) $(stax_resource_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/stax/service; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF JYTHON-INF
+
+$(REL)/lib/STAXMon.jar: $(staxmonitor_class_targets) $(staxmonitor_image_targets) $(staxmonitor_manifest_target)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/stax/monitor; $(JAR) cfm '$(OS_@)' MANIFEST.MF com images
+        
+$(REL)/lib/STAXDoc.jar: $(staxdoc_class_targets) $(staxdoc_resource_targets) $(staxdoc_manifest_target)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/stax/staxdoc; $(JAR) cfm '$(OS_@)' MANIFEST.MF com resources
+
+# Generate the documentation for the STAX library functions (e.g STAXUtil, STAFUpgradeUtil) using STAXDoc
+# Note:  STAXDoc requires Java 1.4 or later
+
+$(REL)/services/stax/libraries/docs/libraries/STAXUtil.html: $(SR_SRC)/libraries/STAXUtil.xml $(SR_SRC)/libraries/STAFUpgradeUtil.xml $(REL)/lib/STAXDoc.jar
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(REL)/services/stax/libraries/docs
+	@echo "*** Generating STAX libraries documentation using STAXDoc ***"
+	@$(JAVA) -jar $(OS_REL)/lib/STAXDoc.jar -sourcepath $(OS_SRC)/services/stax libraries -d $(OS_REL)/services/stax/libraries/docs
+
+# Create STAXGS html document from the .xml file to verify that no syntax errors exist.
+# Only do if SAXON_ROOT and DOCBOOK_ROOT have been set since require Saxon and Docbook to convert
+# the xml file to an html file.
+# XXX: When able to generate pdf file automatically, change to create it and copy it to appropriate place.
+
+ifdef SAXON_ROOT
+ifdef DOCBOOK_ROOT
+$(O)/services/stax/docs/gettingstarted/STAXGS.html: $(SRC)/services/stax/docs/gettingstarted/STAXGS.xml $(MAKEFILE_NAME)
+	@echo "*** Building Getting Started with STAX (STAXGS.html) document ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/services/stax/docs/gettingstarted
+	@cp $(SRC)/services/stax/docs/gettingstarted/*.xml $(O)/services/stax/docs/gettingstarted
+	@cp $(SRC)/services/stax/docs/gettingstarted/*.gif $(O)/services/stax/docs/gettingstarted
+	@chmod 777 $(O)/services/stax/docs/gettingstarted/*
+	@cd $(O)/services/stax/docs/gettingstarted; $(JAVA) -cp $(SAXON_ROOT)/saxon.jar com.icl.saxon.StyleSheet -o STAXGS.html STAXGS.xml $(DOCBOOK_ROOT)/html/docbook.xsl
+endif
+endif
+	
+cleanup_stax:
+	-@$(DEL) $(O)/services/stax/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/STAX.jar $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/STAXMon.jar $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/STAXDoc.jar $(OUT_ERR_TO_DEV_NULL)

@@ -1,0 +1,91 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+#########################
+# Setup C/C++ variables #
+#########################
+
+CC_CC             := g++
+CC_C              := g++ -x c
+
+ifeq ($(OS_NAME),macosx)
+    CC_MK_SHARED_LIB := g++ -dynamiclib
+else
+    CC_MK_SHARED_LIB := g++ -shared
+endif
+
+GCC_VERSION := $(word 3,$(shell g++ --version))
+GCC_MAJOR_VERSION := $(word 1,$(subst ., ,$(GCC_VERSION)))
+
+ifeq ($(BUILD_TYPE),retail)
+    CC_BUILD_TYPE_FLAGS = $(CC_OPTIMIZE) -DNDEBUG
+else
+    CC_BUILD_TYPE_FLAGS = $(CC_DEBUG)
+endif
+
+CC_DEBUG        := -g
+CC_OPTIMIZE     := -O2
+CC_FPIC         := -fPIC
+CC_STL_PTHREADS := -D_PTHREADS
+CC_SHAREDLIBNAMEFLAGS = -DSTAF_SHARED_LIB_PREFIX=$(OS_SHARED_LIB_PREFIX) \
+                        -DSTAF_SHARED_LIB_SUFFIX=$(OS_SHARED_LIB_SUFFIX)
+                        
+ifeq ($(OS_NAME),solaris)
+    ifeq ($(BUILD_ARCH),SPARC64)
+        CC_ARCHFLAGS = -m64
+    endif    
+    ifeq ($(BUILD_ARCH),x64-64)
+        CC_ARCHFLAGS = -m64
+    endif
+else
+    ifeq ($(OS_NAME),macosx)
+        ifdef BUILD_ARCH
+            ifeq ($(BUILD_ARCH),universal)
+                CC_ARCHFLAGS = -arch i386 -arch x86_64 -arch ppc
+                CC_DEPEND_IT = touch $@
+                CC_DEPEND_IT_C = touch $@
+            else
+                CC_ARCHFLAGS = -arch $(BUILD_ARCH)
+            endif
+        endif
+    endif
+endif    
+
+CC_COMMONFLAGS = $(OS_COMMONFLAGS) $(COMMONFLAGS) $(CC_FPIC)\
+                 $(CC_BUILD_TYPE_FLAGS) $(CC_SHAREDLIBNAMEFLAGS)\
+                 $(CC_STL_PTHREADS) -DSTAF_NATIVE_COMPILER\
+                 $(CC_ARCHFLAGS)
+
+CC_CFLAGS = $(CC_COMMONFLAGS) $(CFLAGS)
+
+CC_LINKFLAGS     = $(CC_COMMONFLAGS) $(LINKFLAGS)
+CC_SHARED_LIB_LINKFLAGS = $(CC_COMMONFLAGS) $(LINKFLAGS)
+
+ifeq ($(GCC_MAJOR_VERSION),2)
+    CC_SHARED_LIB_LINKFLAGS += -Wl,-Bsymbolic
+endif
+
+##########################################
+# Set commands needed by master makefile #
+##########################################
+
+CC_DEPEND_IT     ?= cd $(@D); $(CC_CC) -MM $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) \
+                    $< | sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@
+
+CC_DEPEND_IT_C   ?= cd $(@D); $(CC_C) -MM $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) \
+                    $< | sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@
+
+CC_COMPILE_IT    = $(CC_CC) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_COMPILE_IT_C  = $(CC_C) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_LINK_IT       = $(CC_CC) -o $@ $(CC_LINKFLAGS) $(ALL_INCLUDEDIR_LIST)\
+                   $(ALL_LIBDIR_LIST) $(ALL_LIB_LIST) $(OBJS)
+
+CC_SHARED_LIB_IT = $(CC_MK_SHARED_LIB) -o $@ $(CC_SHARED_LIB_LINKFLAGS) \
+                   $(ALL_INCLUDEDIR_LIST) $(ALL_LIBDIR_LIST) $(ALL_LIB_LIST) \
+                   $(OBJS)

@@ -1,0 +1,35 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+docs_targets += $(REL)/docs/staf/STAFAnt.htm
+Targets += $(docs_targets)
+CleanupTargets += cleanup_ant_docs
+
+$(docs_targets): SUBSYS_REL := doc
+SUBSYS_REL := doc
+
+# Doc targets
+
+ifndef SAXON_ROOT
+  $(error You must set SAXON_ROOT to the full pathname where you installed Saxon)
+endif
+
+ifndef DOCBOOK_ROOT
+  $(error You must set DOCBOOK_ROOT to the full pathname where you installed DocBook XSL)
+endif
+
+$(REL)/docs/staf/STAFAnt.htm: $(SRC)/lang/ant/STAFAnt.xml $(MAKEFILE_NAME)
+	@echo "*** Building STAF Ant Task User's Guide ***"
+	@$(CREATE_PATH)
+	-@$(MAKE_PATH) $(O)/lang/ant
+	@cp $(SRC)/lang/ant/*.xml $(O)/lang/ant
+	@chmod 777 $(O)/lang/ant/*
+	@cd $(O)/lang/ant; $(JAVA) -cp $(SAXON_ROOT)/saxon.jar com.icl.saxon.StyleSheet -o STAFAnt.htm STAFAnt.xml $(DOCBOOK_ROOT)/html/docbook.xsl
+	@cp $(O)/lang/ant/STAFAnt.htm $(REL)/docs/staf/STAFAnt.htm
+	
+cleanup_ant_docs:
+	-@$(DEL) $(REL)/docs/staf/STAFAnt.htm $(OUT_ERR_TO_DEV_NULL)

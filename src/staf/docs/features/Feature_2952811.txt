@@ -1,0 +1,664 @@
+Feature ID  : 2952811
+Title       : Provide ability to require fucnctions from other files
+
+Description
+-----------
+
+It would be nice to simply call a function and have it also
+automatically import functions from other STAX files that the
+function depends on.
+
+Problem(s) Solved
+-----------------
+
+The <function> element's requires attribute lets you specify
+other functions in the same job that must be imported along
+with the specified function.  This allows the function's users
+to only import the function itself, without having to worry
+about any other functions it may call. It is used by the
+<import> element.  The functionality is great as long as all
+of the code is in a single STAX file. However, more advanced
+development usually involves STAX code broken up into modular
+files to be imported and called individually. Also, compiles
+of very large STAX files usually incur a very high CPU penalty.
+In Sametime, the code is usually broken up by product, but
+there are many product inter-dependencies that causes code to
+be referenced from other product directories.
+
+It would be nice to be able to specify a file + function in a
+requires attribute for the dependent code to be automatically
+imported during an import of the original function.
+
+Today, the flow is:
+1. From a top level function, Import everything that all
+   sub-functions requires
+2. Call the 2nd layer functions that may call 3rd layer functions.
+   We're not doing 3rd layer function imports from the 2nd layer
+   because it's most helpful to import everything to validate that
+   the functions compile successfully before any code is called
+
+Suggested flow:
+1. From a top function, import the 2nd layer function
+2. During the import of the 2nd layer function, the 2nd layer
+   automatically imports any 3rd layer functions in the requires
+   element using the file and function specified
+3. Any import errors are passed up to the 1st layer during the
+   2nd layer import call, to ensure code isn't executed when a
+   dependent import fails to compile
+ 
+
+Related Features
+----------------
+
+- Feature #3077278: Add ability to list/query functions in a STAX job
+- Feature #3076665: Add ability to import all files from a directory
+
+
+External Changes
+----------------
+
+a) Add a new <function-import> sub-element for the <function>
+element.  You can specify 0 to any number of <function-import>
+elements for a <function> (after the function-epilog and before
+the function argument elements).  Here's are the changes to the
+STAX DTD for the function element:
+
+<!ELEMENT function    ((function-prolog | function-description)?,
+                       (function-epilog)?,
+                       (function-import)*,
+                       (function-no-args | function-single-arg |
+                        function-list-args | function-map-args)?,
+                       (%task;))>
+
+<!ELEMENT function-import       (#PCDATA)>
+<!ATTLIST function-import
+          file         CDATA    #REQUIRED
+          machine      CDATA    #IMPLIED
+>
+
+The function-import element specifies a set of functions to be
+imported from another STAX XML file. The function-import element
+has the following attributes:
+
+* file - is the name of the STAX XML file from which the 
+  function(s) will be imported. It is required. It is a literal.
+  o If the machine attribute is specified, the file attribute
+    should specify the fully-qualified path to the STAX XML file
+    (an absolute file name).
+  o If the machine attribute is not specified, the file attribute
+    can specify either the fully-qualified path to the STAX XML
+    file (an absolute file name), or a relative path to the
+    STAX XML file. It must be relative to the parent directory of
+    the STAX XML file that contains the <function-import> element.
+    A relative path can only be specified if the file being
+    imported resides on the same machine as the STAX XML file that
+    is importing the file.  Using the relative path name allows a
+    group of STAX XML files to be moved to different machines
+    without modification to the <function-import> elements in your
+    STAX XML files (assuming the same sub-directory structure that
+    contains these files is maintained). 
+* machine - is the name of the machine where the STAX XML file is
+  located. It is optional. It is a literal. If the machine
+  attribute is not specified, it will default to the machine where
+  the STAX XML file that contains the <function-import> element
+  resides. 
+
+The function-import element may optionally specify functions to
+import from the file.  The function names must be separated by
+whitespace (e.g. Function1 Function2 Function3).  It is a
+literal.  If you don't specify any functions to import, then all
+functions in the specified file will be imported.
+
+If an error occurs while processing a <function-import> element,
+such as a problem accessing the specified file, or a xml parsing
+error or Python compile error in the specified file, if specified
+in the main job or if accessed only via files imported by other
+<function-import> elements (not <import> elements), an error will
+be returned with information about the STAXFunctionImportException
+and the job won't be executed.
+
+You can have a combination of <function-import> and <import>
+elements.  When the <import> element is processed during run-time,
+it will check if any of the functions that it imported from other
+files have <function-import> elements and it will import these
+functions as well during run-time (as well as any other functions
+required by these <function-import> elements).  This means that
+any errors in the files specified by <function-import> elements
+that are in files imported by an <import> element (e.g. that are
+not in the main xml file) will occur during run-time with a
+STAXFunctionImportError signal being raised (which by default will
+log an error and terminate the job (instead of at the beginning of
+the STAX job).
+
+If file caching is enabled, the file cache will be checked for an
+up-to-date copy of the imported file before loading and parsing
+the XML from the target machine. For a file cache hit to occur,
+the machine and file options must match a file cache entry.  If
+the file is retrieved from cache, there can be an increase in the
+performance of the import operation.  For more information on how
+caching works, refer to the "STAX File and Machine Caching" section. 
+
+Usage:
+
+The function-import element may only be specified within a
+function element.  This allows files to be imported prior to
+starting the execution of the job (unlike the <import> element).
+
+After a function-import element has imported a function from a
+file, during execution any function can then call the
+imported function.
+
+Examples:
+
+1) This example specifies a relative path to the files to be
+imported.  Assuming the following STAX XML files resided on the
+same machine:
+
+  /stax/MyApp/job1.xml
+  /stax/MyApp/commonLib.xml
+  /stax/common/library1.xml
+
+and you wanted file /stax/MyApp/job1.xml to import all functions
+from file /stax/MyApp/commonLib.xml and from file
+/stax/common/library1.xml, you could do this as follows:
+
+  <function-import file="commonLib.xml"/>
+  <function-import file="../common/library1.xml"/>
+
+2) This example imports all functions from file C:/stax/baseFunctions.xml
+on machine server1.company.com:
+
+  <function-import file="C;/stax/baseFunctions.xml" machine="server1.company.com"/>
+
+3) This example only imports functions FunctionA, FunctionB,
+and FunctionC from file C:/stax/baseFunctions.xml on machine
+server1.company.com:
+
+  <function-import file="c:/util/library.xml" machine="server1.company.com">
+      FunctionA FunctionB FunctionC
+  </function-import>
+
+4) Here's is a more complete snippet of a STAX job that shows
+
+Following are three STAX xml files that show how to the new
+function-import element can be used.
+
+The 1st layer is in file C:/stax/main.xml.  It imports function
+B1 from file C:/stax/group1/commonFunctions1.xml.  Function B1
+requires function B2 (also in file commonFunctions1.xml), but
+also requires functions C1 and C2 that are in file
+C:/stax/group2/commonFunctions2.xml.  When function B1 is
+imported from commonFunctions1.xml, it will also automatically
+import function B2 from the commonFunctions1.xml file, as well
+as import functions C1 and C2 from commonFunctions2.xml because
+function B1 requires functions B2, C1, and C2.
+
+If an error that can be detected before runtime (e.g. xml parsing
+error, STAXPythonCompileError, etc) occurred in any of these
+files, an error would occur before the job began execution.
+For example, if a STAXPythonCompileError occurred in the <log>
+element at line 9 in file C:/stax/group2/commonFunctions2.xml,
+you could see an error like the following:
+
+C:\>STAF local STAX EXECUTE FILE c:/stax/main.xml
+Error submitting request, RC: 4001
+Additional info
+---------------
+Caught com.ibm.staf.service.stax.STAXFunctionImportException:
+
+Cause: com.ibm.staf.service.stax.STAXPythonCompileException
+
+File: c:\stax\group2\commonFunctions2.xml, Machine: local://local
+Line 9: Error in element type "log".
+
+Python code compile failed for:
+'In function C2 in file %s % (STAXCurrentXMLFile)
+
+SyntaxError: ("mismatched character '\\n' expecting '''", ('<string>', 1, 49,
+"'In function C2 in file %s % (STAXCurrentXMLFile)\n"))
+
+File:  c:\stax\main.xml
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>  
+<!DOCTYPE stax SYSTEM "stax.dtd">  
+ 
+<stax>  
+
+  <defaultcall function="Main"/> 
+
+  <function name="Main">
+    <sequence>
+      <log>'In function Main, delaying 2 seconds'</log>
+      <stafcmd name="'Delay 2 seconds'">
+        <location>'local'</location>
+        <service>'DELAY'</service>
+        <request>'DELAY 2s'</request>
+      </stafcmd> 
+      <call function="'A1'"/>
+    </sequence>
+  </function>
+
+  <function name="A1">
+    <function-import file="group1/commonFunctions1.xml">B1</function-import>
+    <sequence>
+      <log message="1">'In function A1 in file %s' % (STAXCurrentXMLFile)</log>
+      <call function="'B1'"/>
+    </sequence>
+  </function>
+
+</stax>
+
+File:  c:\stax\group1\commonFunctions1.xml
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>  
+<!DOCTYPE stax SYSTEM "stax.dtd">  
+ 
+<stax>  
+
+  <function name="B1" requires="B2">
+    <sequence>
+      <log message="1">'In function B1 in file %s' % (STAXCurrentXMLFile)</log>
+      <call function="'B2'"/>
+    </sequence>
+  </function>
+
+  <function name="B2" requires="B3">
+    <function-import file="../group2/commonFunctions2.xml">
+      C1 C2
+    </function-import>
+    <sequence>
+      <log message="1">'In function B2 in file %s' % (STAXCurrentXMLFile)</log>
+      <call function="'B3'"/>
+      <call function="'C1'"/>
+      <call function="'C2'"/>
+    </sequence>
+  </function>
+
+  <function name="B3">
+    <log message="1">'In function B3 in file %s' % (STAXCurrentXMLFile)</log>
+  </function>
+
+  <function name="B4">
+    <log message="1">'In function B4 in file %s' % (STAXCurrentXMLFile)</log>
+  </function>
+
+</stax>
+
+File:  c:\stax\group2\commonFunctions2.xml
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>  
+<!DOCTYPE stax SYSTEM "stax.dtd">  
+ 
+<stax>  
+  <function name="C1">
+    <log message="1">'In function C1 in file %s' % (STAXCurrentXMLFile)</log>
+  </function>
+  <function name="C2">
+    <log message="1">'In function C2 in file %s' % (STAXCurrentXMLFile)</log>
+  </function>
+  <function name="C3">
+    <log message="1">'In function C3 in file %s' % (STAXCurrentXMLFile)</log>
+  </function>
+</stax>
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+services/stax/service/STAXFunctionActionFactory.java
+services/stax/service/STAXFunctionAction.java
+services/stax/service/STAXJob.cpp
+services/stax/service/STAX.java
+services/stax/service/STAXImportAction.java
+services/stax/service/STAXDocument.java
+services/stax/service/STAXFileCache.java
+services/stax/makefile.stax
+services/stax/docs/userguide/staxug.html
+test/STAFTest.xml
+
+New Files:
+
+services/stax/service/STAXFunctionImport.java
+services/stax/service/STAXFunctionImportException.java
+
+1) Changes to services/stax/service/STAXFunctionActionFactory.java:
+
+   a) Updated the DTD for the function element to include the
+      function-import element.
+
+   "     The name, requires, and scope attribute values are literals.\n" +
+   "     The function element can also define any number of function-import\n" +
+   "     elements if it requires functions from other xml files.\n" +
+   ...
+   "                       (function-epilog)?,\n" +
+   "                       (function-import)*,\n" +
+   ...
+   "<!ELEMENT function-import       (#PCDATA)>\n" +
+   "<!ATTLIST function-import\n" +
+   "          file         CDATA    #REQUIRED\n" +
+   "          machine      CDATA    #IMPLIED\n" +
+   ">\n" +
+
+   b) Added code to check for function-import elements and
+      to call the new STAXFunctionImport's addToImportList method
+      passing it the file, machine, and functions for each
+      function-import element found.
+
+      else if (thisChild.getNodeName().equals("function-import"))
+      {
+          // Get required file attribute and optional machine and
+          // functions attributes
+
+          String functions = null;
+          String file = null;
+          String machine = null;
+
+          NamedNodeMap childAttrs = thisChild.getAttributes();
+
+          for (int j = 0; j < childAttrs.getLength(); ++j)
+          {
+              Node thisAttr = childAttrs.item(j);
+
+              if (thisAttr.getNodeName().equals("file"))
+              {
+                  file = thisAttr.getNodeValue();
+              }
+              else if (thisAttr.getNodeName().equals("machine"))
+              {
+                  machine = thisAttr.getNodeValue();
+              }
+          }
+
+          functions = handleChild(thisChild, function);
+
+          if (functions.length() == 0)
+              functions = null;
+
+          function.addToImportList(file, machine, functions);
+      }
+
+2) Changes to services/stax/service/STAXFunctionAction.java:
+   
+   a) Defined one new member variable:
+
+    private ArrayList fImportList = new ArrayList();
+
+   b) Added a addToImportList() method:
+
+      public void addToImportList(
+          String file, String machine, String functions)
+      {
+          fImportList.add(
+              new STAXFunctionImport(file, machine, functions));
+      }
+
+   c) Added a getImportList() method:
+
+     public List getImportList() { return fImportList; }
+
+   d) Updated the cloneAction() method to clone fImportList:
+
+     clone.fImportList = (ArrayList)fImportList.clone();
+
+3) Changes to services/stax/service/STAXJob.java:
+
+  a) Added a new public method called addImportedFunctions
+     (that is called by STAX.java and STAXImportAction.java).
+     This is a recursive function that checks if a function
+     needs to import other xml files that contain functions it
+     requires.  It checks if the specified function has any
+     function-import sub-elements that specify files to be
+     imported.  If so, it parses the files (if not already in
+     the cache) and adds their required functions to the job's
+     fFunctionMap. For any new functions added to the job's
+     fFunctionMap, it recursively calls the
+     addImportedFunctions method.
+
+     Note:  It contains code similar to STAXImportAction.java
+     to handle importing functions from files.
+
+     public void addImportedFunctions(STAXFunctionAction functionAction) 
+         throws STAFException, STAXException
+
+  b) Added a new private method called addRequiredFunctions
+     (which is called by STAXJob's addImportedFunctions
+     method).  This recursive method adds the specified
+     required function to the main job's fFunctionMap.  And,
+     if this function has any function-import elements, it
+     recursively adds these functions that are required by
+     the imported function.  And, if this function has any
+     required functions from the same xml file, it
+     recursively adds these required functions.
+ 
+     private void addRequiredFunctions(String functionName, HashMap functionMap)
+         throws STAFException, STAXException
+
+   c) Added a default signal handler for a STAXFunctionImportError
+      signal that logs an error message and terminates the job.
+
+      {
+          "STAXFunctionImportError", "terminate",
+          "STAXFunctionImportErrorMsg"
+      },
+
+   d) Changed the submitSync() method to check if the job's
+      handle is null and if so, to use the STAX service's
+      handle to submit the request.  This way, the
+      addImportedFunctions() method can use the submitSync()
+      method to submit STAF service requests (e.g. an FS GET
+      to get a file, etc) even if the handle for the STAX job
+      has not been created yet.
+
+      public STAFResult submitSync(String location, String service, 
+                                   String request)
+      {
+          STAFHandle theHandle = fHandle;
+        
+          // If the STAX job's handle has not yet been assigned, use the
+          // STAX service's handle to submit the STAF service request
+
+          if (fHandle == null)
+              theHandle = fSTAX.getSTAFHandle();
+
+          STAFResult result = theHandle.submit2(
+              STAFHandle.ReqSync, location, service, request);
+        
+          return result;
+      }
+
+4) Changes to services/stax/service/STAX.java:
+
+  a) Added code to recursively process function-import elements
+     for all of the functions added to the job's function map.
+
+  Iterator functionIter = job.getSTAXDocument().getFunctionMap().
+      values().iterator();
+
+  while (functionIter.hasNext())
+  {
+      job.addImportedFunctions(
+          (STAXFunctionAction)functionIter.next());
+  }
+
+  b) Changed to call the new STAXFileCache.getFileSep(machine, handle)
+     method in two places (for breakpoint machines and during the
+     xml file name normalization process) since this is common code
+     that is also used by STAXImportAction.java and STAXJob.java.
+
+5) Changes to services/stax/service/STAXImportAction.java:
+
+  a) Added code to recursively process function-import elements
+     for all of the functions added to the job's function map
+     by the import element:
+
+     // The names of the functions that were added to the job's
+     // function map are in the fFunctionListImportedRequested and
+     // fFunctionListImportedRequired lists.  Merge them into a single
+     // list so we can iterate through the merged list.
+
+     ArrayList functionList = fFunctionListImportedRequested;
+     functionList.addAll(fFunctionListImportedRequired);
+
+     // Recursively process any function-import elements for all the
+     // imported functions that were added to the job's function map
+
+     Iterator functionIter = functionList.iterator();
+
+     try
+     {
+         while (functionIter.hasNext())
+         {
+             String functionName = (String)functionIter.next();
+
+             STAXFunctionAction functionAction = (STAXFunctionAction)
+                 fThread.getJob().getSTAXDocument().getFunction(functionName);
+
+             if (functionAction != null)
+                 fThread.getJob().addImportedFunctions(functionAction);
+         }
+     }
+     catch (Exception e)
+     {
+         fThread.setSignalMsgVar("STAXFunctionImportErrorMsg", e.toString());
+         fThread.popAction();
+         fThread.raiseSignal("STAXFunctionImportError");
+
+         return;
+     }
+
+  b) Moved the fThread.popAction() after setSignalMsgVar so it
+     includes the import element in the call stack logged in
+     the message.
+
+  c) Changed to call the new STAXFileCache.getFileSep(machine, handle)
+     method since this is common code that is also used by
+     STAX.java and STAXJob.java.
+
+6) Changes to services/stax/service/STAXDocument.java:
+
+  a) Added a getSortedFunctionMap() function to return a sorted
+     map of all the functions in the document (so that STAX.java
+     could call it when handling a STAX LIST JOB <JobID> FUNCTIONS
+     request to list the functions sorted by function name
+
+     public TreeMap getSortedFunctionMap()
+     {
+         synchronized(fFunctionMap)
+         {
+             return new TreeMap(fFunctionMap);
+         }
+     }
+
+7) Changed to services/stax/service/STAXFileCache.java
+
+  a) Added a new public static method called getFileSep (which
+     is called by STAX.java, STAXImportAction.java, and 
+     STAXJob's addImportedFunctions method (instead of
+     duplicating the code in each place as it was in STAX.java
+     and STAXImportAction.java). 
+
+     This method gets the file separator for the operating
+     system of the specified machine.  It returns a
+     STAFResult object.  If successful, the STAFResult's
+     rc = 0 and the result contains the file separator.
+     If it fails, the STAFResult's rc is set to a non-zero
+     rc and the result contains an error message.
+      
+    public static STAFResult getFileSep(String machine, STAFHandle handle)
+    {
+        String fileSep = "";
+
+        if (STAXFileCache.get().isLocalMachine(machine))
+        {
+            // Assign the file separator for the local STAX machine
+            fileSep = STAX.fileSep;
+            return new STAFResult(STAFResult.Ok, fileSep);
+        }
+        
+        // Get the file separator for the remote machine.
+          
+        // Get the file separator from the machine cache if the remote
+        // machine is in the cache (so that don't have to submit a VAR
+        // RESOLVE request to the remote machine).
+         
+        if (STAXMachineCache.get().checkCache(machine))
+        {
+            fileSep = STAXMachineCache.get().getFileSep(machine);
+            return new STAFResult(STAFResult.Ok, fileSep);
+        }
+        
+        // The remote machine is not in the machine cache, so submit a
+        // VAR RESOLVE request to get the file separator and add the
+        // machine/fileSep to the machine cache.
+
+        STAFResult result = handle.submit2(
+            machine, "VAR", "RESOLVE STRING {STAF/Config/Sep/File}");
+
+        if (result.rc == STAFResult.Ok)
+        {
+            fileSep = result.result;
+
+            // Add the machine/fileSep to the machine cache
+            STAXMachineCache.get().addMachine(machine, fileSep);
+        }
+        
+        return result;
+    }
+
+7) Changes to services/stax/makefile.stax
+
+  a) Added new classes STAXFunctionImportException.class and
+     STAXFunctionImport.class
+
+   $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionImportException.class \
+   $(O)/services/stax/service/STAF-INF/classes/com/ibm/staf/service/stax/STAXFunctionImport.class \
+
+8) New file services/stax/service/STAXFunctionImport.java
+
+  a) This new class is used by STAXFunctionImportAction to
+     store information about a <function-import> element
+     so STAXFunctionImport object can be stored in a list
+     by STAXFuntcionImportAction.
+
+package com.ibm.staf.service.stax;
+
+public class STAXFunctionImport
+{
+    public STAXFunctionImport(String file, String machine, String functions)
+    {
+        fFile = file;
+        fMachine = machine;
+        fFunctions = functions;
+    }
+
+    public String getFile() { return fFile; }
+    public String getMachine() { return fMachine; }
+    public String getFunctions() { return fFunctions; }
+
+    private String fFile = null;
+    private String fMachine = null;
+    private String fFunctions = null;
+}
+
+9) New file services/stax/service/STAXFunctionImportException.java
+
+  a) This new class is defines the exception that is thrown
+     when an error occurs handling a <function-import> element.
+
+package com.ibm.staf.service.stax;
+
+public class STAXFunctionImportException extends STAXException
+{
+    public STAXFunctionImportException(String message)
+    {
+        super(message);
+    }
+}
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

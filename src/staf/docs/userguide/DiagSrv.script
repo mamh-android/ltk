@@ -1,0 +1,840 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : DelaySrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Delay Service
+.*  Detail:
+.*
+.*     This file describes the STAF Delay Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.diag service
+:ih1.services
+:i2.Diagnostics (DIAG) service
+:h2 id=diagsrv.Diagnostics (DIAG) Service
+:h3.Description
+:p.The Diagnostics service, called DIAG, is an internal STAF service
+which lets you record and list diagnostics data.  It provides the
+following commands:
+:ul compact.
+:li.RECORD - Records diagnostics data in the diagnostics map and keeps
+a count of the number of times each unique trigger/source combination
+is recorded
+:li.LIST - Displays diagnostics data that has been recorded or
+displays the operational settings (e.g. enabled or disabled) for the
+service
+:li.RESET - Clears all data from the diagnostics map
+:li.ENABLE - Enables recording diagnostics data
+:li.DISABLE - Disables recording diagnostics data
+:li.HELP - Returns syntax information
+:eul.
+:p.The purpose of the DIAG service is to allow you to record
+diagnostics data consisting of a trigger and its source.  The number
+of times each trigger/source combination occurs is accumulated by
+the DIAG service.  You may list the trigger(s)/source(s) and their
+counts, as well as clear all data from the diagnostics map.
+:note.The commands for the DIAG service and their result formats are
+subject to change.
+.*
+:ih1.service commands
+:ih2.RECORD
+:i3.Diagnostics (DIAG) service
+:h3.RECORD
+:p.RECORD writes diagnostics data (a trigger and its source) to a
+diagnostics map where a count is kept of the number of times each
+unique trigger/source combination occurs.
+:note.You must enable diagnostics before you can record diagnostics
+data.
+:h4.Syntax
+:xmp.
+RECORD TRIGGER <Trigger> SOURCE <Source>
+:exmp.
+:p.:xph.TRIGGER:exph. specifies the trigger (event) that you want
+to record in the diagnostics map.  You can specify anything for
+the trigger, but we recommend that you don't specify a semi-colon (;)
+in the trigger to make it easier to parse the list output which uses
+a semi-colon to separate fields.  &varres.
+:p.:xph.SOURCE:exph. specifies information about the originator of
+the trigger.  It is also recorded in the diagnostics map.  For example,
+you may want to include the originating machine's name, handle, and
+handle name.  &varres.
+:h4.Security
+:p.&seclvl. 3.
+:note.This command is only valid if submitted to the local machine,
+not to remote machines.
+
+:h4.Return Codes
+:p.All return codes from RECORD are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+RECORD command.
+:h4.Examples
+:sl compact.
+:li.:hp2.Goal::ehp2.&nbsp; Record trigger "PROCESS QUERY" and "myApp;machinea.ibm.com"
+as the source of the trigger in the diagnostics map.
+:li.:hp2.Syntax::ehp2.&nbsp; :xph.RECORD TRIGGER "PROCESS QUERY" SOURCE "myApp;machinea.ibm.com":exph.
+:esl.
+
+.*
+:ih1.service commands
+:ih2.LIST
+:h3 id=diagList.LIST
+:i3.Diagnostics (DIAG) service
+:p.LIST allows you to list all the information in the diagnostics map,
+or just the triggers or sources, or a particular trigger or source.
+It also allows you to list current operational settings.
+:h4.Syntax
+:xmp.
+LIST   <[TRIGGER <Trigger> | SOURCE <Source> | TRIGGERS | SOURCES]
+        [SORTBYCOUNT | SORTBYTRIGGER | SORTBYSOURCE]> |
+       SETTINGS
+:exmp.
+:p.If no options are specified (other than a :xph.SORTBY:exph. option),
+it will list all the trigger/source combinations that were recorded
+and the number of times each was recorded.
+:p.:xph.TRIGGER:exph. indicates you want to list all the sources for
+the specified trigger and the number of times each source was recorded
+for this trigger.  &varres.
+:p.:xph.SOURCE:exph. indicates you want to list all the triggers for
+the specified source and the number of times each trigger was recorded
+for this source.  &varres.
+:p.:xph.TRIGGERS:exph. indicates you want to list all the triggers that
+have been recorded and the number of times they were recorded.
+:p.:xph.SOURCES:exph. indicates you want to list all the sources that
+have been recorded and the number of times they were recorded.
+:p.:xph.SORTBYCOUNT:exph. specifies to sort the listing by count in
+descending order.  This is the default.
+:p.:xph.SORTBYTRIGGER:exph. specifies to sort the listing by trigger in
+ascending order.
+:p.:xph.SORTBYSOURCE:exph. specifies to sort the listing by source in
+ascending order.
+:p.:xph.SETTINGS:exph. indicate you want to list the current operational
+settings for the service.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain information
+about the :xph.LIST:exph. request based on the options specified: 
+:p.
+:ul.
+:li.:xph.LIST:exph.
+:p.
+The result buffer for a :xph.LIST:exph. request (without specifying options
+:xph.TRIGGER, SOURCE, TRIGGERS, SOURCES, or SETTINGS:exph.) will contain a
+marshalled :xph.<Map&colon.STAF/Service/Diag/AllDiagInfo>:exph.
+representing the diagnostics information for all of the unique
+trigger/source combinations.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Diag/AllDiagInfo
+:tnote text='Description'.This map class represents the diagnostics
+information for all of the unique trigger/source combinations.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.fromTimestamp
+:c.From Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.toTimestamp
+:c.To Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.elapsedTime
+:c.Elapsed Time
+:c.&stringObj. | &noneObj.
+:c.:xph.<[H]HH&colon.MM&colon.SS>:exph.
+:row.
+:c.numberOfTriggers
+:c.Number of Triggers
+:c.&stringObj.
+:c.
+:row.
+:c.numberOfSources
+:c.Number of Sources
+:c.&stringObj.
+:c.
+:row.
+:c.comboList
+:c.Trigger/Source Combinations
+:c.:xph.<List> of <Map&colon.STAF/Service/Diag/ComboCount>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."From Date-Time" specifies the date/time that diagnostics
+were first enabled or last reset, or &noneObj. if diagnostics have never
+been enabled.
+:li."To Date-Time" specifies the date/time that diagnostics
+were disabled or, if still enabled, the current time.
+:li."Elapsed Time" specifies the difference between the
+"From Date-Time" and the "To Date-Time" in hours,
+minutes, and seconds, or &noneObj. if diagnostics have never been enabled.
+:li."Number of Triggers" specifies the number of unique
+triggers that have been recorded.
+:li."Number of Sources" specifies the number of unique sources
+that have been recorded.
+:li.See table :tref refid=diagComboCountTable. for the map class definition of
+:xph.<Map&colon.STAF/Service/Diag/ComboCount>:exph..
+:eol.
+:etnote.
+:etable.
+:table cols='* * * *' id=diagComboCountTable.
+:tcap.Definition of map class STAF/Service/Diag/ComboCount
+:tnote text='Description'.This map class represents a unique trigger/source
+combination and a count of how many times it was recorded.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.trigger
+:c.Trigger
+:c.&stringObj.
+:c.
+:row.
+:c.source
+:c.Source
+:c.&stringObj.
+:c.
+:row.
+:c.count
+:c.Count
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+"Count" specifies the number of times each trigger/source
+combination has been recorded.
+:etnote.
+:etable.
+:p.
+:li.:xph.LIST TRIGGERS:exph.
+:p.
+The result buffer for a :xph.LIST TRIGGERS:exph. request will contain a
+marshalled :xph.<Map&colon.STAF/Service/Diag/TriggersInfo>:exph.
+representing the diagnostics information for all of the unique triggers
+that have been recorded.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Diag/TriggersInfo
+:tnote text='Description'.This map class represents the diagnostics
+information for all of the unique triggers that have been recorded.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.fromTimestamp
+:c.From Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.toTimestamp
+:c.To Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.elapsedTime
+:c.Elapsed Time
+:c.&stringObj. | &noneObj.
+:c.:xph.<[H]HH&colon.MM&colon.SS>:exph.
+:row.
+:c.numberOfTriggers
+:c.Number of Triggers
+:c.&stringObj.
+:c.
+:row.
+:c.triggerList
+:c.Triggers
+:c.:xph.<List> of <Map&colon.STAF/Service/Diag/TriggerCount>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."From Date-Time" specifies the date/time that diagnostics
+were first enabled or last reset, or &noneObj. if diagnostics have never
+been enabled.
+:li."To Date-Time" specifies the date/time that diagnostics
+were disabled or, if still enabled, the current time.
+:li."Elapsed Time" specifies the difference between the
+"From Date-Time" and the "To Date-Time" in hours,
+minutes, and seconds, or &noneObj. if diagnostics have never been enabled.
+:li."Number of Triggers" specifies the number of unique
+triggers that have been recorded.
+:li.See table :tref refid=diagTriggerCountTable. for the map class definition of
+:xph.<Map&colon.STAF/Service/Diag/TriggerCount>:exph..
+:eol.
+:etnote.
+:etable.
+:table cols='* * * *' id=diagTriggerCountTable.
+:tcap.Definition of map class STAF/Service/Diag/TriggerCount
+:tnote text='Description'.This map class represents a trigger
+and a count of how many times it was recorded.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.trigger
+:c.Trigger
+:c.&stringObj.
+:c.
+:row.
+:c.count
+:c.Count
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+"Count" specifies the number of times a trigger has been recorded.
+:etnote.
+:etable.
+:p.
+:li.:xph.LIST SOURCES:exph.
+:p.
+The result buffer for a :xph.LIST SOURCES:exph. request will contain a
+marshalled :xph.<Map&colon.STAF/Service/Diag/SourcesInfo>:exph.
+representing the diagnostics information for all of the unique sources
+that have been recorded.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Diag/SourcesInfo
+:tnote text='Description'.This map class represents the diagnostics
+information for all of the unique sources that have been recorded.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.fromTimestamp
+:c.From Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.toTimestamp
+:c.To Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.elapsedTime
+:c.Elapsed Time
+:c.&stringObj. | &noneObj.
+:c.:xph.<[H]HH&colon.MM&colon.SS>:exph.
+:row.
+:c.numberOfSources
+:c.Number of Sources
+:c.&stringObj.
+:c.
+:row.
+:c.sourceList
+:c.Sources
+:c.:xph.<List> of <Map&colon.STAF/Service/Diag/SourceCount>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."From Date-Time" specifies the date/time that diagnostics
+were first enabled or last reset, or &noneObj. if diagnostics have never
+been enabled.
+:li."To Date-Time" specifies the date/time that diagnostics
+were disabled or, if still enabled, the current time.
+:li."Elapsed Time" specifies the difference between the
+"From Date-Time" and the "To Date-Time" in hours,
+minutes, and seconds, or &noneObj. if diagnostics have never been enabled.
+:li."Number of Sources" specifies the number of unique
+sources that have been recorded.
+:li.See table :tref refid=diagSourceCountTable. for the map class definition of
+:xph.<Map&colon.STAF/Service/Diag/SourceCount>:exph..
+:eol.
+:etnote.
+:etable.
+:table cols='* * * *' id=diagSourceCountTable.
+:tcap.Definition of map class STAF/Service/Diag/SourceCount
+:tnote text='Description'.This map class represents a source
+and a count of how many times it was recorded.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.source
+:c.Source
+:c.&stringObj.
+:c.
+:row.
+:c.count
+:c.Count
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+"Count" specifies the number of times a source has been recorded.
+:etnote.
+:etable.
+:p.
+:li.:xph.LIST TRIGGER <Trigger>:exph.
+:p.
+The result buffer for a :xph."LIST TRIGGER <Trigger>":exph. request
+will contain a marshalled
+:xph.<Map&colon.STAF/Service/Diag/TriggerInfo>:exph.
+representing the diagnostics information for the unique sources
+that have been recorded for the specified trigger.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Diag/TriggerInfo
+:tnote text='Description'.This map class represents the diagnostics
+information for the specified trigger.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.fromTimestamp
+:c.From Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.toTimestamp
+:c.To Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.elapsedTime
+:c.Elapsed Time
+:c.&stringObj. | &noneObj.
+:c.:xph.<[H]HH&colon.MM&colon.SS>:exph.
+:row.
+:c.trigger
+:c.Trigger
+:c.&stringObj.
+:c.
+:row.
+:c.numberOfSources
+:c.Number of Sources
+:c.&stringObj.
+:c.
+:row.
+:c.sourceList
+:c.Sources
+:c.:xph.<List> of <Map&colon.STAF/Service/Diag/SourceCount>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."From Date-Time" specifies the date/time that diagnostics
+were first enabled or last reset, or &noneObj. if diagnostics have never
+been enabled.
+:li."To Date-Time" specifies the date/time that diagnostics
+were disabled or, if still enabled, the current time.
+:li."Elapsed Time" specifies the difference between the
+"From Date-Time" and the "To Date-Time" in hours,
+minutes, and seconds, or &noneObj. if diagnostics have never been enabled.
+:li."Number of Sources" specifies the number of unique
+sources that have recorded diagnostics for the specified trigger.
+:li.See table :tref refid=diagSourceCountTable. for the map class definition of
+:xph.<Map&colon.STAF/Service/Diag/SourceCount>:exph..
+:eol.
+:etnote.
+:etable.
+:p.
+:li.:xph.LIST SOURCE <Source>:exph.
+:p.
+The result buffer for a :xph."LIST SOURCE <Source>":exph. request
+will contain a marshalled
+:xph.<Map&colon.STAF/Service/Diag/SourceInfo>:exph.
+representing the diagnostics information for all of the unique triggers
+that have been recorded for the specified source.
+The maps are defined as follows:
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/Diag/SourceInfo
+:tnote text='Description'.This map class represents the diagnostics
+information for the specified source.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.fromTimestamp
+:c.From Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.toTimestamp
+:c.To Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.elapsedTime
+:c.Elapsed Time
+:c.&stringObj. | &noneObj.
+:c.:xph.<[H]HH&colon.MM&colon.SS>:exph.
+:row.
+:c.source
+:c.Source
+:c.&stringObj.
+:c.
+:row.
+:c.numberOfTriggers
+:c.Number of Triggers
+:c.&stringObj.
+:c.
+:row.
+:c.triggerList
+:c.Triggers
+:c.:xph.<List> of <Map&colon.STAF/Service/Diag/TriggerCount>:exph.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."From Date-Time" specifies the date/time that diagnostics
+were first enabled or last reset, or &noneObj. if diagnostics have never
+been enabled.
+:li."To Date-Time" specifies the date/time that diagnostics
+were disabled or, if still enabled, the current time.
+:li."Elapsed Time" specifies the difference between the
+"From Date-Time" and the "To Date-Time" in hours,
+minutes, and seconds, or &noneObj. if diagnostics have never been enabled.
+:li."Number of Triggers" specifies the number of unique
+triggers that have been recorded for the specified source.
+:li.See table :tref refid=diagTriggerCountTable. for the map class definition of
+:xph.<Map&colon.STAF/Service/Diag/TriggerCount>:exph..
+:eol.
+:etnote.
+:etable.
+:p.
+:li.:xph.LIST SETTINGS:exph.
+:p.
+The result buffer for a :xph."LIST SETTINGS":exph. request
+will contain a marshalled
+:xph.<Map&colon.STAF/Service/Diag/Settings>:exph.
+representing the current operational settings for the DIAG service.
+The maps are defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Diag/Settings
+:tnote text='Description'.This map class represents the current
+operational settings for the DIAG service.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.diagnostics
+:c.Diagnostics
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled'.:exph.
+:row.
+:c.lastResetTimestamp
+:c.Last Reset / First Enabled
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.lastDisabledTimestamp
+:c.Last Disabled
+:c.&stringObj.
+:c.&timestampFormat.
+:tnote text='Notes'.
+:ol compact.
+:li."Diagnostics" specifies if recording diagnostics is 
+currently enabled or disabled.
+:li."Last Reset / First Enabled" specifies the timestamp when diagnostics
+were last reset or first enabled or &noneObj. if diagnostics have never
+been reset since STAF was started.
+:li."Last Disabled" specifies the timestamp when diagnostics
+were last disabled or last cleared via the RESET command.
+It is initially set to the date/time when STAF was started.
+:eol.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+
+:ul.
+:li.:hp2.Goal::ehp2.&nbsp; Show me all the trigger/source combinations that
+have been recorded (sorted in descending order by count, the
+default).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in verbose format, could look like:
+:xmp.
+{
+  From Date-Time             : 20040926-12:15:04
+  To Date-Time               : 20040926-12:20:05
+  Elapsed Time               : 00:05:01
+  Number of Triggers         : 3
+  Number of Sources          : 2
+  Trigger/Source Combinations: [
+    {
+      Trigger: MYSERVICE QUERY
+      Source : MyApp;machine1.austin.ibm.com;77
+      Count  : 10
+    }
+    { 
+      Trigger: MYSERVICE QUERY
+      Source : myApp2;machine1.austin.ibm.com;97
+      Count  : 7
+    }
+    {
+      Trigger: SAMPLE1 QUERY
+      Source : myApp2;machine1.austin.ibm.com;97
+      Count  : 4
+    }
+    {
+      Trigger: MYSERVICE LIST
+      Source : myApp2;machine1.austin.ibm.com;97
+      Count  : 1
+    }
+  ]
+}
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Show me all the triggers and sources that have been
+recorded sorted in ascending order by trigger.
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.LIST SORTBYTRIGGER:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in verbose format, could look like:
+:xmp.
+{
+  From Date-Time             : 20040926-12:15:04
+  To Date-Time               : 20040926-12:21:09
+  Elapsed Time               : 00:06:05
+  Number of Triggers         : 3
+  Number of Sources          : 2
+  Trigger/Source Combinations: [
+    {
+      Trigger: MYSERVICE LIST
+      Source : myApp2;machine1.austin.ibm.com;97
+      Count  : 1
+    }
+    {
+      Trigger: MYSERVICE QUERY
+      Source : MyApp;machine1.austin.ibm.com;77
+      Count  : 10
+    }
+    {
+      Trigger: MYSERVICE QUERY
+      Source : myApp2;machine1.austin.ibm.com;97
+      Count  : 7
+    }
+    {
+      Trigger: SAMPLE1 QUERY
+      Source : myApp2;machine1.austin.ibm.com;97
+      Count  : 4
+    }
+  ]
+}
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2.&nbsp;  Show me all the triggers that have been recorded,
+sorted by trigger in ascending order.
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.LIST TRIGGERS SORTBYTRIGGER:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in verbose format, could look like:
+:xmp.
+{
+  From Date-Time    : 20040926-12:15:04
+  To Timestamp      : 20040926-12:28:20
+  Elapsed Time      : 00:13:16
+  Number of Triggers: 3
+  Triggers          : [
+    {
+      Trigger: MYSERVICE LIST
+      Count  : 1
+    }
+    {
+      Trigger: MYSERVICE QUERY
+      Count  : 17
+    }
+    {
+      Trigger: SAMPLE1 QUERY
+      Count  : 4
+    }
+  ]
+}
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2.&nbsp;  Show me all the sources that have been recorded
+(sorted by count in descending order, the default).
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.LIST SOURCES:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in verbose format, could look like:
+:xmp.
+{
+  From Date-Time   : 20040926-12:15:04
+  To Date-Time     : 20040926-12:32:53
+  Elapsed Time     : 00:17:49
+  Number of Sources: 2
+  Sources          : [
+    {
+      Source: MyApp;machine1.austin.ibm.com;77
+      Count : 10
+    }
+    {
+      Source: MyApp2;machine1.austin.ibm.com;97
+      Count : 12
+    }
+  ]
+}
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Show me all of the sources for trigger
+:xph."MYSERVICE QUERY":exph., sorted by source in ascending order.
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.LIST TRIGGER "MYSERVICE QUERY" SORTBYSOURCE:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in verbose format, could look like:
+:xmp.
+{
+  From Date-Time   : 20040926-12:15:04
+  To Date-Time     : 20040926-12:36:18
+  Elapsed Time     : 00:21:14
+  Trigger          : MYSERVICE QUERY
+  Number of Sources: 2
+  Sources          : [
+    {
+      Source: MyApp;machine1.austin.ibm.com;77
+      Count : 10
+    }
+    {
+      Source: MyApp2;machine1.austin.ibm.com;97
+      Count : 7
+    }
+  ]
+}      
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Show me all of the triggers for source
+:xph."MyApp2;machine1.austin.ibm.com;97":exph. (sorted by count in 
+descending order, the default).
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.LIST SOURCE "MyApp2;machine1.austin.ibm.com;97":exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in verbose format, could look like:
+:xmp. 
+{
+  From Date-Time    : 20040926-12:15:04
+  To Date-Time      : 20040926-12:40:08
+  Elapsed Time      : 00:25:04
+  Source            : MyApp2;machine1.austin.ibm.com;97
+  Number of Triggers: 3
+  Triggers          : [
+    {
+      Trigger: MYSERVICE QUERY
+      Count  : 7
+    }
+    {
+      Trigger: SAMPLE1 QUERY
+      Count  : 4
+    }
+    {
+      Trigger: MYSERVICE LIST
+      Count  : 1
+    }
+  ]
+}
+:exmp.
+:p. 
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Show me the current operational settings.
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the
+command line, the result, in default format, could look like:
+:xmp.
+Diagnostics               : Enabled
+Last Reset / First Enabled: 20040926-12:15:04
+Last Disabled             : 20040926-12:14:53
+:exmp.
+:eul.
+.*
+:ih1.service commands
+:ih2.RESET
+:i3.Diagnostics (DIAG) service
+:h3 id=diagReset.RESET
+:p.RESET allows you to clear all data from the diagnostics map.
+:h4.Syntax
+:xmp.
+RESET FORCE
+:exmp.
+:p.:xph.FORCE:exph. is a confirmation that you want to clear all data.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from RESET are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+RESET command.
+:h4.Examples
+:sl compact.
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Remove all information in the diagnostics map.
+:li.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.RESET FORCE:exph.
+:esl.
+.*
+:ih1.service commands
+:ih2.ENABLE
+:i3.Diagnostics (DIAG) service
+:h3 id=diagEnable.ENABLE
+:p.ENABLE allows you to enable recording diagnostics.
+:note.You may also enable diagnostics when STAF starts by setting
+operational parameter :xph.ENABLEDIAGS:exph. in the STAF configuration
+file.
+:h4.Syntax
+:xmp.
+ENABLE
+:exmp.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from ENABLE are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+ENABLE command.
+:h4.Examples
+:sl compact.
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Enable recording diagnostics.
+:li.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.ENABLE:exph.
+:esl.
+.*
+:ih1.service commands
+:ih2.DISABLE
+:i3.Diagnostics (DIAG) service
+:h3 id=diagDisable.DISABLE
+:p.DISABLE allows you to disable recording diagnostics.
+:h4.Syntax
+:xmp.
+DISABLE
+:exmp.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from DISABLE are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on a successful return from a
+DISABLE command.
+:h4.Examples
+:sl compact.
+:li.:hp2.Goal&colon.:ehp2.&nbsp; Disable recording diagnostics.
+:li.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.DISABLE:exph.
+:esl.

@@ -1,0 +1,209 @@
+#!/bin/bash
+
+ltk_cloud_install_patch=`pwd`
+cd ~
+ltk_cloud_path=`pwd`/ltk_cloud
+staf_path=$ltk_cloud_path/STAF
+
+
+
+version=2014.3.28
+
+check_cloud_folder()
+{
+if [ ! -d $ltk_cloud_path ];then
+	echo "Can't find LTK Cloud folder!!!!!"
+	echo "please use \"ltk_cloud -i\" to install/update the ltk cloud"
+	exit 1
+fi
+}
+ltk_cloud_install(){
+	wget ftp://10.38.164.22/Daily_Build2/Release/ltk_cloud.bin ./
+	#cp $ltk_cloud_install_patch/ltk_cloud.bin ~
+	chmod 777 ./ltk_cloud.bin
+	./ltk_cloud.bin
+	rm ./ltk_cloud*bin
+}
+
+ltk_cloud_start(){
+	ps -u | grep STAFProc | grep -v "grep"
+	progress_result=0
+
+PATH=$staf_path/bin:$PATH
+export PATH
+LD_LIBRARY_PATH=$staf_path/lib
+export LD_LIBRARY_PATH
+CLASSPATH=$staf_path/lib/JSTAF.jar:$staf_path/samples/demo/STAFDemo.jar
+export CLASSPATH
+STAFCONVDIR=$staf_path/codepage
+export STAFCONVDIR
+STAFCODEPAGE=LATIN_1
+export STAFCODEPAGE
+	STAF local var list
+	STAF_start_result=$?
+	if [ $progress_result -eq 0 -a $STAF_start_result -eq 0 ];then
+		echo "STAF has been statred, skip starting"
+	else
+cd $ltk_cloud_path
+STAFProc &
+	fi
+cd $ltk_cloud_path
+	./rcc_utilc list all
+	rcc_server_in_progress=$?
+	if [ $rcc_server_in_progress -ne 0 ];then
+	echo "enable rcc_utils.... , please wait"
+	./rcc_utilc sysctl exit
+	./rcc_utils && sleep 10
+	./rcc_utilc list all
+	fi
+	./cloud_client &
+}
+
+show_help(){
+	echo "USEAGE###############################################"
+	echo "ltk_cloud"
+	echo "          -h	:Help Information"
+	echo "          -i	:Install/Update LTK Cloud"
+	echo "          -s	:Start the ltk project"
+	#echo "          -a	:Add LTK Cloud into starting up"
+	#echo "          -r	:Remove LTK Cloud in starting up"
+	echo "          -v	:Show LTK cloud Version"
+	echo "USEAGE###############################################"
+}
+
+update_ltk()
+{
+	echo in_progress
+}
+
+show_version()
+{
+	echo $version
+}
+
+
+
+server_start()
+{
+server_path=/usr/bin/STAF
+PATH=$server_path/bin:$PATH
+export PATH
+LD_LIBRARY_PATH=$server_path/lib
+export LD_LIBRARY_PATH
+CLASSPATH=$server_path/lib/JSTAF.jar:$staf_path/samples/demo/STAFDemo.jar
+export CLASSPATH
+STAFCONVDIR=$server_path/codepage
+export STAFCONVDIR
+STAFCODEPAGE=LATIN_1
+export STAFCODEPAGE
+	STAF local var list
+	STAF_start_result=$?
+	if [ $STAF_start_result -eq 0 ];then
+		echo "STAF has been statred, skip starting"
+	else
+STAFProc &
+	fi
+cd $ltk_cloud_path
+	./rcc_utils
+
+}
+
+add_start_up()
+{
+	add_start_up=`grep -q ltk_cloud ~/.profile ; echo $?`
+	#add_start_up=0
+	if [ $add_start_up -eq 0 ];then
+	echo "Skip: no support"
+	else
+		echo "Begin add starting up"
+		#echo "ltk_cloud -s" >> ~/.profile
+		#echo "ltk_cloud -l" >> /etc/rc.local
+		if [ `grep -q STAFCODEPAGE /root/.bashrc ; echo $?` -ne 0 ];then
+			echo "PATH=$staf_path/bin:$PATH" >> /root/.bashrc
+			echo "export PATH" >> /root/.bashrc
+			echo "LD_LIBRARY_PATH=$staf_path/lib" >> /root/.bashrc
+			echo "export LD_LIBRARY_PATH" >> /root/.bashrc
+			echo "CLASSPATH=$staf_path/lib/JSTAF.jar:$staf_path/samples/demo/STAFDemo.jar" >> /root/.bashrc
+			echo "export CLASSPATH" >> /root/.bashrc
+			echo "STAFCONVDIR=$staf_path/codepage" >> /root/.bashrc
+			echo "export STAFCONVDIR" >> /root/.bashrc
+			echo "STAFCODEPAGE=LATIN_1" >> /root/.bashrc
+			echo "export STAFCODEPAGE" >> /root/.bashrc
+		fi
+
+		if [ `grep -q STAFCODEPAGE ~/.bashrc ; echo $?` -ne 0 ];then
+			echo "PATH=$staf_path/bin:$PATH" >> ~/.bashrc
+			echo "export PATH" >> ~/.bashrc
+			echo "LD_LIBRARY_PATH=$staf_path/lib" >> ~/.bashrc
+			echo "export LD_LIBRARY_PATH" >> ~/.bashrc
+			echo "CLASSPATH=$staf_path/lib/JSTAF.jar:$staf_path/samples/demo/STAFDemo.jar" >> ~/.bashrc
+			echo "export CLASSPATH" >> ~/.bashrc
+			echo "STAFCONVDIR=$staf_path/codepage" >> ~/.bashrc
+			echo "export STAFCONVDIR" >> ~/.bashrc
+			echo "STAFCODEPAGE=LATIN_1" >> ~/.bashrc
+			echo "export STAFCODEPAGE" >> ~/.bashrc
+		else
+			echo "STAF has been exported"
+		fi
+		if [ $? -eq 0 ];then
+			echo "Add Starting up Success"
+		else
+			echo "Add Starting up Fail"
+		fi
+	fi
+}
+
+
+remove_start_up()
+{
+	if [ `grep -q "ltk_cloud -s" ~/.profile ; echo $?` -ne 0 ];then
+	echo "Skip: ltk_cloud has been removed to starting up"
+	else
+		echo "Begin remove starting up"
+		sed -i s/"ltk_cloud -s"/""/ ~/.profile
+		sed -i s/"ltk_cloud -l"/""/ /etc/rc.local
+		if [ $? -eq 0 ];then
+			echo "Remove Starting up Success"
+		else
+			echo "Remove Starting up Fail"
+		fi
+	fi
+}
+
+while getopts "u:hsivarl" arg 
+do
+        case $arg in
+             u)
+                check_cloud_folder ; update_ltk $OPTARG ; exit 0
+                ;;
+             h)
+                show_help ; exit 0
+		;;
+             s)
+                check_cloud_folder ; ltk_cloud_start ; exit 0
+                ;;
+             i)
+                ltk_cloud_install ; exit 0
+                ;;
+             v)
+                check_cloud_folder ; show_version ; exit 0
+                ;;
+             a)
+                check_cloud_folder ; add_start_up ; exit 0
+                ;;
+             r)
+                check_cloud_folder ; remove_start_up ; exit 0
+                ;;
+             l)
+                server_start ; exit 0
+                ;;
+             ?) 
+            echo "unkonw argument";show_help
+        exit 1
+        ;;
+        esac
+done
+
+
+show_help
+

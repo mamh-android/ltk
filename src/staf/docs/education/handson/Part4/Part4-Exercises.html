@@ -1,0 +1,370 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="David Bender">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <title>Hands-On Automation with STAF/STAX 3 - Part 4</title>
+</head>
+<body>
+
+<h1><font color="blue">Hands-On Automation with STAF/STAX 3 - Part 4</font></h1>
+<p>
+<hr>
+<p>
+<h2><font color="blue">Exercise 4.1 - Execute and debug a STAX Job that executes several sub-jobs</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to the &lt;job> element.
+<li>Learn how to interact with sub-jobs in the STAX Monitor.
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+<p>
+<li>Copy the xml files in directory C:\STAFCD\Part4\exercise4.1 to C:\STAF\xml as follows:
+<pre>COPY C:\STAFCD\Part4\exercise4.1\*.xml C:\STAF\xml\*.xml</pre>
+<p>
+<li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\subjob.xml.
+The purpose of this job is to execute 5 subjobs.  The job should complete in 60 seconds.
+<p>
+<li>After the job successfully completes, look at the "Testcase Info" panel.
+<p>
+<li>Did all 5 testcases pass?  If not, look in the "Messages" panel to see any
+additional information.
+<p>
+<li>Why did any failures occurs?  (Hint: use "staf local help error rc#" )
+<br>______________________________________________________________________________________
+<br>______________________________________________________________________________________
+<br>______________________________________________________________________________________
+<p>
+<li>Correct the problem in the subjob.xml file, and click on the "Resubmit Previous Job"
+button.  Verify that all 5 testcases now pass.
+<p>
+<li>Notice that in the "Active Job Elements" panel, when a subjob is started, the only
+information displayed in the tree is the subjob itself (with the yellow construction
+sign).  You won't see any of the sub-job's processes, blocks, stafcmds, etc.  To view
+the sub-job's active job elements, you can start monitoring that sub-job.  Right-click
+the mouse on the sub-job in the Active Job Elements" panel, and click on "Start
+Monitoring".  You should see a new STAX Monitor window open that show's all of the
+sub-job's activity.
+<p>
+<li>In the STAX Monitor window for subret.xml, click on the "Sub-jobs" tab.  This
+tab shows all sub-jobs that have been executed by the subret.xml.  You can view their
+log files by right-clicking on the sub-job's row in the table and select "Display
+Job Log" or "Display Job User Log".  Notice that this table shows you the result
+that each sub-job returned. 
+<p>
+<li>In the main STAX Monitor window, after the job completes you can see the
+result that subret.xml returned.  Note that the result is also displayed in 
+the title bar of the STAX Monitor window for the subret.xml job.
+</ol>
+
+<p>
+<h2><font color="blue">Exercise 4.2 - Using STAXDoc</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to use STAXDoc.</li>
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+<p>
+<li>Now let's create some STAXDoc documentation for the Part 4 sample jobs.
+<br><br>
+</li>
+<li>In a command prompt, go to C:\STAFCD\Part4, and run the following command:
+<pre>java -jar c:\STAF\services\STAX\STAXDoc.jar -d c:\STAXDoc\samples samples</pre>
+</li>
+<li>This will create the STAXDoc documentation in the c:\STAXDoc\samples
+directory.  Open a browser and navigate to this directory.
+<br><br>
+</li>
+<li>Open the index.html file.  It will show you the documents that are 
+available.  Click on the link for "FunctionParameters.xml" (since this is
+one of the STAX job for which we included the &lt;function> information).
+<br><br>
+</li>
+<li>
+The right side of the page shows the details about the function and its
+parameters.
+</li>
+<p>
+</ol>
+
+<p>
+<h2><font color="blue">Exercise 4.3 - Using STAX Extensions</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to use STAX Extensions.</li>
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+<p>
+<li>In this exercise we will add the "Delay" extension.  It provides &lt;ext-delay>,
+&lt;ext-wait>, and &lt;ext-sleep> elements that can be used in your STAX jobs to delay
+for a specified number of seconds.  In the STAX Monitor, these elements will
+be displayed in the "Active Job Elements" tree as progress bars.
+</li>
+<p>
+<li>
+Edit your STAF.cfg file and add <pre>PARMS "EXTENSION C:/STAFCD/Part4/extensions/ExtDelay.jar"</pre>
+to the STAX service configuration statement.  This statement should now look like:
+<pre>
+service stax library JSTAF execute c:/staf/services/stax/STAX.jar \
+    PARMS "EXTENSION C:/STAFCD/Part4/extensions/ExtDelay.jar"
+</pre>
+</li>
+<li>
+Restart STAFProc on your machine.
+</li>
+<p>
+<li>
+Open your favorite text editor, and copy/paste the following STAX job:
+</li>
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="test"/>
+   
+  &lt;function name="test">     
+  
+   &lt;parallel>
+   
+    &lt;block name="'Block A'">
+  
+      &lt;parallel>
+        &lt;stafcmd>
+          &lt;location>'local'&lt;/location>
+          &lt;service>'delay'&lt;/service>
+          &lt;request>'delay 10000'&lt;/request>
+        &lt;/stafcmd>
+        &lt;ext-delay>20&lt;/ext-delay>
+      &lt;/parallel>
+      
+    &lt;/block>
+    
+    &lt;block name="'Block B'">
+
+      &lt;ext-sleep>30&lt;/ext-sleep>
+      
+    &lt;/block>
+   
+    &lt;block name="'Block C'">
+
+      &lt;parallel>
+        &lt;ext-delay>10&lt;/ext-delay>
+      &lt;/parallel>
+      
+    &lt;/block>
+    
+    &lt;block name="'Block D'">
+
+      &lt;parallel>
+        &lt;ext-wait>8&lt;/ext-wait>
+      &lt;/parallel>
+
+    &lt;/block>
+
+   &lt;/parallel>
+
+  &lt;/function>
+
+&lt;/stax>
+</pre>
+<li>
+Save the file and run it via the STAX Monitor.  You should see 4 progress
+bars, representing the Delay elements, in the "Active Job Elements" tree.  Also
+note that STAX extensions can provide aliases (you can use &lt;ext-delay>,
+&lt;ext-sleep>, or &lt;ext-wait>, which all do the same thing).
+</li>
+</ol>
+
+<p>
+<h2><font color="blue">Exercise 4.4 - Using STAX Breakpoints</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to use STAX Breakpoints.</li>
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+
+<p>
+<li>Copy the xml files in directory C:\STAFCD\Part4\samples to C:\STAF\services\stax as follows:
+<pre>COPY C:\STAFCD\Part4\samples\*.xml C:\STAF\services\stax\*.*</pre>
+<p>
+<li>
+Start the STAX Monitor, and click on the "Submit New Job..." button.
+</li>
+<p>
+<li>
+Click on the "Clear All Parameters" button.
+</li>
+<p>
+<li>
+In the "Job Info" tab, in the "Filename" field (for "local machine"), enter
+C:/STAF/services/stax/TestcaseDebug.xml (or use the "Browse..." button to
+select the TestcaseDebug.xml file).
+</li>
+<p>
+<li>
+In the "Breakpoints" tab, select the "Set breakpoint at first function"
+checkbox.
+</li>
+<p>
+<li>
+Click on the "Submit New Job" button.
+</li>
+<p>
+<li>
+In the STAX Job Monitor dialog for the STAX job, select the "Debug" tab.
+You should maximize the dialog, and use the vertical and horizontal sliders
+so that you can view all of the Debug tab content.
+</li>
+<p>
+<li>
+In the "Threads" tab, note that there is only 1 thread running, and it is at
+a breakpoint.  Click on thread 1 in the "Threads tab".  Notice that the lower
+3 tabs ("Thread Variables", "Thread Info", and "XML File") now have information
+about the thread you just selected.
+</li>
+<p>
+<li>
+Note that the "XML File" tab is displaying the contents of the TestcaseDebug.xml
+file, and is scrolled to line 14 (the &lt;function> element).  This is because
+we selected the "Set breakpoint at first function" checkbox when submitting the
+job.
+</li>
+<p>
+<li>
+In the "Threads" tab, click on the "Step Into" button to step the breakpoint.
+</li>
+<p>
+<li>
+Note that the breakpoint is now at line 16 (the &lt;sequence> element).
+</li>
+<p>
+<li>
+Click on "Step Into" repeatedly until the breakpoint is at line 29 (the &lt;call>
+element).
+</li>
+<p>
+<li>
+Click on "Step Into" again.  Notice that the "XML File" tab now shows the
+contents of file FunctionParametersLogging.xml and the breakpoint is at
+line 8 (the &lt;function> element).
+</li>
+<p>
+<li>
+Click on "Step Into" repeatedly until the breakpoint is back in the
+TestcaseDebug.xml file at line 32 (the &lt;if> element).
+</li>
+<p>
+<li>
+In the "Thread 1 Variables" tab, scroll down to the "callResult" entry.  On
+line 30 of the TestcaseDebug.xml file, it sets variable callResult to the
+STAXResult variable (which contains the value returned from the function
+call, in this case the random number that was previously generated).
+</li>
+<p>
+<li>
+Click on "Step Into" repeatedly until the breakpoint is at line 25 (the
+&lt;sequence> element).
+</li>
+<p>
+<li>
+Next click on the "Step Over" button.  Nntice that the all of the tasks within
+the &lt;sequence> are executed, and the next breakpoint is at line 23 (the
+&lt;testcase> element).
+</li>
+<p>
+<li>
+Click on the "Resume" button.  The job will complete.
+</li>
+<p>
+<li>
+In the main STAX Job Monitor dialog, click on the "Resubmit Previous Job"
+button.
+</li>
+<p>
+<li>
+In the STAX Job Monitor dialog for the STAX job, select the "Debug" tab.
+You should maximize the dialog, and use the vertical and horizontal sliders
+so that you can view all of the Debug tab content.
+</li>
+<p>
+<li>
+In the "Breakpoints" tab, click on the "Add Breakpoint Line..." button.
+</li>
+<p>
+<li>
+In the "Line Number" field, enter 32, and leave the other fields blank.
+Click on the "Add" button.
+</li>
+<p>
+<li>
+Select thread 1, and click on the "Resume" button.
+</li>
+<p>
+<li>
+The breakpoint should now be in the TestcaseDebug.xml file at line 32
+(the &lt;if> element).
+</li>
+<p>
+<li>
+In the "Thread 1 Variables" tab, scroll down to the "callResult" entry.  On
+line 30 of the TestcaseDebug.xml file, it sets variable callResult to the
+STAXResult variable (which contains the value returned from the function
+call, in this case the random number that was previously generated).
+</li>
+<p>
+<li>
+For this exercise, we want to change the callResult variable so that all 10
+testcases will fail.  If the value for variable callResult is less than or
+equal to 50, then in the "Execute Python Code in Current Thread" text field,
+type "callResult = 99" (without the double quotes), and click on the "Execute"
+button.  If you clicked on the "Execute" button, verify that you get a popup
+dialog indicating that the update was successful (RC = 0), and that the
+callResult variable is now set to 99.  Click on the "Resume" button to resume
+the thread.
+</li>
+<p>
+<li>
+Repeat the previous step for the remaining 9 testcases, using the "Execute"
+button to change the callResult value to 99 if it is less than or equal to 50.
+</li>
+<p>
+<li>
+After the job completes, in the "Testcase Info" tab, verify that it shows
+0 Passes and 10 Fails.
+</li>
+<p>
+<li>
+Note that the only difference between the Testcase.xml job and the
+TestcaseDebug.xml job is that the following line was added at line 30:
+<pre>
+&lt;script>callResult = STAXResult&lt;/script>
+</pre>
+and line 32 was changed to check callResult instead of STAXResult:
+<pre>
+&lt;if expr="callResult &lt;= 50">
+</pre>
+Why was it necessary to make these changes?  Why couldn't we just check/update
+the STAXResult value directly?
+<br>______________________________________________________________________________________
+<br>______________________________________________________________________________________
+</li>
+
+</ol>
+
+</body>
+</html>

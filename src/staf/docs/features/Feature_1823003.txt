@@ -1,0 +1,433 @@
+Feature ID  : 1823003
+Title       : Provide a Service Loader that Loads a STAF Java Service
+              via a Web Server
+
+Description
+-----------
+
+Provide a STAF service loader service (SLS) that can load a STAF Java service
+via a web server.
+
+Problem(s) Solved
+-----------------
+
+This feature reduces maintenance of external STAF Java services by:
+- Obtaining specified versions of STAF Java services from a web server
+  instead of having to manually download each service and manually
+  configure the service in the STAF.cfg file on all machines that
+  require the service(s).
+- Providing the ability to specify a zip file on a web server that
+  contains a jar file for a STAF Java services (e.g. STAF Java services
+  are provided in zip files on the SourceForge website) and automatically
+  unzipping the file to obtain the jar file for the STAF Java service.
+- Providing the ability to specify where to download STAF Java services
+  from via a configuration file that resides on a web server as this
+  file only needs to exist in one place and can be used by many machines.
+
+Related Features/Bugs
+---------------------
+
+- Bug #2020819 "Deadlock if SLS submits request to a service loaded by a SLS".
+This bug needed to be fixed so that the HTTP Service Loader Service can
+submit an UNZIP request to the ZIP service which is loaded by the STAF Default
+Service Loader Service.  This bug was fixed in STAF V3.3.1.
+
+Overall Design
+--------------
+
+The new STAF HTTP Service Loader enables STAF to load services that can
+be downloaded from a web server.  The HTTP Service Loader Service (HTTPSLS)
+uses a configuration file to determine what services it can load.  The
+location of the HTTPSLS configuration file is specified via a parameter
+when registering the HTTP Service Loader in the STAF.cfg file and it can
+reside on the local machine or on a web server.  The HTTPSLS configuration
+file contains a line for each STAF Java service which specifies the location
+of the service's jar file (or a zip file that contains the service's jar
+file).
+
+When STAF encounters a request for a service that isn't currently
+registered, it checks each service loader that's registered in the
+STAF.cfg file to see if it handles this service.  The HTTP Service Loader
+reads its HTTPSLS configuration file (first downloading it from a web
+server if needed) to see if it can handle this service.  If so, it
+downloads the service from the specified location to a temporary
+directory on the local machine (and unzips it if necessary to access the
+STAF service jar file) and submits an ADD request to the SERVICE service
+to register the service.  This way, STAF is able to load whatever Java
+services you want.  Also, note that each time the HTTP Service Loader
+attempts to load a service, it reads its HTTPSLS configuration file, so
+you can update the HTTPSLS configuration file and it will read it the
+next time it attempts to load a service (without restarting STAFProc).
+
+Note that each time STAF is restarted, it deletes the tmp directory in
+the STAF data directory so the temporary jar files that the HTTP Service
+Loader downloaded will be deleted since they are stored in the STAF tmp
+data directory's service/<Serviceloader Name> sub-directory.
+
+This new STAF HTTP Service Loader service is written in Java and will be
+installed as part of the Java support that STAF installs by default with
+a typical installation of STAF.  To use the STAF HTTP Service Loader,
+you must have a Java runtime installed on your machine and you must add
+a SERVICELOADER configuration statement to the STAF.cfg file including a
+parameter specifying the location of the HTTPSLS configuration file it
+will use.
+
+
+External Changes
+----------------
+
+1) Service Loader Registration:
+
+  Service loaders are registered with the SERVICELOADER configuration
+  statement in the STAF.cfg file.  The syntax for registering the HTTP
+  Service loader is:
+
+  SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/lib/STAFHTTPSLS.jar
+                [OPTION <Name[=Value]>]...  
+                PARMS "CONFIGFILE <ConfigFileLocation>
+                       [DOWNLOADATTEMPTS <NumDownloadAttempts>]
+                       [DOWNLOADRETRYDELAY <DelayInSeconds>]"
+
+  OPTION specifies a configuration that will be passed to JSTAF to
+  further control the interface to the JVM used for this service loader.
+  You may specify multiple OPTIONs.  See section "4.4.2 JSTAF service proxy
+  library" in the STAF User's Guide for acceptable options to the JSTAF
+  service proxy library.
+
+  Also, you can override the version of Java that you want the HTTP Service
+  Loader to use via the OPTION JVM=<Java Path> option if you create a new 
+  JVM by also using OPTION JVMName=HTTPSLS.  For example:
+
+    OPTION JVMName=HTTPSLS OPTION JVM=C:\java1.5.0_12\bin\java
+
+  PARMS specifies the parameters that will be passed to the service loader
+  during initialization where:
+              
+  - CONFIGFILE specifies the location of the HTTPSLS configuration file.
+    This can be a fully-qualified path to a file on the local machine or
+    it can be a url to the location of the HTTPSLS configuration file on
+    a web server.  The contents of this file must follow the syntax
+    specified in section "HTTPSLS Configuration File" below or the HTTP
+    Service Loader Service registration will fail.  This parameter is
+    required.  This option will resolve STAF variables.  For example:
+
+    CONFIGFILE http://server1.company.com/staf/httpsls.cfg
+    CONFIGFILE C:/tests/staf/myhttpsls.cfg
+    CONFIGFILE {STAF/Config/STAFRoot}/bin/httpsls.cfg
+
+  - DOWNLOADATTEMPTS specifies the maximum number of attempts that the
+    HTTP Service Loader will make to try to download a file.  The default
+    is 3.  This option will resolve STAF variables.
+
+  - DOWNLOADRETRYDELAY specifies the number of seconds that the HTTP
+    Service Loader will delay before retrying to download a file if the
+    previous download attempt failed.  The default is 5.  This option will
+    resolve STAF variables.
+
+  Examples:
+
+  # Add HTTP Service Loader Service
+  SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/lib/STAFHTTPSLS.jar \
+                OPTION JVMName=HTTPSLS \
+                PARMS "CONFIGFILE http://server.company.com/project/httpsls.cfg"
+
+  # Add HTTP Service Loader Service
+  SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/lib/STAFHTTPSLS.jar \
+                OPTION JVMName=HTTPSLS OPTION JVM=C:\java1.5.0_12\bin\java \
+                PARMS "CONFIGFILE http://server.company.com/project/httpsls.cfg \
+                       DOWNLOADATTEMPTS 3 DOWNLOADRETRYDELAY 7"
+
+  Note that you can register the HTTP Service Loader Service multiple times
+  specifying different CONFIGFILE parameters.  For example, you may have
+  one HTTP service loader service that downloads STAF Java services like STAX,
+  Event, Cron, and Email from the SourceForge website and you may have a
+  second HTTP service loader service that downloads your custom STAF Java
+  services from your own web server.
+
+2) HTTPSLS Configuration File
+
+  The HTTP Service Loader Service (HTTPSLS) is configured through a text file
+  called the HTTPSLS Configuration File.  This file may have any name you
+  desire and can be located on a web server or on the local machine.  The
+  HTTPSLS Configuration File is read and processed line by line.  Whitespace
+  at the front and end of each line is removed before processing.  Blank
+  lines, or lines containing only whitespace, are ignored.  You may continue
+  a configuration statement onto the next line by placing a "\" as the last
+  character of the line.
+
+  Each service that you want the HTTP Service Loader to load must have a
+  SERVICE entry in the HTTPSLS configuration file.  The syntax for each
+  service is somewhat similar to the SERVICE syntax used when registering a
+  STAF service in the STAF Configuration File.
+
+  Comments:
+
+  You specify a comment by placing a pound sign, #, as the first non-blank
+  character in the line.  Comment lines are ignored.  For example:
+
+  # This is a comment line
+
+  Service Registration:
+
+  External Java services are registered with the SERVICE configuration
+  statement.  The syntax is:
+
+  SERVICE <Name> LIBRARY JSTAF EXECUTE <Location of Service Jar or Zip File>
+                 [ZIPPATH <Path to Service Jar File>]
+                 [OPTION <Name[=Value]>]...
+                 [PARMS "<Service Parameters>"]
+
+  <Name> is the name by which this service will be known on this machine.
+  
+  LIBRARY must always be JSTAF which is the STAF Java service proxy library
+  as the HTTP Service Loader only supports loading Java services currently.
+
+  EXECUTE specifies the url for the Java jar file which implements the
+  service.  Or, it can specify the url of a zip file that contains the Java
+  jar file if the ZIPPATH option is also specified.  Or, it can specify the
+  fully-qualified name of the Java jar file that resides on the local
+  machine.  This option will resolve STAF variables.  For example:
+
+    http://server1.company.com/staf/myservice.jar
+    http://prdownloads.sourceforge.net/staf/STAXV333.zip
+    C:/STAF/services/stax/STAX.jar
+    {STAF/Config/STAFRoot}/services/email/STAFEmail.jar
+
+  ZIPPATH specifies the path to the service jar file in the zip file
+  specified by the EXECUTE option.  Note that this option should only be
+  used if the EXECUTE option specifies a url for a zip file that can be
+  unzipped using the STAF ZIP service.  This option does not resolve STAF
+  variables.  For example:
+
+    stax/STAX.jar
+    myService.jar
+
+  OPTION specifies a configuration option that will be passed on to JSTAF to
+  further control the interface to the JVM where this service will be run.
+  You may specify multiple OPTIONs for a given service.  See section "4.4.2
+  JSTAF service proxy library" in the STAF User's Guide for valid options
+  that can be specified for the JSTAF service proxy library.
+
+  PARMS specifies parameters that will be passed to the service during
+  initialization.
+
+  Examples:
+
+  # Register the custom SERVICE1 service, downloading it from a web server
+  SERVICE SERVICE1 LIBRARY JSTAF EXECUTE http://www.company.com/service1.jar
+
+  # Register the custom SERVICE2 service, downloading it from a web server
+  SERVICE SERVICE2 LIBRARY JSTAF EXECUTE http://www.company.com/service2.jar \
+          OPTION JVMName=SERVICE2
+
+  # Register the STAX V3.3.0 service, downloading it from the SourceForge
+  # website
+  SERVICE STAX LIBRARY JSTAF EXECUTE http://prdownloads.sourceforge.net/staf/STAXV333.zip \
+          ZIPPATH stax/STAX.jar \
+          OPTION JVMName=STAX OPTION J2=-Xmx1024m \
+          PARMS "EXTENSIONXMLFILE C:/staf/services/extensions.xml"
+
+  # Register the Cron V3.3.2 service, downloading it from the SourceForge
+  # website
+  SERVICE CRON LIBRARY JSTAF EXECUTE http://server.company.com/staf/CronV332.zip \
+          ZIPPATH cron/STAFCron.jar OPTION JVMName=CRON
+
+  # Register the Email service (which resides in a jar file on the local
+  # machine)
+  SERVICE EMAIL LIBRARY JSTAF EXECUTE C:/STAF/services/email/STAFEmail.jar \
+          PARMS "MAILSERVER NA.relay.ibm.com \
+          BACKUPMAILSERVERS \"LA.relay.ibm.com EMEA.relay.ibm.com\""
+
+  We provide a sample HTTP Service Loader Service Configuration File
+  on SourceForge that can be used to download the latest versions of
+  STAF Java services available on SourceForge such as STAX, Event,
+  Cron, EventManager, etc.  It is located at:
+
+    http://staf.sourceforge.net/current/STAFHTTPSLS.cfg
+
+  and its contents are as follows.  Note that this HTTPSLS configuration
+  file may not work for you as you may need to customize it for the 
+  services that you use by changing the MAILSERVER and BACKUPMAILSERVERS
+  parameters for the Email service and/or running STAX in its own JVM with
+  a larger maximum heap size by adding the following options:
+
+    OPTION JVMNAME=STAX OPTION J2=-Xmx1024m
+
+  or you may not use use some of the services so you may want to remove
+  them, or you may want to download the STAF Java service zip files and
+  put them on your own web server for faster download times, etc.
+
+SERVICE STAX LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/STAXV333.zip \
+        ZIPPATH stax/STAX.jar
+
+SERVICE Event LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/EventV311.zip \
+        ZIPPATH event/STAFEvent.jar
+
+SERVICE Email LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/EmailV331.zip \
+        ZIPPATH email/STAFEmail.jar \
+        PARMS "MAILSERVER NA.relay.ibm.com \
+               BACKUPMAILSERVERS \"LA.relay.ibm.com EMEA.relay.ibm.com\""
+
+SERVICE HTTP LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/HTTPV300.zip \
+        ZIPPATH http/STAFHTTP.jar
+
+SERVICE Cron LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/CronV332.zip \
+        ZIPPATH cron/STAFCron.jar
+
+SERVICE EventManager LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/EventManagerV332.zip \
+        ZIPPATH eventmanager/STAFEventManager.jar
+
+SERVICE Namespace LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/NamespaceV101.zip \
+        ZIPPATH namespace/Namespace.jar
+
+SERVICE FSExt LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/FSExtV301.zip \
+        ZIPPATH fsext/STAFFSExt.jar
+
+SERVICE NamedCounter LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/NamedCounterV301.zip \
+        ZIPPATH namedcounter/STAFNamedCounter.jar
+
+SERVICE SXE LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/SXEV302.zip \
+        ZIPPATH sxe/STAFSXE.jar
+
+SERVICE Timer LIBRARY JSTAF \
+        EXECUTE http://prdownloads.sourceforge.net/staf/TimerV302.zip \
+        ZIPPATH timer/STAFTimer.jar
+
+
+3) Service Logging
+
+  The STAF HTTP Service Loader doesn't currently write to a STAF machine
+  service log.  Instead, it writes any additional error information to
+  the JVMLog in which it is running.   So, it is important to check the
+  JVMLog for the HTTP Service Loader if you are having problems using it.
+  You may want to run the HTTP Service Loader in a separate JVM by 
+  specifying OPTION JVMName=HTTPSLS when registering the HTTP service loader
+  in the STAF Configuration File as follows:
+
+  SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/lib/STAFHTTPSLS.jar \
+                OPTION JVMName=HTTPSLS \
+                PARMS "CONFIGFILE http://server.company.com/staf/httpsls.cfg"
+
+
+Internal Changes
+----------------
+
+1) Created a new directory named httpsls in src/staf/services and created
+   the following files in this directory for this new service loader:
+
+   STAFHTTPSLS.java
+   MANIFEST.MF
+   makefile.java
+
+   The HTTP Service Loader is being built as part of the "java" project
+   so it gets built when STAF Java support gets built.
+
+2) Need to make build, packaging, and install changes so that this new
+   service loader's jar file (STAFHTTPSLS.jar) is provided when STAF
+   Java support is installed in the STAF bin directory on Windows and in
+   the STAF lib directory on Unix for those operating systems where Java
+   support is provided (e.g. all except FreeBSD 4.10).
+
+3) The temporary directory structure used to store downloaded files is as
+   follows:
+
+  a) If a url is specified by the CONFIGFILE parameter, then during the
+    initialization phase of the STAF HTTP Service Loader, it downloads
+    the url to the following location to verify the file exists and
+    deletes it when it's done with the verification:
+
+    {STAF/DataDir}/tmp/service/<ServiceLoaderName>/STAFHTTPSLS.cfg
+
+  b) When the HTTP Service Loader is trying to load a service, it creates
+    the following temporary files/directories:
+
+    i) If a url is specified by the CONFIGFILE parameter, it downloads
+      the url to the following location and deletes it after it reads
+      it:
+
+      {STAF/DataDir}/tmp/service/<ServiceLoaderName>/<ServiceName>.cfg
+
+    ii) If a url is specified by the EXECUTABLE parameter and the ZIPPATH
+      option is not specified, it downloads the url to the following
+      location:
+
+      {STAF/DataDir}/tmp/service/<ServiceLoaderName>/<ServiceName>.jar
+
+      This jar file exists until STAFProc is restarted and STAF's tmp
+      directory is deleted.
+  
+    iii) If a url is specified by the EXECUTABLE parameter and the ZIPPATH
+      option is specified, it downloads the url to the following location:
+
+      {STAF/DataDir}/tmp/service/<ServiceLoaderName>/<ServiceName>.zip
+ 
+      and unzips this file to directory:
+
+      {STAF/DataDir}/tmp/service/<ServiceLoaderName>/<ServiceName>
+
+      This directory exists until STAFProc is restarted and STAF's tmp
+      directory is deleted.
+
+      The temporary zip file it downloaded is deleted after it unzips
+      it since it's no longer needed.
+
+
+Design Considerations
+---------------------
+
+1) Decide not to have the HTTP Service Loader Service log to a service
+   machine log instead of logging errors to the JVMLog.
+
+2) When a request is submitted to an unregistered service, and the
+   HTTP Service Loader is trying to find the service in its config
+   file, if an error occurs parsing a SERVICE statement in the HTTPSLS
+   config file, the serviceloader returns RC 7 (Invalid Request
+   String) with the following in the result buffer?
+   parsedResult.errorBuffer + "  The STAFHTTPSLS configuration file 
+   'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/
+   test/httpsls.cfg' contains invalid syntax in the following line: " +
+   line.  We decided this was the right behavior instead of logging an
+   error in the JVM Log and continuing on reading the HTTPSLS config
+   file in case there is a valid SERVICE statement for this service
+   later in the HTTPSLS config file.
+
+3) Decided to check the syntax of the HTTP Service Loader CONFIGFILE
+   during the initialization phase of the HTTP service loader by
+   reading and parsing each service configuration statement and
+   verifying that it can download each url as needed and returning an
+   error which prevents the HTTP Service Loader to be initialized if
+   the config file contains invalid syntax (though STAFProc will
+   start up fine).  Decided not to download the url specified for
+   each service as this could take a while depending on how many
+   services are to be downloaded and how long the downloading takes,
+   delaying the time it takes STAFProc to be initialized.
+
+4) If you specify a url starting with https:// then you may get
+   an error like the following if the JVM that the HTTP Service Loader
+   Service is using set up with the needed certificate, etc:
+   
+   javax.net.ssl.SSLHandshakeException: java.security.cert.CertificateException
+
+5) Decided that the HTTP Service Loader Service will only support
+   loading Java services.  It could possibly be updated to support
+   Perl and C++ external STAF services in the future.  Or, if this
+   is a popular request, we may want to provide the ability in C++
+   to load any type of STAF service via a web site by getting OSSC
+   approval to use libcURL 7.15.4 or Libwww 5.4.0 (both of which are
+   Level 2 OSS).  Then, this Jave HTTP Service Loader wouldn't be
+   needed and could be deprecated.
+
+Backward Compatibility Issues
+-----------------------------
+ 
+- None

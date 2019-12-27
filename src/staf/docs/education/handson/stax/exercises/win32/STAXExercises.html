@@ -1,0 +1,780 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="David Bender">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <title>STAX Hands-On Class Exercises</title>
+</head>
+<body>
+
+<h1><font color="blue">STAX Hands-On Class Exercises</font></h1>
+<p>
+<h2><font color="blue">Important Notes:</font></h2>
+<p>
+<ol>
+<li>The STAX Exercises assume that you have already created a
+directory on the machine where you will be running the exercises
+called "C:\STAFCD" which contains the unzipped education package.
+Verify that this directory exists and that a
+C:\STAFCD\stax\exercises\win32 directory exists.
+<p>
+<b>Note:</b> It assumes this because it assumes you performed the
+STAF Hands-On Class Exercises on this machine previously.
+<p>
+<li>The STAX Exercises assume that some of the STAF Exercises have been performed,
+including:
+  <p>
+  <ul>
+  <li><b>STAF Exercise 1</b> - installs STAF into the C:\STAF directory.
+  <p>
+  <li><b>STAF Exercise 5</b> - installs and configures the Event Service (another Java service) by copying
+  STAFEvent.jar into C:\STAF\services and adds the following line to the STAF.cfg file:
+<pre>service event library JSTAF execute C:/STAF/services/STAFEvent.jar</pre>
+  <li><b>STAF Exercise 6</b> - copies SimpleTestcase.java into C:\STAF\testcases and compiles it.
+  <p>
+  <li><b>STAF Exercise 7</b> - copies STAFTestcase.java into C:\STAF\testcases and compiles it.
+  </ul>
+</ol>
+<p>
+<hr>
+<p>
+<h2><font color="blue">Exercise 12 - Installing the STAX Service</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to install and configure the STAX Service, assuming that STAF has
+already been installed with the Log and Event Services registered.
+<li>Learn how to verify that the STAX Service is correctly configured.
+<li>Learn how to start the STAX Monitor for the first time.
+</ol>
+<p>
+<h3>Steps:</h3>
+<p>
+<ol>
+<li>Install the STAX Service:
+  <p>
+  <ol type="a">
+  <li>Make a directory called services in C:\STAF.
+  <pre>C:
+cd \STAF
+mkdir services      (This directory may already exist.)
+</pre>
+  <li>Unzip the STAXV300.zip file into C:\STAF\services:
+<pre>
+cd services
+C:\STAFCD\stax\tools\unzip C:\STAFCD\stax\install\STAXV300.zip
+</pre>
+      Note that a directory named stax will be created by the unzip (e.g.
+      C:\STAF\services\stax).
+</ol>
+<p>
+<li>Assumes Java 1.3.1 has been installed in the C:\jdk1.3.1 directory and
+that C:\jdk1.3.1\bin is in the system PATH as part of the initial setup of the
+systems.  Type the following to verify:
+<pre>java -version</pre>
+<li>Assumes the Event Service has already been installed
+into C:\STAF\services, and the Event Service has been configured in the STAF.cfg 
+file by performing STAF Exercise 5.
+<p>
+<li>Configure the STAX Service:
+  <p>
+  <ol type="a">
+  <li>Edit the STAF configuration file by typing:
+<pre>
+write C:\STAF\bin\STAF.cfg
+</pre>
+  <li>Register the STAX Service by adding the following line to the end of the file:
+<pre>service stax library JSTAF execute c:/staf/services/stax/STAX.jar</pre>
+  <p>
+  <li>Save and exit editing the STAF.cfg file.
+  <p>
+  </ol>
+<p>
+<li>Stop STAF if it is already running:
+<pre>STAF local SHUTDOWN SHUTDOWN</pre>
+<li>Start STAF by typing the following and making sure no error messages are
+displayed in the STAFProc window:
+<pre>STAFProc</pre>
+<li>Verify the LOG, EVENT, and STAX services are listed as services, along
+with many other services, by typing:
+<pre>
+STAF local SERVICE LIST
+</pre>
+<li>Do a STAX HELP request to list the request syntax supported by the STAX Service:
+<pre>STAF local STAX HELP</pre>
+Verify that you see the following:
+<pre>
+Response
+--------
+STAX Service Help:
+
+EXECUTE   &lt; &lt;FILE &lt;xml file name> [MACHINE &lt;machine name>]> | DATA &lt;xml data> >
+          [JOBNAME &lt;Job Name>] [FUNCTION &lt;Function ID>] [ARGS &lt;Arguments>]
+          [SCRIPTFILE &lt;file name>... [SCRIPTFILEMACHINE &lt;machine name>]]
+          [SCRIPT &lt;Python code>]... [CLEARLOGS]
+          [ HOLD | TEST | WAIT [Timeout] [RETURNRESULT] ]
+
+GET       DTD
+
+LIST      JOBS | JOB &lt;Job ID> &lt;THREADS | PROCESSES | STAFCMDS | 
+                               SUBJOBS | BLOCKS | TESTCASES>
+
+QUERY     JOB &lt;Job ID> [THREAD &lt;Thread ID> | PROCESS &lt;Location:Handle> |
+                        STAFCMD &lt;Request#> | BLOCK &lt;Block Name> | 
+                        TESTCASE &lt;Test Name>]
+
+HOLD      JOB &lt;Job ID> [BLOCK &lt;Block Name>]
+
+RELEASE   JOB &lt;Job ID> [BLOCK &lt;Block Name>]
+
+TERMINATE JOB &lt;Job ID> [BLOCK &lt;Block Name>]
+
+UPDATE    JOB &lt;Job ID> TESTCASE &lt;Testcase name> STATUS &lt;Status>
+          [MESSAGE &lt;Message text>] [FORCE]
+
+VERSION
+
+HELP
+</pre>
+<li>Do a STAX VERSION request:
+<pre>STAF local STAX VERSION</pre>
+What is the version?  ________________
+<p>
+<li>Use your favorite editor to examine the following file:
+<pre>C:/STAF/data/STAF/lang/java/jvm/STAFJVM1/JVMLog.l</pre>
+This file will contain any Java errors/exceptions that the STAX service
+(and any other Java STAF services) encounters.  The end of the file should
+be similar to:
+<pre>
+****************************************************************************** 
+*** 20041202-14:40:33 - Start of Log for JVMName: STAFJVM1 
+*** JVM Executable: java 
+*** JVM Options : none 
+****************************************************************************** 
+</pre>
+<p>
+<li>Start the STAX Monitor:
+  <p>
+  <ol type="a">
+  <li>Type the following:
+<pre>
+java -jar C:/STAF/services/stax/STAXMon.jar
+</pre>
+  <li>The first time you start the STAX Monitor, the "STAX Monitor Properties" window
+  will be displayed.      
+  <p>
+  <li>The STAX service machine defaults to your local system and the
+      STAX service name defaults to STAX.
+  Click on the "Save" button to save as the default settings should be correct.
+  <p>
+  <li>The "STAX Job Monitor" panel should be displayed.  It displays information about
+  all running and/or monitored jobs (but since no jobs have been started yet, no jobs
+  will be listed in the table now).  It also allows you to launch new jobs, monitor
+  existing jobs, and terminate jobs.
+  </ol>
+</ol>
+<hr>
+<p>
+<h2><font color="blue">Exercise 13 - Starting the STAX Monitor and Running a Job</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to use the STAX Monitor to run a job, monitor it's progress, and view its job logs.
+</ol>
+<p>
+<h3>Steps:</h3>
+<p>
+<ol>
+<li>Start the STAX Monitor by typing the following (if it's not already started):
+<pre>
+java -jar C:/STAF/services/stax/STAXMon.jar
+</pre>
+<li>Run a sample STAX Job via the STAX Monitor:
+  <p>
+  <ol type="a">
+  <li>Click on the "Submit New Job..." button to submit a new STAX Job.
+  <p>
+  <li>The "STAX Job Parameters" panel should be displayed. 
+  In the "XML Job File" section, leave "local machine" selected and set the "Filename"
+  to C:\STAF\services\stax\samples\sample1.xml (you can type this file name or click on the "Browse"
+  button to use the file browser function to select it).  Note that this is a sample STAX XML 
+  document provided with the STAX service.  Click on "Yes" for the "Clear Logs" option
+  (so that the STAX Job and Job User logs will be deleted before the job is executed). 
+  <p>
+  <li>Click on the "Submit New Job" button to run the job.
+  <p>
+  <li>A "STAX Job Monitor" window should be displayed.  The sample job runs for 2 minutes.
+  <p>
+  What is its Job ID? _______ 
+  <br>Hint: It is a number displayed in the STAX Job Monitor panel's title. 
+  <p>
+  <li>While the job is running, once a process called TestProcess appears in the "Active Job Elements" panel,
+  select it to display information about it in the "Current Selection" panel.
+  <p>What is its Command value?  _____________________
+  <br>What is its Parms value?   ________________________________________
+  <p>
+  <li>While the job is running, right mouse click on a block named 'local_1" in the "Active Job Elements"
+  panel, and click on "Hold" to hold the block.  The block icon should turn red and if there are any
+  nested blocks within it, the nested block icons should turn yellow.
+  <p>
+  <li>Release the block you held.  Its block icon should turn green (as well as the nested block icon).
+  <p>
+  <li>When the job completes (after running for 2 minutes), check the "Testcase Info"
+  panel.
+  <p>How many tests ran successfully and how many tests failed?
+  <br>PASS: ________   FAIL: __________
+  <p>The number of passes and fails recorded within the 2 minutes could vary based on the speed of your system.
+  <p>
+  <li>Browse the "Messages" panel.  The last message should be:
+  <pre>Test complete - ran for 120 seconds</pre>
+  It may show a slightly different value for seconds (e.g. 121), depending on your system.
+  </ol>
+<p>
+<li>Display the STAX Job Log for this job:
+  <p>
+  <ol type="a">
+  <li>Query the STAX Job Log for the job you just ran by selecting "Display" from the menu bar
+  and then select "Display Job Log".
+  <li>Note that a "Start" message is logged containing the File name specified and
+  other job start information.
+  <li>Note that there are some "Info" messages logged whenever a block is held or released.
+  <li>Note that there are some "Fail" and "Pass" messages logged for each testcase
+  that specified some status information.
+  <li>Note that there is a "Status" message logged summarizing for each Testcase, its
+  total number of passes and failures.
+  <li>Note that the last "Status" message logged summarizes the total number of Testcases
+  ran in this job and the total number of testcase passes and failures.  These Pass and
+  Fail totals should match the numbers you noted when monitoring the job.
+  <li>Note that a "Stop" message is logged for the job.
+  <li>Close the window displaying the STAX Job Log by selecting "File" from the menu bar and
+  then select "Exit".
+  </ol>
+<p>
+<li>Close the STAX Job Monitor window (the one that shows the results for the job you just ran).
+</ol>
+
+<hr>
+<p>
+<h2><font color="blue">Exercise 14 - Using STAX Command Line Requests</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to run a sample job via a STAX command line request instead of via the STAX Monitor.
+<li>Learn how to get information about a running job via STAX LIST and QUERY command line requests.
+<li>Learn how to use the Log Service to query the results of a STAX job.
+</ol>
+<p>
+<h3>Steps:</h3>
+<p>
+<ol>
+<li>Use the STAX EXECUTE command line request specifying to run the job defined by
+the STAX XML document in file C:\STAF\services\stax\samples\sample1.xml.  Specify a job name of "Sample Job".
+<p>Hints:
+<ul>
+<li>Do a help on the STAX Service to see the STAX service request syntax:
+<pre>STAF local STAX HELP</pre>
+<li>Look at the STAX EXECUTE request syntax.  You are going to use the FILE &lt;xml file name> option,
+the JOBNAME &lt;Job Name> option, and the CLEARLOGS option.
+<pre>STAF local STAX EXECUTE FILE C:/STAF/services/stax/samples/sample1.xml
+                JOBNAME "Sample Job" CLEARLOGS</pre>
+</ul>
+<p>
+What is its Job ID? _______ 
+<p>Hint: It is the number displayed in the Response from the STAX EXECUTE request. 
+<p>
+<li>Use the STAX LIST JOBS command line request to list all jobs running.  Information about the job you just started should 
+be displayed, including job name "Sample Job".
+<p>Hints:
+<ul>
+<li>Do a help on the STAX Service to see the STAX service request syntax.
+<pre>STAF local STAX HELP</pre>
+<li>Look at the STAX LIST request syntax.  You are going to use the JOBS option.
+<pre>STAF local STAX LIST JOBS</pre>
+</ul>
+<li>Use the STAX LIST JOB command line request to list all blocks currently running in the job.
+<p>Hint:
+<ul>
+<li>Look at the STAX LIST request syntax again.  You are going to use the JOB and the BLOCKS options.
+<pre>STAF local STAX LIST JOB &lt;Job ID> BLOCKS</pre>
+Replace &lt;Job ID> with the Job ID number you recorded in an earlier step.
+</ul>
+<p>How many blocks are currently running?  _________
+<p>
+<li>Use the STAX LIST JOB command line request to list all threads currently running for this job
+<p>
+Hint:
+<ul>
+<li>Look at the STAX LIST request syntax again.  You are going to use the JOB and the THREADS options. 
+<pre>STAF local STAX LIST JOB &lt;Job ID> THREADS</pre>
+Replace &lt;Job ID> with the Job ID number you recorded in an earlier step.
+</ul>
+<p>How many threads are currently running?  _________
+<br>Write down the thread ID of each thread currently running:  __________________________
+<p>
+<li>Use the STAX QUERY command line request to show general information about the job currently running, including
+"Start Time" and "Blocks Running".
+<p>Hint:
+<ul>
+<li>Do a help on the STAX Service to see the STAX service request syntax.
+<pre>STAF local STAX HELP</pre>
+<li>Look at the STAX QUERY request syntax.  You are going to use the JOB option.
+<pre>STAF local STAX QUERY JOB &lt;Job ID></pre>
+</ul>
+<p>How many blocks are currently running?  __________
+<br>How many blocks are currently held?  __________
+<p> 
+<li>Use the STAX QUERY command line request to query more information about a thread currently running in the job.
+<br>Hint: Look at the STAX QUERY request syntax again.  You are going to use the JOB and THREAD options.
+<pre>STAF local STAX QUERY JOB &lt;Job ID> THREAD &lt;Thread ID></pre>
+Replace &lt;Job ID> with the Job ID number you recorded in an earlier step and replace <Thread ID> with one of the 
+thread IDs shown in a previous step where you listed all the threads.
+<p>Write the thread's call stack here:
+<br>
+<br>
+<br>
+<br>
+<br>
+<p>
+<li>Use the LOG service to check the STAX Job Log for this STAX job that you just ran:
+  <p>
+  <ol type="a">
+  <li>Query the STAX Job Log for the job you just ran by typing the following, replacing
+  &lt;Machine> with the machine nickname of your machine (e.g. the long host name unless
+       you changed it via the MACHINENICKNAME parameter in your STAF configuration file)
+       and replacing &lt;JobID> with the Job ID number
+  that you noted in the previous step when running the job:
+  <pre>STAF local LOG QUERY MACHINE &lt;Machine> LOGNAME STAX_Job_&lt;JobID></pre>
+  <li>Note that a "Start" message is logged containing the File name specified and
+  other job start information.
+  <li>Note that there are some "Info" messages logged whenever a block is held or released.
+  <li>Note that there are some "Fail" and "Pass" messages logged for each testcase
+  that specified some status information.
+  <li>Note that there is a "Status" message logged summarizing for each Testcase, its
+  total number of passes and failures.
+  <li>Note that the last "Status" message logged summarizes the total number of Testcases
+  ran in this job and the total number of testcase passes and failures.  These Pass and
+  Fail totals should match the numbers you noted when monitoring the job.
+  <li>Note that a "Stop" message is logged for the job.
+  </ol>
+</ol>
+
+<hr>
+<p>
+<h2><font color="blue">Exercise 15 - Create a Simple STAX Job and Run it</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to create a simple STAX XML document that runs a non-STAF enabled
+testcase and checks its return code to determine if it ran successfully and sends a message to the
+STAX Monitor (and logs the message) which says whether the testcase ran successfully.
+<li>Learn how to change how a testcase runs (without editing the XML document)
+by passing different variables to it via the Script option.
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+<li>Note:  This exercise requires that you completed STAF Exercise 6 so that SimpleTestcase.class exists in
+your C:\STAF\testcases directory (as well as .; has been added to the system CLASSPATH).
+<p>
+<li>Make a directory called xml in C:\STAF and change to this directory.  This directory (C:\STAF\xml) is where
+you will put your xml files that define STAX jobs.
+<p>
+<li>Copy C:\STAFCD\stax\exercises\win32\exercise15\*.* to C:\STAF\xml as follows:
+<pre>COPY C:\STAFCD\stax\exercises\win32\exercise15\*.* C:\STAF\xml\*.*</pre>
+<li>Use an editor (e.g. write) to view file simple1.xml in directory C:\STAF\xml.
+This STAX XML document demonstrates a simple STAX job that runs a Java testcase called SimpleTestcase on
+the local machine.  It looks like the following:
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="Main"/>
+
+  &lt;script>numLoops = 10&lt;/script>
+
+  &lt;function name="Main">
+
+      &lt;sequence>
+ 
+        &lt;process>
+          &lt;location>'local'&lt;/location>
+          &lt;command>'java'&lt;/command>
+          &lt;parms>'SimpleTestcase %s' % numLoops&lt;/parms>
+          &lt;env>'CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases'&lt;/env>
+       &lt;/process>
+
+       &lt;if expr="RC == 0">
+         &lt;sequence>
+           &lt;message>'Completed %s loops' % numLoops&lt;/message>
+           &lt;log>'Completed %s loops' % numLoops&lt;/log>
+         &lt;/sequence>
+         &lt;else>
+           &lt;sequence>
+             &lt;message>'Failed with RC=%s' % RC&lt;/message>
+             &lt;log>'Completed %s loops' % numLoops&lt;/log>
+           &lt;/sequence>
+         &lt;/else>
+       &lt;/if>
+
+     &lt;/sequence>  
+
+  &lt;/function>
+
+&lt;/stax></pre>
+<li>Save the file. 
+<p>
+<li>Start the STAX Monitor by typing:
+<pre>java -jar c:/STAF/services/stax/STAXMon.jar</pre>
+<li>Click on the "Submit New Job..." button.
+<p>
+<li>Enter the following information:
+<pre>Job Name:  Simple Job
+Filename:  C:\STAF\xml\simple1.xml</pre>
+<li>Click on the "Test" button to verify that the XML document is valid.  You should get a "Validation Successful"
+popup message.  If you don't, then you have a typo in the document.  The error message displayed should point you
+to the line in error.  Edit the XML document and fix the problem and retest.
+<p>
+<li>Click on the "Submit New Job" button to start the job.
+<p>
+<li>While the job is running:
+  <p>
+  <ol type="a">
+  <li>What is its Job ID? _______ 
+  <br>Hint: It is a number displayed in the STAX Job Monitor panel's title. 
+  <p>
+  <li>You should notice that a new command prompt window has opened and it is executing SimpleTestcase
+  (it loops for 10 seconds and displays a message every second).  When the testcase completes,
+  this command prompt window closes.
+  <p>
+  <li>Note that in the "Active Job Elements" panel (in the Job Monitor window), you should see
+  a process named Process1 running for 10 seconds.
+  To the right of it, you should see its elapsed time is
+  displayed (and continually updated).
+  <p>
+  Note that to the right of the elapsed time, you won't see any additional information
+  (unless you changed the STAX Monitor Properties to select "Show Process &lt;No STAF
+  Monitor information available> message</nobr>.  This is because the testcase itself
+  that is running is not STAF enabled and thus, is not using the STAF Monitor service
+  to log its current status.
+  </ol>
+<p>
+<li>When the job completes:
+  <p>
+  <ol type="a">
+  <li>Verify the "Messages" section displays "Completed 10 loops".
+  <p> 
+  <li>Verify the STAX Job <b>User</b> log contains a message with level
+  "Info" and message text "Completed 10 loops" by selecting "Display"
+  from the menu bar and then select "Display Job User Log".
+  After verifying this, close the window displaying the Job User Log.
+  </ol>
+<p>
+<li>Run the same STAX XML file again, this time changing the value of numLoops from 10 to 30.
+Note that you can do this without editing the XML file by adding a Script option containing:
+<pre>numLoops = 30</pre>
+before submitting the job.
+<p>
+<b>Hint:</b>  From the "STAX Job Parameters ... panel, select the "Scripts" tab,
+    click on "Add", type <tt>numLoops = 30</tt>, click on "Add", click on "Submit New Job".
+<p>
+<li>While the job is running:
+  <p> 
+  <ol type="a">
+  <li>What is its Job ID? _______ 
+  <br>Hint: It is a number displayed in the STAX Job Monitor panel's title. 
+  <p>
+  <li>You should notice that a new command prompt window has opened and is executing SimpleTestcase
+  (it loops for 30 seconds and displays a message every second).  When the testcase completes,
+  this command prompt window closes.
+  </ol>
+<p>
+<li>When the job completes:
+  <p>
+  <ol type="a">
+  <li>Verify the "Messages" section displays "Completed 30 loops".
+  <p>
+  <li>Verify the STAX Job <b>User</b> log contains a message with level
+  "Info" and message text "Completed 30 loops" by selecting "Display"
+  from the menu bar and then select "Display Job User Log".
+  After verifying this, close the window displaying the Job User Log.
+  </ol>
+</ol>
+
+<hr>
+<p>
+<h2><font color="blue">Exercise 16 - Create Another Simple STAX Job and Run it</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to create a simple STAX XML document that runs a STAF enabled
+testcase which updates its current status using the Monitor Service.
+<li>Understand how the STAX Monitor displays the current status of a testcase when it uses the STAF Monitor service.
+</ol>
+<p>
+<h3>Steps:</h3>
+<p>
+<ol>
+<li>Note:  This exercise requires that you completed STAF Exercise 7 so that STAFTestcase.class exists in
+your C:\STAF\testcases directory (as well as .; has been added to the system CLASSPATH).
+<p>
+<li>Copy C:\STAF\xml\simple1.xml to C:\STAF\xml\simple2.xml as follows:
+<pre>COPY C:\STAF\xml\simple1.xml C:\STAF\xml\simple2.xml</pre>
+<li>Use an editor (e.g. write) to edit simple2.xml in directory C:\STAF\xml.
+Change the value of the process's &lt;parms> element to contain:
+<pre>'STAFTestcase %s' % numLoops</pre>
+(replacing SimpleTestcase with STAFTestcase)
+<p>
+Now it will run a Java testcase called STAFTestcase on
+the local machine.  This testcase uses the STAF Monitor service to update its current status
+in the STAX Job Monitor while the testcase is running.
+<p>
+<li>Save the file. 
+<p>
+<li>Start the STAX Monitor by typing:
+<pre>java -jar C:/STAF/services/stax/STAXMon.jar</pre>
+<li>Click on the "Submit New Job..." button.
+<p>
+<li>Enter the following information:
+<pre>Job Name:  Simple Job
+Filename:  C:\STAF\xml\simple2.xml</pre>
+<li>Click on the "Submit New Job" button to start the job.
+<p>
+<li>While the job is running:
+  <p>
+  <ol type="a">
+  <li>What is its Job ID? _______ 
+  <br>Hint: It is a number displayed in the STAX Job Monitor panel's title. 
+  <p>
+  <li>You should notice that it runs just like the sample1.xml job except for one thing.
+  Note that in the "Active Job Elements" panel (in the Job Monitor window), you should see a monitor message
+  that displays the current loop number (and is continually updated).
+  </ol>
+</ol>
+
+<hr>
+<p>
+<h2><font color="blue">Exercise 17 - Debugging STAX Jobs</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to debug problems encountered when submitting and running STAX jobs.
+</ol>
+<p>
+<h3>Steps:</h3>
+<p>
+<ol>
+<li>Copy the xml files in directory C:\STAFCD\stax\exercises\win32\exercise17 to C:\STAF\xml as follows:
+<pre>COPY C:\STAFCD\stax\exercises\win32\exercise17\*.xml C:\STAF\xml\*.xml</pre>
+<li>Debug some XML parser errors:
+<p>
+  <ol type="a">
+  <li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\debug1.xml.
+  If it displays an error, find the error and edit the XML document to fix
+  the problem, save it, and re-submit the job.  Repeat until successful.
+  <p>What is the first error found and how did you fix it?   
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <p>What is the second error found and how did you fix it?   
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <p>
+  <li>When the job is successful and complete, it will display that three tests passed
+  (0 failures) in the "Testcase Info" panel and the "Messages" panel.
+  </ol>
+<p>
+<li>Debug some Python errors:
+<p>
+  <ol type="a">
+  <li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\debug2.xml
+  If it displays an error, find the error and edit the XML document to fix
+  the problem, save it, and re-submit the job.  Repeat until successful.
+  <p>What is the first error found and how did you fix it?   
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <p>What is the second error found and how did you fix it?   
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <p>What is the third error found and how did you fix it?   
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <p>
+  <li>When the job is successful and complete, it will display that three tests passed
+  (0 failures) in the "TestCase Information" panel and the "Messages" panel.
+  </ol>
+<p>
+<li>Debug some Process Start errors:
+<p>
+  <ol type="a">
+  <li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\debug3.xml
+  If it displays an error, find the error and edit the XML document to fix
+  the problem, save it, and re-submit the job.  Repeat until successful.
+  <p>What are the errors found and how did you fix them?   
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <br>______________________________________________________________________________________
+  <p>
+  <li>When the job is successful and complete, it will display that three tests passed
+  (0 failures) in the "Testcase Info" panel and the "Messages" panel.
+  </ol>
+</ol>
+
+<hr>
+<p>
+<h2><font color="blue">Exercise 18 - Modify a STAX Job to Release Machines from a Resource Pool</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to use imported functions.
+<li>Learn how to iterate a Python list in STAX jobs.
+<li>Learn how to use the Resource Pool service to allocate machines for use by a STAX job, run some tests, and
+then release the machines so that they are available for other tests.
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+<p>
+<li>Copy the xml files in directory C:\STAFCD\stax\exercises\win32\exercise18 to C:\STAF\xml as follows:
+<pre>COPY C:\STAFCD\stax\exercises\win32\exercise18\*.xml C:\STAF\xml\*.xml</pre>
+<li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\respool.xml
+<p>
+<li>After the job successfully completes, look at the "Messages" panel.
+It displays the results from querying the resource pool after 5 machines have been
+allocated from it.  These results should look like:
+<pre>
+    5 of the 10 machines are available
+    5 of the 10 machines are owned
+</pre>
+<p>
+<li>Edit C:\STAF\xml\respool.xml by inserting code into function 'ReleaseMachines' to
+release the machines that have been requested (allocated) from the resource pool,
+that are in Python list variable machineList.
+<p>
+  <ul>
+  <li>Find the following line in the C:\STAF\xml\respool.xml file and insert code after it.
+  <pre>&lt;!-- Insert code here to release the machines that are in machineList --></pre>
+  <li>Use the iterate element to iterate through the machineList.
+  <p>Hint:  The syntax for the &lt;iterate> element you want to use here is:
+  <pre>  &lt;iterate var="machine" in="machineList">
+
+    &lt;sequence>
+
+      &lt;!-- To be filled in by the next hints -->
+
+    &lt;/sequence>
+
+  &lt;/iterate></pre>
+  <li>Call the 'RunSTAFCommand' function (a function imported from commonFunctions.xml) for
+  each machine in machineList to specify a ResPool release request for that machine in the poolName pool.  
+  <p>Hint: The AllocateMachines function in respool.xml calls the 'RunSTAFCommand' function to specify a
+  ResPool request for an entry in the poolName pool so copy the following lines from it after the
+  new &lt;iterate element's &lt;sequence> element.
+  <pre>
+  &lt;call function="'RunSTAFCommand'">
+    [resPoolServer, 'RESPOOL', 'REQUEST POOL %s' % poolName]
+  &lt;/call></pre>
+  Modify the request (the third argument in the list) to release an entry from the resource pool.
+  <p>Hint: Use the 'STAF local RESPOOL HELP' command to get the syntax for the RELEASE request:
+  <pre>  'RELEASE POOL %s ENTRY %s FORCE' % (poolName, machine)</pre>
+  <li>Call the 'CheckSuccess' function (a function imported from commonFunctions.xml) after
+  calling the 'RunSTAFCommand' function to check whether it was successful (0 indicates it was).
+  <p>Hint: The AllocateMachines function in respool.xml calls the 'CheckSuccess' function to check 
+  for sucess, so copy the following lines from it:
+  <pre>
+  &lt;call function="'CheckSuccess'">
+    [STAXResult[0], [0], STAXResult[1]]
+  &lt;/call></pre>
+  <li>So, the inserted code should look like:
+  <pre>
+  &lt;iterate var="machine" in="machineList">
+
+    &lt;sequence>
+
+      &lt;call function="'RunSTAFCommand'">
+        [resPoolServer, 'RESPOOL',
+         'RELEASE POOL %s ENTRY %s' % (poolName, machine)]
+      &lt;/call>
+
+      &lt;call function="'CheckSuccess'">
+        [STAXResult[0], [0], STAXResult[1]]
+      &lt;/call>
+ 
+    &lt;/sequence>
+
+  &lt;/iterate></pre>
+  <li>Save the changes you made to the C:\STAF\xml\respool.xml file.
+  </ul>
+<p>
+<li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\respool.xml again.
+<p>
+<li>After the job successfully completes, look at the "Messages" panel.
+The last query pool request should display the following results to show that
+all 10 of the machines in the pool are available (now that you added the function to
+release them).
+<pre>
+    10 of the 10 machines are available
+    0 of the 10 machines are owned
+</pre>
+</ul>
+</ol>
+
+<hr>
+<p>
+<h2><font color="blue">Exercise 19 - Execute and debug a STAX Job that executes several sub-jobs</font></h2>
+<p>
+<h3>Objectives:</h3>
+<ol>
+<li>Learn how to the &lt;job> element.
+<li>Learn how to interact with sub-jobs in the STAX Monitor.
+</ol>
+<p>
+<h3>Steps:</h3>
+<ol>
+<p>
+<li>Copy the xml files in directory C:\STAFCD\stax\exercises\win32\exercise19 to C:\STAF\xml as follows:
+<pre>COPY C:\STAFCD\stax\exercises\win32\exercise19\*.xml C:\STAF\xml\*.xml</pre>
+<p>
+<li>Submit a STAX job using the STAX Monitor, specifying file C:\STAF\xml\subjob.xml.
+The purpose of this job is to execute 5 subjobs.  The job should complete in 60 seconds.
+<p>
+<li>After the job successfully completes, look at the "Testcase Info" panel.
+<p>
+<li>Did all 5 testcases pass?  If not, look in the "Messages" panel to see any
+additional information.
+<p>
+<li>Why did any failures occurs?  (Hint: use "staf local help error rc#" )
+<br>______________________________________________________________________________________
+<br>______________________________________________________________________________________
+<br>______________________________________________________________________________________
+<p>
+<li>Correct the problem in the subjob.xml file, and click on the "Resubmit Previous Job"
+button.  Verify that all 5 testcases now pass.
+<p>
+<li>Notice that in the "Active Job Elements" panel, when a subjob is started, the only
+information displayed in the tree is the subjob itself (with the yellow construction
+sign).  You won't see any of the sub-job's processes, blocks, stafcmds, etc.  To view
+the sub-job's active job elements, you can start monitoring that sub-job.  Right-click
+the mouse on the sub-job in the Active Job Elements" panel, and click on "Start
+Monitoring".  You should see a new STAX Monitor window open that show's all of the
+sub-job's activity.
+<p>
+<li>In the STAX Monitor window for subret.xml, click on the "Sub-jobs" tab.  This
+tab shows all sub-jobs that have been executed by the subret.xml.  You can view their
+log files by right-clicking on the sub-job's row in the table and select "Display
+Job Log" or "Display Job User Log".  Notice that this table shows you the result
+that each sub-job returned. 
+<p>
+<li>In the main STAX Monitor window, after the job completes you can see the
+result that subret.xml returned.  Note that the result is also displayed in 
+the title bar of the STAX Monitor window for the subret.xml job.
+</ol>
+
+</body>
+</html>

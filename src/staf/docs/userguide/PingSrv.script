@@ -1,0 +1,122 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : PingSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Ping Service
+.*  Detail:
+.*
+.*     This file describes the STAF Ping Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.ping service
+:ih1.services
+:i2.ping service
+:h2 id=pingsrv.Ping Service
+:h3.Description
+:p.The PING service is an internal STAF service. PING provides a
+service similar to the TCP/IP PING service.  This 'are you there'
+request can be used to determine if STAFProc is up and running
+and accessible.
+.*
+:ih1.service commands
+:ih2.PING
+:i3.ping service
+:h3.PING
+:h4.Syntax
+:xmp.
+PING &lbrk.MACHINE <Machine>&rbrk.
+:exmp.
+:p.:xph.MACHINE:exph. specifies the endpoint for a machine to be pinged.
+This option allows you to check if the machine you are submitting 
+the PING request to can communicate via STAF to another machine.
+It can be useful when trying to determine if there is a firewall issue
+or other network problem. &varres.
+
+:h4.Security
+:p.&seclvl. 1.
+:h4.Return Codes
+:p.All return codes from PING are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain PONG on a successful return from a PING command.
+:h4.Examples
+:p.The following examples show the syntax, and results using the STAF command
+executable from a Windows command prompt.  These STAF requests could also be
+submitted from a program (e.g. Java, C++, Perl, shell, etc.). 
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. See if STAFProc is running on the local machine.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF local PING PING
+Response
+--------
+PONG
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. See if STAFProc is running on machine host1.company.com
+and if you can communicate with the machine via STAF.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF host1.company.com PING PING
+Response
+--------
+PONG
+:exmp.
+:p.
+If STAFProc is not running on machine host1.company.com or you cannot
+communicate via STAF to that machine, you would get an RC 16 (No path to
+endpoint) and an error message.  For example:
+:xmp.
+C:\>STAF host1.company.com PING PING
+Error submitting request, RC: 16
+Additional info
+---------------
+STAFConnectionProviderConnect: Timed out connecting to endpoint: select() timeou
+t: 22, Endpoint: tcp://host1.company.com
+:exmp.
+:p.
+Note that you can get more information on return code 16 (and other STAF
+return codes) by using the Help service.  For example:
+:xmp.
+C:\>STAF local HELP ERROR 16
+Response
+--------
+Description: No path to endpoint
+Details    : This indicates that STAFProc was not able to submit the request to
+the requested endpoint (i.e. machine).  This error usually indicates that STAF i
+s not running on the target machine, or that the requested endpoint is not valid
+, or that the network interface or port for the requested endpoint is not suppor
+ted, or that a firewall is blocking communication via the port for the requested
+ endpoint, or that a secure network interface is being used to communicate to a
+machine that doesn't have a secure network interface configured with the same ce
+rtificate.  Alternatively, you may need to increase your CONNECTTIMEOUT value fo
+r the network interface and/or increase your CONNECTATTEMPTS value in your STAF.
+cfg file.
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. See if machine host1.company.com can communicate via STAF
+to machine host2.company.com.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF host1.company.com PING PING MACHINE host2.company.com
+Response
+--------
+PONG
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. See if machine host1.company.com can communicate via STAF
+to machine host2.company.com on port 6501.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF host1.company.com PING PING MACHINE host2.company.com@6501
+Response
+--------
+PONG
+:exmp.
+:eul.

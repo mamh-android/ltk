@@ -1,0 +1,110 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : FmtLog SCRIPT Version 0.11
+.*  Descriptive Name   : Software Test Automation Framework Log Service
+.*  Detail:
+.*
+.*     This file describes the Format Log Utility
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.FmtLog command
+:ih1.commands
+:i2.FmtLog
+:ih1.utilities
+:i2.format log
+:h2 id=fmtlog.Format Log Utility
+:h3.Description
+The FmtLog utility will read a STAF log file and format and write the data to an
+output file in a readable format.
+A STAF log file is a binary log file that has been created by the STAF Log service. 
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.utility commands
+:ih2.FmtLog
+:i3.FmtLog utility
+:h3.FORMAT
+Format data from a log file to an output file in a readable (non-compressed)
+format.  Note that this utility does not interact with STAF (i.e. STAF does not
+have to be running on the machine).
+:h4.Syntax
+:xmp.
+FmtLog FORMAT LOGFILE <Logfile> NEWFILE <Newfile> &lbrk.LEVELBITSTRING&rbrk.  &lbrk.FIELDSEP <Char>&rbrk.
+:exmp.
+:p.:xph.LOGFILE:exph. contains the name of the log you want to read.  This must
+be the complete path and filename.
+:p.:xph.NEWFILE:exph. contains the name of the output file where you want to
+write the results.  This must be the complete path and filename.
+:p.:xph.LEVELBITSTRING:exph. displays the selected records with the level
+displayed as the 32 byte binary bit string, e.g.
+00000000000000000000000000000001 instead of the standard level text e.g. Error.
+See :hdref refid=loglev. for a complete list of logging levels.
+:p.:xph.FIELDSEP:exph. is the character that separates each record field, the
+default is "|".
+:h4.Directory Structure
+If the log directory was defined as C:\STAF\data\STAF\service\log (the default log
+directory name on Windows) then the following is an example of how the log directory
+structure could look:
+:xmp.
+C:\STAF\data\STAF\service\log\                                        <-Global Top
+C:\STAF\data\STAF\service\log\GLOBAL\                                 <--Global Dir
+  STRESSTST.LOG                                                       <---Global Log
+  SUITE100.LOG                                                        <---Global Log
+C:\STAF\data\STAF\service\log\MACHINE\                                <-Machine Top
+C:\STAF\data\STAF\service\log\MACHINE\client1.company.com\            <--clieot1 Top
+C:\STAF\data\STAF\service\log\MACHINE\client1.company.com\GLOBAL\     <---client1 Global Top
+  TESTLOG1.LOG                                                        <----client1 Global Logs
+C:\STAF\data\STAF\service\log\MACHINE\client1.company.com\HANDLE\     <--client1 Handle Top
+C:\STAF\data\STAF\service\log\MACHINE\client1.company.com\HANDLE\100\ <---Handle 100 Top
+  TESTLOG2.LOG                                                        <---Handle 100 Log
+C:\STAF\data\STAF\service\log\MACHINE\AUTOMATE\                       <--AUTOMATE Top
+C:\STAF\data\STAF\service\log\MACHINE\AUTOMATE\GLOBAL\                <---AUTOMATE Global Top
+  AUTOGLOB.LOG                                                        <----AUTOMATE Global Log
+C:\STAF\data\STAF\service\log\MACHINE\AUTOMATE\HANDLE\                <---AUTOMATE Handle Top
+C:\STAF\data\STAF\service\log\MACHINE\AUTOMATE\HANDLE\42\             <----Handle 42 Top
+  HANDLOG1.log                                                        <-----Handle 42 Log
+C:\STAF\data\STAF\service\log\MACHINE\AUTOMATE\HANDLE\43\             <----Handle 43 Top
+  HANDLOG2.log                                                        <-----Handle 43 Log
+  HANDLOG3.log                                                        <-----Handle 43 Log
+C:\STAF\data\STAF\service\log\MACHINE\AUTOMATE\HANDLE\44\             <----Handle 44 Top
+  HANDLOG4.log                                                        <-----Handle 44 Log
+C:\STAF\data\STAF\service\log\MACHINE\automate\HANDLE\45\             <----Handle 45 Top
+  HANDLOG5.log                                                        <-----Handle 45 Log
+:exmp.
+:p.
+:h4.Result
+A line will be written to the specified file for each record in the specified
+logfile in the following format (assuming the default field separator, '|', is used):
+:xmp.
+Date-Time|Machine|Handle|Handle Name|User|Endpoint|Level|Message
+:exmp.
+:p.
+:h4.Example
+:p.
+:xmp.
+C:\>FmtLog FORMAT LOGFILE C:/STAF/data/STAF/service/LOG/MACHINE/client1/GLOBAL/STAX_Job_4_User.log NEWFILE C:/myLog.txt
+Formatted 10 record(s) to C:/myLog.txt
+:exmp.
+:p.
+The contents of C:/myLog.txt could look like the following:
+:xmp.
+20041029-15:42:03|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|TestMachines=['client1.company.com']
+20041029-15:42:04|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|JobHandle=78
+20041029-15:42:04|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|STAXMachineNickname=client1
+20041029-15:42:04|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|STAXMachine=client1.company.com
+20041029-15:42:08|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|Test machine: client1.company.com  OS type: Win2000  STAFRoot: C:\STAF
+20041029-15:42:08|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|STAF Testing started on machine client1.company.com
+20041029-15:44:28|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|STAF Testing completed on machine client1.company.com
+20041029-15:44:28|client1.company.com|78|STAX/Job/4|none://anonymous|tcp://client1.company.com|Info|STAF Testing completed in 146 seconds
+20041104-18:27:07|client1.company.com|50|STAX/Job/4|none://anonymous|local://local|Info|STAF local PROCESS START SHELL COMMAND "dir C&colon.d*." RETURNSTDOUT STDERRTOSTDOUT WAIT
+20041105-11:22:51|client1.company.com|89|STAX/Job/4|none://anonymous|local://local|Info|STAF local PROCESS START SHELL COMMAND "dir C&colon.d*." RETURNSTDOUT STDERRTOSTDOUT WAIT
+:exmp.
+
+

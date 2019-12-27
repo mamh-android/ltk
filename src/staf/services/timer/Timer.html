@@ -1,0 +1,1058 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002, 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3//EN">
+<HTML><HEAD>
+<TITLE>Timer Service</TITLE>
+<!-- Begin Header Records  ========================================== -->
+<!-- D:\staf\timer\TimSrv.script converted by b2h R3.0 (300) (HPFS)   -->
+<!-- on 12 Jan 2000 at 18:02:12                                       -->
+<META HTTP-EQUIV="updated"  CONTENT="Fri, 12 Jan 1900 18:01:56">
+<META HTTP-EQUIV="review"  CONTENT="Sat, 12 Jan 1901 18:01:56">
+<META HTTP-EQUIV="expires"  CONTENT="Sun, 12 Jan 1902 18:01:56">
+</HEAD><BODY>
+<!-- End Header Records  ============================================ -->
+<A NAME=Top_Of_Page></A>
+<H1>Timer Service</H1>
+<B>Version 3.0.3</B>
+<p><b>Last updated: December 1, 2009</b>
+
+<HR><H2><A NAME=ToC>Table of Contents</A></H2>
+
+<MENU>
+<LI><A NAME=ToC_2 HREF="#Header_2" >Overview</A>
+<LI><A name=ToC_2a href="#Header_2a" >Installation and Configuration</A>
+<LI><A NAME=ToC_7 HREF="#Header_7" >Variables</A>
+<li><a name="ToC_RequestSyntax" href="#Header_RequestSyntax">Request Syntax</a>
+  <menu>
+  <LI><A NAME=ToC_15 HREF="#Header_15" >REGISTER</A>
+  <LI><A NAME=ToC_21 HREF="#Header_21" >UNREGISTER</A>
+  <LI><A NAME=ToC_27 HREF="#Header_27" >WATCH</A>
+  <LI><A NAME=ToC_33 HREF="#Header_33" >UNWATCH</A>
+  <LI><A NAME=ToC_39 HREF="#Header_39" >LIST</A>
+  <LI><A NAME=ToC_45 HREF="#Header_45" >REFRESH</A>
+  <LI><A NAME=ToC_Version HREF="#Header_Version" >VERSION</A>
+  <LI><A NAME=ToC_Help HREF="#Header_Help" >HELP</A>
+  </menu>
+<LI><A NAME=ToC_50 HREF="#HDRTIMQUE" >Timer Queue Messages</A>
+<LI><A NAME=ToC_51 HREF="#HDRTIMERR" >Timer Error Code Reference</A>
+</MENU>
+<p>
+<HR>
+<H1><A NAME="Header_2" HREF="#ToC_2">Overview</A></H1>
+
+The Timer service is an external STAF service that provides the following
+functions:
+<UL COMPACT>
+<LI>REGISTER - Registers the requesting process to receive a timer notification at a given frequency
+<LI>UNREGISTER - Unregisters a process from receiving timer notifications for a given timer
+<LI>WATCH - Notifies the Timer service to begin watching a machine.
+<LI>UNWATCH - Notifies the Timer service to stop watching a machine.
+<LI>LIST - List all currently running timers, watches, or the operational settings for the service.
+<LI>REFRESH - Notifies the timer service that the variables associated with this service have changed
+<LI>VERSION - Causes the timer service to output the version level
+<LI>HELP - Causes the timer service to output help text
+</UL>
+The purpose of the Timer service is to allow a process on one machine to
+periodically receive a notification message from the same or another machine.
+This can be used to have one machine periodically execute a process on another
+machine, as a "heartbeat" to monitor the activity of a machine, or any other
+purpose where a periodic timer may be useful.
+
+<h1><A name=Header_2a href="#ToC_2a">Installation and Configuration</A></h1>
+<p>
+This service requires:
+<ul>
+<li>STAF Version 3.0.0 or later
+<li>Java 1.2 or later
+</ul>
+<p>
+Note that all machines submitting <tt>REGISTER/UNREGISTER</tt> requests to the
+Timer V3.x service and all machines specified in a <tt>WATCH/UNWATCH</tt> must
+be running STAF V3.0.0 or later.
+<p>
+Install the Timer service by downloading the TimerV303.tar/zip file from
+<a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a> 
+and extracting
+its contents to a local directory (e.g. C:\STAF\services or /usr/local/staf/services).
+The STAFTimer.jar file is the service jar file needed when
+registering the Timer service.
+<p>
+The Timer service is written in Java and since it is an external service,
+it must be registered with the SERVICE configuration statement in the
+STAF configuration file. The syntax is:
+<PRE>
+SERVICE &lt;Name> LIBRARY JSTAF EXECUTE &lt;Service Jar File Name>
+               [OPTION &lt;Name[=Value]>]... [PARMS &lt;Data Directory>]
+</PRE>
+where:
+<p>
+<ul>
+<li><TT>SERVICE</TT> specifies the name by which the Timer service will be
+ known on this machine.
+<P>
+<li><TT>EXECUTE</TT> specifies the fully-qualified name of the STAFTimer.jar file.
+On Windows systems, this might be C:\STAF\services\timer\STAFTimer.jar.
+On Unix systems, this might be /usr/local/staf/services/timer/STAFTimer.jar.</li>
+Or, you could specify {STAF/Config/STAFRoot}/services/timer/STAFTimer.jar
+which would work on any operating system.
+<p>
+<li><tt>OPTION</tt> specifes a configuration option that will be passed on to the
+JSTAF Java service proxy library.
+This is typically used by service proxy libraries to further control the interface 
+to the actual service implementation. You may specify 
+multiple <tt>OPTIONs</tt> for a given service.
+See the STAF User's Guide for more information on options for the JSTAF Java
+service proxy library.
+<P>
+<li><TT>PARMS</TT> specifies the fully-qualified name of the
+directory in which the Timer service should store persistent data.
+The default is {STAF/DataDir}/service/&lt;Timer Service Name (lower-case)>
+</ul>
+
+<H4><A NAME="Header_5">Examples</A></H4>
+
+<PRE>
+SERVICE Timer LIBRARY JSTAF EXECUTE C:/STAF/services/timer/STAFTimer.jar
+SERVICE Timer LIBRARY JSTAF EXECUTE /usr/local/staf/services/timer/STAFTimer.jar
+SERVICE Timer LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/timer/STAFTimer.jar PARMS {STAF/DataDir}/service/timer
+</PRE>
+
+Or, you can dynamically add the Timer service using the SERVICE service's ADD SERVICE
+request.
+<P>
+<hr>
+<H1><A NAME="Header_7" HREF="#ToC_7">Variables</A></H1>
+The following variables can be defined in the STAF configuration file or set dynamically
+using the VAR service and the Timer service will query their values:
+<DL COMPACT>
+<DD><TT>STAF/Service/Timer/MinFrequency:</TT> The minimum allowable frequency for a timer
+<DD><TT>STAF/Service/Timer/UnregisterOnNoHandle:</TT> Unregister the timer if handle does not exist
+<DD><TT>STAF/Service/Timer/UnregisterOnNoPath:</TT> Unregister the timer if no path to machine
+<DD><TT>STAF/Service/Timer/TotalFireAttempts:</TT> The number of times to attempt to send a notification before unregistering the timer
+</DL>
+<P>
+<H4><A NAME="Header_8">STAF/Service/Timer/MinFrequency</A></H4>
+Specifies the minimum allowable frequency, in milliseconds, that can be used with the
+REGISTER command. An error will be returned from REGISTER if the FREQUENCY parameter
+is less than the MinFrequency variable. A value of 0 will result in no minimum
+frequency.
+<DL COMPACT>
+<DD><B>Example:</B> set var STAF/Service/Timer/MinFrequency=5000
+<DD><B>Default:</B> 1000
+</DL>
+<P>
+<H4><A NAME="Header_9">STAF/Service/Timer/UnregisterOnNoHandle</A></H4>
+Specifies a binary value that sets the behavior of the timer when the process
+which registered the timer does not exist. If 1, the timer will be automatically
+unregistered. If 0, the timer will discard the message and attempt to send
+a new message at the end of the next period.
+<P>
+<H4><A NAME="Header_10">Note: If the specified value is not defined (not 1 or 0), the value will be set to 1.</A></H4>
+<DL COMPACT>
+<DD><B>Example:</B> set var STAF/Service/Timer/UnregisterOnNoHandle=0
+<DD><B>Default:</B> 1
+</DL>
+<P>
+<H4><A NAME="Header_11">STAF/Service/Timer/UnregisterOnNoPath</A></H4>
+Specifies a binary value that sets the behavior of the timer when no path exists
+to the machine which registered the timer. This will occur if the machine cannot
+be contacted (machine down, network error) or if STAF is not running on the machine.
+If 1, the timer will be automatically unregistered (see STAF/Service/Timer/TotalFireAttempts). If 0, the timer will discard
+the message and attempt to send a new message at the end of the next period.
+<P>
+<H4><A NAME="Header_12">Note: If the specified value is not defined (not 1 or 0), the value will be set to 1.</A></H4>
+<DL COMPACT>
+<DD><B>Example:</B> set var STAF/Service/Timer/UnregisterOnNoPath=0
+<DD><B>Default:</B> 1
+</DL>
+<P>
+<H4><A NAME="Header_13">STAF/Service/Timer/TotalFireAttempts</A></H4>
+Specifies an integer for the number of times to try to attempt to send a timer message,
+before unregistering a timer, if the specified machine is not reachable (STAF not running,
+network error, etc). This variable only has an effect if the timer is configured to unregister
+on no path to machine, either configured globally or specific to the timer. A log message
+will be generated with the timer name and attempt number each time the attempt to queue a
+message fails.
+<P>
+<H4><A NAME="Header_14">Note: Valid values are any positive integer, including 0. If an invalid value is specified, the default value will be used.</A></H4>
+<DL COMPACT>
+<DD><B>Example:</B> set var STAF/Service/Timer/TotalFireAttempts=5
+<DD><B>Default:</B> 3
+</DL>
+<P>
+<hr>
+<h1><b><a name="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></b></h1>
+
+The Timer service provides the following requests:
+<ul>
+<li>REGISTER - Registers the requesting process to receive a timer
+    notification at a given frequency.
+<li>UNREGISTER - Unregisters a process from receiving timer notifications
+    for a given timer.
+<li>WATCH - Notifies the Timer service to begin watching a machine. 
+<li>UNWATCH - Notifies the Timer service to stop watching a machine. 
+<li>LIST - List all currently running timers, watches, or operational settings for the service.
+<li>REFRESH - Notifies the timer service that the variables associated with this service have changed 
+<li>VERSION - Returns the version level of the Timer service. 
+<li>HELP - Displays the help text for using the Timer service.
+</ul>
+
+<H2><A NAME="Header_15" HREF="#ToC_15">REGISTER</A></H2>
+Registers the requesting process to receive a timer notification at a given frequency
+<P>
+<H4><A NAME="Header_16">Syntax</A></H4>
+<PRE>
+REGISTER   TYPE &lt;Type> FREQUENCY &lt;Milliseconds> [PRIORITY &lt;Level>] [KEY &lt;Key>]
+           [BYNAME] [UNREGONNOPATH &lt;1 | 0>] [UNREGONNOHANDLE &lt;1 | 0>]
+</PRE>
+<P><TT>TYPE</TT> specifies a name used to identify the type of timer.
+<P><TT>FREQUENCY</TT> specifies the frequency of the timer in milliseconds.
+<P><TT>PRIORITY</TT> specifies the priority level of the notification message to be sent
+to the registering machine.  The default value is 5.
+<p><tt>KEY</tt> specifies a key to identify the timer. The default value is an empty string.
+Any timer registered with a key must be unregistered specifying the key.
+<P><tt>BYNAME</tt> specifies to register the timer by process name
+rather than by the handle of the process. Any timer registered by name must be
+unregistered by name.
+<P><tt>UNREGONNOPATH</tt> may be specified to set timer specific values for the
+UnregisterOnNoPath variable. If this option is not specified,
+the timer will use the global values specified via the STAF VAR service.
+<P><tt>UNREGONNOHANDLE</tt> may be specified to set timer specific values for the
+UnregisterOnNoHandle variable. If this option is not specified,
+the timer will use the global values specified via the STAF VAR service.
+<P><B>Note: </B> If a timer already exists with the same TYPE, registering machine and
+process or handle, and key, you will get an Already Exists error code returned.
+<!-- it will be updated with the new frequency, and optionally the
+new priority, and REGISTER will return success. -->
+<P>The Timer service uses the STAF Queue service for interprocess communication.
+See <A HREF="#HDRTIMQUE">"Timer Queue Messages"</A>.
+<P>
+<H4><A NAME="Header_17">Security</A></H4>
+<P>Minimum security level of 3 required to register a timer.
+<P>
+<H4><A NAME="Header_18">Return Codes</A></H4>
+<P>All return codes from <tt>REGISTER</tt> are documented in Appendix A, "API Return Codes", in
+the STAF User's Guide. 
+<P>
+<H4><A NAME="Header_19">Results</A></H4>
+<P>The result buffer will contain an error message if an error occurred and will be empty otherwise.
+<P>
+<H4><A NAME="Header_20">Examples</A></H4>
+<DL COMPACT>
+<DD><B>Goal:</B> Register a timer with a name of heartbeat and a frequency of 60 seconds.
+<DD><B>Syntax:</B> <tt>REGISTER TYPE heartbeat FREQUENCY 60000</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Register a timer with a name of heartbeat, a frequency of 60 seconds,
+and a priority of 2.
+<DD><B>Syntax:</B> <tt>REGISTER TYPE heartbeat FREQUENCY 60000 PRIORITY 2</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Register a timer with a name of timer07, a frequency of 30 seconds, and
+will override the system variable UnregisterOnNoPath to unregister when the
+machine which registered the timer cannot be reached.
+<DD><B>Syntax:</B> <tt>REGISTER TYPE timer07 FREQUENCY 30000 UNREGONNOPATH 1</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Register a timer with a name of timer01, a frequency of 60 seconds. Register
+this timer by the process name.
+<DD><B>Syntax:</B> <tt>REGISTER TYPE timer01 FREQUENCY 60000 BYNAME</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Register a timer with a name of heartbeat, a frequency of 2 minutes,
+and a key of MyHeartbeat.
+<DD><B>Syntax:</B> <tt>REGISTER TYPE heartbeat FREQUENCY 120000 KEY MyHeartbeat</tt>
+</DL>
+<P>
+<H2><A NAME="Header_21" HREF="#ToC_21">UNREGISTER</A></H2>
+Unregisters a process from receiving timer notifications for a given timer
+<P>
+<H4><A NAME="Header_22">Syntax</A></H4>
+<PRE>
+UNREGISTER TYPE &lt;Type> [KEY] [BYNAME | &lt;MACHINE &lt;Machine> HANDLE &lt;Handle #> | NAME &lt;Handle Name>>]
+</PRE>
+<P><TT>TYPE</TT> specifies the type of the timer to terminate.  This must be the same as
+the <tt>TYPE</tt> option used when the timer was registered.
+<p><tt>KEY</tt> specifies a key to identify the timer.  This must be the same as
+the <tt>KEY</tt> option used when the timer was registered,
+or do not specify the key if no key was specified when the timer was registered.
+<P><TT>MACHINE</TT> specifies the machine which issued the register command if different
+from the current machine.
+<P><TT>HANDLE</TT> specifies the handle number of the process which issued the
+ <tt>REGISTER</tt> command if different from the current process handle number.
+<P><TT>NAME</TT> specifies the handle name of the process which issued the <tt>REGISTER</tt>
+ command.
+<P><tt>BYNAME</tt> specifies to unregister this timer using the handle
+name rather than the handle number of the process. This is required if the timer was registered
+using the handle name.
+<P><B>Note: </B> If the <tt>MACHINE</tt> parameter is specified, then <tt>BYNAME</tt> cannot
+be specified. The timer will be unregistered using either the handle number or the handle name
+based upon which parameter (<tt>HANDLE</tt> or <tt>NAME</tt>) is specified with <tt>MACHINE</tt>.
+<P>
+<H4><A NAME="Header_23">Security</A></H4>
+<P>Minimum security level of 3 required for a process to unregister a timer which
+it previously registered. Minimum security level of 4 required for a process to
+unregister a timer registered by a process on a different machine.
+<P>
+<H4><A NAME="Header_24">Return Codes</A></H4>
+<P>All return codes from <tt>UNREGISTER</tt> are documented in Appendix A, "API Return Codes", in
+the STAF User's Guide. 
+<P>
+<H4><A NAME="Header_25">Results</A></H4>
+<P>The result buffer will contain an error message if an error occurred and will be empty otherwise.
+<P>
+<H4><A NAME="Header_26">Examples</A></H4>
+<DL COMPACT>
+<DD><B>Goal:</B> Unregister a timer which the current process previously
+registered.
+<DD><B>Syntax:</B> <tt>UNREGISTER TYPE heartbeat</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Unregister a timer registered by a process with a handle of
+17 on machine tcp://server1.company.com@6500
+<DD><B>Syntax:</B> <tt>UNREGISTER TYPE heartbeat MACHINE tcp://server1.company.com@6500 HANDLE 17</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Unregister a timer registered by process name for process test on
+     machine tcp://client1.company.com@6500.
+<DD><B>Syntax:</B> <tt>UNREGISTER TYPE timer07 MACHINE tcp://client1.company.com@6500 PROCESS test</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Unregister a timer registered by process name by the process submitting the unregister request.
+<DD><B>Syntax:</B> <tt>UNREGISTER TYPE timer07 BYNAME</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Unregister a timer which the current process previously
+registered with a key of MyHeartbeat.
+<DD><B>Syntax:</B> <tt>UNREGISTER TYPE heartbeat KEY MyHeartbeat</tt>
+</DL>
+<P>
+<H2><A NAME="Header_27" HREF="#ToC_27">WATCH</A></H2>
+Notifies the Timer service to begin watching a machine. The Timer service will then
+register a timer with the machine to be watched, and track whether the machine
+being watched has sent a notification during the allotted time period (frequency + margin).
+The timer registered with the machine to be watched will have a type of
+<tt>STAF/Service/&lt;NAME&gt;/Watch</tt>, where &lt;NAME&gt; is the registered name of the Timer service
+and will have a key set to the name of the machine specified to be watched.
+<P><B>Note: </B>The machine to be watched must have Timer Service V3.0.0 or later running.
+<P>
+<H4><A NAME="Header_28">Syntax</A></H4>
+<PRE>
+WATCH MACHINE &lt;Machine&gt; FREQUENCY &lt;Milliseconds&gt; [MARGIN &lt;Milliseconds&gt;]
+</PRE>
+<P><TT>MACHINE</TT> specifies the name of the machine to be watched.
+<P><TT>FREQUENCY</TT> specifies the frequency at which the machine should send notifications, in milliseconds.
+<P><TT>MARGIN</TT> specifies the allowable margin of error, in milliseconds, in the response time of the machine being watched, before
+the machine is considered to be not responding.
+<P><B>Note: </B>If the optional parameter MARGIN is not specified then the allowable margin of error
+is assumed to be 0.
+<P>
+<H4><A NAME="Header_29">Security</A></H4>
+<P>Minimum security level of 3 required to register a machine to be watched.
+<P>
+<H4><A NAME="Header_30">Return Codes</A></H4>
+<P>All return codes from <tt>WATCH</tt> are documented in Appendix A, "API Return Codes", in
+the STAF User's Guide. 
+<P>
+<H4><A NAME="Header_31">Results</A></H4>
+<P>The result buffer will contain an error message if an error occurred and will be empty otherwise.
+<P>
+<H4><A NAME="Header_32">Examples</A></H4>
+<DL COMPACT>
+<DD><B>Goal:</B> Register the machine 'machine1' to be watched with a frequency of 10 minutes (600000 milliseconds)
+     and a margin of 10 seconds (10000 milliseconds).
+<DD><B>Syntax:</B> <tt>WATCH MACHINE machine1 FREQUENCY 600000 MARGIN 10000</tt>
+</DL>
+<DL COMPACT>
+<DD><B>Goal:</B> Register the machine client1.company.com to be watched with a frequency of 2 minutes
+    (120000 milliseconds) and a margin of 10 seconds (10000 milliseconds).
+<DD><B>Syntax:</B> <tt>WATCH MACHINE client1.company.com FREQUENCY 120000 MARGIN 10000</tt>
+</DL>
+<P>
+<H2><A NAME="Header_33" HREF="#ToC_33">UNWATCH</A></H2>
+Notifies the Timer service to stop watching a machine.
+<P>
+<H4><A NAME="Header_34">Syntax</A></H4>
+<PRE>
+UNWATCH MACHINE &lt;Machine&gt;
+</PRE>
+<P><TT>MACHINE</TT> specifies the name of the machine to stop watching.
+<P>
+<H4><A NAME="Header_35">Security</A></H4>
+<P>Minimum security level of 4 required for a process to unwatch a machine.
+<P>
+<H4><A NAME="Header_36">Return Codes</A></H4>
+<P>All return codes from <tt>UNWATCH</tt> are documented in Appendix A, "API Return Codes", in
+the STAF User's Guide. 
+<P>
+<H4><A NAME="Header_37">Results</A></H4>
+<P>The result buffer will contain an error message if an error occurred and will be empty otherwise.
+<P>
+<H4><A NAME="Header_38">Examples</A></H4>
+<DL COMPACT>
+<DD><B>Goal:</B> Stop watching a machine named 'machine1'.
+<DD><B>Syntax:</B> <tt>UNWATCH MACHINE machine1</tt>
+</DL>
+<DD><B>Goal:</B> Stop watching a machine named 'client1.company.com'.
+<DD><B>Syntax:</B> <tt>UNWATCH MACHINE client1.company.com</tt>
+</DL>
+<P>
+<H2><A NAME="Header_39" HREF="#ToC_39">LIST</A></H2>
+List all registered timers, watches, or the operational settings for the Timer service.
+<P>
+<H4><A NAME="Header_40">Syntax</A></H4>
+<PRE>
+LIST &lt;TIMERS [LONG]> | WATCHES | SETTINGS
+</PRE>
+<p><tt>TIMERS</tt> specifies to list the registerd timers. 
+<p><tt>LONG</tt> provides more detailed information when listing the registered timers.
+<p><tt>WATCHES</tt> specifies to list the watches.
+<p><tt>SETTINGS</tt> specifies to list the operational settings for the service.
+<P>
+<H4><A NAME="Header_41">Security</A></H4>
+<P>Minimum security level of 2 is required.
+<P>
+<H4><A NAME="Header_42">Return Codes</A></H4>
+<P>All return codes from <tt>LIST</tt> are documented in Appendix A, "API Return Codes", in
+the STAF User's Guide. 
+<P>
+<H4><A NAME="Header_43">Results</A></H4>
+<P>
+<ul>
+<li>If a <tt> LIST TIMERS </tt> request is specified, upon successful return,
+    the result buffer will contain a marshalled
+    <tt>&lt;List> of &lt;Map:STAF/Service/Timer/Timer></tt> representing a
+    list of the registered timers.  The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Timer/Timer</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a registered timer.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>type</tt></td>
+<td><tt>Type</tt></td>
+<td><tt>&lt;String></tt></font></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>machine</tt></td>
+<td><tt>Machine</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>notifyBy</tt></td>
+<td><tt>Notify By<br>(Notify)</tt></td>
+<td><tt>&lt;String></tt></td>
+<td><tt>'Handle' | 'Name'</tt></td>
+</tr>
+<tr>
+<td><tt>notifiee</tt></td>
+<td><tt>Notifiee</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>key</tt></td>
+<td><tt>Key</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>lastTimestamp</tt></td>
+<td><tt>Last Fired Date-Time<br>(Last Date-Time)</tt></td>
+<td><tt>&lt;String> | &lt;None></tt></td>
+<td><tt>&lt;YYYYMMDD-HH:MM:SS></tt></td>
+</tr>
+<tr>
+<td><tt>frequency</tt></td>
+<td><tt>Frequency<br>(Freq)</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The <tt>Type</tt> value is set to the name used to identify the timer.
+<li>The <tt>Machine</tt> value is set to the machine which submitted the <tt>REGISTER</tt> request.
+<li>The <tt>Notify By</tt> value is set to <tt>'Handle'</tt> if the timer was registered by handle number or
+    <tt>'Name'</tt> if the timer was registered by handle name.
+<li>The <tt>Notifiee</tt> value is set to one of the following:
+    <ul compact>
+    <li>If the timer was registered by handle number, the value is set to the handle
+        number of the process which submitted the <tt>REGISTER</tt> request.
+    <li>If the timer was registered by handle name, the value is set to the handle
+        name of the process which submitted the <tt>REGISTER</tt> request .
+    </ul>
+<li>The <tt>Key</tt> value is set to the key specified when registering the timer, or an empty string
+    if no key was specified when registering the timer.
+<li>The <tt>Last Fired Date-Time</tt> value is set to the timestamp of the last notification sent
+    to the notifiee for the timer or <tt>&lt;None></tt> if no notification has been sent to
+    the notifiee for the timer yet.
+<li>The <tt>Frequency</tt> value is set to the frequency of the timer is milliseconds.
+</ol>
+</tr>
+</tfoot>
+</table>
+<p>
+<li>If a <tt> LIST TIMERS LONG </tt> request is specified, upon successful return,
+    the result buffer will contain a marshalled
+    <tt>&lt;List> of &lt;Map:STAF/Service/Timer/TimerLong></tt> representing a
+    list of the registered timers, containing detailed information about each timer.
+    The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Timer/TimerLong</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents detailed information
+    about a registered timer.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>type</tt></td>
+<td><tt>Type</tt></td>
+<td><tt>&lt;String></tt></font></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>machine</tt></td>
+<td><tt>Machine</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>notifyBy</tt></td>
+<td><tt>Notify By</tt></td>
+<td><tt>&lt;String></tt></td>
+<td><tt>'Handle' | 'Name'</tt></td>
+</tr>
+<tr>
+<td><tt>notifiee</tt></td>
+<td><tt>Notifiee</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>key</tt></td>
+<td><tt>Key</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>lastTimestamp</tt></td>
+<td><tt>Last Fired Date-Time</tt></td>
+<td><tt>&lt;String> | &lt;None></tt></td>
+<td><tt>&lt;YYYYMMDD-HH:MM:SS></tt></td>
+</tr>
+<tr>
+<td><tt>frequency</tt></td>
+<td><tt>Frequency</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>priority</tt>
+<td><tt>Priority</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>unRegOnNoPath</tt>
+<td><tt>Unregister On No Path</tt></td>
+<td><tt>&lt;String></tt></td>
+<td><tt>'true' | 'false' | 'global'</tt></td>
+</tr>
+<tr>
+<td><tt>unRegOnNoHandle</tt>
+<td><tt>Unregister On No Handle</tt></td>
+<td><tt>&lt;String></tt></td>
+<td><tt>'true' | 'false' | 'global'</tt></td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The <tt>Type</tt> value is set to the named used to identify the timer.
+<li>The <tt>Machine</tt> value is set to the machine which submitted the <tt>REGISTER</tt> request.
+<li>The <tt>Notify By</tt> value is set to <tt>'Handle'</tt> if the timer was registered by handle number or
+    <tt>'Name'</tt> if the timer was registered by handle name.
+<li>The <tt>Notifiee</tt> value is set to one of the following:
+    <ul compact>
+    <li>If the timer was registered by handle number, the value is set to the handle
+        number of the process which submitted the <tt>REGISTER</tt> request.
+    <li>If the timer was registered by handle name, the value is set to the handle
+        name of the process which submitted the <tt>REGISTER</tt> request .
+    </ul>
+<li>The <tt>Key</tt> value is set to the key specified when registering the timer, or an empty string
+    if no key was specified when registering the timer.
+<li>The <tt>Last Fired Date-Time</tt> value is set to the timestamp of the last notification sent
+    to the notifiee for the timer or <tt>&lt;None></tt> if no notification has been sent to
+    the notifiee for the timer yet.
+<li>The <tt>Frequency</tt> value is set to the frequency of the timer is milliseconds.
+<li>The <tt>Priority</tt> value is set to the priority of the notification message sent to the
+    notifiee for the timer.
+<li>The <tt>Unregister On No Path</tt> value is set to the value of the timer specific variable
+    named STAF/Service/Timer/UnregisterOnNoPath.  It can be set to one of three values:
+    <ul compact>
+    <li><tt>'true'</tt> indicates that <tt>UNREGONNOPATH</tt> was set to 1 on the <tt>REGISTER</tt>
+        request.
+    <li><tt>'false'</tt> indicates that <tt>UNREGONNOPATH</tt> was set to 0 on the <tt>REGISTER</tt>
+        request.
+    <li><tt>'global'</tt> indicates no timer specific value is set.
+    </ul>
+<li>The "Unregister On No Handle" value is set to the value of the timer specific variable
+    named STAF/Service/Timer/UnregisterOnNoHandle.
+    <ul compact>
+    <li><tt>'true'</tt> indicates that <tt>UNREGONNOHANDLE</tt> was set to 1 on the <tt>REGISTER</tt>
+        request.
+    <li><tt>'false'</tt> indicates that <tt>UNREGONNOHANDLE</tt> was set to 0 on the <tt>REGISTER</tt>
+        request.
+    <li><tt>'global'</tt> indicates no timer specific value is set.
+    </ul>
+</ol>
+</tr>
+</tfoot>
+</table>
+<p>
+<li>If a <tt> LIST WATCHES </tt> request is specified, upon successful return,
+    the result buffer will contain a marshalled
+    <tt>&lt;List> of &lt;Map:STAF/Service/Timer/Watch></tt> representing a
+    list of the watches.  The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Timer/Watch</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a watch.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>machine</tt></td>
+<td><tt>Machine</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>status</tt></td>
+<td><tt>Status</tt></td>
+<td><tt>&lt;String></tt></td>
+<td><tt>'OK' | 'Missed'</tt></td>
+</tr>
+<tr>
+<td><tt>lastTimestamp</tt></td>
+<td><tt>Last Fired Date-Time<br>(Last Date-Time)</tt></td>
+<td><tt>&lt;String> | &lt;None></tt></td>
+<td><tt>&lt;YYYYMMDD-HH:MM:SS></tt></td>
+</tr>
+<tr>
+<td><tt>frequency</tt></td>
+<td><tt>Frequency<br>(Freq)</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+<tr>
+<td><tt>margin</tt></td>
+<td><tt>Margin</tt></td>
+<td><tt>&lt;String></tt></td>
+<td></td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The <tt>Machine</tt> value is set to the name of the machine beiung watched.
+<li>The <tt>Status</tt> value indicates whether the machine is sending
+    timely notifications.
+<li>The <tt>Last Fired Date-Time</tt> value is set to the timestamp of the last notification
+    received from the machine or <tt>&lt;None></tt> if no notification has been received yet.
+<li>The <tt>Frequency</tt> value is set to the frequency (in milliseconds) with which 
+    the machine should respond.
+<li>The <tt>Margin</tt> value is set to the allowable margin of error before the machine
+    is marked as not responding.
+</ol>
+</tr>
+</tfoot>
+</table>
+<p>
+<li>If a <tt> LIST SETTINGS </tt> request is specified, upon successful return,
+    the result buffer will contain a marshalled
+    <tt>&lt;Map:STAF/Service/Timer/Settings></tt> representing the
+    operational settings for the Timer service.  The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Timer/Settings</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents the settings for
+the Timer service.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>directory
+<td>Directory
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The "Directory" value is the directory where the Timer service writes
+    its data.  It's value can be overridden via a parameter when registering
+    the Timer service.
+</ol>
+</tr>
+</tfoot>
+</table>
+</ul>
+<P>
+<H4><A NAME="Header_44">Examples</A></H4>
+<p>
+<ul>
+<li><b>Goal:</b> List all of the registered timers (in the short form).
+<p><b>Syntax:</b>&nbsp; <tt>LIST TIMERS</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and
+the commands in the file are executed successful, the result, in default format,
+could look like:
+<pre>
+Type         Machine         Notify Notifiee     Key  Last Date-Time    Freq
+------------ --------------- ------ ------------ ---- ----------------- ------
+TIMER1       tcp://client1.c Handle 62                &lt;None>            300000
+             ompany.com@6500                      
+HEARTBEAT    tcp://client2.c Handle 49                20050215-15:30:36 60000
+             ompany.com@6500                        
+FULL_REFRESH tcp://client3.c Name   REFRESH           20050215-15:28:44 600000
+             ompany.com@6500
+STAF/SERVICE tcp://client2.c Name   STAF/Service CLIE 20050215-15:20:53 60000
+/TIMER/WATCH ompany.com@6500        /Timer       NT2
+STAF/SERVICE tcp://client1.c Name   STAF/Service CLIE 20050215-15:20:46 45000
+/TIMER/WATCH ompany.com@6500        Timer/Watch  NT1
+</pre>
+<p>
+<li><b>Goal:</b> List all of the registered timers in the long form (providing detailed
+    information on the timers).
+<p><b>Syntax:</b>&nbsp; <tt>LIST TIMERS LONG</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and
+the commands in the file are executed successful, the result, in default format,
+could look like:
+<pre>
+[
+  {
+    Type                   : TIMER1
+    Machine                : tcp://client1.company.com@6500
+    Notify By              : Handle
+    Notifiee               : 62
+    Key                    :
+    Last Fired Date-Time   : &lt;None>
+    Frequency              : 300000
+    Priority               : 4
+    Unregister On No Path  : global
+    Unregister On No Handle: global
+  }
+  {
+    Type                   : HEARTBEAT
+    Machine                : tcp://client2.company.com@6500
+    Notify By              : Handle
+    Notifiee               : 49
+    Last Fired Date-Time   : 20050215-15:20:53
+    Frequency              : 60000
+    Priority               : 5
+    Unregister On No Path  : global
+    Unregister On No Handle: global
+  }
+  {
+    Type                   : FULL REFRESH
+    Machine                : tcp://client3.company.com@6500
+    Notify By              : Name
+    Notifiee               : REFRESH
+    Last Fired Date-Time   : 20050215-15:28:44
+    Frequency              : 600000
+    Priority               : 2
+    Unregister On No Path  : true
+    Unregister On No Handle: false
+  }
+  {
+    Type                   : STAF/SERVICE/TIMER/WATCH
+    Machine                : tcp://client2.company.com@6500
+    Notify By              : Name
+    Notifiee               : STAF/Service/Timer
+    Last Fired Date-Time   : 20050215-15:20:53
+    Frequency              : 60000
+    Priority               : 5
+    Unregister On No Path  : global
+    Unregister On No Handle: true
+  }
+  {
+    Type                   : STAF/SERVICE/TIMER/WATCH
+    Machine                : tcp://client1.company.com@6500
+    Notify By              : Name
+    Notifiee               : STAF/Service/Timer/Watch
+    Last Fired Date-Time   : 20050215-15:20:46
+    Frequency              : 45000
+    Priority               : 5
+    Unregister On No Path  : false
+    Unregister On No Handle: false
+  }
+]
+</pre>
+<p>
+<li><b>Goal:</b> List all of the watches.
+<p><b>Syntax:</b>&nbsp; <tt>LIST WATCHES</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and
+the commands in the file are executed successful, the result, in default format,
+could look like:
+<pre>
+Machine To Watch       Machine Status Last Fired Date-Time Frequency Margin
+---------------------- -------------- -------------------- --------- ------
+CLIENT1                OK             20050215-15:20:46    60000     10000
+SERVER1.AUSTIN.IBM.COM Missed         20050215-12:24:55    600000    30000
+</pre>
+<p>
+<li><b>Goal:</b> List the operational settings for the Timer service.
+<p><b>Syntax:</b>&nbsp; <tt>LIST SETTINGS</tt>
+<p><b>Output:</b>  If the request is submitted from the command line,
+the result, in default format, could look like:
+<pre>
+Directory: C:\STAF\data\STAF\service\timer
+</pre>
+</ul>
+<P>
+<H2><A NAME="Header_45" HREF="#ToC_45">REFRESH</A></H2>
+Update variable references
+<P>
+<H4><A NAME="Header_46">Syntax</A></H4>
+<PRE>
+REFRESH
+</PRE>
+<P>
+<H4><A NAME="Header_47">Security</A></H4>
+<P>Minimum security level of 3 required to refresh variables.
+<P>
+<H4><A NAME="Header_48">Return Codes</A></H4>
+<P>All return codes from <tt>REFRESH</tt> are documented in Appendix A, "API Return Codes", in
+the STAF User's Guide. 
+<P>
+<H4><A NAME="Header_49">Results</A></H4>
+<P>The result buffer contains no data on return from a REFRESH command.
+<p>
+
+
+<h2><a NAME="Header_Version" href="#ToC_Version">VERSION</a></h2>
+
+VERSION displays the Timer Service version.
+
+<h4>Syntax</h4>
+
+<tt>VERSION</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result is the version number of the Timer service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the version of the Timer service on machine server1.company.com:
+<p><tt>STAF server1.company.com timer VERSION</tt>
+<p><b>Output:</b>
+<pre>
+3.0.3
+</pre>
+</ul>
+
+<h2><a NAME="Header_Help" href="#ToC_Help">HELP</a></h2>
+
+HELP displays the request options and how to use them.
+
+<h4>Syntax</h4>
+
+<tt>HELP</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the Help messages for the request options for
+the Timer service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the syntax for the Timer service requests:
+<p><tt>STAF local timer HELP</tt>
+<p><b>Output:</b>
+<pre>
+Timer Service Help
+
+REGISTER   TYPE <Type> FREQUENCY <Milliseconds> [PRIORITY <Level>] [KEY <Key>]
+           [BYNAME] [UNREGONNOPATH <1 | 0>] [UNREGONNOHANDLE <1 | 0>]
+UNREGISTER TYPE <Type> [KEY] [BYNAME |
+           <MACHINE <Machine> HANDLE <Handle #> | NAME <Handle Name>>]
+WATCH      MACHINE <Machine> FREQUENCY <Milliseconds> [MARGIN <Milliseconds>]
+UNWATCH    MACHINE <Machine>
+LIST       <TIMERS [LONG]> | WATCHES | SETTINGS
+REFRESH
+VERSION
+HELP
+</pre>
+</ul>
+<P>
+<hr>
+<p>
+<H1><A NAME="HDRTIMQUE" HREF="#ToC_50">Timer Queue Messages</A></H1>
+<P>The timers use the STAF QUEUE service to send notifications to the process
+which submitted the REGISTER command.
+<P>
+The behavior of the timer if the process is not available is controlled by the
+variables UnregisterOnNoHandle and UnregisterOnNoPath.
+<p>  
+The message queued to the process
+will have a queue type of "STAF/Service/Timer" with the content of
+the message being a
+<font face="Courier New,Courier"><font size=-1> &lt;Map></font></font>
+defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th colspan="3">Definition for message map for a "STAF/Service/Timer" type queued message
+</tr>
+<tr>
+<th colspan="3"><b>Description: </b>This map represents a timer message.
+</tr>
+<tr>
+<th width=30%>Key Name
+<th width=30%>Type
+<th width=40%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>type</tt>
+<td><tt>&lt;String></tt>
+<td>
+</tr>
+<tr>
+<td><tt>timerServiceName</tt>
+<td><tt>&lt;String></tt>
+<td>
+</tr>
+<tr>
+<td><tt>timestamp</tt>
+<td><tt>&lt;String></tt>
+<td><tt>&lt;YYYYMMDD-HH:MM:SS></tt>
+</tr>
+<tr>
+<td><tt>key</tt>
+<td><tt>&lt;String></tt>
+<td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="3">
+<b>Notes:</b>
+<ol compact>
+<li>Key <tt>type</tt> will containe the type of the timer.
+<li>Key <tt>timerServiceName</tt> will contain the registered name of the
+    Timer service that generated the timer.
+<li>Key <tt>timestamp</tt> will contain the formatted time at which the
+    notification was generated.
+<li>Key <tt>key</tt> will contain the key specified when registering the timer.
+    If no key was specified when the timer was registered, the value will be a empty string.
+</ol>
+</tr>
+</tfoot>
+</table>
+<p>
+Here's an example of a queued message with queue type "STAF/Service/Timer"
+generated by the Timer service:
+<pre>
+STAF local QUEUE GET WAIT
+{
+  Priority   : 5
+  Date-Time  : 20050216-14:46:23
+  Machine    : server1.austin.ibm.com
+  Handle Name: STAF/Service/Timer
+  Handle     : 15
+  User       : none://anonymous
+  Type       : STAF/Service/Timer
+  Message    : {
+    timerServiceName: Timer
+    type            : HEARTBEAT
+    timestamp       : 20050216-14:46:23
+    key             :
+  }
+}
+</pre>
+<P>
+<hr>
+<p>
+<H1><A NAME="HDRTIMERR" HREF="#ToC_51">Timer Error Code Reference</A></H1>
+<P>There are no additional Timer return codes.  The Timer service uses the common
+STAF return codes.
+<p>
+<p>
+<A NAME=Bot_Of_Page></A>
+</BODY></HTML>

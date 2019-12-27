@@ -1,0 +1,1116 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Generator" content="Lotus Word Pro">
+   <meta name="GENERATOR" content="Mozilla/4.7 [en] (WinNT; U) [Netscape]">
+   <title>Namespace Service User's Guide</title>
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1>
+Namespace Service User's Guide</h1>
+<b>Version 1.0.3</b>
+<p><b>Last updated: August 26, 2011</b>
+
+<p>
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Overview" href="#Header_Overview"><b>Overview</b></a>
+<p>
+<a name="ToC_Installation" href="#Header_Installation"><b>Installation and Configuration</b></a>
+<p>
+<a name="ToC_RequestSyntax" href="#Header_RequestSyntax"><b>Request Syntax</b></a>
+<menu>
+<li><a name="ToC_Create" href="#Header_Create">CREATE</a></li>
+<li><a name="ToC_Modify" href="#Header_Modify">MODIFY</a></li>
+<li><a name="ToC_Delete" href="#Header_Delete">DELETE</a></li>
+<li><a name="ToC_List" href="#Header_List">LIST</a></li>
+<li><a name="ToC_Query" href="#Header_Query">QUERY</a></li>
+<li><a name="ToC_Set" href="#Header_Set">SET</a></li>
+<li><a name="ToC_Get" href="#Header_Get">GET</a></li>
+<li><a name="ToC_Version" href="#Header_Version">VERSION</a></li>
+<li><a name="ToC_Help" href="#Header_Help">HELP</a></li>
+</menu>
+<a name="ToC_ErrorCodes" href="#Header_ErrorCodes"><b>Error Code Reference</b></a>
+<p>
+<a name="ToC_Logging" href="#Header_Logging"><b>Service Logging</b></a>
+<p>
+<a name="ToC_DataStorage" href="#Header_DataStorage"><b>Service Data Storage</b></a>
+<menu>
+  <li><a name="ToC_DTDFile" href="#Header_DTDFile">Namespaces DTD</a>
+  <li><a name="ToC_XMLFile" href="#Header_XMLFile">Namespaces XML File</a>
+  <li><a name="ToC_BackupXMLFile" href="#Header_BackupXMLFile">Backup XML Files</a>
+</menu>
+
+<p>
+<hr>
+<p>
+<h1><a NAME="Header_Overview" href="#ToC_Overview">Overview</a></h1>
+
+The Namespace service is an external STAF service written in Java.
+The purpose of the Namespace service is to provide a namespace hierarchy for
+storing and retrieving a persistent repository of variables.
+This service allows the creation of namespaces and allows you to set key/value
+pairs (e.g. variables) in a namespace.  Namespaces may inherit variables
+from a parent namespace, thus creating a namespace hierarchy.
+Variable look-ups will be done within a namespace scope.  If a variable
+cannot be found in the given namespace, resolution will be attempted in
+the parent namespace, and so on up the hierarchy.
+<p> 
+Unlike the VAR service, any variables set in a namespace will persist across
+stops and restarts of STAF with no additional steps required by the user.
+This will be done by immediately updating an XML file when any updates are
+made to namespaces.
+<p>
+Here's an example of a namespace hierarchy:
+<p>
+<img src="NSDiagram.gif" alt="Namespace Hierarchy">
+<p>
+<hr>
+<p>
+<h1>
+<a NAME="Header_Installation" href="#ToC_Installation">Installation and Configuration</a></h1>
+
+<ol>
+<li>Install Java 1.3 or later.
+<p>
+<li>Install STAF 3.0.0 or later by following
+the installation instructions in the STAF documentation.
+<p>
+<li>Install the Namedpace service:
+<p>Download the NamespaceV103.zip/tar file from
+<a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+into a local directory (e.g. C:/STAF/services or /usr/local/staf/services) and extract it.
+<p>
+<li>Configure the Namespace service:
+<p>Add the following statement to your staf.cfg file:
+<pre>
+SERVICE &lt;Service Name> LIBRARY JSTAF EXECUTE &lt;Service Jar File Name> \
+                       PARMS "[DIRECTORY &lt;Directory>] [FILENAME &lt;FileName>]"
+</pre>
+<p>where:
+<ul>
+<li><tt>&lt;Service Name></tt>
+is the name by which the Namespace service will be known on this machine.</li>
+<li><tt>&lt;Service Jar File Name></tt>
+is the fully-qualified name of the Namespace.jar file.</li>
+<li><tt>DIRECTORY</tt> specifies the fully-qualified path where the file
+containing the namespaces data will be stored.  This parameter is optional
+and defaults to <tt>{STAF/DataDir}/service/<Service Name (lower-case)></tt>.</li>
+<li><tt>FILENAME</tt> specifies the name of the file containing the
+namespaces data.  This parameter is optional and defaults to Namespaces.xml.</li>
+</ul>
+
+<p><b>Examples:</b>
+<p><tt>
+SERVICE Namespace LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/namespace/Namespace.jar</tt>
+<p>
+<pre>
+SERVICE NS LIBRARY JSTAF EXECUTE C:/STAF/services/namespace/Namespace.jar \
+        PARMS "DIRECTORY C:/test/namespace FILENAME NS.xml"
+</pre>
+<p>Or, you can dynamically add the Namespace service using the SERVICE
+service's <tt>ADD SERVICE</tt> request.
+</ol>
+<p>In most cases, the way that you would use this service is that you would
+designate a system as the Namespace Server.  That system would have STAF installed,
+plus the Namespace service with the <tt>SERVICE</tt> configuration statement in the
+configuration file that is shown above.  Assuming that the machine name
+for the Namespace server is server1 and the registered service name is
+Namespace, an example of the command line interface to create a namespace is:
+<p>
+<tt>
+&nbsp;&nbsp;  STAF server1 Namespace CREATE NAMESPACE AIS DESCRIPTION "Global AIS Namespace"</tt>
+<p>
+<hr>
+<p>
+<h1>
+<a NAME="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></b></h1>
+
+The Namespace service provides the following requests:
+<ul type=disc>
+<li>CREATE - creates a new namespace in which variables may be created</li>
+<li>MODIFY - modifies the description or parent for an existing namespace</li>
+<li>DELETE - deletes a namespace or deletes a variable from a namespace</li>
+<li>LIST - returns information about all registered namespaces or
+    returns a list of variables defined within a namespace or
+    returns a list of the settings for the service</li>
+<li>QUERY - returns information about a single namespace or provides a
+    tree hierarchy view for a namespace, including all it's child namespaces</li>
+<li>SET - creates or sets variable(s) within a namespace</li>
+<li>GET - gets the value for a variable within a namespace</li>
+<li>VERSION - displays the version of the Namespace service</li>
+<li>HELP - provides the help syntax for the Namespace service</li>
+</ul>
+
+<h2><a NAME="Header_Create" href="#ToC_Create">CREATE</a></h2>
+
+The <tt>CREATE</tt> command creates a new namespace in which variables may be
+created.  The namespace may optionally inherit variables from another,
+already existing, namespace.  If the namespace has no parent it will inherit
+no variables.
+<p>
+The only reserved name for a namespace is the string NONE, case insensitive.
+This string will be used to represent a root namespace -- a namespace that
+does not have a parent.
+
+<h4>Syntax</h4>
+
+<tt>
+CREATE NAMESPACE &lt;Name> DESCRIPTION &lt;Description> [PARENT &lt;Name>] 
+</tt>
+<p>
+<tt>NAMESPACE</tt> specifies the name of the namespace to create.
+This can be any string (except for <tt>NONE</tt>, case insensitive, which is reserved).  
+This option will resolve variables.
+<p>
+<tt>DESCRIPTION</tt> specifies a textual description of the new namespace.
+<p>
+<tt>PARENT</tt> specifies the name of the parent namespace that this
+namespace should inherit variables from.  The parent namespace must
+exist.  If the <tt>PARENT</tt> option is not specified, the new
+namespace will have no parent and will not inherit any variables.
+This can also be achieved by specifying <tt>NONE</tt> (case-insensitive).
+This option is optional.
+This option will resolve variables.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 3.
+
+<h4>Results</h4>
+
+<p>Upon successful return, the result buffer will be empty.
+
+<h4>Examples:</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Create a new namespace named "AIS" which exists as the top of
+a namespace hierarchy.:
+<p><tt>CREATE NAMESPACE AIS DESCRIPTION "Global AIS Namespace"</tt>
+<p>
+<li><b>Goal:</b> Create a new namespace named "WAS" which inherits variables
+from the "AIS" namespace:
+<p><tt>CREATE NAMESPACE WAS PARENT AIS DESCRIPTION "Global WebSphere Namespace"</tt>
+</ul>
+
+<h2><a NAME="Header_Modify" href="#ToC_Modify">MODIFY</a></h2>
+
+The <tt>MODIFY</tt> command may be used to modify the parent and/or
+description of an existing namespace.
+
+<h4>Syntax</h4>
+
+<tt>MODIFY NAMESPACE &lt;Name> [DESCRIPTION &lt;Description>] [PARENT &lt;Name>]</tt>
+<p>
+<tt>NAMESPACE</tt> specifies the name (case-insensitive) of the
+namespace to be modified.
+This option will resolve variables.
+<p>
+<tt>DESCRIPTION</tt> specifies the new description for this namespace.
+<p>
+<tt>PARENT</tt> specifies the name (case-insensitive) of the new
+parent for this namespace.
+This option will resolve variables.
+Be aware that any children of this namespace will keep this namespace
+as their parent and will move to the new hierarchy location as well.
+To specify that the namespace should be modified to have no parent
+(a root namespace), then specify <tt>NONE</tt> (case-insensitive).
+<p>
+At least one of the <tt>DESCRIPTION</tt> or <tt>PARENT</tt> options
+must be specified, but both may specified as well.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 3.
+
+<h4>Results</h4>
+
+<p>Upon successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+
+<p>
+<ul>
+<li><b>Goal:</b> Change the description for namespace "AIS" to
+    be "My root namespace":
+<p><tt>MODIFY NAMESPACE AIS DESCRIPTION "My root namespace"</tt>
+<p>
+<li><b>Goal:</b> Change the parent for namespace "WebSphereSVT" to
+    be "WAS":
+<p><tt>MODIFY NAMESPACE WebSphereSVT PARENT WAS</tt>
+<p>
+<li><b>Goal:</b> Change the description and the parent for
+    namespace "WAS", specifying None to indicate that the
+    WAS namespace will no longer have a parent:
+<p><tt>MODIFY NAMESPACE WAS DESCRIPTION "WAS Namespace" PARENT None</tt>
+</ul>
+
+<h2><a NAME="Header_Delete" href="#ToC_Delete">DELETE</a></h2>
+
+The <tt>DELETE</tt> command may be used to delete one or more
+variables from a namespace or to delete a namespace.
+
+<h4>Syntax</h4>
+
+<p><tt>DELETE NAMESPACE &lt;Name> &lt;VAR &lt;Key>... | CONFIRM></tt>
+
+<p>
+<tt>NAMESPACE</tt> specifies the name (case-insensitive) of a
+namespace.
+This option will resolve variables.
+<p>
+<tt>VAR</tt> specifies the key (case-insensitiveI) of a variable to
+delete from the namespace.  This option may appear more than one time.
+This option will resolve variables.
+<p>
+<tt>CONFIRM</tt> indicates that you want to delete the namespace
+and any variables directly contained within it.  If the namespace
+has any child namespaces, their parents will be changed to be the
+parent of the deleted namespace.
+<p>
+You cannot specify both the <tt>VAR</tt> and <tt>CONFIRM</tt> options.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 4 if deleting a namespace or
+trust level 3 if deleting a variable from a namespace.
+
+<h4>Results</h4>
+
+<p>Upon successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+
+<p>
+<ul>
+<li><b>Goal:</b> Delete the variable with key "GlobalVar1" in the
+"AIS" namespace:
+<p><tt>DELETE NAMESPACE AIS VAR GlobalVar1</tt>
+<p>
+<li><b>Goal:</b> Delete multiple variables (with keys "WASVar1"
+and "WASVar2") in the "WAS" namespace:
+<p><tt>DELETE NAMESPACE WAS VAR WASVar1 VAR WASVar2</tt>
+<p>
+<li><b>Goal:</b> Delete a leaf namespace "WebSphereSVT":
+<p>
+<tt>DELETE NAMESPACE WebSphereSVT CONFIRM</tt>
+<p>
+<li><b>Goal:</b> Delete an intermediary namespace "WAS"
+<p>
+<tt>DELETE NAMESPACE WAS CONFIRM</tt>
+</ul>
+
+<h2>
+<a NAME="Header_List" href="#ToC_List">LIST</a></h2>
+
+<p>The LIST command may be used to list all namespaces or variables
+defined within a namespace, or the settings for the service, 
+depending on the option(s) specified.
+
+<h4>Syntax</h4>
+
+<pre>
+LIST [NAMESPACES | &lt;NAMESPACE &lt;Name> [ONLY]> | SETTINGS] 
+</pre>
+<p>
+<tt>NAMESPACES</tt> specifies to list all namespaces.  This is the default.
+<p>
+<tt>NAMESPACE</tt> specifies the name (case-insensitive) of a
+namespace for which its variables will be listed.
+This option will resolve variables.
+<p>
+<tt>ONLY</tt> specifies to list only the variables defined directly
+in the specified namespace.
+None of the variables from any parents of this namespace will
+be listed.  If the <tt>ONLY</tt> option is not specified,
+all variables from the given namespace will be listed as well
+as any variables from parent namespaces which were not overridden
+n this namespace.
+<p>
+<tt>SETTINGS</tt> specifies to list the settings for the service.
+<p>
+If neither the <tt>NAMESPACE</tt> nor <tt>NAMESPACES</tt> nor
+<tt>SETTINGS</tt> option is specified, a list of the namespaces
+will be returned.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 2.
+
+<h4>Results</h4>
+<p>
+Upon successful return,
+<p>
+<ul>
+<li>The result buffer for a <tt>"LIST"</tt> or <tt>"LIST NAMESPACES"</tt>
+request will contain a marshalled <tt>&lt;List></tt> of
+<tt>&lt;Map:STAF/Service/Namespace/NamespaceInfo></tt>
+which represents a list of all namespaces.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Namespace/NamespaceInfo</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a namespace.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name
+<td>Name
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>description
+<td>Description
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>parent
+<td>Parent
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>"Name" is the name of a namespace.
+<li>"Description" is a description of a namespace.
+<li>"Parent" is the name of the parent namespace. If the namespace has no
+    parent, the parent will be <tt>&lt;None></tt>.
+</ol>
+</tr>
+</tfoot>
+</table>
+<p>
+<li>The result buffer for a <tt>"LIST NAMESPACE"</tt> request will 
+contain a marshalled <tt>&lt;List></tt> of
+</tt>&lt;Map:STAF/Service/Namespace/VarInfo></tt>
+which represents a list of variables in the specified namespace.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Namespace/VarInfo</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents a variable
+    defined in a namespace.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>key
+<td>Key
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>value
+<td>Value
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>namespace
+<td>Namespace
+<td><tt>&lt;String></tt>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>"Key" is the key of the variable.
+<li>"Value" is the value of the variable.
+<li>"Namespace" is the name of the namespace that the variable is
+    defined in.
+</ol>
+</tr>
+</tfoot>
+</table>
+
+<p>
+<li>The result buffer for a <tt>"LIST SETTINGS"</tt> request will 
+contain a marshalled <tt>&lt;List></tt> of
+</tt>&lt;Map:STAF/Service/Namespace/Settings></tt>
+which represents a list of the settings for the service.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Namespace/Settings</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents the settings
+    for the service.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>directory
+<td>Directory
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>filename
+<td>File Name
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>"Directory" is the directory where the file containing the data for the
+    Namespace service is located.
+<li>"File Name" is the name of the file containing the data for the
+    Namespace service.
+</ol>
+</tr>
+</tfoot>
+</table>
+
+</ul>
+
+<h4>Examples</h4>
+
+<p>For the following examples, assume that the namespaces are defined
+as shown in the example XML file in the
+<a href="#Header_XMLFile">Namespaces XML File</a> section.
+<p>
+<ul>
+<li><b>Goal:</b> List all of the namespaces.
+<p><tt>LIST NAMESPACES</tt>
+<p><b>Result:</b>  If the request is submitted from the command line,
+the result in the table format could look like:
+<pre>
+Name            Description                Parent
+--------------- -------------------------- ------
+AIS             Global AIS Namespace       &lt;None>
+DB2             Global DB2 Namespace       AIS
+MyIndependentNS User Independent Namespace &lt;None>
+WAS             Global WebSphere Namespace AIS
+WebSphereSVT    WebSphere SVT Namespace    
+</pre>
+<p>
+<li><b>Goal:</b> List only the variables defined in the WebSphereSVT
+namespace:
+<p><tt>LIST NAMESPACE WebSphereSVT ONLY</tt>
+<p><b>Result:</b> If the request is submitted from the command line,
+the result in the table format could look like:
+<pre>
+Key        Value                Namespace
+---------- -------------------- ------------
+GlobalVar2 OverrideGlobalValue2 WebSphereSVT
+WASSVTVar1 WASSVTValue1         WebSphereSVT
+WASSVTVar2 WASSVTValue2         WebSphereSVT
+WASVar2    OverrideWASValue2    WebSphereSVT
+</pre>
+<p>
+<li><b>Goal:</b> List the variables defined in the WebSphereSVT
+namespace, as well as any variables from parent namespaces that
+were not overridden in this namespace :
+<p><tt>LIST NAMESPACE WebSphereSVT</tt>
+<p><b>Result:</b>  If the request is submitted from the command line,
+the result in the table format could look like:
+<pre>
+Key        Value                Namespace
+---------- -------------------- ------------
+GlobalVar2 OverrideGlobalValue2 WebSphereSVT
+WASSVTVar1 WASSVTValue1         WebSphereSVT
+WASSVTVar2 WASSVTValue2         WebSphereSVT
+WASVar2    OverrideWASValue2    WebSphereSVT
+WASVar1    WASValue1            WAS
+GlobalVar1 GlobalValue1         AIS
+</pre>
+<p>
+<li><b>Goal:</b> List the settings for the Namespace service:
+<p><tt>LIST SETTINGS</tt>
+<p><b>Result:</b> If the request is submitted from the command line,
+the result could look like:
+<pre>
+Directory: C:\STAF\data\STAF\service\namespace
+File Name: Namespaces.xml
+</pre>
+</ul>
+
+<h2>
+<a NAME="Header_Query" href="#ToC_Query">QUERY</a></h2>
+<p>
+The <tt>QUERY</tt> command may be used to query information about a
+single namespace or to view the namespace hierarchy from the given
+namespace down the hierarchy through all leaf namespaces.
+<p>
+<h4>Syntax</h4>
+
+<p>
+<tt>QUERY NAMESPACE &lt;Namespace> [TREE]</tt>
+<p>
+<p>
+<tt>NAMESPACE</tt> specifies the name (case-insensitive) of the
+namespace to query.
+This option will resolve variables.
+<p>
+<tt>TREE</tt> indicates to return the tree hierarchy view from the
+given namespace down through all child leaf namespaces.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 2.
+
+<h4>Results</h4>
+
+<p>
+Upon successful return:
+<p>
+<ul>
+<li>The result buffer for a <tt>"QUERY NAMESPACE"</tt> request
+(without the <tt>TREE</tt> option) will contain a marshalled
+<tt>&lt;Map:STAF/Service/Namespace/Query></tt>
+which represents detailed information about the namespace.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Namespace/Query</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents detailed
+information about a namespace.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name
+<td>Name
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>description
+<td>Description
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>parent
+<td>Parent
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>children
+<td>Children
+<td><tt>&lt;List> of &lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>"Children" will contain a list of the names of the immediate child
+    namespaces in this namespace, if any.
+</tr>
+</tfoot>
+</table>
+<p>
+<li>The result buffer for a <tt>"QUERY NAMESPACE <Namespace> TREE"</tt> request
+will contain a marshalled <tt>&lt;Map:STAF/Service/Namespace/QueryTree></tt>
+which represents the namespace and its children in a hierarchical manner.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/Namespace/QueryTree</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents the namespace
+and its children in a hierarchical manner.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=20%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name
+<td>Name
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>children
+<td>Children
+<td><tt>&lt;List> of &lt;Map:STAF/Service/Namespace/QueryTree></tt>
+<td>
+</tbody>
+</table>
+
+</ul>
+
+<h4>Examples</h4>
+
+<p>For the following examples, assume that the namespaces are defined
+as shown in the example XML file in the
+<a href="#Header_XMLFile">Namespaces XML File</a> section.
+<p>
+<ul>
+<li><b>Goal:</b> Show detailed information about namespace AIS.
+<p><tt>QUERY NAMESPACE AIS</tt>
+<p><b>Result:</b>  If the request is submitted from the command line,
+the result, in the default format, could look like:
+<pre>
+{
+  Name       : AIS
+  Description: Global AIS Namespace
+  Parent     : <None>
+  Children   : [
+    DB2
+    WAS
+  ]
+}</pre>
+<p>
+<li><b>Goal:</b> Show hierarchical information about the namespaces contained
+    in namespace AIS.
+<p><tt>QUERY NAMESPACE AIS TREE</tt>
+<p><b>Result:</b>&nbsp; If the request is submitted from the command line,
+the result, in the default format, would look like:
+<pre>
+{
+  Name    : AIS
+  Children: [
+    {
+      Name    : DB2
+      Children: []
+    }
+    {
+      Name    : WAS
+      Children: [
+        {
+          Name    : WebSphereSVT
+          Children: []
+        }
+      ]
+    }
+  ]
+}</pre>
+</ul>
+
+<h2><a NAME="Header_Set" href="#ToC_Set">SET</a></h2>
+
+<p>
+The SET command creates or modifies one or more variables within a
+namespace.
+ 
+<h4>Syntax</h4>
+
+<p><tt>SET VAR &lt;Key=Value> [VAR &lt;Key=Value>] NAMESPACE &lt;Name></tt>
+<p>
+<tt>VAR</tt> specifies the key and value of the variable to set, separated by "=".
+This parameter may appear 1 or more times.
+<p>
+<tt>NAMESPACE</tt> specifies the name (case-insensitiveI) of the
+namespace in which to create the variable(s).
+This option will resolve variables.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 3.
+
+<h4>Results</h4>
+
+<p>On a successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Set a new variable in the "AIS" namespace.
+<p>
+<tt>SET VAR GlobalVar2=GlobalValue2 NAMESPACE AIS</tt>
+<p>
+<li><b>Goal:</b> Change the value of the variable withe key "GlobalVar2"
+in the "AIS" namespace.
+<p>
+<tt>SET VAR GlobalVar2=MyNewValue NAMESPACE AIS</tt>
+<p>
+<li><b>Goal:</b> Set multiple variables in the "WebSphereSVT" namespace.
+<p>
+<tt>SET VAR WASSVTVar1=WASSVTValue1 VAR GlobalVar2=OverrideGlobalValue2 NAMESPACE WebSphereSVT</tt>
+</ul>
+
+<h2><a NAME="Header_Get" href="#ToC_Get">GET</a></h2>
+
+<p>
+The GET command gets the value of a particular variable within a namespace.
+If the variable does not exist in the specified namespace, the parent
+namespace will be checked and so on up the hierarchy.  The value for the
+first instance of the variable found will be returned.
+ 
+<h4>Syntax</h4>
+
+<p><tt>GET VAR &lt;Key> NAMESPACE &lt;Name></tt>
+<p>
+<tt>VAR</tt> specifies the key (case-insensitive) of the variable that you
+want to get the value of.
+This option will resolve variables.
+<p>
+<tt>NAMESPACE</tt> specifies the name (case-insensitive) of the namespace
+in which to begin looking for the variable.
+This option will resolve variables.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 2.
+
+<h4>Results</h4>
+
+<p>On a successful return, the result buffer will contain the value for
+the first instance of the variable found.
+
+<h4>Examples</h4>
+<p>
+For the following examples, assume that the namespaces are defined
+as shown in the example XML file in the
+<a href="#Header_XMLFile">Namespaces XML File</a> section.
+<p>
+<ul>
+<li><b>Goal:</b> Get the value for the variable with key "GlobalVar2"
+starting in the "AIS" namespace.
+<p><tt>GET VAR GlobalVar2 NAMESPACE AIS</tt>
+<p><b>Result:</b>
+<p><tt>GlobalValue2</tt>
+<p>
+<li><b>Goal:</b> Get the value for the variable with key "GlobalVar2"
+starting in the "WebSphereSVT" namespace.
+<p><tt>GET VAR GlobalVar2 NAMESPACE WebSphereSVT</tt>
+<p><b>Result:</b>
+<p><tt>OverrideGlobalValue2</tt>
+<p>
+<li><b>Goal:</b> Get the value for the variable with key "GlobalVar1"
+starting in the "WebSphereSVT" namespace.
+<p><tt>GET VAR GlobalVar1 NAMESPACE WebSphereSVT</tt>
+<p><b>Result:</b>
+<p><tt>GlobalValue1</tt>
+</ul>
+
+<h2><a NAME="Header_Version" href="#ToC_Version">VERSION</a></h2>
+
+VERSION displays the Namespace Service version.
+
+<h4>Syntax</h4>
+
+<tt>VERSION</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result is the version number of the Namespace service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the version of the Namespace service on machine server1:
+<p><tt>STAF server1 Namespace VERSION</tt>
+<p><b>Output:</b>
+<pre>
+1.0.3
+</pre>
+</ul>
+
+<h2><a NAME="Header_Help" href="#ToC_Help">HELP</a></h2>
+
+HELP displays the request options and how to use them.
+
+<h4>Syntax</h4>
+
+<tt>HELP</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the Help messages for the request options for
+the Namespace service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the syntax for the Namespace service on machine server1:
+<p><tt>STAF server1 Namespace HELP</tt>
+<p><b>Output:</b>
+<pre>
+Namespace Service Help
+
+CREATE  NAMESPACE &lt;Name> DESCRIPTION &lt;Description> [PARENT &lt;Name>]
+MODIFY  NAMESPACE &lt;Name> [DESCRIPTION &lt;Description>] [PARENT &lt;Name>]
+DELETE  NAMESPACE &lt;Name> &lt; VAR &lt;Key>... | CONFIRM >
+LIST    [NAMESPACES | &lt;NAMESPACE &lt;Name> [ONLY]> | SETTINGS]
+QUERY   NAMESPACE &lt;Name> [TREE]
+SET     VAR &lt;Key=Value> [VAR &lt;Key=Value>]... NAMESPACE &lt;Name>
+GET     VAR &lt;Key> NAMESPACE &lt;Name>
+VERSION
+HELP</pre>
+</ul>
+
+<p>
+<hr>
+<p>
+<h1>
+<a NAME="Header_ErrorCodes" href="#ToC_ErrorCodes">Error Code Reference</a></b></h1>
+<p>
+In addition to the common STAF return codes, the following service
+return codes are defined for the Namespace service:
+<br>&nbsp;
+<table BORDER WIDTH="100%" BGCOLOR="#FFFF00" >
+<tr>
+<td><b><font face="Comic Sans MS">Error Code</font></b></td>
+
+<td><b><font face="Comic Sans MS">Meaning&nbsp;</font></b></td>
+
+<td><b><font face="Comic Sans MS">Comment&nbsp;</font></b></td>
+</tr>
+
+<tr>
+<td>4001</td>
+<td>Data storage error</td>
+<td>An error occurred saving namespaces data to persistent storage.
+    Additional information about the error is put into the STAF Result.
+</td>
+</tr>
+</table>
+
+<p>
+<hr>
+<p>
+<h1><a NAME="Header_Logging" href="#ToC_Logging">Service Logging</a></h1>
+<p>
+The Namespace service maintains a global log where it writes an entry
+when: 
+<p>
+<ul>
+<li>The Namespace service is registered, logs a message with log level "Start".
+<p>
+<li>A CREATE, MODIFY, DELETE, or SET request is performed successfully, logs
+    a message with log level "Info".  The message includes information about the
+    originator of the request and the actual request submitted in the following
+    format:
+    <p>
+    <tt>[&lt;Orig machine> &lt;Orig handle name> &lt;Orig handle] &lt;Request></tt>
+<p>
+<li>A Namespace service error occurs (such as when an error occurs reading
+    or writing the Namespaces XML file), logs a message with log level "Error"
+    and detailed information about the error in the message.
+<p>
+<li>The Namespace service is unregistered, logs a message with log level "Stop"
+</ul>
+<p> 
+The logname for the Namespace service is the name under which the service
+is registered. 
+<p>
+Here is an example of what a Namespace service log (with the Namespace service's
+registered name begin NS) could look like shown via a request from the command
+line in the table format: 
+<pre>
+C:\>STAF local LOG QUERY GLOBAL LOGNAME NS
+Response
+--------
+20051016-16:43:24 Start Initialized the NS service
+20051016-16:44:47 Info  [local://local STAX/Job/1 27] CREATE NAMESPACE WebSpher
+                        eSVT DESCRIPTION WebSphere SVT Namespace PARENT WAS
+20051016-16:44:47 Info  [local://local STAX/Job/1 27] SET NAMESPACE WebSphereSV
+                        T VAR WASSVTVar1=WASSVTValue1 VAR WASSVTVar2=WASSVTValu
+                        e2 VAR WASVar2=OverrideWASValue2 VAR GlobalVar2=Overrid
+                        eGlobalValue2
+20051016-16:44:47 Info  [local://local STAX/Job/1 27] CREATE NAMESPACE DB2 DESC
+                        RIPTION Global DB2 Namespace PARENT AIS
+20051016-16:44:48 Info  [local://local STAX/Job/1 27] SET NAMESPACE DB2 VAR DB2
+                        Var1=DB2Value1 VAR DB2Var2=DB2Value2
+20051016-16:44:52 Info  [local://local STAX/Job/1 27] DELETE NAMESPACE WEBSpher
+                        eSVT CONFIRM
+20051016-16:44:53 Info  [local://local STAX/Job/1 27] DELETE NAMESPACE DB2 CONF
+                        IRM
+20051016-16:46:42 Stop  Terminating the NS service
+</pre>
+
+<p>
+<hr>
+<p>
+<h1><a NAME="Header_DataStorage" href="#ToC_DataStorage">Service Data Storage</a></h1>
+<p> 
+Unlike the VAR service, any variables set in a namespace will persist across
+stops and restarts of STAF with no additional steps required by the user.
+This will be done by immediately updating an XML file when any updates are
+made to namespaces.
+
+<h2><a NAME="Header_DTDFile" href="#ToC_DTDFile">Namespaces DTD</a></h2>
+
+The Namespaces Document Type Definition (DTD) is defined as follows and
+will be used to validate the Namespaces XML file.
+Parent-child relationships are represented by nested &lt;namespace>
+elements.
+<pre>
+&lt;!--
+   STAF Namespaces Document Type Definition (DTD)
+
+   This DTD module is identified by the SYSTEM identifier:
+
+     SYSTEM 'resources/Namespaces.dtd'
+
+-->
+
+&lt;!ELEMENT namespaces     (namespace)*>
+
+&lt;!ELEMENT namespace      (var*, namespace*)>
+&lt;!ATTLIST namespace
+          name           CDATA    #REQUIRED
+          description    CDATA    #REQUIRED
+>
+
+&lt;!ELEMENT var            (#PCDATA)>
+&lt;!ATTLIST var
+          key            CDATA    #REQUIRED
+          value          CDATA    #REQUIRED
+>
+</pre>
+
+<h2><a NAME="Header_XMLFile" href="#ToC_XMLFile">Namespaces XML File</a></h2>
+<p>
+The Namespace service stores namespaces and their variables in an
+XML file.  By default the file is named<tt> Namespaces.xml </tt> and is
+located in directory <tt>{STAF/DataDir}/service/&lt;Service Name (lower-case)></tt>.
+To override the storage location, you can specify the DIRECTORY and/or FILENAME
+options in the PARMS value when registering the Namespace service.
+See the <a href="#Header_Installation">Installation and Configuration</a> section
+for more information on setting these parameters.
+<p>
+The Namespace service immediately updates this XML file at the end of
+each successful CREATE, MODIFY, DELETE, or SET request.
+<p>
+For example, on Windows, the Namespaces xml file will be stored in
+C:\STAF\data\STAF\service\ns\Namespacees.xml if the Namespace service is
+registered as NS with no parameters and STAF is installed at C:\STAF
+using the default STAF instance name of STAF.
+<p>
+Here's an example of a Namespaces xml file:
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?>
+&lt;!DOCTYPE namespaces SYSTEM "resources/Namespaces.dtd">
+&lt;namespaces>
+  &lt;namespace description="Global AIS Namespace" name="AIS">
+    &lt;var key="GlobalVar1" value="GlobalValue1"/>
+    &lt;var key="GlobalVar2" value="GlobalValue2"/>
+    &lt;var key="GlobalVar3" value="GlobalValue3"/>
+    &lt;namespace description="Global DB2 Namespace" name="DB2">
+      &lt;var key="DB2Var1" value="DB2Value1"/>
+      &lt;var key="DB2Var2" value="DB2Value2"/>
+    &lt;/namespace>
+    &lt;namespace description="Global WebSphere Namespace" name="WAS">
+      &lt;var key="WASVar1" value="WASValue1"/>
+      &lt;var key="WASVar2" value="WASValue2"/>
+      &lt;namespace description="WebSphere SVT Namespace" name="WebSphereSVT">
+        &lt;var key="GlobalVar2" value="OverrideGlobalValue2"/>
+        &lt;var key="WASSVTVar1" value="WASSVTValue1"/>
+        &lt;var key="WASSVTVar2" value="WASSVTValue2"/>
+        &lt;var key="WASVar2" value="OverrideWASValue2"/>
+      &lt;/namespace>
+    &lt;/namespace>
+  &lt;/namespace>
+  &lt;namespace description="User Independent Namespace" name="MyIndependentNS">
+    &lt;var key="MyVar1" value="MyValue1"/>
+    &lt;var key="MyVar2" value="MyValue2"/>
+  &lt;/namespace>
+&lt;/namespaces></pre>
+
+<h2><a NAME="Header_BackupXMLFile" href="#ToC_XMLFile">Backup XML Files</a></h2>
+<p>
+For backup purposes, the Namespace service makes a temporary copy of the
+Namespaces xml file at the following times:
+<ul>
+<li>When the Namespace service is registered (<tt>Phase = init</tt>)
+<li>Immediately before a namespace is deleted (<tt>Phase = delete</tt>)
+<li>When the Namespace service is unregisterd (<tt>Phase = term</tt>)
+</ul>
+<p>
+These files are temporary because they are stored in STAF's temporary
+directory (<tt>{STAF/DataDir}/tmp</tt>).  STAF's temporary directory and
+all of its contents are deleted whenever STAF is restarted.
+<p> 
+The directory where these temporary files are stored is:
+<p>
+<tt>&nbsp; {STAF/DataDir}/tmp/service/&lt;Service Name (lower-case)></tt>.
+<p>For example, on Windows, this directory could be
+<tt>C:\STAF\data\STAF\tmp\service\ns</tt>.
+<p>
+The format of the names of the copied Namespace xml files will be:
+<p>
+<tt>&nbsp;&lt;Namespace File Name>.&lt;Phase>.&lt;Current Time (milli-seconds)></tt>
+<p>
+So, for example, the temporary directory for the Namespace service
+could contain files such as:
+<pre>
+Namespaces.xml.init.1129499304537
+Namespaces.xml.delete.1129499341040
+Namespaces.xml.delete.1129499341200
+Namespaces.xml.term.1129499418842
+</pre>
+<p>
+Also, a backup of the Namespaces xml file
+named<tt> &lt;Namespace FileName>.backup </tt> is created immediately before 
+the Namespace service updates the Namespaces.xml file during a
+CREATE, MODIFY, DELETE, or SET request.
+This backup file is located in the namespace directory along with the
+Namespaces xml file.
+
+<p>
+</body>
+</html>

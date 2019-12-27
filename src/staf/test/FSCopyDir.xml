@@ -1,0 +1,1180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+
+  File Name:    FSCopyDir.xml
+  Description:  This STAX xml job tests STAF FS COPY DIRECTORY Feature Changes
+-->
+
+<stax>
+
+  <!-- Beginning of job -->
+
+  <defaultcall function="DoAll"/>
+
+  <!-- Default variables -->
+
+  <script>
+
+    W1 = 'staf3f'   # Windows 2000
+    W2 = 'staf1d'   # Windows 2003
+    L1 = 'staf1a'   # Linux
+    L2 = 'staf4d'   # AIX
+    L3 = 'staf4f'   # Solaris
+
+    # List of all machines used in test - so can be pinged at start of test
+    # to verify STAF is running on all of them.
+
+    AllMachines = [ W1, W2, L1, L2, L3 ]
+    
+    ### IMPORTANT ###
+    # Set OrgMach to the operating system for the STAX Machine (e.g. W1, L2, etc.)
+    # Note: The originating system is always the STAX system.
+    # XXX:  Should change to set this automatically in the job.
+
+    OrgMach = W1
+
+    #### TestMachines consists of a list of [ FromMach, ToMach ] lists
+
+    if OrgMach == W1:
+      TestMachines = [ [W2, L1] ]
+    # [L1, W2]
+    elif OrgMach == W2:
+      TestMachines = [ [ W1, L1 ],
+                       [ L1, W1 ],
+                       [ W1, L2 ],
+                       [ L2, W1 ],
+                       [ W1, L3 ],
+                       [ L3, W1 ],
+                       [ W2, W1 ],
+                       [ L1, L2 ] ]
+    elif OrgMach == L1:
+      TestMachines = [ [ W1, L2 ],
+                       [ L2, W1 ],
+                       [ W2, L2 ],
+                       [ L2, W2 ],
+                       [ W2, L3 ],
+                       [ L3, W2 ],
+                       [ W2, W1 ],
+                       [ L2, L3 ] ]
+    elif OrgMach == L2:
+      TestMachines = [ [ W1, L1 ],
+                       [ L1, W1 ],
+                       [ W2, L1 ],
+                       [ L1, W2 ],
+                       [ W2, L3 ],
+                       [ L3, W2 ],
+                       [ W2, W1 ],
+                       [ L1, L3 ] ]
+
+    # ImportMachine should be set to the machine where STAXUtil.xml resides
+    # (e.g. 'local' if the file resides on the STAX service machine).
+    # ImportDirectory should be set to the directory which contains STAXUtil.xml.
+    # STAXJarFile should be set to the STAX.jar file on the STAX service machine.
+
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/libraries'
+    STAXJarFile = '{STAF/Config/STAFRoot}/services/STAX.jar'
+
+    # Set these to some default values, just in case
+
+    STAFResult = ''
+    RC = 0
+
+  </script>
+
+  <!-- Import necessary utilities -->
+
+  <script>
+    import re
+    import string
+
+    from com.ibm.staf import STAFUtil
+    from com.ibm.staf import STAFResult as STAFRetCode
+  </script>
+
+  <!-- Start function definitions -->
+
+  <!-- ================================================================= -->
+  <!-- InitTests - This function initializes all the test information    -->
+  <!-- ================================================================= -->
+
+  <function name="InitTests">
+    <sequence>
+
+      <!-- get OS info  of to and from machines -->
+      <stafcmd>
+        <location>ToMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>ToMachOSType = STAFResult</script>
+
+      <stafcmd>
+        <location>FromMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>FromMachOSType = STAFResult</script>
+
+
+
+      <script>
+
+      if FromMachOSType.find('Win') == 0:
+          FromMachTextResult    = textResultWindows
+      else:
+          FromMachTextResult    = textResultUnix
+
+      if ToMachOSType.find('Win') == 0:
+          ToMachTextResult    = textResultWindows
+          ToMachSmallTextSize = textSmallWinSize
+          ToMachLargeTextSize = textLargeWinSize
+          ToMachEOLTextSize   = textEOLWinSize
+      else:
+          ToMachTextResult    = textResultUnix
+          ToMachSmallTextSize = textSmallUnixSize
+          ToMachLargeTextSize = textLargeUnixSize
+          ToMachEOLTextSize   = textEOLUnixSize
+
+      </script>
+
+      <!-- Copy the text file, textFileName, created on the STAX machine to the TestMach -->
+      <stafcmd>
+        <location>'local'</location>
+        <service>'FS'</service>
+        <request>'COPY FILE %s TOFILE {STAF/Config/STAFRoot}/bin/STAFTest.txt TOMACHINE %s TEXT' % (textFileName1, FromMach)</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'STAF local FS COPY FILE %s TOFILE {STAF/Config/STAFRoot}/bin/STAFTest.txt TOMACHINE %s TEXT failed.  RC=%s Result=%s' % \
+                     (textFileName1, FromMach, RC, STAFResult),
+          'sendToMonitor': 1,
+          'recordStatus': 1 }
+      </call>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'FS'</service>
+        <request>'COPY FILE %s TOFILE {STAF/Config/STAFRoot}/bin/STAFTestLarge.txt TOMACHINE %s TEXT' % (textFileName2, FromMach)</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'STAF local FS COPY FILE %s TOFILE {STAF/Config/STAFRoot}/bin/STAFTestLarge.txt TOMACHINE %s TEXT failed.  RC=%s Result=%s' % \
+                     (textFileName2, FromMach, RC, STAFResult),
+          'sendToMonitor': 1,
+          'recordStatus': 1 }
+      </call>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'FS'</service>
+        <request>'COPY FILE %s TOFILE {STAF/Config/STAFRoot}/bin/STAFTestLargeEOL.txt TOMACHINE %s TEXT' % (textFileName3, FromMach)</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0,
+          'failMsg': 'STAF local FS COPY FILE %s TOFILE {STAF/Config/STAFRoot}/bin/STAFTestLargeEOL.txt TOMACHINE %s TEXT failed.  RC=%s Result=%s' % \
+                     (textFileName3, FromMach, RC, STAFResult),
+          'sendToMonitor': 1,
+          'recordStatus': 1 }
+      </call>
+
+      <script>
+
+      allTests = [
+
+      #
+      #FS tests
+      #
+
+      [ 'STD:FS', FromMach, 'SEM', 'REQUEST MUTEX STAFTest/FS', [ 0 ], r'^$' ],
+      [ 'STD:FS', ToMach,   'SEM', 'REQUEST MUTEX STAFTest/FS', [ 0 ], r'^$' ],
+
+      ### Make sure that ToMach and FromMach have given orgMach trust level 5 to delete entire directories
+      [ 'STD:FS', FromMach, 'TRUST', 'GET MACHINE %s' % (OrgMachLongName),  [ 0 ], '5' ],
+      [ 'STD:FS', ToMach,   'TRUST', 'GET MACHINE %s' % (OrgMachLongName),  [ 0 ], '5' ],
+
+      ### Make sure that ToMach has given FromMach at least trust level 4 to copy files
+      [ 'STD:FS', ToMach,   'TRUST', 'GET MACHINE %s' % (FromMachLongName), [ 0 ], r'[4 | 5]\s*' ],
+
+      [ 'STD:FS', FromMach, 'FS', 'HELP', [ 0 ], None ],
+
+      ### Make sure 3-way COPY FILE still works
+      # Make sure directory to be created doesn't exist on the ToMach or FromMach
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestFileCopy RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTestFileCopy', [ 0 ], r'^$' ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTestFileCopy/STAFTest.out TOMACHINE %s' % (ToMach),  [ 0 ], r'^$' ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestFileCopy CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) > 0 and " +
+          "STAFResult[0] == 'STAFTest.out'"
+      ],
+      # Clean-up
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestFileCopy RECURSE CONFIRM', [ 0 ], None ],
+
+      # Set up a directory containing subdirectories and files to be copied
+      # Make sure the directory does not exist first
+      [ 'STD:FS', FromMach, 'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTest', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTest/subDir1', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTest/subDir1/subDir1.1', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTest/subDir2', [ 0 ], r'^$' ],  [ 'STD:FS', FromMach, 'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTest/subDir2/subDir2.1', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/STAFTest.YYY TOMACHINE %s' % (FromMach), [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/STAFTest.XYY TOMACHINE %s' % (FromMach),  [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/subDir1/STAFTestSub1.XXX TOMACHINE %s' % (FromMach),  [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/subDir1/STAFTestSub1.YXX TOMACHINE %s' % (FromMach),  [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/subDir2/STAFTestSub2.XXY TOMACHINE %s' % (FromMach),  [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/subDir2/STAFTestSub2.YYX TOMACHINE %s' % (FromMach),  [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAF.cfg TOFILE {STAF/Config/STAFRoot}/STAFTest/subDir2/subDir2.1/XXX TOMACHINE %s' % (FromMach),  [ 0 ], None ],
+
+      ###Non-Recurse w/ ext
+      # Make sure the directory does not exist first
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s EXT XXX CASESENSITIVE' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest', [ 0 ], None, "len(STAFResult) == 0" ],
+
+      ###FailIfNew/FailIfExists
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s FAILIFEXISTS' % ToMach, [ 49 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestNew TOMACHINE %s FAILIFNEW' % ToMach, [ 48 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest CONFIRM', [ 0 ], None ],
+
+      ###recurse w/ no option
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s RECURSE' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTest.XYY' and " +
+          "STAFResult[1] == 'STAFTest.YYY' and " +
+          "STAFResult[2] == 'subDir1' and " +
+          "STAFResult[3] == 'subDir2'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir1 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0] == 'STAFTestSub1.XXX' and " +
+          "STAFResult[1] == 'STAFTestSub1.YXX'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 3 and " +
+          "STAFResult[0] == 'STAFTestSub2.XXY' and " +
+          "STAFResult[1] == 'STAFTestSub2.YYX' and " +
+          "STAFResult[2] == 'subDir2.1'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2/subDir2.1 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 1 and " +
+          "STAFResult[0] == 'XXX'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0 ], None ],
+
+      ###Recurse w/ name
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s NAME XXX CASESENSITIVE RECURSE' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 1 and " +
+          "STAFResult[0] == 'subDir2'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 1 and " +
+          "STAFResult[0] == 'subDir2.1'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2/subDir2.1 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 1 and " +
+          "STAFResult[0] == 'XXX'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0 ], None ],
+
+      ###Recurse w/ name, caseinsensitive
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s NAME staf* CASEINSENSITIVE RECURSE' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTest.XYY' and " +
+          "STAFResult[1] == 'STAFTest.YYY' and " +
+          "STAFResult[2] == 'subDir1' and " +
+          "STAFResult[3] == 'subDir2'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir1 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0] == 'STAFTestSub1.XXX' and " +
+          "STAFResult[1] == 'STAFTestSub1.YXX'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0] == 'STAFTestSub2.XXY' and " +
+          "STAFResult[1] == 'STAFTestSub2.YYX'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0 ], None ],
+
+      ###Onlydirectories
+      # Make sure the STAFTestOnlyDir does not already exist
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestOnlyDir RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestOnlyDir TOMACHINE %s RECURSE ONLYDIRECTORIES' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestOnlyDir CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 2 and " +
+          "STAFResult[0] == 'subDir1' and " +
+          "STAFResult[1] == 'subDir2'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestOnlyDir/subDir1 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 1 and " +
+          "STAFResult[0] == 'subDir1.1'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestOnlyDir/subDir2 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 1 and " +
+          "STAFResult[0] == 'subDir2.1'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestOnlyDir RECURSE CONFIRM', [ 0 ], None ],
+
+      ###Recurse w/ name, casesensitive, keepemptydirectories
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTest TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s NAME staf* CASEINSENSITIVE RECURSE KEEPEMPTYDIRECTORIES' % ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTest.XYY' and " +
+          "STAFResult[1] == 'STAFTest.YYY' and " +
+          "STAFResult[2] == 'subDir1' and " +
+          "STAFResult[3] == 'subDir2'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir1 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 3 and " +
+          "STAFResult[0] == 'STAFTestSub1.XXX' and " +
+          "STAFResult[1] == 'STAFTestSub1.YXX' and " +
+          "STAFResult[2] == 'subDir1.1'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2 CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 3 and " +
+          "STAFResult[0] == 'STAFTestSub2.XXY' and " +
+          "STAFResult[1] == 'STAFTestSub2.YYX' and " +
+          "STAFResult[2] == 'subDir2.1'"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir1/subDir1.1 CASESENSITIVE SORTBYNAME',
+           [ STAFRC.Ok ], None,
+           "len(STAFResult) == 0"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest/subDir2/subDir2.1 CASESENSITIVE SORTBYNAME',
+           [ STAFRC.Ok ], None,
+           "len(STAFResult) == 0"
+      ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0 ], None ],
+
+      ###set up test textext dir
+      [ 'STD:FS', FromMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestText RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'CREATE DIRECTORY {STAF/Config/STAFRoot}/STAFTestText', [ 0 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAFTest.txt TOFILE {STAF/Config/STAFRoot}/STAFTestText/STAFTestSmall.txt TEXT TOMACHINE %s' % FromMach , [ 0 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAFTest.txt TOFILE {STAF/Config/STAFRoot}/STAFTestText/STAFTestSmall.bin TEXT TOMACHINE %s' % FromMach , [ 0 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAFTestLarge.txt TOFILE {STAF/Config/STAFRoot}/STAFTestText/STAFTestLarge.txt TEXT TOMACHINE %s' % FromMach , [ 0 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'COPY FILE {STAF/Config/STAFRoot}/bin/STAFTestLargeEOL.txt TOFILE {STAF/Config/STAFRoot}/STAFTestText/STAFTestLargeEOL.txt TEXT TOMACHINE %s' % FromMach , [ 0 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestText CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+
+      ###textext tests
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach,   'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestText TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s TEXTEXT "*" FORMAT windows' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestLargeEOL.txt SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textEOLWinSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestLarge.txt SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textLargeWinSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.txt SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textSmallWinSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.bin SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textSmallWinSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestText TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s TEXTEXT "*" FORMAT unix' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestLargeEOL.txt SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textEOLUnixSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestLarge.txt SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textLargeUnixSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.txt SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textSmallUnixSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET ENTRY {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.bin SIZE',
+          [ STAFRC.Ok ], None,
+          "int(STAFResult['lowerSize']) == textSmallUnixSize and " +
+          "int(STAFResult['upperSize']) == 0"
+      ],
+
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestText TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s TEXTEXT "*" FORMAT native' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.txt TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.bin TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestText TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s TEXTEXT txt TEXTEXT bin FORMAT native' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.txt TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.bin TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestText TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s TEXTEXT txt TEXTEXT bin FORMAT native' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.txt TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.bin TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestText TODIRECTORY {STAF/Config/STAFRoot}/STAFTestDest TOMACHINE %s TEXTEXT txt' %ToMach, [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'LIST DIRECTORY {STAF/Config/STAFRoot}/STAFTestDest CASESENSITIVE SORTBYNAME',
+          [ STAFRC.Ok ], None,
+          "len(STAFResult) == 4 and " +
+          "STAFResult[0] == 'STAFTestLarge.txt' and " +
+          "STAFResult[1] == 'STAFTestLargeEOL.txt' and " +
+          "STAFResult[2] == 'STAFTestSmall.bin' and " +
+          "STAFResult[3] == 'STAFTestSmall.txt'"
+      ],
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.txt TEXT FORMAT AsIs', [ 0 ], ToMachTextResult ],
+      # Output from GET FILE TEXT FORMAT AsIs for binary file is different if binary copy on z/OS (EBCDIC) so not comparing output
+      [ 'STD:FS', ToMach,    'FS',  'GET FILE {STAF/Config/STAFRoot}/STAFTestDest/STAFTestSmall.bin TEXT FORMAT AsIs', [ 0 ], None ],
+      [ 'STD:FS', ToMach,   'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestDest RECURSE CONFIRM', [ 0 ], None ],
+
+
+      ###Clean up on Source Tree
+      [ 'STD:FS', FromMach, 'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTest RECURSE CONFIRM', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestText RECURSE CONFIRM', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/bin/STAFTest.txt CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/bin/STAFTestLarge.txt CONFIRM', [ 0, 48 ], None ],
+      [ 'STD:FS', FromMach, 'FS',  'DELETE ENTRY {STAF/Config/STAFRoot}/bin/STAFTestLargeEOL.txt CONFIRM', [ 0, 48 ], None ],
+
+      [ 'STD:FS', ToMach,   'SEM', 'RELEASE MUTEX STAFTest/FS FORCE', [ 0 ], None ],
+      [ 'STD:FS', FromMach, 'SEM', 'RELEASE MUTEX STAFTest/FS FORCE', [ 0 ], None ]
+
+      ]
+      </script>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- check-stafcmd - This function determines whether an arbitrary     -->
+  <!--                 staf command worked.  If not, it generates some   -->
+  <!--                 messages and log data, and then terminates the    -->
+  <!--                 whole job.                                        -->
+  <!-- ================================================================= -->
+
+  <function name="check-stafcmd">
+    <if expr="RC != 0">
+      <sequence>
+        <message>
+          'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+        </message>
+        <log level="'error'">
+          'Failed (RC=%d): %s, Result: %s' % (RC, failMessage, STAFResult)
+        </log>
+        <terminate/>
+      </sequence>
+    </if>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- InitJob - This function performs tasks that need to be done once  -->
+  <!--     at the beginning of the job.                                  -->
+  <!-- ================================================================= -->
+
+  <function name="InitJob">
+    <sequence>
+
+      <!-- Resolve the ImportDirectory -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING %s' % ImportDirectory</request>
+      </stafcmd>
+
+      <script>failMessage = 'Resolving VAR %s' % ImportDirectory</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>ImportDirectory = STAFResult</script>
+
+      <message>'ImportMachine=%s' % ImportMachine</message>
+      <message>'ImportDirectory=%s' % ImportDirectory</message>
+
+      <import machine="ImportMachine" file="'%s/STAXUtil.xml' % ImportDirectory"/>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'AllMachines=%s' % AllMachines
+      </call>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'TestMachines=%s' % TestMachines
+      </call>
+
+      <call function="'PingTestMachines'"/>
+
+      <!-- Get the handle for this STAX Job -->
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'HANDLE'</service>
+        <request>'LIST HANDLES NAME STAX/Job/%s' % STAXJobID</request>
+      </stafcmd>
+
+      <script>
+          resultList = STAFResult
+          failMessage = 'STAF local HANDLE LIST NAMES NAME STAX/Job/%s' % STAXJobID
+      </script>
+      <call function="'check-stafcmd'"/>
+
+      <if expr="len(resultList) == 0">
+        <sequence>
+            <log message="1">'No handles with name STAX/Job/%s' % (STAXJobID)</log>
+            <terminate block="'main'"/>
+        </sequence>
+      </if>
+
+      <script>
+        JobHandle = resultList[len(resultList) - 1]['handle']
+      </script>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'JobHandle=%s' % JobHandle
+      </call>
+
+      <stafcmd>
+         <location>OrgMach</location>
+         <service>'var'</service>
+         <request>'resolve string {STAF/Config/STAFRoot}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/STAFRoot}'</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>OrgMachSTAFRoot = STAFResult</script>
+
+      <script>
+
+         # Create a file called STAFTest.txt in {STAF/Config/STAFRoot} on the STAX (local) machine with
+         # line-endings appropriate for the STAX machine's platform
+
+         textFileName1 = '%s/STAFTest.txt' % OrgMachSTAFRoot
+
+         # Open the file in write ('w') and text('t') mode.  Text mode means the appropriate line-endings with be set by Python.
+         textFile = open(textFileName1, 'wt')
+
+         textFile.writelines([ 'This is line 1.\n',
+                               'This is line 2.\n',
+                               'Finally, line 3.\n' ])
+         textFile.close()
+
+         textResultWindows = r"""(?mx)
+                            ^This\ is\ line\ 1.\r\n
+                            ^This\ is\ line\ 2.\r\n
+                            ^Finally,\ line\ 3.\r\n"""
+         textResultUnix    = r"""(?mx)
+                            ^This\ is\ line\ 1.\n
+                            ^This\ is\ line\ 2.\n
+                            ^Finally,\ line\ 3.\n"""
+
+         # Create a file called STAFTestLarge.txt in {STAF/Config/STAFRoot}/STAFTest on the STAX (local) machine with
+         # line-endings appropriate for the STAX machine's platform
+
+         textFileName2 = '%s/STAFTestLarge.txt' % OrgMachSTAFRoot
+
+         # Open the file in write ('w') and text('t') mode.  Text mode means the appropriate line-endings with be set by Python.
+         textFile2 = open(textFileName2, 'wt')
+
+         for i in range(5):
+           for j in range(299):
+             textFile2.writelines([ 'xxxxxxxxxb' ])
+           textFile2.writelines([ 'xxxxxxxa\n' ])
+           for j in range(299):
+             textFile2.writelines([ 'xxxxxxxxxb' ])
+           textFile2.writelines([ 'xxxxxxxxa\n' ])
+           for j in range(300):
+             textFile2.writelines([ 'xxxxxxxxxb' ])
+           textFile2.writelines([ '\n' ])
+
+         textFile2.close()
+
+         # Create a file called STAFTestLargeEOL.txt in {STAF/Config/STAFRoot}/STAFTest on the STAX (local) machine with
+         # line-endings appropriate for the STAX machine's platform
+
+         textFileName3 = '%s/STAFTestLargeEOL.txt' % OrgMachSTAFRoot
+
+         # Open the file in write ('w') and text('t') mode.  Text mode means the appropriate line-endings with be set by Python.
+         textFile3 = open(textFileName3, 'wt')
+
+         for i in range(5):
+           for j in range(300):
+             textFile3.writelines([ '\n\n\n\n\n\n\n\n\n\n' ])
+
+         textFile3.close()
+
+
+         textLargeWinSize     = 45015
+         textLargeUnixSize    = 45000
+         textEOLWinSize       = 30000
+         textEOLUnixSize      = 15000
+         textSmallUnixSize    = 49
+         textSmallWinSize     = 52
+
+      </script>
+
+    </sequence>
+
+  </function>
+
+
+  <!-- ================================================================= -->
+  <!-- PingTestMachines - This function pings all the test machines to   -->
+  <!--     verify that STAF is up and running on all of them.  If it's   -->
+  <!--     not running on one or more machines, it terminates the job.   -->
+  <!-- ================================================================= -->
+
+  <function name="PingTestMachines" scope="local">
+    <sequence>
+
+      <message>'Making sure that all TestMachines are running STAF'</message>
+
+      <!-- Make sure that all of the test machines can be sent STAF commands -->
+
+      <call function="'STAXUtilWaitForSTAF'">[AllMachines, 60]</call>
+
+      <script>[rc, result] = STAXResult</script>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': rc == 0,
+          'failMsg': 'STAXUtilWaitForSTAF failed.  RC=%s Result=%s' % (rc, result),
+          'sendToMonitor': 1,
+          'recordStatus': 1 }
+      </call>
+
+      <if expr="rc != 0">
+        <terminate block="'main'"/>
+      </if>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- GatherInfo - This function retrieves information about the        -->
+  <!--              system we are testing.                               -->
+  <!-- ================================================================= -->
+
+  <function name="GatherInfo">
+    <sequence>
+
+      <message>
+        'Gathering information about OrgMach=%s, FromMach=%s, ToMach=%s' % \
+        (OrgMach, FromMach, ToMach)
+      </message>
+
+      <!-- Get OS Name for OrgMach, FromMach, ToMach -->
+
+      <stafcmd>
+        <location>OrgMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name} for %s' % (OrgMach)</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>OrgMachOSType = STAFResult</script>
+
+      <stafcmd>
+        <location>ToMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name} for %s' % (ToMach)</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>ToMachOSType = STAFResult</script>
+
+      <stafcmd>
+        <location>FromMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <script>failMessage = 'Obtaining {STAF/Config/OS/Name} for %s' % (FromMach)</script>
+      <call function="'check-stafcmd'"/>
+
+      <script>FromMachOSType = STAFResult</script>
+
+      <script>
+        OSTypes = '%s / %s / %s' % (OrgMachOSType, FromMachOSType, ToMachOSType)
+      </script>
+
+      <!-- Get the machine names for the Originating, From, and To Machines -->
+
+      <stafcmd>
+        <location>OrgMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/Machine}'</request>
+      </stafcmd>
+
+      <script>OrgMachLongName = STAFResult</script>
+      <script>OrgMach = OrgMachLongName</script>
+
+      <stafcmd>
+        <location>FromMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/Machine}'</request>
+      </stafcmd>
+
+      <script>FromMachLongName = STAFResult</script>
+
+      <stafcmd>
+        <location>ToMach</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/Machine}'</request>
+      </stafcmd>
+
+      <script>ToMachLongName = STAFResult</script>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'Org/From/To Machines: %s / %s / %s' % \
+        (OrgMachLongName, FromMachLongName, ToMachLongName)
+      </call>
+
+    </sequence>
+  </function>
+
+  <function name="InitTestMachine">
+    <sequence>
+
+      <message>
+        'Initializing test machines %s and %s' % (FromMach, ToMach)
+      </message>
+
+      <script>
+        SemMutexList = [ 'STAFTest/FS' ]
+      </script>
+
+      <iterate var="TestMach" in="[FromMach, ToMach]">
+        <sequence>
+
+          <!-- Delete any Mutex Semaphores left over from a previous test run -->
+
+          <iterate var="mutexName" in="SemMutexList">
+            <sequence>
+
+              <stafcmd>
+               <location>TestMach</location>
+               <service>'SEM'</service>
+               <request>'RELEASE MUTEX %s FORCE' % mutexName</request>
+              </stafcmd>
+
+              <stafcmd>
+               <location>TestMach</location>
+               <service>'SEM'</service>
+               <request>'RELEASE MUTEX %s FORCE' % mutexName</request>
+              </stafcmd>
+
+              <stafcmd>
+                <location>TestMach</location>
+                <service>'SEM'</service>
+                <request>'DELETE MUTEX %s' % mutexName</request>
+              </stafcmd>
+
+              <script>
+                failMessage = 'Deleting mutex semaphore %s on %s' % (mutexName, TestMach)
+              </script>
+
+              <if expr="RC not in [ 0, 34 ]">
+                <call function="'check-stafcmd'"/>
+              </if>
+            </sequence>
+
+          </iterate>
+
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+  <function name="TermTestMachine">
+    <sequence>
+
+      <message>
+        'Performing test cleanup on test machines %s and %s' % (FromMach, ToMach)
+      </message>
+
+      <iterate var="TestMach" in="[FromMach, ToMach]">
+        <sequence>
+
+          <!-- Delete any Mutex Semaphores from this run -->
+
+          <iterate var="mutexName" in="SemMutexList">
+            <sequence>
+
+              <stafcmd>
+                <location>TestMach</location>
+                <service>'SEM'</service>
+                <request>'DELETE MUTEX %s' % mutexName</request>
+              </stafcmd>
+
+            </sequence>
+          </iterate>
+
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- run-standard-test - This function executes a standard STAF test   -->
+  <!-- ================================================================= -->
+
+  <function name="run-standard-test">
+    <sequence>
+
+      <script>
+        location    = thisTest[1]
+        service     = thisTest[2]
+        request     = thisTest[3]
+        rcList      = thisTest[4]
+        resultValue = thisTest[5]
+      </script>
+
+      <message>
+       'STAF %s %s %s' % (location, service, request)
+      </message>
+
+      <stafcmd>
+        <location>location</location>
+        <service>service</service>
+        <request>request</request>
+      </stafcmd>
+
+      <script>failMsg = ''</script>
+
+      <if expr="RC not in rcList">
+        <script>
+          failMsg =  'ERROR:  STAF %s %s %s - RC (%s) not in %s' % (location, service, request, RC, rcList)
+        </script>
+        <elseif expr="resultValue and not re.match(resultValue, STAFResult)">
+          <script>
+            failMsg = 'ERROR: STAF %s %s %s - Grep error\nmatching:\n%s\nwith:\n%s' % \
+                      (location, service, request, resultValue, STAFResult)
+          </script>
+        </elseif>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': failMsg == '', 'failMsg': failMsg,
+          'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- run-tests - This function runs the testcases on a given system    -->
+  <!-- ================================================================= -->
+
+  <function name="RunTests">
+    <sequence>
+
+      <iterate var="thisTest" in="allTests">
+        <sequence>
+
+          <script>
+            TestType = thisTest[0]
+            TestScope = None
+
+            if string.find(thisTest[0], ':') >= 0:
+              [ TestType, TestScope ] = string.split(thisTest[0], ':')
+          </script>
+
+          <if expr="TestType == 'STD'">
+            <call function="'run-standard-test'"/>
+          <else>
+            <message>'Unknown test type: %s' % thisTest[0]</message>
+          </else>
+          </if>
+
+        </sequence>
+      </iterate>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- RunNonStandardTests - This function runs non-standard tests       -->
+  <!--    XXX: This needs work!  Not currently running.                  -->
+  <!-- ================================================================= -->
+
+  <function name="RunNonStandardTests">
+    <sequence>
+
+      <script>
+        if string.find(OrgMachOSType, 'Win') >= 0:
+          copydir = '{STAF/Config/STAFRoot}/bin'
+        else:
+          copydir = '{STAF/Config/STAFRoot}/lib'
+      </script>
+
+      <message>
+        'Copying directory %s from STAX machine to %s...' % (copydir, FromMach)
+      </message>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'FS'</service>
+        <request>'COPY DIRECTORY %s TODIRECTORY {STAF/Config/STAFRoot}/STAFTestX TOMACHINE %s RECURSE' % (copydir, FromMach)</request>
+      </stafcmd>
+
+      <!-- Test deleting a file in a directory that is being copied  -->
+
+      <parallel>
+
+        <block name="'Copy Directory'">
+        <sequence>
+
+          <script>
+            request = 'COPY DIRECTORY {STAF/Config/STAFRoot}/STAFTestX TODIRECTORY {STAF/Config/STAFRoot}/STAFTestX TOMACHINE %s RECURSE' % (ToMach)
+          </script>
+
+          <message>
+            'STAF %s %s %s' % (FromMach, 'FS', request)
+          </message>
+
+          <stafcmd>
+            <location>FromMach</location>
+            <service>'FS'</service>
+            <request>request</request>
+          </stafcmd>
+
+          <script>
+            saveRC = RC
+            failMsg = 'ERROR:  STAF %s %s %s - RC=%s STAFResult=%s' % \
+                      (FromMach, 'FS', request, RC, STAFResult)
+          </script>
+
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': saveRC == 51, 'failMsg': failMsg,
+              'sendToMonitor': 1, 'recordStatus': 1  }
+          </call>
+
+        </sequence>
+        </block>
+
+        <block name="'Delay and Delete 2 Files'">
+        <sequence>
+
+          <!-- XXX: The time to delay until the list directory ocurrs varies depending
+                    on the systems involved in the copy directory -->
+          <stafcmd>
+            <location>'local'</location>
+            <service>'DELAY'</service>
+            <request>'DELAY 200'</request>
+          </stafcmd>
+
+          <message>
+            'Deleting a couple of files from a directory while its being copied...'
+          </message>
+
+          <stafcmd>
+            <location>FromMach</location>
+            <service>'FS'</service>
+            <request>'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestX/JSTAF.jar CONFIRM'</request>
+          </stafcmd>
+
+          <script>
+            failMsg = 'ERROR:  STAF %s %s %s - RC=%s STAFResult=%s' % \
+                      (FromMach, 'FS', 'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestX/JSTAF.jar', RC, STAFResult)
+          </script>
+
+          <if expr="RC != 0">
+            <call function="'check-stafcmd'"/>
+          </if>
+
+          <stafcmd>
+            <location>FromMach</location>
+            <service>'FS'</service>
+            <request>'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestX/JSTAF.zip CONFIRM'</request>
+          </stafcmd>
+
+          <script>
+            failMsg = 'ERROR:  STAF %s %s %s - RC=%s STAFResult=%s' % \
+                      (FromMach, 'FS', 'DELETE ENTRY {STAF/Config/STAFRoot}/STAFTestX/JSTAF.zip', RC, STAFResult)
+          </script>
+
+          <if expr="RC != 0">
+            <call function="'check-stafcmd'"/>
+          </if>
+
+        </sequence>
+        </block>
+
+      </parallel>
+
+    </sequence>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- DoAll - This function is the main function called and drives the  -->
+  <!--         overall build process.                                    -->
+  <!-- ================================================================= -->
+
+  <function name="DoAll">
+    <testcase name="'FSCopyDir'">
+      <sequence>
+
+        <call function="'InitJob'"/>
+
+        <iterate var="TestMachs" in="TestMachines">
+          <sequence>
+
+            <script>
+              OrgMach  = 'local'
+              FromMach = TestMachs[0]
+              ToMach   = TestMachs[1]
+            </script>
+
+            <call function="'GatherInfo'"/>
+
+            <!-- Set up files for textext tests -->
+
+            <block name="OSTypes">
+              <testcase name="OSTypes">
+                <sequence>
+
+                  <call function="'STAXUtilLogAndMsg'">
+                    'STAF Testing started for %s' % OSTypes
+                  </call>
+
+                  <call function="'InitTestMachine'"/>
+                  <call function="'InitTests'"/>
+                  <call function="'RunTests'"/>
+                  <!-- <call function="'RunNonStandardTests'"/> -->
+                  <call function="'TermTestMachine'"/>
+
+                  <call function="'STAXUtilLogAndMsg'">
+                    'STAF Testing completed for %s' % OSTypes
+                  </call>
+
+                </sequence>
+              </testcase>
+            </block>
+
+          </sequence>
+        </iterate>
+
+        <!-- clean up after complete -->
+        <call function="'TermJob'"/>
+      </sequence>
+    </testcase>
+  </function>
+
+  <!-- ================================================================= -->
+  <!-- TermJob - This function cleans up the Org machine after the job.  -->
+  <!-- ================================================================= -->
+
+  <function name="TermJob">
+    <sequence>
+       <stafcmd>
+          <location>'local'</location>
+          <service>'FS'</service>
+          <request>'DELETE ENTRY %s CONFIRM' % textFileName1</request>
+       </stafcmd>
+       <stafcmd>
+          <location>'local'</location>
+          <service>'FS'</service>
+          <request>'DELETE ENTRY %s CONFIRM' % textFileName2</request>
+       </stafcmd>
+       <stafcmd>
+          <location>'local'</location>
+          <service>'FS'</service>
+          <request>'DELETE ENTRY %s CONFIRM' % textFileName3</request>
+       </stafcmd>
+    </sequence>
+  </function>
+
+
+</stax>
+
+
+
+

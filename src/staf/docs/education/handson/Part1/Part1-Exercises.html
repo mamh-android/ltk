@@ -1,0 +1,896 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="David Bender">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <title>Hands-On Automation with STAF/STAX 3 - Part 1</title>
+</head>
+<body>
+
+<h1>
+<font face="Arial,Helvetica">Hands-On Automation with STAF/STAX 3 - Part 1</font></h1>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.1 - Installing STAF</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Install STAF on your machine</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">On the STAF/STAX CD, go to directory /Part1/install
+and run STAF344-setup-win32.exe.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">On the Introduction panel, click on Next.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the License Agreement panel, select "I accept
+the terms of the license agreement".  Click on Next.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the Choose Install Folder panel, accept
+the default directory of C:\STAF and click on Next.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the Choose Install Set panel, accept the default
+type of Full and click on Next.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the Registration Information panel, accept all
+of the defaults and click on Next.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the Advanced Options panel, accept all of the
+defaults and click on Next.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the Pre-Installation Summary panel, click on
+Next to start the installation.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">On the Install Complete panel, click on
+Done.</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.2 - Starting and Stopping STAF</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to start and stop STAF</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Start STAF 3.4.4".&nbsp; You should see a new window
+open titled "Start STAF" with the text "STAFProc version 3.4.4 initialized".&nbsp;
+Alternatively, you can open a command prompt and type "stafproc" to start
+STAF.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Shutdown STAF 3.4.4".&nbsp;&nbsp; You should see the
+"Start STAF" window close.</font></li>
+<br><br>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">Did STAF Stop?  Yes/No  ____________________</font></li>
+</ul>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Start STAF 3.4.4".</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Go to the C:\STAF\bin directory and edit the
+STAF.cfg file.&nbsp; This is the default STAF.cfg file; note that the STAF
+installation program automatically configured the default Service Loader.</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.3 - Basic STAF Commands</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn some basic STAF commands</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type each of the following
+commands (note that they are not case sensitive):</font></li>
+
+<ul>
+
+<pre>STAF LOCAL PING PING</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command verifies that you can communicate
+with STAF.</font></li>
+</ul>
+
+
+<pre>STAF PING PING PING</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">What result do you get?  ___________________________________________________________</font></li>
+<li>
+<font face="Arial,Helvetica">Why?  ___________________________________________________________</font></li>
+</ul>
+
+<pre>STAF LOCAL VAR LIST</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command shows you all of the STAF variables
+on your machine.</font></li>
+
+<li>
+<font face="Arial,Helvetica">What command would you execute to list the
+configured STAF services (hint:&nbsp; the Service Service)?  ___________________________________________________________</font></li>
+
+</ul>
+
+<pre>STAF LOCAL SERVICE LIST REQUESTS</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This commands lists all of the executing requests
+(you should only see the "list requests" request).</font></li>
+</ul>
+
+<pre>STAF LOCAL HANDLE LIST HANDLES</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command lists all of the current STAF
+handles.</font></li>
+</ul>
+
+<pre>STAF LOCAL HANDLE LIST HANDLES</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">Compare this with the output from the previous
+command.&nbsp; What are the differences?</font></li>
+</ul>
+
+<pre>STAF LOCAL PROCESS LIST</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command lists all of the current STAF
+Processes.</font></li>
+</ul>
+
+<pre>STAF LOCAL PROCESS START COMMAND NOTEPAD</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command starts the Notepad
+Process.</font></li>
+</ul>
+
+<pre>STAF LOCAL PROCESS LIST</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command lists all of the current STAF
+Processes.  Note that you should see the Notepad process.  Now, close the
+Notepad window.</font></li>
+</ul>
+
+<pre>STAF LOCAL PROCESS LIST</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command lists all of the current STAF
+Processes.  What is the RC of the Notepad process?</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG HELP</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command displays the Help for the Log
+Service.</font></li>
+</ul>
+
+<pre>STAF LOCAL HELP ERROR [Error Number]</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command displays the Help for the specified
+error number.</font></li>
+</ul>
+
+<pre>STAF LOCAL SHUTDOWN SHUTDOWN</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command will shutdown staf.</font></li>
+</ul>
+
+<pre>STAF LOCAL PING PING</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">What do you get as the result?  ___________________________________________________________</font></li>
+
+<li>
+<font face="Arial,Helvetica">Why did you get this?  ___________________________________________________________</font></li>
+
+<li>
+<font face="Arial,Helvetica">Now restart STAFProc</font></li>
+</ul>
+
+<pre>STAF LOCAL PING PING</pre>
+
+<pre>STAF LOCAL HELP ERROR 21</pre>
+
+<pre>STAF LOCAL VAR RESOLVE STRING {STAF/Config/MachineNickname}</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command displays the value of variable
+STAF/Config/MachineNickname</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG LOG MACHINE LOGNAME log1 LEVEL info message test-message</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command creates machine log (associate with
+the MachineNickname) called log1 and writes an informational message to the
+log.</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG LIST MACHINES</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command list the machines for which machine
+log exist.  Notice that it shows the MachineNickname.</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG QUERY MACHINE xxx.austin.ibm.com LOGNAME log1</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">Note: change "xxx" to your hostname.  This command
+queries the machine log named log1.  Note that you need to specify the hostname
+for the "MACHINE" option.  Now, add the following to your STAF.cfg file:
+<pre>MACHINENICKNAME testmachine1</pre> and restart STAF.</font></li>
+</ul>
+
+<pre>STAF LOCAL VAR RESOLVE STRING {STAF/Config/MachineNickname}</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command displays the value of variable
+STAF/Config/MachineNickname (which should be "testmachine1").</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG LOG MACHINE LOGNAME log2 LEVEL info message second-message</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command creates machine log (associate with
+the MachineNickname) called log2 and writes an informational message to the
+log.</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG LIST MACHINES</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command list the machines for which machine
+log exist.  Notice that it shows the MachineNickname testmachine1.</font></li>
+</ul>
+
+<pre>STAF LOCAL LOG QUERY MACHINE testmachine1 LOGNAME log2</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">Notice that now you can use the machine nickname
+for the MACHINE option.</font></li>
+</ul>
+
+<pre>STAF LOCAL MISC LIST INTERFACES</pre>
+
+<ul>
+<li>
+<font face="Arial,Helvetica">This command will list the network interfaces
+that are currently configured.</font></li>
+<li>
+<font face="Arial,Helvetica">Which TCP/IP ports are being used?  ___________________________________________________________</font></li>
+<li>
+<font face="Arial,Helvetica">Which one is encrypted?  ___________________________________________________________</font></li>
+
+
+</ul>
+
+</ul>
+<br>
+<li>
+<font face="Arial,Helvetica">Now try some of the commands, substituting
+a neighbor's machine hostname instead of "local" in the commands.</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.4 - Adding a STAF variable</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to use STAF variables via the command 
+line and the STAF configuration file</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">From a command prompt type</font>
+<font face="Fixed width"><pre>staf local var set system var HandsOn/Variables/MyVar=xyz</pre></font></li>
+
+<li>
+<font face="Arial,Helvetica">Now type</font>
+<pre><font face="Fixed width">staf local var resolve string {HandsOn/Variables/MyVar}</pre></font>
+<font face="Arial,Helvetica">Verify that you get "xyz" as the result.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now shutdown STAFProc and restart it.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Now type</font>
+<font face="Fixed width"><pre>staf local var resolve string {HandsOn/Variables/MyVar}</pre></font>
+<font face="Arial,Helvetica">What is the result?&nbsp;   ___________________________________________________________
+<br>Why do you get this result?  ___________________________________________________________</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Edit the C:\STAF\bin\STAF.cfg file and add
+the line "SET SYSTEM VAR HandsOn/Variables/MyVar=xyz".&nbsp; Save the changes to the
+STAF.cfg file.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Shutdown STAF 3.4.4".</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Start STAF 3.4.4".</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Type the command</font>
+<pre><font face="Fixed width">staf local var list</pre></font>
+<font face="Arial,Helvetica">and verify that HandsOn/Variables/MyVar=xyz is listed.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Type the command</font>
+<pre><font face="Fixed width">staf local var help</pre></font>
+<font face="Arial,Helvetica">to see the help for the Variable service.</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Type the command </font>
+<pre><font face="Fixed width">staf local var resolve string {HandsOn/Variables/MyVar}</pre></font>
+<font face="Arial,Helvetica">and verify that the response is "xyz".</font></li>
+<br><br>
+
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Shutdown STAF 3.4.4".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Start STAF 3.4.4".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Type the command </font>
+<pre><font face="Fixed width">staf local var resolve string {HandsOn/Variables/MyVar}</pre></font>
+<font face="Arial,Helvetica">and verify that the response is "xyz".&nbsp; Why is this variable still
+set to "xyz"?</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.5 - Configuring a Java STAF Service</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Install and Configure the EmailService</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF directory, create a services\email
+directory.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From the STAF/STAX CD, unzip /Part1/install/EmailV335.zip 
+to C:\STAF\services</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on&nbsp; "Shutdown STAF 3.4.4".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit the C:\STAF\bin\STAF.cfg file and add
+the lines</font>
+<pre><font face="Fixed width">service email library JSTAF execute C:/STAF/services/email/STAFEmail.jar \<br>    parms "mailserver na.relay.ibm.com"</font></pre>
+<font face="Arial,Helvetica">Save the changes to the STAF.cfg file.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Click on "Start" on the Windows task bar.&nbsp;
+Then click on "Start STAF 3.4.4".
+</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Type the command </font>
+<pre><font face="Fixed width">staf local service list</pre></font>
+<font face="Arial,Helvetica">and verify that the Email service is listed.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Type the command </font>
+<pre><font face="Fixed width">staf local email version</pre></font>
+<font face="Arial,Helvetica">and verify that the Email service version is 3.3.5.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Type the command </font>
+<pre><font face="Fixed width">staf local email help</pre></font>
+<font face="Arial,Helvetica">and verify that you get the Help for the email Service.</font></li>
+<br><br>
+<li>Use your favorite editor to examine the following file:
+<pre>C:/STAF/data/STAF/lang/java/jvm/STAFJVM1/JVMLog.l</pre>
+This file will contain any Java errors/exceptions that the Email service
+(and any other Java STAF services) encounters.  The end of the file should
+be similar to:
+<pre>
+******************************************************************************
+*** 20110120-10:41:37 - Start of Log for JVMName: STAFJVM1
+*** JVM Executable: java
+*** JVM Options   : -Xmx1024m 
+*** JVM Version   : java version "1.5.0_16"
+Java(TM) 2 Runtime Environment, Standard Edition (build 1.5.0_16-b02)
+Java HotSpot(TM) Client VM (build 1.5.0_16-b02, mixed mode, sharing)
+*** JVM PID       : 3764
+******************************************************************************
+</pre>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.6 - Executing a simple Testcase</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Execute a simple, non-STAF-enabled testcase via STAF</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF directory, create a testcases
+directory.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From the STAF/STAX CD, copy /Part1/testcases/SimpleTestcase.java
+to C:\STAF\testcases.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, type "javac
+SimpleTestcase.java".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process start command java parms "SimpleTestcase 10"
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</pre></font>
+</li>
+<li>
+<font face="Arial,Helvetica">You should notice that a new command prompt
+window has opened and it executing SimpleTestcase (it loops for 10 seconds
+and displays a message every second).&nbsp; Note that after the testcase
+completes, the command prompt window closes.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process list handles</pre></font>
+<font face="Arial,Helvetica">What is the output?  __________________________________________________________</font>
+</li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process free handle XX</pre></font>
+<font face="Arial,Helvetica">where XX is the handle that was listed in the process query all request</font>
+</li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process list handles</pre></font>
+<font face="Arial,Helvetica">What is the output now, and why has it changed?  __________________________________________________________</font>
+</li>
+
+<br><br>
+<li>
+<font face="Arial,Helvetica">Execute the process start command again, changing
+10 to 30, and then, while the testcase is executing, type "staf local process
+list running".&nbsp; Notice that the process shows as "Running".&nbsp; After
+the process completes, run the process query command again, and note that
+the process shows as "Completed".</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.7 - Executing a STAF-enabled Testcase</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Executing a STAF-enabled testcase via STAF</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">From the STAF/STAX CD, copy /Part1/testcases/STAFTestcase.java
+to C:\STAF\testcases.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, type "javac
+STAFTestcase.java"</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type</font>
+<pre><font face="Fixed width">staf local process start command java parms "STAFTestcase 60" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre>
+<font face="Arial,Helvetica">Note that after you execute the command, the response contains a number,
+which is the handle number for the STAFTestcase.
+<br><br>
+When you run the command, if a separate command window opens and then immediately
+closes, that indicates that was an error when running the command.  Re-run
+the command again, but add 
+<pre><font face="Fixed width">RETURNSTDOUT STDERRTOSTDOUT WAIT</font></pre>
+ at the end of the command.  This will give you detailed information about the error.
+</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now type </font>
+<pre><font face="Fixed width">staf local monitor help</font></pre>
+<font face="Arial,Helvetica">to familiarize yourself with the Monitor service.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Type </font>
+<pre><font face="Fixed width">staf local monitor query machine testmachine1 handle YY</font></pre>
+<font face="Arial,Helvetica">substituting the handle
+number for STAFTestcase for YY.&nbsp; Notice that the response you get
+back is the current information (loop #) which the testcase is publishing.&nbsp;
+Execute this command several times to get the latest status of the testcase.</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.8 - Enabling a Testcase with STAF 
+(OPTIONAL: Requires Java programming skills)</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Leverage STAF within the testcase by adding additional
+call to STAF services</font></h4>
+<h3>
+<font face="Arial,Helvetica">1.8.1 - Adding Logging to a STAF-enabled Testcase</font></h3>
+
+<ol>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local log help</font></pre>
+<font face="Arial,Helvetica">to familiarize yourself with the Log Service commands.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, copy STAFTestcase.java
+to STAFTestcase1.java.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit STAFTestcase1.java.&nbsp; On line 2,
+change the class name to STAFTestcase1.&nbsp;&nbsp; In the for loop, after
+the submit call to the Monitor service, add another submit call to the
+Log service to log the same information that is published to the Monitor
+service.&nbsp; If you were submit this request via the command line, it
+would look like:&nbsp; staf local log log machine logname STAFTestcase1.log
+level info message "Loop #n".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, type "javac
+STAFTestcase1.java"</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Type the command </font>
+<pre><font face="Fixed width">staf local log list machine testmachine1</font></pre>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process start command java parms "STAFTestcase1 15" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre></li>
+<li>
+<font face="Arial,Helvetica">After STAFTestcase1 executes, type the log
+list command again.&nbsp; You should now see the STAFTestcase1.log listed.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now type </font>
+<pre><font face="Fixed width">staf local log query machine testmachine1 logname STAFTestcase1.log</font></pre>
+<font face="Arial,Helvetica">You should see 15 Loop # lines.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now type <font>
+<pre><font face="Fixed width">staf local log query machine testmachine1 logname STAFTestcase1.log last 5</font></pre>
+<font face="Arial,Helvetica">You should see the last 5 lines in the log file.</font></li>
+</ol>
+
+<h3>
+<font face="Arial,Helvetica">1.8.2 - Using the Delay service in a STAF-enabled
+Testcase</font></h3>
+
+<ol>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, copy STAFTestcase1.java
+to STAFTestcase2.java.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit STAFTestcase2.java.&nbsp; On line 2,
+change the class name to STAFTestcase2.&nbsp;&nbsp; In the for loop, after
+the submit call to the Log service, add another submit call to the Delay
+service to have it delay for 1 second, and then remove the entire try/catch
+block for the Thread.sleep(1000) statement.&nbsp; Rather than using Thread.sleep,
+we are now using the STAF Delay service instead.  Note that if you were 
+executing the Delay command via the STAF executable, the syntax would
+be "staf local delay delay 1000".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, type "javac
+STAFTestcase2.java"</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process start command java parms "STAFTestcase2 15" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre>
+<font face="Arial,Helvetica">You should see the testcase behaving as before, but it is now using the
+STAF Delay service to delay 1 second between each loop.</font></li>
+</ol>
+
+<h3>
+<font face="Arial,Helvetica">1.8.3 - Using the Var service in a STAF-enabled
+Testcase</font></h3>
+
+<ol>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local var help</font></pre>
+<font face="Arial,Helvetica">to familiarize yourself with the Var Service commands.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, copy STAFTestcase2.java
+to STAFTestcase3.java.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit STAFTestcase3.java.&nbsp; On line 2,
+change the class name to STAFTestcase3.&nbsp;&nbsp; Previously, this testcase
+would loop for the specified number of loops.&nbsp; Now let's have it check
+a STAF variable to see if it should continue execution.&nbsp; In the for
+loop, after the submit call to the Delay service, add a submit call to
+the Var service to check the value of the variable {HandsOn/Variables/MyVar}
+(this is the variable that we set to "xyz" in an earlier exercise).&nbsp;
+From the command line, this command would be "staf local var resolve string {HandsOn/Variables/MyVar}".</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In STAFTestcase3.java, after the submit to
+the Var service, call add the following lines to determine if the testcase
+should terminate:</font>
+<pre><font face="Fixed width">if ((varResult.rc == 0) && 
+    (varResult.result.equals("STAFTestcase3/Terminate")))
+{
+    System.exit(0);
+}
+</font></pre>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, type "javac
+STAFTestcase3.java"</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process start command java parms "STAFTestcase3 100" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre>
+<font face="Arial,Helvetica">Note the handle number given to the testcase.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">As the testcase is running, type the command</font>
+<pre><font face="Fixed width">staf local var handle YY set var HandsOn/Variables/MyVar=STAFTestcase3/Terminate</font></pre>
+<font face="Arial,Helvetica">where YY is the handle number for STAFTestcase3.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">When you execute this command, the testcase
+should terminate as expected.</font></li>
+</ol>
+
+<h3>
+<font face="Arial,Helvetica">1.8.4 - Using the Queue service in a STAF-enabled
+Testcase</font></h3>
+
+<ol>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local queue help</font></pre>
+<font face="Arial,Helvetica">to familiarize yourself with the Queue Service commands.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, copy STAFTestcase1.java
+to STAFTestcase4.java.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit STAFTestcase4.java.&nbsp; On line 2,
+change the class name to STAFTestcase4.&nbsp; Now, once again remove the
+entire try/catch block for the Thread.sleep(1000) statement.&nbsp; In this
+exercise, instead of using the Delay service and the Var service for notification
+when the testcase should terminate, we will use the Queue service.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">In STAFTestcase4.java, after the submit call
+to the Log service, add a call to the Queue service to run the "get" command.&nbsp;
+Specify the "wait 1000" option.&nbsp; This will cause the testcase to check
+its queue for any messages, and will wait for 1 second before continuing
+to the next loop.&nbsp; After the call to the Queue service, add the following
+lines to determine if the testcase should terminate:</font>
+<pre><font face="Fixed width">if ((queueResult.rc == 0) && !(queueResult.result.equals(null)))
+{
+    STAFQueueMessage message = new STAFQueueMessage(queueResult.result);
+    if (message.message.equals("STAFTestcase4/Terminate"))
+    {
+        System.exit(0);
+    }
+}
+</font></pre>
+<font face="Arial,Helvetica">In the C:\STAF\testcases directory, type "javac
+STAFTestcase4.java"</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local process start command java parms "STAFTestcase4 100" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre>
+<font face="Arial,Helvetica">Note the handle number given to the testcase.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">As the testcase is running, type the command</font>
+<pre><font face="Fixed width">staf local queue queue handle YY message STAFTestcase4/Terminate</font></pre>
+<font face="Arial,Helvetica">where YY is the handle number for STAFTestcase4.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">When you execute this command, the testcase
+should terminate as expected.</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.9 - Starting a process on a remote
+machine</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to execute a process on a remote system</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">Work with a neighbor on this exercise.&nbsp;
+Find out the hostname of your neighbor's machine.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf XX process start command java parms "STAFTestcase4 100" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre>
+<font face="Arial,Helvetica">where XX is the hostname of your neighbor's machine.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">You should get a return code 25.&nbsp; Type
+"staf local help error 25".&nbsp; This means that you don't have access
+to run the process on your neighbor's machine.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a web browser, go to "staf.sourceforge.net",
+and click the "Documentation" link, and then click on STAF V3 User's Guide.&nbsp;
+Section 8.11 describes the Process service.&nbsp; Note that in section
+8.11.2, where the PROCESS START command is described, under the "Security"
+section it states this command requires Trust level 5.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf XX trust list</font></pre>
+<font face="Arial,Helvetica">where XX is the hostname of your neighbor's machine.&nbsp; Your machine's
+is not listed, and the Default Trust level is 3.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now have your neighbor shutdown STAFProc.&nbsp;
+Next your neighbor should edit their C:\STAF\staf.cfg file, and add the
+statement "TRUST LEVEL 5 MACHINE ZZ" where ZZ is your machine's hostname.&nbsp;
+Have your neighbor save their changes to the staf.cfg file, and then restart
+STAFProc on their machine.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now try the command again from your machine</font>
+<pre><font face="Fixed width">staf XX process start command java parms "STAFTestcase4 100" 
+    env CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases</font></pre>
+<font face="Arial,Helvetica">where XX is the hostname of your neighbor's machine.&nbsp; This time the
+testcase should successfully start.&nbsp; Note the handle number given
+to the testcase.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">As the testcase is running, type the command</font>
+<pre><font face="Fixed width">staf XX queue queue handle YY message STAFTestcase4/Terminate</font></pre>
+<font face="Arial,Helvetica">where XX is the hostname of your neighbor's machine and&nbsp; YY is the handle number
+for STAFTestcase4.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">When you execute this command, the testcase
+should terminate as expected.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Now re-run this exercise with you and your
+neighbor reversing roles.</font></li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.10 - Using the Process, FS, and Log
+services</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to use
+the Process, FS, and Log services</font></h4>
+<ol>
+<li>Run the following command:
+<pre><font face="Fixed width">staf local process start shell command "java -version" stderrtostdout returnstdout wait</font></pre>
+<font face="Arial,Helvetica">The result should contain the version information
+for the Java installed on your machine.</font>
+</li>
+<br>
+<li>Run the following command:
+<pre><font face="Fixed width">staf local fs list directory {STAF/Config/STAFRoot}/bin</font></pre>
+<font face="Arial,Helvetica">The result should contain contents of the STAF
+bin directory.</font>
+<br><br>
+<li>Run the following commands:
+<pre><font face="Fixed width">staf local log log machine logname log3 level info message test-message</font></pre>
+<pre><font face="Fixed width">staf local log log machine logname log3 level info message "Another message"</font></pre>
+<font face="Arial,Helvetica">Now query the log:</font>
+<pre><font face="Fixed width">staf local log query machine {STAF/Config/MachineNickname} logname log3</font></pre>
+<font face="Arial,Helvetica">The result should contain the 2 records in the log.</font>
+</li>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 1.11 - Tracing and Debugging</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to trace and debug STAF</font></h4>
+<ol>
+<li>
+<font face="Arial,Helvetica">Run the following command to see the help for the
+trace service</font>
+<pre><font face="Fixed width">staf local trace help</font></pre>
+<br></li>
+<li>
+<font face="Arial,Helvetica">Run the following command to turn on tracing every
+time a service request is initiated, and every time a service
+request completes:</font></li>
+<pre><font face="Fixed width">staf local trace enable tracepoints "servicerequest serviceresult"</font></pre>
+<br>
+<li>
+<font face="Arial,Helvetica">Run the following command</font></li>
+<pre><font face="Fixed width">staf local ping ping</font></pre>
+<br>
+<font face="Arial,Helvetica">Now check the STAFProc window, and you should
+see the trace output.  If you were running a lot of STAF requests, you can imagine
+that there could potentially be a lot of trace output, so you may want to limit
+which services to trace (by default all services will be traced).</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Run the following command to turn off tracing
+for all services:</font></li>
+<pre><font face="Fixed width">staf local trace disable all services</font></pre>
+<br>
+<li>
+<font face="Arial,Helvetica">Now run the ping command again:</font></li>
+<pre><font face="Fixed width">staf local ping ping</font></pre>
+<br>
+<font face="Arial,Helvetica">Now check the STAFProc window, and you should
+not see the trace output for that request.</font></li>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Next let's turn on tracing for the Process service:</font></li>
+<pre><font face="Fixed width">staf local trace enable service process</font></pre>
+<br>
+<li>
+<font face="Arial,Helvetica">Run the following command</font></li>
+<pre><font face="Fixed width">staf local process start shell command time returnstdout wait</font></pre>
+<br>
+<font face="Arial,Helvetica">Now check the STAFProc window, and you should
+see the trace output for the process service.</font></li>
+<br><br>
+<li><font face="Arial,Helvetica">Next run the following command to turn off tracing:</font></li>
+<pre><font face="Fixed width">staf local trace disable all services</font></pre>
+<br>
+</body>
+</html>

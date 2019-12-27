@@ -1,0 +1,1129 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/******************************************************************************/
+/* STAF_SERVICE_INTERFACE_LEVEL:2                                             */
+/******************************************************************************/
+/* REXX Resource Service for Software Testing Automation Framework (STAF)     */
+/* -------------------------------------------------------------------------- */
+/* Desc: External service providing exclusive use of a resource pool resource */
+/* -------------------------------------------------------------------------- */
+/* Options:                                                                   */
+/*                                                                            */
+/*   CREATE  - Creates a resource pool                                        */
+/*   DELETE  - Deletes a resource pool                                        */
+/*   QUERY   - Displays information about a resource pool                     */
+/*   REQUEST - Request exclusive access to next available resource in a pool  */
+/*   ADD     - Add a resource to a specified resource pool                    */
+/*   REMOVE  - Removes a resource from a specified resource pool              */
+/*   RELEASE - Releases exclusive use of a resource from a resource pool      */
+/*   LIST    - Display a list of resource pools                               */
+/*   HELP    - Returns syntax information                                     */
+/*                                                                            */
+/* -------------------------------------------------------------------------- */
+/* History:                                                                   */
+/*  1.00  PEP  09/11/1998  Initial implementation                             */
+/*  1.01  PEP  09/22/1998  Updates per 9/17/98 code review                    */
+/*  1.10  CVR  03/09/1999  Overhaul for new STAF features in STAF V1.2        */
+/*  1.11  CVR  04/03/2000  Fixed problem removing an owned resource, and      */
+/*                         fixed problem w/ not waking up waiters on addition */
+/*                         of new resource, and added VERSION command         */
+/******************************************************************************/
+OPTIONS "EXMODE ETMODE"
+
+parse source osType invokeType functionName
+
+/**********************************/
+/* Initialize STAF error messages */
+/**********************************/
+
+call STAFErrorText
+call STAFPoolErrorText
+
+/*******************************************/
+/* Make sure we are being called correctly */
+/*******************************************/
+
+if invokeType \= "FUNCTION" then
+    RETURN MakeSTAFResult(STAFError.!ServiceConfigurationError)
+
+/********************************************/
+/* Now simply call the appropriate function */
+/********************************************/
+
+SIGNAL VALUE TRANSLATE(functionName)
+
+/****************************************************************************/
+/* STAFServiceInit - Initializes the service                                */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/*          The service parameters                                          */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceInit:
+
+  parse arg serviceName, serviceParms
+
+  ext = '.rpl'
+
+  /***********************************************/
+  /* Load STAF, RexxUtil, and RxThread Functions */
+  /***********************************************/
+
+  call RxFuncAdd "STAFLoadFuncs", "RXSTAF", "STAFLoadFuncs"
+  call STAFLoadFuncs
+
+  call RxFuncAdd "SysLoadFuncs", "RexxUtil", "SysLoadFuncs"
+  call SysLoadFuncs
+
+  call RxFuncAdd "RxThreadLoadFuncs", "RxThread", "RxThreadLoadFuncs"
+  call RxThreadLoadFuncs
+
+  /**********************************************/
+  /* Register with STAF                         */
+  /**********************************************/
+
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then
+  do
+      RETURN MakeSTAFResult(STAFError.!STAFRegistrationError,,
+                            STAFError.!STAFRegistrationError.!Text":" RESULT)
+  end
+
+  self = "STAF/Service/"serviceName
+  errorBuffer = ""
+
+  /************************/
+  /* Query STAF Variables */
+  /************************/
+
+  call ResolveStandardVariables
+  if RESULT \= 0 then RETURN MakeSTAFResult(RESULT, errorBuffer)
+
+  /******************************************/
+  /* Find all the pools and initialize them */
+  /******************************************/
+
+  call SysFileTree pooldir || delimit'*'ext, 'find', 'FSO'
+
+  do i = 1 to find.0
+
+      /* Open the pool file */
+
+      call OpenFile find.i, "read"
+      if RESULT \= 0 then
+          RETURN MakeSTAFResult(STAFError.!FileOpenError, find.i)
+
+      /* Read and validate pool file version */
+
+      thisPoolFileVersion = LINEIN(find.i)
+
+      if thisPoolFileVersion \= 0 then
+      do
+          RETURN MakeSTAFResult(STAFPoolError.!PoolFileVersionError,,
+                                thisPoolFileVersion)
+      end
+
+      /* Read main pool data */
+
+      call VAL 'POOL.'i'.!Name', LINEIN(find.i)
+      call VAL 'POOL.'i'.!Description', LINEIN(find.i)
+      call VAL 'POOL.'i'.!Request.0', 0
+
+      /* Read the pool entries */
+      do j = 1 while LINES(find.i)
+          call VAL 'POOL.'i'.!Resource.'j'.!Entry', LINEIN(find.i)
+          call VAL 'POOL.'i'.!Resource.'j'.!Owner', ';Available'
+      end
+
+      call VAL 'POOL.'i'.!Resource.0', j - 1
+
+      /* Close the file */
+
+      call STREAM find.i, 'C', 'CLOSE'
+
+  end  /* do for each pool */
+
+  /* Set number of pools */
+  call VAL 'POOL.0', i - 1
+
+  RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of STAFServiceInit */
+
+
+/******************************************************************************/
+/* STAFServiceAcceptRequest - Handles a service request from STAF             */
+/*                                                                            */
+/* Accepts: The name of this service                                          */
+/*          The name of the this machine                                      */
+/*          The name of the client machine                                    */
+/*          The effective name of the client machine                          */
+/*          The trust level of the client machine                             */
+/*          The registered name of the originating process                    */
+/*          The handle of the originating process                             */
+/*          The actual request string                                         */
+/*                                                                            */
+/* Returns: 0 , on success                                                    */
+/*          >0, otherwise                                                     */
+/******************************************************************************/
+STAFServiceAcceptRequest:
+
+  parse arg serviceName, thisMachine, orgMachineLong, orgMachine, trustLevel,,
+            orgName, orgHandle, request
+
+  version = "1.11"
+  poolFileVersion = 0
+  ext = '.rpl'
+  self = "STAF/Service/"serviceName
+  mutexSemName = self"/Mutex"
+  eventSemName = self"/Event"
+  clientMachine = orgMachineLong    /* For ResolveVariable: */
+  origHandle = orgHandle            /* For ResolveVariable: */
+
+  if request = '' then
+      RETURN MakeSTAFResult(STAFError.!InvalidRequestString)
+
+  /* Register with STAF */
+  call STAFRegister "STAF/Service/"serviceName
+  if RESULT \= 0 then
+      RETURN MakeSTAFResult(STAFError.!STAFRegistrationError, RESULT)
+
+  /* Resolve STAF Variables */
+  call ResolveStandardVariables
+
+  /* Throw away untrusted clients immediately */
+  if trustLevel = 0 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  /* Initialize parser and parse the request */
+  call InitResParser request
+  call ParseString request, "errorBuffer"
+  if RESULT \= 0 then RETURN MakeSTAFResult(RESULT, errorBuffer)
+
+  mainCommand = TRANSLATE(WORD(request, 1))
+
+  select
+      when mainCommand = "VERSION" then
+      do
+          if trustLevel < 1 then
+              RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+          RETURN MakeSTAFResult(STAFError.!Ok, version)
+      end
+      when mainCommand = "CREATE" then RETURN HandleCreate()
+      when mainCommand = "DELETE" then RETURN HandleDelete()
+      when mainCommand = "QUERY" then RETURN HandleQuery()
+      when mainCommand = "REQUEST" then RETURN HandleRequest()
+      when mainCommand = "ADD" then RETURN HandleAdd()
+      when mainCommand = "REMOVE" then RETURN HandleRemove()
+      when mainCommand = "RELEASE" then RETURN HandleRelease()
+      when mainCommand = "LIST" then RETURN HandleList()
+      when mainCommand = "HELP" then RETURN HandleHelp()
+      otherwise RETURN MakeSTAFResult(STAFError.!InvalidRequestString)
+  end
+
+  RETURN MakeSTAFResult(STAFError.!UnknownError)
+
+/* End of STAFServiceAcceptRequest */
+
+
+/****************************************************************************/
+/* STAFServiceTerm - Terminates the service                                 */
+/*                                                                          */
+/* Accepts: The name of this service                                        */
+/* Returns: 0                                                               */
+/****************************************************************************/
+STAFServiceTerm:
+
+    parse arg serviceName
+
+    RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of STAFServiceTerm */
+
+/******************************************************************************/
+/*                   STAFPool Function Definitions                            */
+/******************************************************************************/
+
+
+/****************************************************************************/
+/* InitResParser - Defines the syntax of each request type for the Parser   */
+/*                                                                          */
+/* Accepts: The request                                                     */
+/*                                                                          */
+/* Returns: 0                                                               */
+/****************************************************************************/
+InitResParser:
+
+  parse arg IRP_Request
+
+  IRP_MainCommand = TRANSLATE(WORD(IRP_Request, 1))
+
+  /* Initialize the Parser options for each request type */
+  call InitParser
+
+  call AddOptionGroup "CREATE DELETE QUERY REQUEST ADD REMOVE RELEASE LIST",
+                      "HELP VERSION", 1, 1
+
+  select
+
+      when IRP_MainCommand = "CREATE" then
+      do
+          call AddOption "CREATE", 1, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOption "DESCRIPTION", 1, "YES"
+          call AddOptionNeed "CREATE", "POOL"
+          call AddOptionNeed "CREATE", "DESCRIPTION"
+      end
+      when IRP_MainCommand = "DELETE" then
+      do
+          call AddOption "DELETE", 1, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOption "CONFIRM", 1, "NO"
+          call AddOption "FORCE", 0, "NO"
+          call AddOptionNeed "DELETE", "POOL"
+          call AddOptionNeed "DELETE", "CONFIRM"
+      end
+      when IRP_MainCommand = "QUERY" then
+      do
+          call AddOption "QUERY", 1, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOptionNeed "QUERY", "POOL"
+      end
+      when IRP_MainCommand = "REQUEST" then
+      do
+          call AddOption "REQUEST", 1, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOption "FIRST", 0, "NO"
+          call AddOption "RANDOM", 0, "NO"
+          call AddOptionGroup "FIRST RANDOM", 0, 1
+          call AddOptionNeed "REQUEST", "POOL"
+          call AddOption "TIMEOUT", 0, "YES"
+      end
+      when IRP_MainCommand = "ADD" then
+      do
+          call AddOption "ADD", 1, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOption "ENTRY", 0, "YES"
+          call AddOptionNeed "ADD", "POOL"
+          call AddOptionNeed "ADD", "ENTRY"
+      end
+      when IRP_MainCommand = "REMOVE" then
+      do
+          call AddOption "REMOVE", 1, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOption "ENTRY", 0, "YES"
+          call AddOption "CONFIRM", 1, "NO"
+          call AddOptionNeed "REMOVE", "POOL"
+          call AddOptionNeed "REMOVE", "ENTRY"
+          call AddOptionNeed "REMOVE", "CONFIRM"
+          call AddOption "FORCE", 0, "NO"
+      end
+      when IRP_MainCommand = "RELEASE" then
+      do
+          call AddOption "RELEASE", 1, "NO"
+          call AddOption "FORCE", 0, "NO"
+          call AddOption "POOL", 1, "YES"
+          call AddOption "ENTRY", 1, "YES"
+          call AddOptionNeed "RELEASE", "POOL"
+          call AddOptionNeed "RELEASE", "ENTRY"
+      end
+      when IRP_MainCommand = "LIST" then call AddOption "LIST", 1, "NO"
+      when IRP_MainCommand = "HELP" then call AddOption "HELP", 1, "NO"
+      when IRP_MainCommand = "VERSION" then call AddOption "VERSION", 1, "NO"
+      otherwise NOP
+
+  end  /* select on type */
+
+  RETURN 0
+
+/* End of InitResParser */
+
+
+/****************************************************************************/
+/* RequestMutexSem - Gets a STAF mutex sem                                  */
+/*                                                                          */
+/* Accepts: No parameters                                                   */
+/*                                                                          */
+/* Returns: 0 , if no errors encountered                                    */
+/*          STAFExit data, if an error occurs                               */
+/****************************************************************************/
+RequestMutexSem:
+
+  STAFRC = STAFSubmit("LOCAL", "SEM", "MUTEX" mutexSemName "REQUEST")
+
+  if STAFRC \= 0 then RETURN MakeSTAFResult(STAFRC, STAFResult)
+
+  RETURN 0
+
+/* End of RequestMutexSem */
+
+
+/****************************************************************************/
+/* ReleaseMutexSem - Gives back the mutex sem to STAF                     */
+/*                                                                          */
+/* Accepts: No parameters                                                   */
+/*                                                                          */
+/* Returns: 0 , if no errors encountered                                    */
+/*          STAFExit data, if an error occurs                               */
+/****************************************************************************/
+ReleaseMutexSem:
+
+  STAFRC = STAFSubmit("LOCAL", "SEM", "MUTEX" mutexSemName "RELEASE")
+
+  if STAFRC \= 0 then RETURN MakeSTAFResult(STAFRC, STAFResult)
+
+  RETURN 0
+
+/* End of ReleaseMutexSem */
+
+
+/****************************************************************************/
+/* Val - Returns a named variable's value, or updates the variables value   */
+/*       with a new value before returning the previous value               */
+/*                                                                          */
+/* Accepts: varName - The name of the variable                              */
+/*          varValue - The new variable value                               */
+/*                                                                          */
+/* Returns: The current value of the named variable.                        */
+/*          If a value is input, the named variable is updated with this    */
+/*          new value prior to returning its previous value                 */
+/****************************************************************************/
+Val: PROCEDURE EXPOSE self
+
+  parse arg varName, varValue
+
+  if varValue = '' then
+      RETURN RxThreadValue(self, varName)
+  else
+      RETURN RxThreadValue(self, varName, varValue)
+
+  RETURN ""
+
+/* End of Val */
+
+/****************************************************************************/
+/* DeletePending - Deletes a pending request                                */
+/*                                                                          */
+/* Accepts: No formal parameters (pending_save is set during a request      */
+/*          for a resource and no resources are available. pending_save     */
+/*          contains the information used to search for the pending request */
+/*          among all the pending requests for the pool.                    */
+/*                                                                          */
+/* Returns: The time stamp of the pending request                           */
+/****************************************************************************/
+DeletePending: PROCEDURE EXPOSE self thePool orgMachine orgName orgHandle
+
+  numPending = VAL('POOL.'thePool'.!Request.0')
+
+  do i = 1 to numPending
+      pendingRecord = VAL('POOL.'thePool'.!Request.'i'.!Owner')
+      parse var pendingRecord . ';' pMach ';' pName ';' pHandle ';' rest
+      if (pMach = orgMachine) & (pName = orgName) & (pHandle = orgHandle) then
+          LEAVE
+  end
+
+  tempOwner = VAL('POOL.'thePool'.!Request.'i'.!Owner')
+  delPos = LASTPOS(';', tempOwner)
+  timeOfRequest = SUBSTR(tempOwner, delPos + 1)
+
+  if i \= numPending then
+  do
+      do j = i to (VAL('POOL.'thePool'.!Request.0') - 1)
+          call VAL 'POOL.'thePool'.!Request.'j'.!Owner',,
+                   VAL('POOL.'thePool'.!Request.'j+1'.!Owner')
+      end
+  end
+
+  call VAL 'POOL.'thePool'.!Request.0', numPending - 1
+
+  RETURN timeOfRequest
+
+/* End of DeletePending */
+
+
+/**************************************************************************/
+/* ResolveStandardVariables - Determines the standard variables needed by */
+/*                            this service                                */
+/*                                                                        */
+/* Accepts: Nothing                                                       */
+/*                                                                        */
+/* Returns: 0 , if successful                                             */
+/*          >0, if not successful (errorBuffer will be set)               */
+/**************************************************************************/
+ResolveStandardVariables: PROCEDURE EXPOSE STAFHandle self poolDir bootDrive,
+                                           delimit crlf errorBuffer serviceName
+
+  call STAFSubmit "LOCAL", "VAR", "RESOLVE {"self"/Directory} RESOLVE",
+                  "{STAF/Config/BootDrive} RESOLVE {STAF/Config/Sep/File}",
+                  "RESOLVE {STAF/Config/Sep/Line}"
+  if RESULT \= 0 then
+  do
+      errorBuffer = STAFResult
+      RETURN RESULT
+  end
+
+  parse var STAFResult poolDirRC ':' poolDir '00'x bootDriveRC ':',
+                       bootDrive '00'x delimitRC ':' delimit '00'x,
+                       crlfRC ':' crlf '00'x
+
+  if bootDriveRC \= 0 then
+  do
+      errorBuffer = bootDrive
+      RETURN bootDriveRC
+  end
+
+  if poolDirRC \= 0 then
+      poolDir = bootDrive || delimit"STAF"delimit || serviceName
+
+  if delimitRC \= 0 then delimit = '\'
+  if crlfRC \= 0 then crlf = "0D0A"x
+
+  RETURN 0
+
+/* End of ResolveStandardVariables */
+
+
+/**************************************************************************/
+/* GetPoolIndex - Returns the index of the specified pool                 */
+/*                                                                        */
+/* Accepts: The name of the pool to find                                  */
+/*                                                                        */
+/* Returns: The index of the pool (0, if pool no found)                   */
+/**************************************************************************/
+GetPoolIndex: PROCEDURE EXPOSE self
+
+  parse arg poolName
+
+  checkName = TRANSLATE(poolName)
+
+  do i = 1 to VAL('POOL.0')
+      if TRANSLATE(VAL('POOL.'i'.!Name')) = checkName then RETURN i
+  end
+
+  RETURN 0
+
+/* End of GetPoolIndex */
+
+
+/*************************************************************/
+/* HandleCreate - Handles resource pool creation requests    */
+/*                                                           */
+/* Accepts: Nothing                                          */
+/*                                                           */
+/* Returns: Preformatted STAF result string                  */
+/*************************************************************/
+HandleCreate:
+
+  if trustLevel < 4 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+  poolFile = poolDir || delimit || poolName || ext
+  description = ResolveVariable(OptionValue("DESCRIPTION"))
+
+  /* Verify does not exist */
+  if STREAM(poolFile, "C", "QUERY DATETIME") \= "" then
+      RETURN MakeSTAFResult(STAFPoolError.!PoolAlreadyExists, poolName)
+
+  /* Create the directory path if needed */
+  if CreatePath(poolDir, delimit) \= 0 then
+      RETURN MakeSTAFResult(STAFPoolError.!CreatePoolPath, poolDir)
+
+  /* Write the pool data */
+  call OpenFile poolFile, "write"
+  if RESULT \= 0 then
+      RETURN MakeSTAFResult(STAFError.!FileOpenError, poolFile)
+
+  call LINEOUT poolFile, poolFileVersion
+  call LINEOUT poolFile, description
+  call LINEOUT poolFile, poolName
+  call STREAM poolFile, "C", "CLOSE"
+
+  /* Now update in memory data structures */
+
+  call RequestMutexSem
+
+  newIndex = VAL('POOL.0', VAL('POOL.0') + 1)
+  call VAL 'POOL.'newIndex'.!Name', poolName
+  call VAL 'POOL.'newIndex'.!Description', description
+  call VAL 'POOL.'newIndex'.!Resource.0', 0
+  call VAL 'POOL.'newIndex'.!Request.0', 0
+
+  call ReleaseMutexSem
+
+  RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of HandleCreate */
+
+
+/*************************************************************/
+/* HandleDelete - Handles resource pool deletion requests    */
+/*                                                           */
+/* Accepts: Nothing                                          */
+/*                                                           */
+/* Returns: Preformatted STAF result string                  */
+/*************************************************************/
+HandleDelete:
+
+  if trustLevel < 4 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+
+  call RequestMutexSem
+
+  thePool = GetPoolIndex(poolName)
+  if thePool = 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!PoolDoesNotExist, poolName)
+  end
+
+  /* Only delete if no pending requests or FORCE specified */
+  if (VAL('POOL.'thePool'.!Request.0') \= 0) & (OptionTimes("FORCE") = 0) then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!PoolHasPendingRequests, poolName)
+  end
+
+  /* Now delete the pool file */
+  poolFile = poolDir || delimit || poolName || ext
+  delRC = SysFileDelete(poolFile)
+  if delRC \= 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFError.!FileDeleteError, delRC':'poolFile)
+  end
+
+  /* Now move all the data up one index */
+  do i = thePool to (VAL('POOL.0') - 1)
+
+      call VAL 'POOL.'i'.!Name', VAL('POOL.'i+1'.!Name')
+      call VAL 'POOL.'i'.!Description', VAL('POOL.'i+1'.!Description')
+      call VAL 'POOL.'i'.!Resource.0', VAL('POOL.'i+1'.!Resource.0')
+
+      do j = 1 to VAL('POOL.'i+1'.!Resource.0')
+          call VAL 'POOL.'i'.!Resource.'j'.!Entry',,
+                   VAL('POOL.'i+1'.!Resource.'j'.!Entry')
+          call VAL 'POOL.'i'.!Resource.'j'.!Owner',,
+                   VAL('POOL.'i+1'.!Resource.'j'.!Owner')
+      end
+
+      call VAL 'POOL.'i'.!Request.0', VAL('POOL.'i+1'.!Request.0')
+
+      do j = 1 to VAL('POOL.'i+1'.!Request.0')
+          call VAL 'POOL.'i'.!Request.'j'.!Owner',,
+                   VAL('POOL.'i+1'.!Request.'j'.!Owner')
+      end
+
+  end  /* do for each pool index */
+
+  call VAL 'POOL.0', VAL('POOL.0') - 1
+
+  /* Pulse the EVENT semaphore and release the mutex sem */
+
+  STAFRC = STAFSubmit("LOCAL", "SEM", "EVENT" eventSemName "PULSE")
+
+  call ReleaseMutexSem
+
+  RETURN MakeSTAFResult(STAFRC, STAFResult)
+
+/* End of HandleDelete */
+
+
+/*************************************************************/
+/* HandleQuery - Handles resource pool query requests        */
+/*                                                           */
+/* Accepts: Nothing                                          */
+/*                                                           */
+/* Returns: Preformatted STAF result string                  */
+/*************************************************************/
+HandleQuery:
+
+  if trustLevel < 2 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+
+  call RequestMutexSem
+
+  thePool = GetPoolIndex(poolName)
+  if thePool = 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!PoolDoesNotExist, poolName)
+  end
+
+  POOLResult = crlf
+  POOLResult = crlf'Description:',
+               VAL('POOL.'thePool'.!Description') || crlf || crlf
+  POOLResult = POOLResult'Pending requests:',
+               VAL('POOL.'thePool'.!Request.0') || crlf || crlf
+
+  do i = 1 to VAL('POOL.'thePool'.!Request.0')
+      POOLResult = POOLResult'Request' i':',
+                   SUBSTR(VAL('POOL.'thePool'.!Request.'i'.!Owner'), 2) || crlf
+  end
+
+  if VAL('POOL.'thePool'.!Request.0') > 0 then
+      POOLResult = POOLResult || crlf
+
+  POOLResult = POOLResult'Resources:' crlf || crlf
+  do i = 1 to VAL('POOL.'thePool'.!Resource.0')
+      POOLResult = POOLResult || VAL('POOL.'thePool'.!Resource.'i'.!Entry') ||,
+                   VAL('POOL.'thePool'.!Resource.'i'.!Owner') || crlf
+  end
+
+  call ReleaseMutexSem
+
+  RETURN MakeSTAFResult(STAFError.!Ok, POOLResult)
+
+/* End of HandleQuery */
+
+
+/*************************************************************/
+/* HandleRequest - Handles resource pool request requests    */
+/*                                                           */
+/* Accepts: Nothing                                          */
+/*                                                           */
+/* Returns: Preformatted STAF result string                  */
+/*************************************************************/
+HandleRequest:
+
+  if trustLevel < 3 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+
+  if OptionTimes("FIRST") > 0 then first = 'yes'
+  else first = 'no'
+
+  /* set the timeout variable and, if appropriate, start elapsed timer */
+  if OptionTimes("TIMEOUT") > 0 then
+  do
+      timeout = ResolveVariable(OptionValue("TIMEOUT"))
+      call TIME 'E'
+  end
+  else timeout = ''
+
+  iAmPending = 0
+
+  /* Begin loop to get an available resource or wait for release event */
+  do forever
+
+      call RequestMutexSem
+
+      thePool = GetPoolIndex(poolName)
+      if thePool = 0 then
+      do
+          call ReleaseMutexSem
+          RETURN MakeSTAFResult(STAFPoolError.!PoolDoesNotExist, poolName)
+      end
+
+      /* Save any available resource indexes in an array ----------------*/
+      available.0 = 0
+
+      if VAL('POOL.'thePool'.!Resource.0') = 0 then
+      do
+          call ReleaseMutexSem
+          RETURN MakeSTAFResult(STAFPoolError.!NoEntriesAvailable, poolName)
+      end
+
+      do i = 1 to VAL('POOL.'thePool'.!Resource.0')
+          if VAL('POOL.'thePool'.!Resource.'i'.!Owner') = ";Available" then
+          do
+              call AddToStem "available.", i
+              if first = 'yes' then leave  /* only need first available */
+          end
+      end
+
+      /* We found some available resources */
+      if available.0 > 0 then
+      do
+          /* Get index of random resource */
+          rindex = RANDOM(1, available.0)
+          resid = available.rindex
+
+          /* I got a resource, so remove me from the pending list */
+          if iAmPending then
+              requestedTime = DeletePending()
+          else
+              requestedTime = DATE('S')'-'TIME()
+
+          /* Mark the resource as OWNED  */
+          call VAL 'POOL.'thePool'.!Resource.'resid'.!Owner',,
+                   ';Owned;'orgMachine';'orgName';'orgHandle';' ||,
+                    requestedTime';'DATE('S')'-'TIME()
+
+          theEntry = VAL('POOL.'thePool'.!Resource.'resid'.!Entry')
+          call ReleaseMutexSem
+
+          RETURN MakeSTAFResult(STAFError.!Ok, theEntry)
+      end
+      else
+      do
+          /* No resources available, put me on the pending list */
+          if \iAmPending then
+          do
+              newIndex = VAL('POOL.'thePool'.!Request.0',,
+                             VAL('POOL.'thePool'.!Request.0') + 1)
+              call VAL 'POOL.'thePool'.!Request.'newIndex'.!Owner',,
+                       ';'orgMachine';'orgName';'orgHandle';' ||,
+                       DATE('S')'-'TIME()
+              iAmPending = 1
+          end
+
+          /* If timeout, reduce it by the elapsed time */
+          currTime = TIME('E')
+          elapsedTime = FORMAT(currTime, , 0) * 1000
+          if timeout \= '' then timeout = timeout - elapsedTime
+
+          /* No timeout specified or some time left on the timeout - so WAIT */
+          if (timeout > 0) | (timeout = '') then
+          do
+              call ReleaseMutexSem
+
+              call STAFSubmit "LOCAL", "SEM", "EVENT" eventSemName,
+                              "WAIT" timeout
+              if RESULT \= 0 then
+                  RETURN MakeSTAFResult(RESULT, STAFResult)
+          end
+          else
+          do
+              /* There is no time left, we timed out */
+              if iAmPending then call DeletePending
+              call ReleaseMutexSem
+              RETURN MakeSTAFResult(STAFError.!Timeout)
+          end
+
+      end /* no resource currently available */
+
+  end /* do while */
+
+  RETURN MakeSTAFResult(STAFError.!UnknownError)
+
+/* End of HandleRequest */
+
+
+/*************************************************************/
+/* HandleAdd - Handles resource pool add entry requests      */
+/*                                                           */
+/* Accepts: Nothing                                          */
+/*                                                           */
+/* Returns: Preformatted STAF result string                  */
+/*************************************************************/
+HandleAdd:
+
+  if trustLevel < 4 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+
+  call RequestMutexSem
+
+  thePool = GetPoolIndex(poolName)
+  if thePool = 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!PoolDoesNotExist, poolName)
+  end
+
+  dupString = ""
+
+  /* Get each entry to be added */
+  entries.0 = 0
+  do i = 1 to OptionTimes("ENTRY")
+      thisEntry = OptionValue("ENTRY", i)
+      entryFound = 0
+      do j = 1 to VAL('POOL.'thePool'.!Resource.0') while \entryFound
+          if thisEntry = VAL('POOL.'thePool'.!Resource.'j'.!Entry') then
+          do
+              dupString = dupString || thisEntry || crlf
+              entryFound = 1
+          end
+      end
+
+      if \entryFound then call AddToStem "entries.", thisEntry
+  end
+
+  /* Delete the old pool file */
+  poolFile = poolDir || delimit || poolName || ext
+  delRC = SysFileDelete(poolFile)
+  if delRC \= 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFError.!FileDeleteError, delRC':'poolFile)
+  end
+
+  /* Write the new pool file */
+  call LINEOUT poolFile, poolFileVersion
+  call LINEOUT poolFile, VAL('POOL.'thePool'.!Name')
+  call LINEOUT poolFile, VAL('POOL.'thePool'.!Description')
+
+  do i = 1 to VAL('POOL.'thePool'.!Resource.0')
+      call LINEOUT poolFile, VAL('POOL.'thepool'.!Resource.'i'.!Entry')
+  end
+
+  do i = 1 to entries.0
+      call LINEOUT poolFile, entries.i
+  end
+
+  call STREAM poolFile, 'C', 'CLOSE'
+
+  /* Add each entry that is not a duplicate to in-memory data */
+  do i = (VAL('POOL.'thePool'.!Resource.0') + 1) for entries.0
+      index = i - VAL('POOL.'thepool'.!Resource.0')
+      call VAL 'POOL.'thePool'.!Resource.'i'.!Entry', entries.index
+      call VAL 'POOL.'thePool'.!Resource.'i'.!Owner', ';Available'
+  end
+
+  call VAL 'POOL.'thePool'.!Resource.0', i - 1
+
+  /* Pulse the event semaphore                                       */
+  /* Note: We don't check this RC, as we wouldn't return this to the */
+  /*       caller anyway                                             */
+  STAFRC = STAFSubmit("LOCAL", "SEM", "EVENT" eventSemName "PULSE")
+
+  call ReleaseMutexSem
+
+  if dupString \= "" then
+      RETURN MakeSTAFResult(STAFPoolError.!EntryAlreadyExists, dupString)
+
+  RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of HandleAdd */
+
+
+/**************************************************************/
+/* HandleRemove - Handles resource pool remove entry requests */
+/*                                                            */
+/* Accepts: Nothing                                           */
+/*                                                            */
+/* Returns: Preformatted STAF result string                   */
+/**************************************************************/
+HandleRemove:
+
+  if trustLevel < 4 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+
+  call RequestMutexSem
+
+  thePool = GetPoolIndex(poolName)
+  if thePool = 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!PoolDoesNotExist, poolName)
+  end
+
+  if VAL('POOL.'thePool'.!Resource.0') = 0 then
+  do
+      /* XXX: This doesn't seem to be the correct behaviour */
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFError.!Ok)
+  end
+
+  /* Get each of the enties to be removed */
+  notHere = ""
+
+  do i = 1 to OptionTimes("ENTRY")
+
+      thisEntry = OptionValue("ENTRY", i)
+      theEntry = 0
+
+      do j = 1 to VAL('POOL.'thePool'.!Resource.0') while theEntry = 0
+          if thisEntry = VAL('POOL.'thePool'.!Resource.'j'.!Entry') then
+              theEntry = j
+      end
+
+      if (theEntry \= 0) &,
+         ((VAL('POOL.'thePool'.!Resource.'theEntry'.!Owner') =,
+              ';Available') | (OptionTimes("FORCE") \= 0)) then
+      do
+          numResources = VAL('POOL.'thePool'.!Resource.0')
+
+          if theEntry \= numResources then
+          do
+              /* Move all the entries below up one */
+              do j = theEntry to (VAL('POOL.'thePool'.!Resource.0') - 1)
+                  call VAL 'POOL.'thePool'.!Resource.'j'.!Entry',,
+                            VAL('POOL.'thePool'.!Resource.'j+1'.!Entry')
+                  call VAL 'POOL.'thePool'.!Resource.'j'.!Owner',,
+                            VAL('POOL.'thePool'.!Resource.'j+1'.!Owner')
+              end
+          end
+
+          call VAL 'POOL.'thePool'.!Resource.0', numResources - 1
+      end
+      else
+      do
+          notHere = notHere || thisEntry || crlf
+      end
+
+  end  /* do for each entry specified */
+
+  /* Delete the old pool file */
+  poolFile = poolDir || delimit || poolName || ext
+
+  /* XXX: Should check this retCode, but we have already updated in-memory */
+  /*      data                                                             */
+  call SysFileDelete poolFile
+
+  /* Write the new pool file */
+  call LINEOUT poolFile, poolFileVersion
+  call LINEOUT poolFile, VAL('POOL.'thePool'.!Name')
+  call LINEOUT poolFile, VAL('POOL.'thePool'.!Description')
+
+  do i = 1 to VAL('POOL.'thePool'.!Resource.0')
+      call LINEOUT poolFile, VAL('POOL.'thePool'.!Resource.'i'.!Entry')
+  end
+
+  call STREAM poolFile, 'C', 'CLOSE'
+  call ReleaseMutexSem
+
+  if notHere \= "" then
+      RETURN MakeSTAFResult(STAFPoolError.!EntryDoesNotExist, notHere)
+
+  RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of HandleRemove */
+
+
+/****************************************************************/
+/* HandleRelease - Handles resource pool release entry requests */
+/*                                                              */
+/* Accepts: Nothing                                             */
+/*                                                              */
+/* Returns: Preformatted STAF result string                     */
+/****************************************************************/
+HandleRelease:
+
+  if trustLevel < 3 then
+      RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  poolName = ResolveVariable(OptionValue("POOL"))
+  releaseEntry = ResolveVariable(OptionValue("ENTRY"))
+
+  call RequestMutexSem
+
+  thePool = GetPoolIndex(poolName)
+  if thePool = 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!PoolDoesNotExist, poolName)
+  end
+
+  /*  Find the entry */
+  theEntry = 0
+  do i = 1 to VAL('POOL.'thePool'.!Resource.0') while theEntry = 0
+      if releaseEntry = VAL('POOL.'thePool'.!Resource.'i'.!Entry') then
+          theEntry = i
+  end
+
+  if theEntry = 0 then
+  do
+      call ReleaseMutexSem
+      RETURN MakeSTAFResult(STAFPoolError.!EntryDoesNotExist, releaseEntry)
+  end
+
+  /* Isolate the owner section of the resource entry data */
+  tempString = VAL('POOL.'thePool'.!Resource.'theEntry'.!Owner')
+
+  if tempString \= ';Available' then
+  do
+      parse var tempString . ';' . ';' oMachine ';' oName ';' oHandle ';' rest
+      resourceOwner = oMachine';'oName';'oHandle
+
+      /* To release, you must be the owner or FORCE must be specified */
+      if (resourceOwner = orgMachine';'orgName';'orgHandle) |,
+         (optionTimes("FORCE") > 0) then
+      do
+          /* Mark the resource as available */
+          call VAL 'POOL.'thePool'.!Resource.'theEntry'.!Owner', ';Available'
+
+          /* Pulse the event semaphore */
+          STAFRC = STAFSubmit("LOCAL","SEM", "EVENT" eventSemName "PULSE")
+          if STAFRC \= 0 then
+          do
+              call ReleaseMutexSem
+              RETURN MakeSTAFResult(STAFRC, STAFResult)
+          end
+      end
+      else
+      do
+          call ReleaseMutexSem
+          RETURN MakeSTAFResult(STAFPoolError.!NotEntryOwner, releaseEntry)
+      end
+  end  /* if entry not available */
+
+  call ReleaseMutexSem
+
+  RETURN MakeSTAFResult(STAFError.!Ok)
+
+/* End of HandleRelease */
+
+
+/****************************************************************/
+/* HandleList - Handles resource pool list requests             */
+/*                                                              */
+/* Accepts: Nothing                                             */
+/*                                                              */
+/* Returns: Preformatted STAF result string                     */
+/****************************************************************/
+HandleList:
+
+  if trustLevel < 4 then RETURN MakeSTAFResult(STAFError.!AccessDenied)
+
+  call RequestMutexSem
+
+  out = ""
+
+  do i = 1 to VAL('POOL.0')
+      out = out || VAL('POOL.'i'.!Name') '-' VAL('POOL.'i'.!Description') ||,
+            crlf
+  end
+
+  call ReleaseMutexSem
+
+  RETURN MakeSTAFResult(STAFError.!Ok, out)
+
+/* End of HandleList */
+
+
+/****************************************************************/
+/* HandleHelp - Handles resource pool help requests             */
+/*                                                              */
+/* Accepts: Nothing                                             */
+/*                                                              */
+/* Returns: Preformatted STAF result string                     */
+/****************************************************************/
+HandleHelp:
+
+  RETURN MakeSTAFResult(STAFError.!Ok,,
+         "STAF Resource Pool Help"crlf || crlf ||,
+         "CREATE  POOL <PoolName> DESCRIPTION <Pooltext>"crlf ||,
+         "DELETE  POOL <PoolName> CONFIRM [FORCE]"crlf ||,
+         "QUERY   POOL <PoolName>"crlf ||,
+         "REQUEST POOL <PoolName> [TIMEOUT <Timeout>] [FIRST | RANDOM]"crlf ||,
+         "ADD     POOL <PoolName> ENTRY <Value> [ENTRY <Value>]"crlf ||,
+         "REMOVE  POOL <PoolName> ENTRY <Value> [ENTRY <Value>] CONFIRM [FORCE]"crlf ||,
+         "RELEASE POOL <PoolName> ENTRY <Value> [FORCE]"crlf ||,
+         "LIST"crlf ||,
+         "HELP")
+
+/* End of HandleHelp */
+
+
+/********************************/
+/* Now import needed functions. */
+/********************************/
+#From STAFPool Import STAFPoolErrorText
+#From STAFUtil Import All
+#From STAFCPar Import All
+#From Misc     Import CreatePath AddToStem OpenFile
+#From LogMon   Import ResolveVariable

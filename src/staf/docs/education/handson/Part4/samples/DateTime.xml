@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="test"/>
+
+  <function name="test">
+    <sequence>
+
+      <!-- get the python date -->
+      <script>
+        from time import localtime, strftime
+        currenttime = strftime("%a, %d %b %Y %H:%M:%S", localtime())
+      </script>
+
+      <message>'Python time: %s' % currenttime</message>
+
+      <!-- get the java date -->
+      <script>
+        from java.util import Calendar, Date
+        from java.text import SimpleDateFormat
+        formatter = SimpleDateFormat("yyyy.MM.dd G 'at' hh:mm:ss a zzz")
+        currentTimestamp = Date()
+        dateString = formatter.format(currentTimestamp)
+      </script>
+
+      <message>'Java time: %s' % dateString</message>
+
+      <!-- get the STAF date -->
+      <stafcmd>
+        <location>'local'</location>
+        <service>'MISC'</service>
+        <request>'WHOAREYOU'</request>
+      </stafcmd>
+
+      <message>'STAF time: %s' % STAFResult['currentTimestamp']</message>
+
+    </sequence>
+  </function>
+
+</stax>
+

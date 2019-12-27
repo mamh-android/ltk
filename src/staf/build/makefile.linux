@@ -1,0 +1,163 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_LIBS = pthread crypt dl
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := gcc
+endif
+
+OS_COMMONFLAGS := -D_XOPEN_SOURCE -D_BSD_SOURCE -DSTAF_OS_NAME_LINUX \
+                  -DSTAF_GETHOSTBYNAME_R_6PARM -DSTAF_GETHOSTBYADDR_R_8PARM \
+                  -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
+
+# Provide the default location for Java files on this system
+
+JAVA_DEFAULT_VERSION ?= V12
+
+JAVA_BUILD_V11 ?= 0
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /opt/IBMJava2-142
+
+# Provide the default location for Perl files on this system
+
+PERL_V514_ROOT ?= /opt/ActivePerl-5.14
+PERL_V514_INCLUDEDIRS ?= $(PERL_V514_ROOT)/lib/CORE
+PERL_V514_LIBDIRS ?= $(PERL_V514_ROOT)/lib/CORE
+PERL_V514_LIBS ?= perl
+PERL_V514_DYNALOADER ?=
+PERL_BUILD_V514 ?= 1
+
+PERL_V512_ROOT ?= /opt/ActivePerl-5.12
+PERL_V512_INCLUDEDIRS ?= $(PERL_V512_ROOT)/lib/CORE
+PERL_V512_LIBDIRS ?= $(PERL_V512_ROOT)/lib/CORE
+PERL_V512_LIBS ?= perl
+PERL_V512_DYNALOADER ?=
+PERL_BUILD_V512 ?= 1
+
+PERL_V510_ROOT ?= /opt/ActivePerl-5.10
+PERL_V510_INCLUDEDIRS ?= $(PERL_V510_ROOT)/lib/CORE
+PERL_V510_LIBDIRS ?= $(PERL_V510_ROOT)/lib/CORE
+PERL_V510_LIBS ?= perl
+PERL_V510_DYNALOADER ?=
+PERL_BUILD_V510 ?= 1
+
+PERL_V58_ROOT ?= /usr/lib/perl5/5.8.8
+PERL_V58_INCLUDEDIRS ?= $(PERL_V58_ROOT)/i386-linux-thread-multi/CORE
+PERL_V58_LIBDIRS ?= $(PERL_V58_ROOT)/i386-linux-thread-multi/CORE
+PERL_V58_LIBS ?= perl
+PERL_V58_DYNALOADER ?= $(PERL_V58_ROOT)/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a
+PERL_BUILD_V58 ?= 1
+
+PERL_V56_ROOT ?= /usr/lib/perl5/5.6.1
+PERL_V56_INCLUDEDIRS ?= $(PERL_V56_ROOT)/i386-linux/CORE
+PERL_V56_LIBDIRS ?= $(PERL_V56_ROOT)/i386-linux/CORE
+PERL_V56_LIBS ?= perl
+PERL_BUILD_V56 ?= 1
+
+PERL_V50_ROOT ?= /usr/lib/perl5/5.00503
+PERL_V50_INCLUDEDIRS ?= $(PERL_V50_ROOT)/i686-linux/CORE
+PERL_V50_LIBDIRS ?=$(PERL_V50_ROOT)/i686-linux/CORE
+PERL_V50_LIBS ?= perl
+PERL_BUILD_V50 ?= 1
+
+# Provide the default location for Python files on this system
+
+PYTHON_V22_ROOT ?= /opt/Python-2.2
+PYTHON_V22_INCLUDEDIRS ?= $(PYTHON_V22_ROOT)/include/python2.2
+PYTHON_V22_LIBDIRS ?= $(PYTHON_V22_ROOT)/lib/python2.2/config
+PYTHON_V22_LIBS ?= python2.2
+PYTHON_BUILD_V22 ?= 1
+
+PYTHON_V23_ROOT ?= /opt/Python-2.3
+PYTHON_V23_INCLUDEDIRS ?= $(PYTHON_V23_ROOT)/include/python2.3
+PYTHON_V23_LIBDIRS ?= $(PYTHON_V23_ROOT)/lib/python2.3/config
+PYTHON_V23_LIBS ?= python2.3
+PYTHON_BUILD_V23 ?= 1
+
+PYTHON_V24_ROOT ?= /opt/Python-2.4
+PYTHON_V24_INCLUDEDIRS ?= $(PYTHON_V24_ROOT)/include/python2.4
+PYTHON_V24_LIBDIRS ?= $(PYTHON_V24_ROOT)/lib/python2.4/config
+PYTHON_V24_LIBS ?= python2.4
+PYTHON_BUILD_V24 ?= 1
+
+PYTHON_V25_ROOT ?= /opt/Python-2.5
+PYTHON_V25_INCLUDEDIRS ?= $(PYTHON_V25_ROOT)/include/python2.5
+PYTHON_V25_LIBDIRS ?= $(PYTHON_V25_ROOT)/lib/python2.5/config
+PYTHON_V25_LIBS ?= python2.5
+PYTHON_BUILD_V25 ?= 1
+
+PYTHON_V26_ROOT ?= /opt/Python-2.6
+PYTHON_V26_INCLUDEDIRS ?= $(PYTHON_V26_ROOT)/include/python2.6
+PYTHON_V26_LIBDIRS ?= $(PYTHON_V26_ROOT)/lib/python2.6/config
+PYTHON_V26_LIBS ?= python2.6
+PYTHON_BUILD_V26 ?= 1
+
+PYTHON_V27_ROOT ?= /opt/Python-2.7
+PYTHON_V27_INCLUDEDIRS ?= $(PYTHON_V27_ROOT)/include/python2.7
+PYTHON_V27_LIBDIRS ?= $(PYTHON_V27_ROOT)/lib/python2.7/config
+PYTHON_V27_LIBS ?= python2.7
+PYTHON_BUILD_V27 ?= 1
+
+PYTHON_V30_ROOT ?= /opt/Python-3.0
+PYTHON_V30_INCLUDEDIRS ?= $(PYTHON_V30_ROOT)/include/python3.0
+PYTHON_V30_LIBDIRS ?= $(PYTHON_V30_ROOT)/lib/python3.0/config
+PYTHON_V30_LIBS ?= python3.0
+PYTHON_BUILD_V30 ?= 1
+
+PYTHON_V31_ROOT ?= /opt/Python-3.1
+PYTHON_V31_INCLUDEDIRS ?= $(PYTHON_V31_ROOT)/include/python3.1
+PYTHON_V31_LIBDIRS ?= $(PYTHON_V31_ROOT)/lib/python3.1/config
+PYTHON_V31_LIBS ?= python3.1
+PYTHON_BUILD_V31 ?= 1
+
+# Provide the default location for TCL files on this system
+
+TCL_V84_ROOT ?= /opt/ActiveTcl8.4
+TCL_V84_INCLUDEDIRS ?= $(TCL_V84_ROOT)/include
+TCL_V84_LIBDIRS ?= $(TCL_V84_ROOT)/lib
+TCL_V84_LIBS ?= tcl8.4
+TCL_BUILD_V84 ?= 1
+
+TCL_V85_ROOT ?= /opt/ActiveTcl8.5
+TCL_V85_INCLUDEDIRS ?= $(TCL_V85_ROOT)/include
+TCL_V85_LIBDIRS ?= $(TCL_V85_ROOT)/lib
+TCL_V85_LIBS ?= tcl8.5
+TCL_BUILD_V85 ?= 1
+
+TCL_V86_ROOT ?= /opt/ActiveTcl8.6
+TCL_V86_INCLUDEDIRS ?= $(TCL_V86_ROOT)/include
+TCL_V86_LIBDIRS ?= $(TCL_V86_ROOT)/lib
+TCL_V86_LIBS ?= tcl8.6
+TCL_BUILD_V86 ?= 1
+
+# Rexx data
+
+REXX_INCLUDEDIRS ?= /opt/orexx
+
+# Provide the default location for zlib files on this system
+
+ZLIB_SOURCEDIR ?= /opt/dev/autobuild/tools/zlib-1.2.5
+
+# Provide the default location for openssl files on this system
+
+OPENSSL_ROOT ?= /opt/dev/autobuild/tools/openssl-0.9.8e-root
+
+# Provide the default location for Ant on this system
+
+ANT_ROOT ?= /opt/dev/autobuild/tools/apache-ant-1.6.2

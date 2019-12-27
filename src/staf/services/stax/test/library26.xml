@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+    Function Library
+-->
+
+<stax>
+
+  <defaultcall function="FunctionA26"/>
+  
+  <function name="FunctionA26">
+  
+    <sequence>
+        
+      <script>file = "%slibrary27.xml" % xmlFileDir</script>
+
+      <message>"FunctionA26 is executing from file library26.xml"</message>
+      
+      <script>currentFunction = "FunctionA26"</script>
+
+      <import machine="'local'" file='file'>
+      </import>
+      
+      <call function="'FunctionA27'"/>
+
+    </sequence>
+  
+  </function>
+  
+</stax>

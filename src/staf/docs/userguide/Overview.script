@@ -1,0 +1,71 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Overview SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Overview
+.*  Detail:
+.*
+.*     This file contains an overview of STAF.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.overview
+:h1 id=overview.Overview
+:p.As its name indicates, STAF is a framework.  It was designed to promote
+reuse and extensibility.  It is intended to make software testing easier, and
+specifically to make it easier to automate software testing.  This includes
+creating automated testcases, managing and automating the test environment,
+creating execution harnesses (i.e., applications which schedule and/or execute
+work on test systems), etc.
+:p.STAF externalizes its capabilities through services.  A service provides
+a focused set of functionality, such as, Logging, Process Invocation, etc.
+STAFProc is the process that runs on a machine, called a STAF Client, which
+accepts requests and routes them to the appropriate service.  These requests
+may come from the local machine or from another STAF Client.  Thus, STAF works
+in a peer environment, where machines may make requests of services on other
+machines.
+:p.STAF was designed with the following points in mind.
+:ul compact.
+:li.Minimum machine requirements - This is both a hardware and a software
+statement.
+:li.Easily useable
+:li.Easily extendable - This means that it should be easy to create other
+services to plug into STAF.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.requirements
+:h2 id=requirements.Requirements
+:h3.Operating System
+:p.STAF is supported on the following operating systems
+:ul compact.
+:li.Windows 2000
+:li.Windows XP
+:li.Windows Server 2003 (i386, x86_64)
+:li.Windows Vista (i386, x86_64)
+:li.Windows Server 2008 (i386, x86_64)
+:li.Windows 7 (i386, x86_64)
+:li.Windows Server 2008 R2 (x86_64)
+:li.Windows 8 (i386, x86_64)
+:li.Windows Server 2012 (x86_64)
+:li.Linux (i386, x86_64, PPC64)
+:li.Linux on zSeries (31-bit, 64-bit)
+:li.AIX 6.1 and higher (32-bit, 64-bit)
+:li.IBM i 7.1 and higher (32-bit, 64-bit), previously known as i5/OS or OS/400
+:li.z/OS UNIX 1.4 and higher (32-bit, 64-bit)
+:li.Mac OS X 10.6 and higher (Universal binary with support for i386, x86_64, and ppc)
+:li.Solaris (Sparc 32-bit) 10 and higher
+:li.Solaris (Sparc 64-bit) 10 and higher
+:li.Solaris (AMD Opteron 64-bit) 10 and higher
+:li.Solaris (x86) 10 and higher
+:li.HP-UX 11.11 and higher (PA-RISC) 32-bit and 64-bit
+:li.HP-UX 11.31 and higher (IA64) 32-bit and 64-bit
+.*:li.Irix 6.3 (N32) and higher
+:li.FreeBSD 7.4 and higher (i386)
+:eul.

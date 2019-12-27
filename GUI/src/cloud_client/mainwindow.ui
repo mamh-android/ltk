@@ -1,0 +1,808 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>407</width>
+    <height>712</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>LTK Cloud Client</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="pushButton_unshare">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>55</y>
+      <width>91</width>
+      <height>35</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Unshare</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="listWidget_list">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>5</y>
+      <width>291</width>
+      <height>87</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_list">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>37</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>List</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_share">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>10</y>
+      <width>91</width>
+      <height>35</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Share</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_reboot">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>150</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Reboot</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_download">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>260</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Download</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_power_on">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>315</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Power_On</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_power_off">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>425</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Power_Off_HW</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_power_off_soft">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>480</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Power_Off_SW</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_onkey">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>205</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>On_Key</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>90</y>
+      <width>401</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>305</x>
+      <y>110</y>
+      <width>101</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Remote Control</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_2">
+    <property name="geometry">
+     <rect>
+      <x>295</x>
+      <y>0</y>
+      <width>20</width>
+      <height>691</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>-10</y>
+      <width>381</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>130</y>
+      <width>62</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Center</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_fw_update">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>535</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>FW Update</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_4">
+    <property name="geometry">
+     <rect>
+      <x>307</x>
+      <y>580</y>
+      <width>111</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_emmd_dump">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>370</y>
+      <width>91</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>EMMD_Dump</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="widget_burn_image" native="true">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>105</y>
+      <width>301</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-top-color: qconicalgradient(cx:0.5, cy:0.5, angle:0, stop:0 rgba(255, 255, 255, 255), stop:0.373979 rgba(255, 255, 255, 255), stop:0.373991 rgba(33, 30, 255, 255), stop:0.624018 rgba(33, 30, 255, 255), stop:0.624043 rgba(255, 0, 0, 255), stop:1 rgba(255, 0, 0, 255));</string>
+    </property>
+    <widget class="QPushButton" name="pushButton_burning_image">
+     <property name="geometry">
+      <rect>
+       <x>198</x>
+       <y>30</y>
+       <width>91</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Burn Image</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox">
+     <property name="geometry">
+      <rect>
+       <x>9</x>
+       <y>0</y>
+       <width>181</width>
+       <height>27</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QTreeWidget" name="ltk_image_tree">
+     <property name="geometry">
+      <rect>
+       <x>9</x>
+       <y>125</y>
+       <width>281</width>
+       <height>451</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QTextEdit" name="textEdit_burn_detail">
+     <property name="geometry">
+      <rect>
+       <x>9</x>
+       <y>30</y>
+       <width>183</width>
+       <height>93</height>
+      </rect>
+     </property>
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;buring status&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_burn_result">
+     <property name="geometry">
+      <rect>
+       <x>198</x>
+       <y>90</y>
+       <width>91</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(85, 255, 0);</string>
+     </property>
+     <property name="text">
+      <string>Result: Success</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_update_list">
+     <property name="geometry">
+      <rect>
+       <x>198</x>
+       <y>0</y>
+       <width>91</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Update List</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_clear_log">
+     <property name="geometry">
+      <rect>
+       <x>198</x>
+       <y>60</y>
+       <width>91</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Clear Log</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_burn_switch">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>230</y>
+       <width>93</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Burn Image</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="textEdit_detail">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>291</width>
+       <height>581</height>
+      </rect>
+     </property>
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="textInteractionFlags">
+      <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QComboBox" name="comboBox_branch_list">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>610</y>
+      <width>91</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>If you register branch info LTK cloud,After LTK cloud test finished,
+LTK cloud will revert the board to the latest branch you sellected,
+If no Hung/fail happened on board to keep environment,
+
+</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>315</x>
+      <y>600</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Share Level</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_register_level">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>630</y>
+      <width>89</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Global :  Board can be assigned all task 
+Team   :  Board can be assigned the task form your team
+Local   :  Board can be assigned the task form yourself</string>
+    </property>
+    <item>
+     <property name="text">
+      <string>Global</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Team</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Local</string>
+     </property>
+    </item>
+   </widget>
+   <zorder>comboBox_branch_list</zorder>
+   <zorder>pushButton_list</zorder>
+   <zorder>pushButton_unshare</zorder>
+   <zorder>listWidget_list</zorder>
+   <zorder>pushButton_share</zorder>
+   <zorder>pushButton_reboot</zorder>
+   <zorder>pushButton_download</zorder>
+   <zorder>pushButton_power_on</zorder>
+   <zorder>pushButton_power_off</zorder>
+   <zorder>pushButton_power_off_soft</zorder>
+   <zorder>pushButton_onkey</zorder>
+   <zorder>line</zorder>
+   <zorder>label_2</zorder>
+   <zorder>line_2</zorder>
+   <zorder>line_3</zorder>
+   <zorder>label</zorder>
+   <zorder>pushButton_fw_update</zorder>
+   <zorder>line_4</zorder>
+   <zorder>pushButton_emmd_dump</zorder>
+   <zorder>widget_burn_image</zorder>
+   <zorder>label_6</zorder>
+   <zorder>comboBox_register_level</zorder>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>407</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButton_list</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>list_board()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>246</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>278</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>listWidget_list</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>show_board_detail(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>145</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>224</x>
+     <y>35</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_share</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>share_board()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>315</x>
+     <y>67</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>183</x>
+     <y>46</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_unshare</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>unshare_board()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>351</x>
+     <y>98</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>358</x>
+     <y>125</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_reboot</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reboot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>321</x>
+     <y>173</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>294</x>
+     <y>316</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_onkey</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onkey()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>354</x>
+     <y>246</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>403</x>
+     <y>175</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_download</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>download()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>352</x>
+     <y>296</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>386</x>
+     <y>206</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_power_on</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>power_on()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>353</x>
+     <y>346</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>402</x>
+     <y>236</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_power_off</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>power_off()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>354</x>
+     <y>448</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>406</x>
+     <y>268</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_power_off_soft</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>power_off_soft()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>347</x>
+     <y>503</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>392</x>
+     <y>301</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_fw_update</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>fw_update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>360</x>
+     <y>593</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>319</x>
+     <y>515</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_emmd_dump</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>emmd_dump()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>380</x>
+     <y>395</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>395</x>
+     <y>587</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_burn_switch</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>show_burning_setting()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>192</x>
+     <y>398</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>343</x>
+     <y>687</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_update_list</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>load_blf_map()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>272</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>6</x>
+     <y>101</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>close_to_icon()</slot>
+  <slot>on_action_quit_triggered()</slot>
+  <slot>list_board()</slot>
+  <slot>show_board_detail(QString)</slot>
+  <slot>share_board()</slot>
+  <slot>unshare_board()</slot>
+  <slot>reboot()</slot>
+  <slot>onkey()</slot>
+  <slot>download()</slot>
+  <slot>power_off()</slot>
+  <slot>power_on()</slot>
+  <slot>power_off_soft()</slot>
+  <slot>fw_update()</slot>
+  <slot>emmd_dump()</slot>
+  <slot>show_burning_setting()</slot>
+  <slot>show_blf_map()</slot>
+  <slot>load_blf_map()</slot>
+ </slots>
+</ui>

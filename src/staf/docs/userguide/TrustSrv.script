@@ -1,0 +1,538 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : TrustSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Trust Service
+.*  Detail:
+.*
+.*     This file describes the STAF Trust Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.trust service
+:ih1.services
+:i2.trust service
+:h2 id=trustsrv.Trust Service
+:h3.Description
+:p.The TRUST Service is one of the internal STAF services.  It allows you to
+query and set the trust entries.  It provides the
+following commands.
+:ul compact.
+:li.SET - Sets the trust level for a specific machine or user or a default trust level
+:li.GET - Retrieves the effective trust level for a given machine or user
+:li.LIST - Retrieves the default trust level and a list of the explicit
+trust entries for machines and users
+:li.DELETE - Deletes a given trust entry for a machine or user
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.trust service
+:h3.SET
+:p.SET will set the default trust level or the trust level for a specific
+machine or user.
+:h4.Syntax
+:xmp.
+SET <MACHINE <Machine> | USER <User> | DEFAULT> LEVEL <Level>
+:exmp.
+:p.:xph.MACHINE:exph. indicates a machine for which to set a trust level.
+&varres.
+The format for <Machine> is:
+:xmp.
+  &lbrk.<Interface>&colon.//&rbrk.<System Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Interface>:exph. is the name of the network interface.
+It is case-insensitive.
+If the name of a network interface is not specified, wildcard '*' is
+substituted which will match any network interface name.
+:li.:xph.<System Identifier>:exph. is a valid network identifier for the network
+interface.  It is case-insensitive.
+Logical or physical identifiers may be specified for the system
+identifier.  Physical identifiers are the lowest-level identifier
+available via the specified network interface.  Logical identifiers are more
+human readable identifiers that ultimately map to physical identifiers.
+For example, for a TCP/IP interface, the physical identifier for a
+machine is the IP address, while the logical identifier for a machine
+is the hostname.
+:eul.
+:p.Note that you can specify match patterns (e.g. wild cards) in the
+interface and the system identifier.  These patterns recognize two
+special characters, '*' and '?', where '*' matches a string of
+characters (including an empty string) and '?' matches any single
+character (the empty string does not match).
+:p.Note that if you specify the hostname in a trust specification
+for a TCP/IP interface, you must specify the long host name
+(and/or wildcards).
+:p.Note that if you specify a port (e.g. @6500) at the end of the
+system identifier, it will be removed.
+:p.Requests coming from the local system will now appear as though
+they came from an interface named "local" and a system identifier
+of "local".  This allows you to specify a trust level for local
+requests.  (In STAF V2.x, local requests were automatically granted
+a trust level of 5.)
+:p.
+:xph.USER:exph. indicates a user for which to set a trust level.
+&varres.
+The format for <User> is:
+:xmp.
+  &lbrk.<Authenticator>&colon.//&rbrk.<User Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Authenticator>:exph. is the name of the authenticator.
+It is case-insensitive.  If an authenticator is not specified, the default
+authenticator is used.
+:li.:xph.<User Identifier>:exph. is a valid user identifier for the authenticator.
+It is case sensitive.
+:eul.
+:p.Note that you can specify match patterns in the authenticator name
+and the user identifier.  These patterns recognize two special characters,
+'*' and '?', where '*' matches a string of characters (including an
+empty string) and '?' matches any single character (the empty string
+does not match).
+:p.
+:xph.DEFAULT:exph. specifies that you want to set the default trust level.
+:p.
+:xph.LEVEL:exph. specifies the level of trust you wish to set.
+&varres.
+
+:h4.Notes:
+:ol compact.
+:li.If multiple trust specifications match the same user,
+STAF will rank the matching specifications as documented in
+section :hdref refid=userTrustMatching. and use the match with 
+the highest (i.e. lowest numbered) rank.  If multiple trust
+specifications match within the same rank, the lowest matching trust
+level will be used.
+:li.If multiple trust specifications match the same system,
+STAF will rank the matching specifications as documented in
+section :hdref refid=machineTrustMatching. and use the match with
+the highest (i.e. lowest numbered) rank.  If multiple trust
+specifications match within the same rank, the lowest matching trust
+level will be used.
+:li.User trust specifications override machine trust specifications.
+:eol.
+
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from SET are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a SET command.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Set the trust level for local requests to 5. 
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE local&colon.//local LEVEL 5:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the default trust level to 1.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET DEFAULT LEVEL 1:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 5 for machine
+*&colon.//client1.austin.ibm.com (e.g. a machine with host name
+client1.austin.ibm.com using any network interface).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE client1.austin.ibm.com LEVEL 5:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 5 for machine *&colon.//93.224.16
+(e.g. a machine with IP address 9.3.224.16 using any network interface).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE 9.3.224.16 LEVEL 5:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 4 for machine tcp&colon.mysystem.site.com
+(e.g. a machine with host name mysystem.site.com using network interface tcp).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE tcp&colon.//mysystem.site.com LEVEL 4:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 0 for machine
+*&colon.//badguy.austin.ibm.com (e.g. a machine with host name
+badguy.austin.ibm.com using any network interface).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE badguy.austin.ibm.com LEVEL 0:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 3 for a group of machines
+using network interface tcp2 and with IP addresses that begin
+with "9.3.224.".
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE tcp2&colon.//9.3.224.* LEVEL 3:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 2 for a group of machines
+with host names that end with ".austin.ibm.com" using any network interface.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE *.austin.ibm.com LEVEL 2:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 2 for a group of machines
+using a network interface that begins with tcp and with host names
+that end with ".site.com".
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MACHINE tcp*&colon.//*.site.com LEVEL 2:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 5 for a user whose
+user identifier is John@company.com and uses the default authenticator.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET USER John@company.com LEVEL 5:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 0 for a user whose
+user identifier is badguy@company.com and uses the default authenticator.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET USER badguy@company.com LEVEL 0:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 3 for a group of users
+whose user identifiers end with "@company.com" and which use the
+default authenticator.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET USER *@company.com LEVEL 3:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 4 for a group of users
+using an authenticator named SampleAuth and whose user identifiers end
+with "@company.com".
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET USER SampleAuth&colon.//*@company.com LEVEL 4:exph.
+:p.
+:li.:hp2.Goal::ehp2. Set the trust level to 1 for a group of users
+using any authenticator (indicated by wildcard *) and any
+user name (indicated by wildcard *).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET USER *&colon.//* LEVEL 1:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.GET
+:i3.trust service
+:h3.GET
+:p.GET will return the effective trust level of a specific machine
+and, optionally, for a specific user.
+:h4.Syntax
+:xmp.
+GET MACHINE <Machine> &lbrk.USER <User>&rbrk.
+:exmp.
+:p.:xph.MACHINE:exph. specifies the machine for which to return the
+effective trust level.
+&varres.
+The format for <Machine> is:
+:xmp.
+  &lbrk.<Interface>&colon.//&rbrk.<System Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Interface>:exph. is the name of the network interface.
+It is case-insensitive.
+If the name of a network interface is not specified, the default interface
+is used.
+:li.:xph.<System Identifier>:exph. is a valid network identifier for the network
+interface.  It is case-insensitive.
+Logical or physical identifiers may be specified for the system
+identifier.  Physical identifiers are the lowest-level identifier
+available via the specified network interface.  Logical identifiers are more
+human readable identifiers that ultimately map to physical identifiers.
+For example, for a TCP/IP interface, the physical identifier for a
+machine is the IP address, while the logical identifier for a machine
+is the hostname.
+:eul.
+:p.
+Wildcard patterns, '*' and '?', should not be specified.
+If a port is included (e.g. @6500) at the end of the machine
+value, it will be removed.
+:p.
+If the machine has a matching :xph.MACHINE:exph. trust entry,
+the effective trust level is the level specified in the
+:xph.MACHINE:exph. trust entry.  Otherwise, the effective trust
+level is the default trust level.
+:p.:xph.USER:exph. specifies the user for which to return the effective
+trust level.
+&varres.
+The format for <User> is:
+:xmp.
+  &lbrk.<Authenticator>&colon.//&rbrk.<User Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Authenticator>:exph. is the name of the authenticator.
+It is case-insensitive.  If an authenticator is not specified, the default
+authenticator is used.
+:li.:xph.<User Identifier>:exph. is a valid user identifier for the authenticator.
+It is case sensitive.
+:eul.
+:p.
+Wildcard patterns, '*' and '?', cannot be specified.
+:p.If the user has a matching :xph.USER:exph. trust entry,
+the effective trust level is the level specified in the 
+:xph.USER:exph. trust entry.  Otherwise, if the machine has a
+matching :xph.MACHINE:exph. trust entry, the effective trust
+level is the level specified in the :xph.MACHINE:exph. trust
+entry.  Otherwise, the effective trust level is the default
+trust level.
+:h4.Notes:
+:ol compact.
+:li.If multiple trust specifications match the same user,
+STAF will rank the matching specifications as documented in
+section :hdref refid=userTrustMatching. and use the match with 
+the highest (i.e. lowest numbered) rank.  If multiple trust
+specifications match within the same rank, the lowest matching trust
+level will be used.
+:li.If multiple trust specifications match the same system,
+STAF will rank the matching specifications as documented in
+section :hdref refid=machineTrustMatching. and use the match with
+the highest (i.e. lowest numbered) rank.  If multiple trust
+specifications match within the same rank, the lowest matching trust
+level will be used.
+:li.User trust specifications override machine trust specifications.
+:eol.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from GET are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain the effective trust level of the given
+machine.
+
+:h4.Examples
+:p.For the following examples, assume the trust entries for machines and
+users are as follows with tcp as the default network interface and SampleAuth as
+the default authenticator:
+:xmp.
+Type    Entry                         Trust Level
+------- ----------------------------- -----------
+Default <None>                        1
+Machine *&colon.//*.austin.ibm.com          2
+Machine *&colon.//client1.austin.ibm.com    5
+Machine *&colon.//client3.austin.ibm.com    3
+Machine local&colon.//local                 5
+Machine tcp&colon.//client2.austin.ibm.com  0
+User    SampleAuth&colon.//*@company.com    3
+User    SampleAuth&colon.//Jane@company.com 4
+User    SampleAuth&colon.//John@company.com 5
+:exmp.
+
+:p.Here are some :xph.GET:exph. requests and their results:
+
+:xmp.
+Request:  GET MACHINE client1.austin.ibm.com
+Result :  5
+:exmp.
+:p.
+:xmp.
+Request:  GET MACHINE tcp&colon.//client2.austin.ibm.com
+Result :  0
+:exmp.
+:p.
+:xmp.
+Request:  GET MACHINE client3.austin.ibm.com
+Result :  3
+:exmp.
+:p.
+:xmp.
+Request:  GET MACHINE client4.austin.ibm.com
+Result    2
+:exmp.
+:p.
+:xmp.
+Request:  GET MACHINE server1.raleigh.ibm.com
+Result:   1
+:exmp.
+:p.
+:xmp.
+Request:  GET USER John@company.com MACHINE client3.austin.ibm.com
+Result :  5
+:exmp.
+:p.
+:xmp.
+Request:  GET USER SampleAuth&colon.//Jane@company.com MACHINE client1.austin.ibm.com
+Result :  4
+:exmp.
+:p.
+:xmp.
+Request:  GET USER Henry@company.com MACHINE client1.austin.ibm.com
+Result :  3
+:exmp.
+:p.
+:xmp.
+Request:  GET USER Sally@mybusiness.com MACHINE client1.austin.ibm.com
+Result :  5
+:exmp.
+:p.
+:xmp.
+Request:  GET USER Sally@mybusiness.com MACHINE server1.raleigh.ibm.com
+Result :  1
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.trust service
+:h3.LIST
+:p.LIST will return the default trust level and a list of the trust entries
+for machines and users.
+
+:h4.Syntax
+:xmp.
+LIST
+:exmp.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+The result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Trust/Entry>:exph., representing
+all the trust entries.  The first trust entry in the list will be for
+the default trust entry, followed by trust entries for machines,
+and then followed by trust entries for users.
+The map is defined as follows:
+:table cols='* * * 3*'.
+:tcap.Definition of map class STAF/Service/Trust/Entry
+:tnote text='Description'.This map class represents a trust entry.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.type
+:c.Type
+:c.&stringObj.
+:c.:xph.'Default' | 'Machine' | 'User':exph.
+:row.
+:c.entry
+:c.Entry
+:c.&stringObj. | &noneObj.
+:c.:xph.<Machine Spec> | <User Spec):exph.
+:row.
+:c.trustLevel
+:c.Trust Level
+:c.&stringObj.
+:c.:xph.'0' - '5':exph.
+:tnote text='Notes'.
+:ol compact.
+:li.The value for "Entry" will be &noneObj. for the default trust entry.
+:li.Each trust entry for a machine, aka :xph.<Machine Spec>:exph., has
+the following format:
+.br
+:xph.<Interface>&colon.//<System Identifier>:exph.
+:li.Each trust entry for a user, aka :xph.<User Spec>:exph., has the
+following format:
+.br
+:xph.<Authenticator>&colon.//<User Identifier>:exph.
+:eol.
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Retrieve the list of all trust entries.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST:exph.
+:p.:hp2.Result::ehp2.  If the request is submitted from the command line,
+the result, in table format, could look like:
+:xmp.
+Type    Entry                         Trust Level
+------- ----------------------------- -----------
+Default <None>                        1
+Machine *&colon.//*.austin.ibm.com          2
+Machine *&colon.//9.31.73.14*               3
+Machine *&colon.//9.31.73.147               5
+Machine *&colon.//client1.austin.ibm.com    5
+Machine *&colon.//client3.austin.ibm.com    3
+Machine local&colon.//local                 5
+Machine tcp&colon.//client2.austin.ibm.com  0
+User    SampleAuth&colon.//*@company.com    3
+User    SampleAuth&colon.//Jane@company.com 4
+User    SampleAuth&colon.//John@company.com 5
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.trust service
+:h3.DELETE
+:p.DELETE will remove the explicit trust entry for the specified machine
+or user.
+:h4.Syntax
+:xmp.
+DELETE MACHINE <Machine> | USER <User>
+:exmp.
+:p.:xph.MACHINE:exph. specifies the machine for which you wish to delete the
+specific trust entry.
+&varres.
+The format for <Machine> is:
+:xmp.
+  &lbrk.<Interface>&colon.//&rbrk.<System Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Interface>:exph. is the name of the network interface.
+It is case-insensitive.
+If the name of a network interface is not specified, wildcard '*' is
+substituted.
+:li.:xph.<System Identifier>:exph. is a valid network identifier for the network
+interface.  It is case-insensitive.
+:eul.
+:p.
+If a port is included (e.g. @6500) at the end of the machine
+value, it will be removed.
+:p.
+:xph.USER:exph. specifies the user for which you wish to delete the
+specific trust entry.
+&varres.
+The format for <User> is:
+:xmp.
+  &lbrk.<Authenticator>&colon.//&rbrk.<User Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Authenticator>:exph. is the name of the authenticator.
+It is case-insensitive.  If an authenticator is not specified, the default
+authenticator is used.
+:li.:xph.<User Identifier>:exph. is a valid user identifier for the authenticator.
+It is case sensitive.
+:eul.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes from DELETE are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.The result buffer will contain no data on return from a DELETE command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete the trust entry for machine *&colon.//client1.austin.ibm.com
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MACHINE client1.austin.ibm.com:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for machine tcp&colon.//mysystem.site.com.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MACHINE tcp&colon.//mysystem.site.com:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for machine *&colon.//9.3.224.82
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MACHINE 9.3.224.82:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for machine *&colon.//*.austin.ibm.com
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE MACHINE *.austin.ibm.com:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for user SampleAuth&colon.//John@company.com
+(assuming SampleAuth is the default authenticator).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE USER John@company.com:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for user "SampleAuth&colon.//*@company.com"
+(assuming SampleAuth is the default authenticator).
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE USER *@company.com:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for user "Auth2&colon.//Mary"
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE USER Auth2&colon.//Mary:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete the trust entry for user "*&colon.//*"
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE USER *&colon.//*:exph.
+:eul.

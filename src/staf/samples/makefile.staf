@@ -1,0 +1,70 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+samples_targets += $(REL)/samples/rexx/Sample1.cmd\
+                   $(REL)/samples/rexx/Sample2.cmd\
+                   $(REL)/samples/rexx/Sample3.cmd\
+                   $(REL)/samples/rexx/Sample4.cmd\
+                   $(REL)/samples/rexx/PingTest.cmd\
+                   $(REL)/samples/java/JPing.java\
+                   $(REL)/samples/cpp/LogIt.cpp\
+                   $(REL)/samples/c/LogIt.c\
+                   $(REL)/samples/demo/STAFDemoController.java\
+                   $(REL)/samples/demo/STAFProcess.java\
+                   $(REL)/samples/misc/OldVars.cfg
+Targets += $(samples_targets)
+CleanupTargets += cleanup_samples
+
+# Samples targets
+
+$(REL)/samples/rexx/Sample1.cmd: $(SRC)/samples/rexx/Sample1.cmd $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/rexx/Sample2.cmd: $(SRC)/samples/rexx/Sample2.cmd $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/rexx/Sample3.cmd: $(SRC)/samples/rexx/Sample3.cmd $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/rexx/Sample4.cmd: $(SRC)/samples/rexx/Sample4.cmd $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/rexx/PingTest.cmd: $(SRC)/test/PingTest.cmd $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/java/JPing.java: $(SRC)/test/JPing.java $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/cpp/LogIt.cpp: $(SRC)/samples/cpp/LogIt.cpp $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/c/LogIt.c: $(SRC)/samples/c/LogIt.c $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/demo/STAFDemoController.java: $(SRC)/samples/demo/STAFDemoController.java $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/demo/STAFProcess.java: $(SRC)/samples/demo/STAFProcess.java $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+$(REL)/samples/misc/OldVars.cfg: $(SRC)/samples/misc/OldVars.cfg $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_samples:
+	-@$(DEL) $(O)/samples/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/rexx/Sample1.cmd $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/rexx/Sample2.cmd $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/rexx/Sample3.cmd $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/rexx/Sample4.cmd $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/rexx/PintTest.cmd $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/java/JPing.java $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/cpp/LogIt.cpp $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/c/LogIt.c $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/STAFDemoController.java $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/STAFProcess.java $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/misc/OldVars.cfg $(OUT_ERR_TO_DEV_NULL)
+

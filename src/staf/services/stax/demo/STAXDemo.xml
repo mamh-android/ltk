@@ -1,0 +1,1593 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!-- ==================================================================
+
+     STAXDemo.xml
+
+     This is a STAX job definition file that demonstrates STAX.
+
+     Change the value for demoMode passed to Main by <defaultcall> in
+     this XML file (or in the ARGS parameter as the first element in a
+     list on the STAX EXECUTE request).  Set to 0 to run in manual mode,
+     or 1 to run in a semi-automated mode.
+
+     Change the default for machList in this XML file (or in the ARGS
+     parameter as the second argument in a list on the STAX EXECUTE
+     request) to be a list of one or more systems where you will be
+     running STAFProcess.  For example,
+       machList = ['local']
+       machList = ['machA', 'machB']
+
+     On the system(s) that you will be running STAFProcess, you will
+     need to set the following STAF variables.
+
+       * STAFDemo/JavaAppCommand
+       * STAFDemo/JavaAppParms
+       * STAFDemo/JavaAppClassPath
+
+     Typically, you should set these variables in your STAF.cfg file.
+
+     STAFDemo/JavaAppCommand should be set to the full path to the
+     java.exe program.  For example,
+       STAFDemo/JavaAppCommand=c:\jdk1.2.1\bin\javaw.exe
+
+     STAFDemo/JavaAppParms should be set to the name of the demo app.
+     For example,
+       STAFDemo/JavaAppParms=STAFProcess
+
+     STAFDemo/JavaAppClassPath should be set to contain the JSTAF.zip
+     file, as well as the path to the STAFProcess.class files.
+     For example,
+       STAFDemo/JavaAppClassPath=c:\STAF\bin\JSTAF.zip;c:\STAFDemo
+
+     You should ensure that the STAFDemoController system has a trust
+     level of 5 to each of the systems that will be running the
+     STAFProcess program.
+     ============================================================== -->
+
+<stax>
+
+  <!-- Modify the value for demoMode passed to Main as needed.
+       0 = manual mode, 1 = semi-automated mode
+    -->
+  <defaultcall function="Main">1</defaultcall>
+
+  <script>
+    processCorner = STAXGlobal(0)  # 0 = northwest, 1 = southwest, 2 = southeast, 3 = northeast
+  </script>
+
+  <function name="Main">
+
+    <function-description>
+      Runs a demo for STAX.  This demo emulates the STAF Demo by allowing various
+      STAF commands to be initiated by releasing blocks via the STAX Monitor.
+      Other STAF services this demo interfaces with are:  Resource Pool, Queue,
+      Semaphore, Var, Log, and Process.
+
+      This demo can be run in a manual or semi-automated mode by setting the
+      demoMode to 0 for manual and 1 for automated.  The STAFProcess process
+      initiated by this demo can be configured to run on any number of remote
+      systems (and/or the local system) by setting the machList variable to a
+      list of machines.
+    </function-description>
+
+    <!-- Modify machList to contain the names of the machine(s) where you
+         will be running STAFProcess.
+         Modify demoMode to run in manual mode instead of semi-automated
+      -->
+    <function-list-args>
+
+      <function-required-arg name="demoMode">
+        Mode to run the demo.  0=manual, 1=semi-automated
+      </function-required-arg>
+
+      <function-optional-arg name="machList" default="['local']">
+        List of machines that can run STAFProcess
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <block name="'Initialize STAFDemo'">
+
+        <sequence>
+
+          <script>
+            numResources = 2
+            ColorList = ['Yellow', 'Green', 'Red']
+            ProcessMap = STAXGlobal({})   # key is machine/Process#, value is process handle
+            import time, string
+          </script>
+
+          <call function="'GetLocalMachineName'"/>
+
+          <if expr="STAXResult[0] != 0">
+            <sequence>
+              <message>'Error getting local machine name'</message>
+              <terminate/>
+            </sequence>
+            <else>
+              <script>localMachine = STAXResult[1]</script>
+            </else>
+          </if>
+
+          <call function="'InitializeResourcePool'"/>
+
+        </sequence>
+
+      </block>
+
+      <parallel>
+
+        <if expr="demoMode == 1">
+          <call function="'RunAutomatedDemo'"/>
+        </if>
+
+        <call function="'ResourcePoolControl'"/>
+
+        <call function="'ProcessControl'"/>
+
+      </parallel>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="ProcessControl">
+
+    <function-description>
+      Initialize the blocks for each machine in machList.  Each machine has
+      a "Start new process" block kept in a held state.  When released, a
+      new process is started on that machine and the block is put back into
+      a held state so that more processes can be started on that machine.
+    </function-description>
+
+    <sequence>
+
+      <!-- Sleep a half second to let other blocks appear first -->
+      <script>
+        time.sleep(.5)
+      </script>
+
+      <!-- Initialize blocks for each machine in machList  -->
+      <paralleliterate var="machName" in="machList">
+
+        <block name="'Machine %s' % machName">
+
+          <sequence>
+
+            <script>
+
+              start = STAXGlobal(None)
+              processNum = STAXGlobal(0)
+
+              if machName == 'local':
+                machName = localMachine
+                orgMachName = 'local'
+              else:
+                orgMachName = machName
+
+            </script>
+
+            <parallel>
+
+              <block name="'Start new process'">
+                <loop>
+                  <sequence>
+                    <hold/>
+                    <script>
+                      start.set(1)
+                      processNum.set(processNum + 1)
+                    </script>
+                  </sequence>
+                </loop>
+              </block>
+
+              <call function="'CheckStartProcess'"/>
+
+            </parallel>
+
+          </sequence>
+
+        </block>
+
+      </paralleliterate>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="CheckStartProcess">
+
+    <function-description>
+      Check if a process has been requested to be started.  If so, start
+      the process and recursively call this function again.
+    </function-description>
+
+    <loop>
+      <sequence>
+
+        <if expr="start.get() == 1">
+          <sequence>
+
+            <script>
+              start.set(None)
+            </script>
+
+            <parallel>
+              <call function="'CheckStartProcess'"/>
+              <call function="'STAFProcess'"/>
+            </parallel>
+
+          </sequence>
+        </if>
+
+        <script>
+          time.sleep(1)
+        </script>
+
+      </sequence>
+    </loop>
+  </function>
+
+
+  <function name="STAFProcess">
+
+    <function-description>
+      Starts a process which contains a sequence which initiates various process
+      control blocks.
+    </function-description>
+
+    <block name="'Process %d' % processNum">
+
+      <testcase name="'%s: Process%d' % (orgMachName, processNum)">
+
+        <sequence>
+          <process name="'Process %d' % processNum">
+            <location>machName</location>
+            <command>'{STAFDemo/JavaAppCommand}'</command>
+            <parms>'{STAFDemo/JavaAppParms} %d' % processCorner</parms>
+            <vars>
+              [ 'STAFDemo/ResourcePoolMachine=%s' % localMachine,
+                'STAF/Service/Log/Mask=Error']
+            </vars>
+            <env>'CLASSPATH={STAFDemo/JavaAppClassPath}'</env>
+            <process-action>
+              <sequence>
+
+                <script>
+                  processCorner.set(processCorner + 1)
+                </script>
+
+                <script>
+                  # Store in map with key: machName/ProcessNum, value: STAXProcessHandle
+                  # For use with automated demo
+                  key = '%s/Process%s' % (orgMachName, processNum)
+                  ProcessMap[key] = str(STAXProcessHandle)
+                </script>
+
+                <block name="'Handle %s: Process Control Options' % str(STAXProcessHandle)">
+                  <parallel>
+                    <call function="'ChangeBackgroundColor'"/>
+                    <call function="'ChangeExecutionState'"/>
+                    <call function="'ChangeLoggingOptions'"/>
+                  </parallel>
+                </block>
+
+              </sequence>
+            </process-action>
+          </process>
+
+          <if expr="RC == 0">
+            <tcstatus result="'pass'"/>
+            <else>
+              <sequence>
+                <tcstatus result="'fail'">'Process failed with RC=%s, Result=%s' % (RC, STAFResult)</tcstatus>
+                <return/>
+              </sequence>
+            </else>
+          </if>
+
+          <stafcmd name="'Delete Log'">
+            <location>machName</location>
+            <service>'LOG'</service>
+            <request>'DELETE MACHINE {STAF/Config/MachineNickname} HANDLE %s LOGNAME STAFDemo CONFIRM' % (STAXProcessHandle)</request>
+          </stafcmd>
+
+        </sequence>
+
+      </testcase>
+
+    </block>
+
+  </function>
+
+
+  <function name="ChangeBackgroundColor">
+
+    <function-description>
+      Controls changing the background color of a process window
+    </function-description>
+
+    <block name="'Change Background Color:'">
+
+      <sequence>
+
+        <stafcmd name="'Post Event Continue Semaphore'">
+          <location>machName</location>
+          <service>'SEM'</service>
+          <request>'POST EVENT STAFDemo/Handle/%s/Continue' % STAXProcessHandle</request>
+        </stafcmd>
+
+        <if expr="RC != 0">
+          <message>'Error posting event continue semaphore; RC=%s, Result=%s' % (RC, STAFResult)</message>
+        </if>
+
+        <paralleliterate var="color" in="ColorList">
+          <block name="color">
+            <loop>
+              <sequence>
+
+                <hold/>
+
+                <stafcmd name="'Set Background Color Var'">
+                  <location>machName</location>
+                  <service>'VAR'</service>
+                  <request>
+                    'SET HANDLE %s VAR STAFDemo/BackgroundColor=%s' % (STAXProcessHandle, color)
+                  </request>
+                </stafcmd>
+
+                <call function="'Check-STAFCmd-RC'">
+                  { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error setting color variable'}
+                </call>
+
+              </sequence>
+            </loop>
+          </block>
+        </paralleliterate>
+
+      </sequence>
+
+    </block>
+
+  </function>
+
+
+  <function name="ChangeExecutionState">
+
+    <function-description>
+      Controls changing the execution state of a process
+    </function-description>
+
+    <block name="'Change Execution State:'">
+
+      <parallel>
+
+        <block name="'Pause'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <stafcmd name="'Reset Continue Event Semaphore'">
+                <location>machName</location>
+                <service>'SEM'</service>
+                <request>'RESET EVENT STAFDemo/Handle/%s/Continue' % STAXProcessHandle</request>
+              </stafcmd>
+
+              <call function="'Check-STAFCmd-RC'">
+                { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error pausing process'}
+              </call>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+
+        <block name="'Continue'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <stafcmd name="'Post Continue Event Semaphore'">
+                <location>machName</location>
+                <service>'SEM'</service>
+                <request>'POST EVENT STAFDemo/Handle/%s/Continue' % STAXProcessHandle</request>
+              </stafcmd>
+
+              <call function="'Check-STAFCmd-RC'">
+                { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error continuing process'}
+              </call>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+
+        <block name="'Stop'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <stafcmd name="'Queue Stop Message'">
+                <location>machName</location>
+                <service>'QUEUE'</service>
+                <request>'QUEUE HANDLE %s MESSAGE STAFDemo/Stop' % STAXProcessHandle</request>
+              </stafcmd>
+
+              <call function="'Check-STAFCmd-RC'">
+                { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error queueing message'}
+              </call>
+
+              <!-- Terminate the main Process block  -->
+              <script>
+                blocks = string.split(STAXCurrentBlock, '.')
+                if len(blocks) > 1:
+                  mainProcessBlock = string.join([blocks[0], blocks[1], blocks[2]], '.')
+                else:
+                  print 'Error determining name of main process block to terminate'
+              </script>
+
+              <terminate block="mainProcessBlock"/>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+
+      </parallel>
+
+    </block>
+
+  </function>
+
+
+  <function name="ChangeLoggingOptions">
+
+    <function-description>
+      Controls changing the logging options for a process's log file.  The logging
+      options include setting the log mask to 'Error', setting the log mask to
+      'Error Warning Info Debug', displaying the log file, and clearing the log file.
+    </function-description>
+
+    <block name="'Change Logging Options:'">
+
+      <parallel>
+
+        <block name="'Set Log Mask - Error'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <call function="'ChangeLogMask'">
+                {
+                  'logMask': 'Error',
+                  'machName': machName,
+                  'handle': STAXProcessHandle
+                }
+              </call>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+
+        <block name="'Set Log Mask - All (Error, Warning, Info, Debug)'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <call function="'ChangeLogMask'">
+                {
+                  'logMask': 'Error Warning Info Debug',
+                  'machName': machName,
+                  'handle': STAXProcessHandle
+                }
+              </call>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+
+        <block name="'Clear Log'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <stafcmd name="'Clear Log'">
+                <location>machName</location>
+                <service>'LOG'</service>
+                <request>'PURGE MACHINE {STAF/Config/MachineNickname} HANDLE %s LOGNAME STAFDemo CONFIRMALL' % (STAXProcessHandle)</request>
+              </stafcmd>
+
+              <call function="'Check-STAFCmd-RC'">
+                { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error clearing log'}
+              </call>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+        <block name="'Display Log'">
+
+          <loop>
+
+            <sequence>
+
+              <hold/>
+
+              <call function="'ViewLog'">
+                { 'machName': machName,
+                  'handle': STAXProcessHandle,
+                  'logName': 'STAFDemo'}
+              </call>
+
+            </sequence>
+
+          </loop>
+
+        </block>
+
+      </parallel>
+
+    </block>
+
+  </function>
+
+
+  <function name="ResourcePoolControl">
+
+    <function-description>
+      Controls adding and removing resources from the STAFDemo resource pool
+    </function-description>
+
+    <block name="'Resource Pool Control'">
+
+      <testcase name="'ResourcePool'">
+
+        <parallel>
+
+          <block name="'Add Resource'">
+
+            <loop>
+
+              <sequence>
+
+                <hold/>
+
+                <call function="'GetNumberResources'">['local', 'STAFDemo']</call>
+                <script>numResources = STAXResult</script>
+
+                <stafcmd name="'Add Resource Pool Entry'">
+                  <location>'local'</location>
+                  <service>'RESPOOL'</service>
+                  <request>'ADD POOL STAFDemo ENTRY Resource%s' % str(numResources + 1)</request>
+                </stafcmd>
+
+                <if expr="RC == 0">
+                  <sequence>
+                    <script>numResources = numResources + 1</script>
+                    <message>'Number of Resources: %d' % numResources</message>
+                  </sequence>
+                </if>
+
+                <call function="'Check-STAFCmd-RC'">
+                  { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error adding resource'}
+                </call>
+
+              </sequence>
+
+            </loop>
+
+          </block>
+
+          <block name="'Remove Resource'">
+
+            <loop>
+
+              <sequence>
+
+                <hold/>
+
+                <call function="'GetNumberResources'"/>
+                <script>numResources = STAXResult</script>
+
+                <stafcmd name="'Remove Resouce Pool Entry'">
+                  <location>'local'</location>
+                  <service>'RESPOOL'</service>
+                  <request>'REMOVE POOL STAFDemo ENTRY Resource%s CONFIRM FORCE' % str(numResources)</request>
+                </stafcmd>
+
+                <if expr="RC == 0">
+                  <sequence>
+                    <script>numResources = numResources - 1</script>
+                    <message>'Number of Resources: %d' % numResources</message>
+                  </sequence>
+                </if>
+
+                <call function="'Check-STAFCmd-RC'">
+                  { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error removing resource'}
+                </call>
+
+              </sequence>
+
+            </loop>
+
+          </block>
+
+        </parallel>
+
+      </testcase>
+
+    </block>
+
+  </function>
+
+
+  <function name="InitializeResourcePool">
+
+    <function-description>
+      Create the initial resource pool.
+    </function-description>
+
+    <sequence>
+
+      <stafcmd name="'Delete STAFDemo Pool'">
+        <location>'local'</location>
+        <service>'RESPOOL'</service>
+        <request>'DELETE POOL STAFDemo CONFIRM FORCE'</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <message>'Error deleting STAFDemo resource pool; RC=%s, Result=%s' % (RC, STAFResult)</message>
+      </if>
+
+      <stafcmd name="'Create STAFDemo Pool'">
+        <location>'local'</location>
+        <service>'RESPOOL'</service>
+        <request>'CREATE POOL STAFDemo DESCRIPTION \"STAF Demo Resource Pool\"'</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <message>'Error creating STAFDemo resource pool; RC=%s, Result=%s' % (RC, Result)</message>
+      </if>
+
+      <loop var="i" from="1" to="numResources">
+
+        <sequence>
+
+          <stafcmd name="'Add Entry to STAFDemo Pool'">
+            <location>'local'</location>
+            <service>'RESPOOL'</service>
+            <request>'ADD POOL STAFDemo ENTRY Resource%s' % str(i)</request>
+          </stafcmd>
+
+          <if expr="RC != 0">
+            <message>'Error adding resource to STAFDemo resource pool; RC=%s, Result=%s' % (RC, Result)</message>
+          </if>
+
+        </sequence>
+
+      </loop>
+
+      <message>'Number of Resources: %d' % numResources</message>
+
+    </sequence>
+
+  </function>
+
+
+
+  <function name="GetNumberResources" scope="local">
+
+    <function-description>
+      Returns the number of resources in a resource pool
+    </function-description>
+
+    <function-list-args>
+
+      <function-optional-arg name="machName" default="'local'">
+        Resource Pool service machine name
+      </function-optional-arg>
+
+      <function-optional-arg name="poolName" default="'STAFDemo'">
+        Resource Pool Name
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <stafcmd name="'Query STAFDemo Pool'">
+        <location>machName</location>
+        <service>'RESPOOL'</service>
+        <request>'QUERY POOL %s' % poolName</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <sequence>
+          <message>
+            'Error querying %s resource pool; RC=%s, Result=%s' % (poolName, RC, STAFResult)
+          </message>
+          <return>0</return>
+        </sequence>
+        <else>
+          <sequence>
+            <script>
+              resources = STAFResult['resourceList']
+              numResources = len(resources)
+            </script>
+            <return>numResources</return>
+          </sequence>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="GetLocalMachineName" scope="local">
+
+    <function-description>
+      Gets the local machine name
+    </function-description>
+
+    <sequence>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING {STAF/Config/Machine}'</request>
+      </stafcmd>
+
+      <!-- STAFResult contains the machine name -->
+      <return>RC, STAFResult</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="ViewLog" scope="local">
+
+    <function-description>
+      Views a STAF Log
+    </function-description>
+
+    <function-map-args>
+
+      <function-required-arg name="machName">
+        Log file's machine name
+      </function-required-arg>
+
+      <function-required-arg name="handle">
+        Log file's handle
+      </function-required-arg>
+
+      <function-required-arg name="logName">
+        Log file name
+      </function-required-arg>
+
+    </function-map-args>
+
+    <sequence>
+
+      <process name="'STAFLogViewer'">
+        <location>'local'</location>
+        <command>'{STAFDemo/JavaAppCommand}'</command>
+        <title>'STAFLogViewer'</title>
+        <parms>
+          'com.ibm.staf.STAFLogViewer -machine %s -queryRequest "QUERY MACHINE {STAF/Config/MachineNickname} HANDLE %s LOGNAME %s"' % (machName, handle, logName)
+        </parms>
+        <env>'CLASSPATH={STAFDemo/JavaAppClassPath}'</env>
+        <console use="'same'"/>
+        <stderr mode="'stdout'"/>
+        <returnstdout/>
+      </process>
+
+      <call function="'Check-Process-RC'">
+        { 'returnCode': RC, 'msg': 'STAFLogViewer failed.', 'theSTAFResult': STAFResult, 'theSTAXResult': STAXResult }
+      </call>
+
+      <return>RC</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="ChangeLogMask" scope="local">
+
+    <function-description>
+      Sets the log mask STAF variable
+    </function-description>
+
+    <function-map-args>
+      <function-required-arg name="logMask">Log mask to set</function-required-arg>
+      <function-required-arg name="machName">Machine name</function-required-arg>
+      <function-required-arg name="handle">Process handle</function-required-arg>
+    </function-map-args>
+
+    <sequence>
+
+      <stafcmd>
+        <location>machName</location>
+        <service>'VAR'</service>
+        <request>'SET HANDLE %s VAR "STAF/Service/Log/Mask=%s"' % (handle, logMask)</request>
+      </stafcmd>
+
+      <call function="'Check-STAFCmd-RC'">
+        { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error setting log mask to "%s"' % logMask}
+      </call>
+
+      <if expr="RC == 0">
+        <message>
+          'Log mask "%s" set for Process; Handle=%s, Machine=%s' % (logMask, handle, machName)
+        </message>
+      </if>
+
+      <return>RC, STAFResult</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="Check-STAFCmd-RC" scope="local">
+
+    <function-description>
+      Checks if a STAFCmd was successful and updates testcase status
+    </function-description>
+
+    <function-map-args>
+
+      <function-required-arg name="returnCode">
+        Return Code from a STAF Command
+      </function-required-arg>
+
+      <function-required-arg name="result">
+        Result from a STAF Command
+      </function-required-arg>
+
+      <function-optional-arg name="msg" default="''">
+        Message to display if an error occurs
+      </function-optional-arg>
+
+    </function-map-args>
+
+    <if expr="RC == 0">
+      <tcstatus result="'pass'"/>
+      <else>
+        <tcstatus result="'fail'">'%s; RC=%s, Result=%s' % (msg, returnCode, result)</tcstatus>
+      </else>
+    </if>
+
+  </function>
+
+
+  <function name="Check-Process-RC" scope="local">
+
+    <function-description>
+      Checks if a Process was successful and updates testcase status
+    </function-description>
+
+    <function-map-args>
+
+      <function-required-arg name="returnCode">
+        Return Code from a Process
+      </function-required-arg>
+      
+      <function-optional-arg name="msg" default="''">
+        Message to display if an error occurs
+      </function-optional-arg>
+
+      <function-optional-arg name="theSTAFResult" default="''">
+        STAFResult from a Process
+      </function-optional-arg>
+
+      <function-optional-arg name="theSTAXResult" default="''">
+        STAXResult from a Process
+      </function-optional-arg>
+
+    </function-map-args>
+
+    <if expr="RC == 0">
+      <tcstatus result="'pass'"/>
+      <else>
+        <sequence>
+          <message log="1">'Check Process Result'</message>
+          <script>
+            failMsg = '%s; RC=%s' % (msg, returnCode)
+
+            if theSTAFResult != None:
+              # Append STAFResult to failMsg
+              failMsg = '%s, STAFResult=%s' % (failMsg, theSTAFResult)
+
+            if theSTAXResult != None:
+              if len(theSTAXResult) > 0:
+                # Append process's stdout/stderr to failMsg
+                failMsg += '%s, STAXResult=%s' % (failMsg, theSTAXResult[0][1])
+          </script>
+          <message log="1">failMsg</message>
+          <tcstatus result="'fail'">failMsg</tcstatus>
+        </sequence>
+      </else>
+    </if>
+
+  </function>
+
+
+  <function name="DisplayPopup" scope="local">
+
+    <function-description>
+      Displays a dialog pop-up to give information about the STAXDemo
+    </function-description>
+
+    <function-map-args>
+
+      <function-required-arg name="msg">
+          Message to display in the dialop pop-up window
+      </function-required-arg>
+
+      <function-required-arg name="DemoHandle">
+          DemoHandle for the DemoDialog process where the message will be sent
+      </function-required-arg>
+
+    </function-map-args>
+
+    <sequence>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'QUEUE'</service>
+        <request>'QUEUE HANDLE %s MESSAGE %s' % (DemoHandle, msg)</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <message>'Error running STAFDemoDialog; RC=%s Result=%s' % (RC,STAXResult)</message>
+      </if>
+
+    </sequence>
+
+  </function>
+
+  <function name="WaitForSemaphoreAndReset" scope="local">
+
+    <sequence>
+
+      <call function="'WaitForSemaphore'"/>
+
+      <call function="'ResetSemaphore'"/>
+
+    </sequence>
+
+  </function>
+
+  <function name="WaitForSemaphore" scope="local">
+
+    <function-description>
+      Wait for the demo semaphore
+    </function-description>
+
+    <sequence>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'SEM'</service>
+        <request>'WAIT EVENT STAFDemoDialog/Continue'</request>
+      </stafcmd>
+    </sequence>
+
+  </function>
+
+  <function name="ResetSemaphore" scope="local">
+
+    <function-description>
+      Reset the demo semaphore
+    </function-description>
+
+    <sequence>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'SEM'</service>
+        <request>'RESET EVENT STAFDemoDialog/Continue'</request>
+      </stafcmd>
+    </sequence>
+
+  </function>
+
+  <function name="RunSTAXRequest" scope="local">
+
+    <function-description>
+      Submit a STAX request
+    </function-description>
+
+    <function-single-arg>
+      <function-required-arg name="request">STAX request to be submitted</function-required-arg>
+    </function-single-arg>
+
+    <sequence>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'STAX'</service>
+        <request>request</request>
+      </stafcmd>
+
+      <call function="'Check-STAFCmd-RC'">
+        { 'returnCode': RC, 'result': STAFResult, 'msg': 'Error submitting request %s' % request}
+      </call>
+
+      <return>RC, STAFResult</return>
+
+    </sequence>
+
+  </function>
+
+
+  <function name="RunAutomatedDemo" scope="local">
+
+    <function-description>
+      Runs the semi-automated demo.
+    </function-description>
+
+    <block name="'Automated Demo'">
+
+      <testcase name="'Automated Demo'">
+
+        <sequence>
+
+          <!-- Run the demo -->
+          <call function="'AutomatedDemo'"/>
+
+        </sequence>
+
+      </testcase>
+
+    </block>
+
+  </function>
+
+
+  <function name="AutomatedDemo" scope="local">
+
+    <function-description>
+      Runs a semi-automated demo in a continuous loop.  The demo displays popup windows
+      which describe the action that will happen when the user presses OK.  Then the
+      block associated with the action is released to initiate the action.
+    </function-description>
+
+    <sequence>
+
+      <script>
+        m1 = machList[0]
+        pCtr = STAXGlobal(0)          # process counter for machine 1; increments each time a
+                                      # new process is started
+      </script>
+
+      <loop>
+
+        <sequence>
+
+          <script>
+            processCorner.set(0)
+          </script>
+
+          <process name="'DemoDialog'">
+            <location>'local'</location>
+            <command>'{STAFDemo/JavaAppCommand}'</command>
+            <title>'STAFDemoDialog'</title>
+            <parms>'STAFDemoDialog'</parms>
+            <env>'CLASSPATH={STAFDemo/JavaAppClassPath}'</env>
+            <console use="'same'"/>
+            <process-action>
+
+              <sequence>
+
+                <call function="'ResetSemaphore'"/>
+
+                <script>DemoHandle = STAXProcessHandle</script>
+
+                <!-- Display Welcome message -->
+
+                <script>
+                  msg = "newMessage=Welcome to the STAF Demo!"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = "appendMessage=STAF is an Open Source automation framework designed around the idea of reusable components. " \
+                        "It is intended to make it easier to create automated testcases and workloads.  \n\nSTAF can help " \
+                        "you increase the efficiency, productivity, and quality of your testing by improving your " \
+                       "level of automation and reuse in your individual testcases as well as your overall test " \
+                        "environment."
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <!-- Start a process on machine m1 -->
+
+                <script>block = 'main.Machine %s.Start new process' % m1</script>
+
+                <script>
+                  msg = 'newMessage=Start a new process on machine %s' % m1
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <script>
+                  pCtr.set(pCtr + 1)
+                  pNum1 = pCtr.get()
+                </script>
+
+                <!-- Change background color to yellow for process pNum1 on machine m1 -->
+
+                <script>
+                  msg = "location=375,0"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Change background color to yellow for Process %d on machine %s' % (pNum1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  # Get the handle for process pNum1 on machine m1 from the ProcessMap
+                  key = '%s/Process%d' % (m1, pNum1)
+                  h1 = ProcessMap[key]
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Background Color:.Yellow' % (m1, pNum1, h1)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Start process pNum2 on machine m1 -->
+
+                <script>block = 'main.Machine %s.Start new process' % m1</script>
+
+                <script>
+                  msg = "location=center"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Start a new process on machine %s' % m1
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <script>
+                  pCtr.set(pCtr + 1)
+                  pNum2 = pCtr.get()
+                </script>
+
+                <!-- Change background color to green for Process pNum2 on machine m1 -->
+
+                <script>
+                  msg = "location=375,490"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Change background color to green for Process %d on machine %s' % (pNum2, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  # Get the handle for process pNum2 on machine m1 from the ProcessMap
+                  key = '%s/Process%d' % (m1, pNum2)
+                  h2 = ProcessMap[key]
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Background Color:.Green' % (m1, pNum2, h2)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Display the log file for process pNum1: Handle h1 on machine m1 -->
+
+                <script>
+                  msg = "location=525,0"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Display the log file for Process: %d Handle: %s on machine %s' % (pNum1, h1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Logging Options:.Display Log' % (m1, pNum1, h1)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Refresh the log and then close the log viewer for process pNum1: Handle h1 on machine m1 -->
+
+                <script>
+                  msg = 'newMessage=Via the log viewer for Process %d: Handle: %s on machine %s, click on View -> Refresh to refresh the log and then click on File->Exit to close the log viewer.' % (pNum1, h1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'appendMessage=Do this manually.'
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <!-- Set the log mask to All logging options for process pNum1: Handle h1 on machine m1 -->
+
+                <script>
+                  msg = 'newMessage=Set the log mask to All logging options for Process %d: Handle: %s on machine %s' % (pNum1, h1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Logging Options:.Set Log Mask - All (Error, Warning, Info, Debug)' % (m1, pNum1, h1)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Clear the log file for process pNum1: Handle h1 on machine m1 -->
+
+                <script>
+                  msg = 'newMessage=Clear the log file for Process %d: Handle: %s on machine %s' % (pNum1, h1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Logging Options:.Clear Log' % (m1, pNum1, h1)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Display the log file for process pNum1: Handle h1 on machine m1 -->
+                <script>
+                  msg = 'newMessage=Wait for about 15 seconds and then display the log file for Process %d: Handle: %s on machine %s' % (pNum1, h1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Logging Options:.Display Log' % (m1, pNum1, h1)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+                
+                <!-- Close the log viewer for process pNum1: Handle h1 on machine m1 -->
+                 <script>
+                  msg = 'newMessage=Via the log viewer for Process %d: Handle: %s on machine %s, click on File->Exit to close the log viewer.' % (pNum1, h1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'appendMessage=Do this manually.'
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+                
+                <!-- Add a resource to the STAFDemo resource pool -->
+
+                <script>
+                  machine = 'local'
+                  block = 'main.Resource Pool Control.Add Resource'
+                </script>
+
+                <script>
+                  msg = "location=center"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Add another resource to the STAFDemo resource pool'
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Remove a resource from the STAFDemo resource pool -->
+
+                <script>
+                  machine = 'local'
+                  block = 'main.Resource Pool Control.Remove Resource'
+                </script>
+
+                <script>
+                  msg = 'newMessage=Remove a resource from the STAFDemo resource pool'
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Stop process pNum1 on machine m1 -->
+
+                <script>
+                  msg = "location=375,0"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Stop Process %d on machine %s' % (pNum1, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Execution State:.Stop' % (m1, pNum1, h1)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Stop process pNum2 on machine m1 -->
+
+                <script>
+                  msg = "location=375,490"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=Stop Process %d on machine %s' % (pNum2, m1)
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  block = 'main.Machine %s.Process %d.Handle %s: Process Control Options.Change Execution State:.Stop' % (m1, pNum2, h2)
+                </script>
+
+                <call function="'RunSTAXRequest'">
+                  'RELEASE JOB %s BLOCK "%s"' % (STAXJobID, block)
+                </call>
+
+                <!-- Dave's examples on how to resize the Demo Dialog -->
+
+                <script>
+                  msg = "location=center"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = "size=500,400"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=This dialog has been resized to 500,400'
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphore'"/>
+
+                <call function="'ResetSemaphore'"/>
+
+                <script>
+                  msg = "size=default"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = 'newMessage=This dialog has been resized to the default size'
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphore'"/>
+
+                <call function="'ResetSemaphore'"/>
+
+                <!-- Display Completion message -->
+
+                <script>
+                  msg = "newMessage=Congratulations!"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = "appendMessage=You have completed runnning the STAX Demo."
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <script>
+                  msg = "appendMessage=Press OK to restart the STAX Demo."
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+
+                <call function="'WaitForSemaphoreAndReset'"/>
+
+                <script>
+                  msg = "STAFDemoDialog/End"
+                </script>
+
+                <call function="'DisplayPopup'">
+                  { 'msg': msg, 'DemoHandle': DemoHandle }
+                </call>
+              </sequence>
+
+            </process-action>
+
+          </process>
+
+        </sequence>
+
+      </loop>
+
+    </sequence>
+
+  </function>
+
+</stax>

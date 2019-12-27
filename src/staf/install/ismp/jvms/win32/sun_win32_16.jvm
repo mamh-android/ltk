@@ -1,0 +1,38 @@
+DESC: Java 1.6.0 by Sun Microsystems
+JVM_EXE: bin\java.exe
+CLASSPATH: "-cp "
+CLASSPATH_SEPARATOR: ;
+SYSTEM: -D
+SYSTEM_SEPARATOR: =
+JVM_PROPERTIES:
+	"java.vendor=Sun Microsystems..."
+	"java.version=1.6.0..."
+/:
+PLATFORM_HINT:
+	\HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Runtime Environment\1.6\JavaHome
+	\HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Development Kit\1.6\JavaHome
+/:
+PATH_HINT:
+	\Program Files\Java\j2re1.6.0
+	\Java\j2re1.6.0
+	\Program Files\Java\j2re1.6
+	\Java\j2re1.6
+	
+	
+	
+/:
+VERBOSE: -verbose
+VERBOSE_GC: -verbose:gc
+VERBOSE_CLASS: -verbose:class
+VERBOSE_JNI: -verbose:jni
+VERSION: -version
+BOOT_CLASSPATH: -Xbootclasspath:
+NO_CLASS_GC: -Xnoclassgc
+INIT_JAVA_HEAP: -Xms
+MAX_JAVA_HEAP: -Xmx
+REDUCE_OS_SIGNALS: -Xrs
+CHECK_JNI: -Xcheck:jni
+RUNHPROF_HELP: -Xrunhprof:help
+RUNHPROF_OPTION: -Xrunhprof
+DEBUG: -Xdebug
+FUTURE: -Xfuture

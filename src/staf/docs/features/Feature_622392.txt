@@ -1,0 +1,3883 @@
+Feature ID  : 622392 
+Title       : Ability to mask passwords/sensitive data 
+
+
+Description 
+----------- 
+
+This feature will provide the ability to mask passwords and other sensitive
+data that is provided in the value for some options in STAF service requests.
+Thus, when the data is logged or displayed, sensitive data will be masked to
+keep it private for security reasons. 
+
+
+Problem(s) Solved 
+----------------- 
+
+Currently, if you have at least trust level 2, you can submit a request to
+list all STAF requests currently in progress on a machine (e.g. STAF machA 
+SERVICE LIST REQUESTS).  If any of the requests contain sensitive information
+like passwords, this information is displayed as well.  For example: 
+
+C:\>staf server1 service list requests 
+Response 
+-------- 
+Req#    Start Date-Time   Service Request 
+------- ----------------- ------- --------------------------------------------- 
+4320649 20050824-14:17:13 wiou    INSTALL TARGET ceres.rchland.ibm.com VERSION 
+                                  6.0.2 PRODUCT was-nd-core-ptf USERNAME root P 
+                                  ASSWORD mysecret BUILDLEVEL gm TEMPDIR /worka 
+                                  rea/WAS60-ptf/ INSTALLROOT /opt/WASND_602/ 
+4323776 20050824-14:43:42 awacs   STARTDM HOST :27:mhpae01.rtp.raleigh.ibm.com 
+                                  PORT :4:8879 INSTALLROOT :27:/opt/cc/WebSpher 
+                                  e/AppServer PROFILE :7:cc_DMGR USERNAME :7:ws 
+                                  admin PASSWORD :8:mysecret 
+4320649 20050824-14:57:25 handle  AUTHENTICATE USER JohnDoe@us.ibm.com PASSWORD 
+                                   mypassword 
+4323776 20050824-14:58:12 process START COMMAND :34:C:/tests/testA.exe /PASSWOR 
+                                  D testpw" USERID user1 PASSWORD myPassword 
+
+Also, if you enable tracing for ServiceRequest and/or ServiceResult tracepoints
+(trust level 5 is required), if any of the requests contain sensitive information
+like passwords, this information is displayed as well.  For example: 
+
+20050824-14:49:51;1808;00000001;PROCESS Service Request - Client: local://local, 
+ Handle: 375, Process: STAF/Client, Request: start command notepad parms :16:-pa 
+ssword secret USERNAME User1 PASSWORD secret2 wait 
+20050824-14:49:54;1808;00000002;PROCESS Service Result (0) - Client: local://loc 
+al, Handle: 375, Process: STAF/Client, Request: start command notepad parms :16: 
+-password secret USERNAME User1 PASSWORD secret2 wait, Result: { 
+  Return Code: 0 
+  Key        : <None> 
+  Files      : [] 
+}
+
+Many services also provide the ability to list or query information and, in some
+cases, log information.  We need a way to prevent sensitive data for being
+displayed or logged.  For example, the Automation Control Center (ACC) web
+application allows you to submit STAX jobs for execution from a website.  It
+also allows you to query not only the status of your job but also other STAX
+jobs.  Job status information includes STAX job logs and information about
+processes and STAF commands that are currently running in a STAX job.
+Currently, the "Start" log record for a STAX job that is logged in the STAX Job
+log displays the arguments passes to the main function.  The arguments could
+contain sensitive data like passwords.  In addition, when displaying process
+information, the command being executed by each process is displayed.  The
+process command could contain sensitive data as well (e.g. PROCESS START COMMAND
+"net use x: /user1 myPassword").  Also, many other STAF service requests
+(e.g. HANDLE AUTHENTICATE USER JohnDoe@company.com PASSWORD secret) could
+contain sensitive data. 
+
+This feature provides the ability to deal with private data.  This feature
+updates STAF and it's services to handle private data by: 
+- Adding privacy delimiters to indicate that certain data is private. 
+- Removing privacy delimiters to get to the actual private data 
+- Masking private data so that if it is logged/displayed, etc., the actual
+  private data is not provided. 
+
+
+Related Features 
+---------------- 
+
+This feature is related to Feature #1279520 "Add ability to specify properties
+for function args" (also being provided in STAF V3.1.0).  This feature adds a
+private property to a STAX function argument to indicate whether an argument 
+contains private data. This allows applications like the ACC that execute STAX
+jobs to check if an argument is private and do special things to indicate that
+like automaticallly adding privacy delimiters and masking it as the argument
+value is specified.  In addition to specifying a "private" property, this 
+feature will allow you to specify other arbitrary properties such as the
+"type" of an argument (e.g. int, string, enum). 
+
+This feature is also related to Feature #1292268 "Provide Java methods to
+compare STAF versions" (also being provided in STAF V3.1.0).  This feature
+provides a new STAFVersion class and a new STAFUtil.compareSTAFVersion() method.
+Since the privacy methods are being added to STAF V3.1.0, a STAF service or
+application that calls these privacy methods should first verify that the STAF
+version is 3.1 or later.  To do this, they can use the new
+STAFUtil.compareSTAFVersion() method.  However, since the compareSTAFVersion()
+method was also added in STAF V3.1.0, need to call the
+STAFUtil.compareSTAFVersion() method within a try/catch error block in case
+the method doesn't exist.  An example of calling this method is provided later. 
+
+
+External Design 
+--------------- 
+
+To solve this problem, we are going to add support for privacy delimiters 
+which STAF users will be able to use to protect private data like passwords
+when providing this data in a STAF service request.  Service writers will be
+able to specify which options on service requests will handle private data
+and what data in the result buffer for a LIST/QUERY, etc. request will be
+masked to protect private data. 
+
+To indicate data is private or sensitive, specify delimiter !!@ at the
+beginning of the private data and specify delimiter @!! at the end of the
+private data.  For example: 
+
+  !!@myPassword@!! 
+
+If the private data contains the actual opening or ending privacy delimiter
+string, a caret (^) can be used to used to escape the characters so that
+they are not seen as privacy delimiters.  For example, if you wanted to add
+privacy delimiters to string "myP@ss@!!d", you would first have to escape
+the @!! characters contained in the private data.  For example: 
+
+  myP@ss^@!!d 
+
+Note that an escapePrivacyDelimiters method is provided that handles this
+for you.  See below for more information. 
+
+Then you can add privacy delimiters.  For example: 
+
+  !!@myP@ss^^@!!@!! 
+
+Also, you can nest private data.  For example, the following string
+contains three levels of nested private data: 
+
+  "!!@Msg: ^!!@Top secret info: password=^^!!@secret^^@!!.^@!!@!!" 
+1)                                            ------ 
+2)             ------------------------------------------- 
+3)    -------------------------------------------------------- 
+
+Note that a caret (^) is added to escape any !!@ and @!! characters that
+are nested within another set of privacy delimiters. 
+
+Note that an addPrivacyDelimiters method is provided that handles all of
+this for you.  See below for more information. 
+
+Common Privacy Utility Methods 
+
+Some common utility methods will be provided that can be used by services
+writers and testcase writers and others to add privacy delimiters, remove
+privacy delimiters, to mask private data  identified by the privacy
+delimiters, and to escape privacy delimiters.  These utility methods will
+be provided for all of the languages that STAF supports (e.g. Java, C++,
+Python, Perl,Tcl, and REXX).  The utility methods are: 
+
+1) addPrivacyDelimiters:  Accepts a string argument that contains private 
+data and returns a string with the privacy delimiters added to the
+beginning and end of the string. 
+
+Here's a description of the what this method does: 
+1) Checks if data is null or has length of 0, and if so, returns data
+   passed in since there's no data protect. 
+2) Checks if data already has privacy delimiters at beginning and end,
+   and if so, returns data passed in (e.g. won't add additional privacy
+   delimiters). 
+3) Escapes all occurrences of the opening and closing privacy delimiters
+   with a caret (^).  That is, replace all occurrences of !!@ with ^!!@
+   and replace all occurrences of @!! with ^@!!. 
+4) Adds an opening privacy delimiter (!!@) to the beginning of the data. 
+5) Adds a closing privacy delimiter (@!!) to the end of the data. 
+6) Returns the updated data. 
+
+Examples: 
+- If you pass string "passw0rd" to the addPrivacyDelimiters method, it
+  would return "!!@passw0rd@!!". 
+- If you pass string "!!@passw0rd@!!" to the addPrivacyDelimiters method,
+  it would return "!!@passw0rd@!!". 
+- If you pass string "passw^@!!d" to the addPrivacyDelimiters method, it
+  would return "!!@passw^^@!!d@!!". 
+- If you pass string "Password=!!@secret@!!." to the addPrivacyDelimiters
+  method, it would return "!!@Password=^!!@secret^@!!.@!!". 
+- If you pass string "Msg: !!@Password=^!!@secret^@!!.@!!" to the 
+  addPrivacyDelimiters method, it would return:
+  "!!@Msg: ^!!@Password=^^!!@secret^^@!!.^@!!@!!". 
+
+Java Example: 
+
+  String password = STAFUtil.addPrivacyDelimiters("passw0rd"); 
+
+C++ Example: 
+
+  STAFString password = STAFHandle::addPrivacyDelimiters("passw0rd"); 
+
+2)  removePrivacyDelimiters:  Accepts a string argument that contains may
+contain private data indicated using the privacy delimiters and, optionally,
+an integer that specified the number of levels of privacy delimiters to
+remove (where 0, the default value, indicates to remove all levels of
+privacy delimiters).  It returns a string with privacy delimiters removed.
+Note that generally you'll want to remove all levels of privacy delimiters. 
+
+Here's a description of the what this method does: 
+1) Checks if data is null or has length of 0 or doesn't contain any privacy
+   delimiters, and if so, returns data passed in since there's no privacy 
+   delimiters to remove. 
+2) Loops to remove privacy delimiters for the specified number of levels
+   (where 0, the default, indicates to remove all levels).  Within this loop: 
+     a) Checks if any more unescaped opening privacy delimiters.   If no
+        more unescaped opening privacy delimiters, exits the loop since no
+        more levels of private data. 
+     b) Checks if any more unescaped closing privacy delimiters after the
+        position of the opening unescaped privacy delimiter. 
+     c) Loops to handle all opening and closing privacy delimiters at this
+        level.  Within this loop: 
+          i) Checks if there are any escaped privacy delimiters between this
+             opening privacy delimiter and the closing privacy delimiter.
+             If so, removes the escape character (^) from them. 
+          ii) Removes this set of unescaped opening and closing privacy 
+              delimiters. 
+          iii) Checks if there is another set of unescaped opening and
+               closing privacy delimiters, after this closing delimiter.
+               If not breaks out of this loop. 
+3) If all levels of privacy delimiters have been removed:
+   a) Replaces any remaining escaped closing privacy delimiters with
+      unescaped closing privacy delimiters. 
+   b) Replaces any remaining escaped opening privacy delimiters with 
+      unescaped opening privacy delimiters. 
+4) Returns the updated data. 
+
+Examples: 
+- If you pass string "!!@passw0rd@!!" to the removePrivacyDelimiters method,
+  it would return "passw0rd". 
+- If you pass string "!!@passw^^@!!d@!!"  to the addPrivacyDelimiters 
+  method, it would return "passw^@!!d" 
+- If you pass string "testA.exe -password !!@secret@!!"  to the 
+  removePrivacyDelimiters method, it would return "testA.exe -password secret". 
+- If you pass string  "!!@Password=^!!@secret^@!!.@!!"." to the
+  addPrivacyDelimiters method and specify to remove all levels of privacy data,
+  it would return "Password=secret. 
+- If you pass string  "!!@Password=^!!@secret^@!!.@!!"." to the
+  addPrivacyDelimiters method and specify to remove 1 level of privacy data,
+  it would return "Password=!!@secret@!!. 
+- If you pass string "!!@Msg: ^!!@Password=^^!!@secret^^@!!.^@!!@!!" to the
+  addPrivacyDelimiters method and specify to remove all levels, it would
+  return "Msg: Password=secret.". 
+- If you pass string "!!@Msg: ^!!@Password=^^!!@secret^^@!!.^@!!@!!" to the
+  addPrivacyDelimiters method and specify to remove 1 level of privacy data,
+  it would return "Msg: !!@Password=^!!@secret^@!!.@!!". 
+
+Java Example: 
+
+  // Remove all levels of privacy delimiters 
+  String command2 = STAFUtil.removePrivacyDelimiters(command); 
+
+  // Remove one level of privacy delimiters 
+  String password2 = STAFUtil.removePrivacyDelimiters(password, 1); 
+
+C++ Example: 
+
+  // Remove all levels of privacy delimiters 
+  STAFString command2 = STAFHandle::removePrivacyDelimiters(command); 
+
+  // Remove one level of privacy delimiters   
+  STAFString password2 = STAFHandle::removePrivacyDelimiters(password, 1); 
+
+3)  maskPrivateData:  Accepts a string argument that contains a value that
+may contain private data indicated using the privacy delimiters and returns
+a string with the private data masked by replacing the privacy delimiters
+and private data contained within the privacy delimiters with asterisks
+("*") on a character for character basis (so that the length of the data is
+not changed to ensure that marshalled data and colonLenthcolon data is not
+corrupted). 
+
+Here's a description of the what this method does: 
+1) Checks if data is null or has length of 0 or doesn't contain any
+   privacy delimiters, and if so, returns data passed in since there's no
+   privacy delimiters to remove. 
+2) Loops to find all unescaped opening privacy delimiters with matching
+   unescaped closing privacy delimiters and replace all data between
+   these privacy delimiters with asterisks.  Within this loop: 
+     a) Finds position of next unescaped opening privacy delimiter.
+        If no more, exits loop. 
+     b) Finds position of next unescaped closing privacy delimiter after
+        this unescaped opening delimiter.  If no more, exits loop. 
+     c) Replaces these open and closing privacy delimiters and all data 
+        in between with the same number of asterisks ("*"). 
+3) Returns the updated data. 
+
+For example, if you pass string "testA.exe -password !!@secret@!!" to the 
+maskPrivate Data method, it will return "testA.exe -password ************". 
+
+Java Example: 
+
+  resultMap['command'] = STAFUtil.maskPrivateData(command); 
+
+C++ Example: 
+
+  processMap->put("command", STAFHandle::maskPrivateData(command)); 
+
+4)  escapePrivacyDelimiters:  Accepts a string argument that contains may
+contain the privacy delimiters and returns a string with all privacy
+delimiters escaped with a caret (^).  This method is useful if data
+contains substring "!!@" and/or "@!!" but not intended as privacy 
+delimiters so you can escape them before adding privacy delimiters. 
+
+Here's a description of the what this method does: 
+1) Checks if data is null or has length of 0, and if so, returns data
+   passed in since there's no privacy delimiters to escape. 
+2) Loops to escape all occurences of the opening and closing privacy
+   delimiters. Within this loop: 
+     a) That is, replaces all occurrences of @!! with ^@!!.   
+     b) Replaces all occurrences of !!@ with ^!!@.   
+3) Returns the updated data. 
+
+For example, if you pass string "my!!@pw@!!!"  to the
+escapePrivacyDelimiters method, it would return "my^!!@pw^@!!!". 
+
+An example of an application that would use this method is the Automation
+Control Center (ACC).  The ACC allows a user to enter data for a STAX
+function argument without any knowledge of STAF's privacy delimiters and
+not as Python data.  So, if a function argument to a STAX job is indicated
+to contain private data (via the new "private" property for a STAX
+function argument), after the value for the argument is entered (and it
+is assumed here that the user enters the value for the password as a
+non-Python string), the ACC can first call the escapePrivacyDelimiters()
+method and then call the addPrivacyDelimiters() method to add privacy 
+delimiters to the value.  Later, when the privacy delimiters are removed
+by the removePrivacyDelimiters() method, the original value entered by
+the user will be returned. 
+
+Java Example: 
+
+  String escapedPassword = STAFUtil.escapePrivacyDelimiters(password); 
+
+  
+C++ Example: 
+
+  STAFString escapedPassword = STAFHandle::escapePrivacyDelimiters(password); 
+
+
+Service Requests which Need to be Changed to Handle Private Data: 
+
+Here is a list of service requests/options that need to be updated 
+to handle private data: 
+
+STAF Service    Requests  Request Options or STAX       Private data that needs            Logs
+or Application  	        Elements that need to         to be masked 	 	
+                          handle private data
+--------------  --------  ----------------------------  ---------------------------------  ----------------------
+					
+STAFTrace.cpp 	                                      All trace messages should be
+                                                        masked. 		
+					
+LOG             LOG                                     Mask any private data contained    The message must be
+                                                        in the MESSAGE value before        masked before writing
+                                                        logging the message. 	             it to the log.  This
+                                                                                           way, when messages in
+                                                                                           STAF log files are 
+                                                                                           displayed, the private
+                                                                                           data is not present
+                                                                                           (and so the LOG QUERY
+                                                                                           request does not need
+                                                                                           to mask the message). 	
+
+PROCESS 	    START 	       Remove any privacy 
+                               delimiters before 
+                               using the COMMAND,
+                               PARMS, PASSWORD values 			
+
+PROCESS 	    LIST [HANDLES] 		              Mask the "command" field in the
+                                                        STAF/Service/Process/ProcessList
+                                                        Info map class and in the
+                                                        STAF/Service/Process/ProcessList
+                                                        Long map class 		
+
+PROCESS 	    QUERY HANDLE 	                          Mask the "command" and "parms"
+                                                        fields in the STAF/Service/Process/
+                                                        ProcessInfo map class 		
+
+PROCESS 	    SET 	       Remove any privacy
+                               delimiters before using
+                               the DEFAULTAUTHPASSWORD
+                               value 			
+
+QUEUE 	    LIST 		                          Mask the "message" field in the
+                                                        STAF/Service/Queue/Entry map class 		
+
+SERVICE 	    LIST REQUESTS                           Mask the "request" field in the
+                                                        STAF/Service/Service/RequestInfo
+                                                        map class 		
+					
+Cron 	          LIST                                    Mask the "request" field in the       Note:  The Log 
+                                                        STAF/Service/Cron/CronID and          service will take
+                                                        STAF/Service/Cron/CronIDLong map      care of masking
+                                                        classes                               private data 
+                                                                                              automatically when
+                                                                                              writing to the
+                                                                                              Cron service log if
+                                                                                              the Cron service
+                                                                                              writes the "request"
+                                                                                              values that contain
+                                                                                              the privacy masks. 	
+
+DB              CONNECT 	Remove any privacy 
+                              delimiters before using
+                              the PASSWORD value 			
+
+Event 	    LIST EVENTIDS 		              Mask the values in the
+                LONG                                    "propertyMap" field in the
+                                                        STAF/Service/Event/EventIDLong
+                                                        map class 		
+
+Event 	    QUERY EVENTID                           Mask the values in the
+                                                        "propertyMap" field in the 
+                                                        STAF/Service/Event/QueryEventID
+                                                        and STAF/Service/Event/EventIDLong
+                                                        map classes 		
+
+EventManager    LIST 		                          Mask the "request" field in the       Note:  The Log service
+                                                        STAF/Service/EventManager/EMID and    will take care of masking
+                                                        STAF/Service/EventManager/            private data automatically
+                                                        EventManagerID map classes            when writing to the
+                                                                                              EventManager service log
+                                                                                              if the EventManager service
+                                                                                              writes the "request" values
+                                                                                              that contain the privacy masks.
+
+HTTP 	          REQUEST,      Remove any privacy 			
+                DOPOST,       delimiters before using
+                DOGET         a PARAMETER value
+
+HTTP      	    SET AUTHENTI  Remove any privacy 
+                ICATIONHOST   delimiters before using
+                              a AUTHENTICATIONPASSWORD
+                              value
+
+HTTP            QUERY AUTHEN                            The "password" field in the
+                TICATIONHOST                            STAF/Service/HTTP/AuthenticationHost
+                                                        map class is already being replaced
+                                                        with "XXXXXXX" to mask its value.
+                                                        This way, even if someone forgot to
+                                                        indicate that the password is private,
+                                                        it's value is always masked by the
+                                                        QUERY AUTHENTICATIONHOST request.
+                                                        Just need to change to replace with
+                                                        "*******" for consistency with how
+                                                        other STAF services mask passwords. 		
+          
+HTTP            SET FORM      Remove any privacy 
+                              delimiters before using
+                              a VALUE value 			
+
+HTTP            QUERY FORM                              Mask the "value" field in the
+                CONTROLNAME                             STAF/Service/HTTP/FormControlName
+                                                        map class 		
+
+STAX            EXECUTE       Remove any privacy                                             Note:  The Log service
+                              delimiters before using                                        will take care of masking
+                              a ARGS, SCRIPT value.                                          private data like the ARGS
+                                                                                             value in a STAX job log's
+                                                                                             "Start" message. 	
+
+STAX            LIST JOB                                 Mask the "command" and "parms"
+                <JobID>                                  fields in the STAF/Service/STAX/
+                PROCESSES                                ProcessInfo map class 		
+
+STAX            LIST JOB                                 Mask the "request" field in the
+                <JobID>                                  STAF/Service/STAX/StafcmdInfo
+                STAFCMDS                                 map class 		
+
+STAX            QUERY JOB                                Mask the  "arguments" and 
+                <JobID>                                  "scriptList" fields in the 
+                                                         STAF/Service/STAX/QueryJob map class 		
+
+STAX            QUERY JOB                                Mask the "command" and "parms"
+                <JobID>                                  fields in the STAF/Service/STAX/
+                PROCESS                                  QueryProcess map class.  The
+                                                         "password" field is currently
+                                                         showing the value for the password
+                                                         which it shouldn't do.  Change to
+                                                         replace the password value with
+                                                         "*******". 		
+
+STAX            QUERY JOB                                Mask the "request" field in the
+                <JobID>                                  STAF/Service/STAX/QueryStafcmd
+                STAFCMD                                  map class 		
+
+STAXSTAXMessage STAXLogAction                            Mask the fMessageValue before
+Actino                                                   queuing the message 		
+
+STAX Monitor                                             Mask the "result" field displayed
+                                                         for completed jobs and sub-jobs. 		
+
+
+
+Documentation Updates 
+
+1) Update the STAF Language Guides to add descriptions of the new privacy
+   methods for Java, Python, Perl, and Tcl. 
+2) Update the STAF User's Guide to describe how to specify private data
+   and update the descriptions of the services that handle private data,
+   and add descriptions of the new privacy methods for C++ and REXX. 
+3) Update the STAX User's Guide to describe the updates made. 
+4) Update the Cron User's Guide to describe the updates made. 
+5) Update the EventManager User's Guide to describe the updates made. 
+6) Update the Event User's Guide to describe the updates made. 
+7) Update the HTTP User's Guide to describe the updates made. 
+
+
+Internal Changes 
+---------------- 
+
+These utility methods will be implemented as C APIs and then these C APIs
+will be called by all of the other languages that STAF supports
+(e.g. Java, C++, Python, Perl,Tcl, and REXX).  This way, the methods only'
+have to be implemented once in C -- not re-implemented in every language. 
+
+Since the privacy methods are being added to STAF V3.1.0, a STAF service
+or application that calls these privacy methods should first verify that
+the STAF version is 3.1 or later.  To do this, they can use the new
+STAFUtil.compareSTAFVersion() method.  However, since the
+compareSTAFVersion() method is also being added in STAF V3.1.0, the service
+or application should call the STAFUtil.compareSTAFVersion() method within
+a try/catch error block in case the method doesn't exist.  For example,
+the following code could be added to a STAF service's init() method: 
+
+  // Verify that the required version of STAF is running on the 
+  // local service machine. 
+  // Note:  Method compareSTAFVersion was added in STAF V3.1.0 
+
+  try 
+  { 
+      res = STAFUtil.compareSTAFVersion( 
+          "local", fHandle, kRequiredSTAFVersion); 
+
+      if (res.rc != STAFResult.Ok) 
+      { 
+          if (res.rc == STAFResult.InvalidSTAFVersion) 
+          { 
+              return new STAFResult( 
+                  STAFResult.ServiceConfigurationError, 
+                  "Minimum required STAF version for this service " + 
+                  "is not running." + lineSep + res.result); 
+          } 
+          else 
+          { 
+              return new STAFResult( 
+                  STAFResult.ServiceConfigurationError, 
+                  "Error verifying the STAF version. RC: " + res.rc + 
+                  ", Additional info: " + res.result); 
+          }   
+      } 
+  } 
+  catch (Error err) 
+  { 
+      return new STAFResult( 
+          STAFResult.ServiceConfigurationError, 
+          "This service requires STAF Version " + 
+          kRequiredSTAFVersion + " or later."); 
+  } 
+
+
+Here's a list of some of the files that are changing for this feature. 
+
+lang/java/JSTAF.cpp 
+lang/java/makefile.java 
+lang/java/classes/STAFUtil.java 
+services/log/STAFLogService.cpp 
+services/cron/CronService.java 
+services/cron/cron.html 
+services/event/EventService.java 
+services/event/event.htm 
+services/event/GenerationManager.java 
+services/eventmanager/EventManagerService.java 
+services/eventmanager/eventmanager.html 
+services/http/HTTP.java 
+services/http/WebSession.java 
+services/http/Http.html 
+services/stax/docs/userguide/staxug.html 
+services/stax/service/STAX.java 
+services/stax/service/STAXLogAction.java 
+services/stax/service/STAXMessageAction.java 
+services/stax/service/STAXProcessAction.java 
+services/stax/service/STAXProcessActionFactory.java 
+services/stax/service/STAXSTAFCommandAction.java 
+services/stax/service/STAXSTAFCommandActionFactory.java 
+stafif/STAF.h 
+stafif/STAFInlImpl.cpp 
+stafif/STAFTrace.cpp 
+stafproc/STAFProcessService.cpp 
+stafproc/STAFQueueService.cpp 
+stafproc/STAFServiceService.cpp 
+test/makefile.staf 
+test/testprivatedata.cpp 
+test/TestPrivatedata.java 
+
+plus many more
+
+
+Design Considerations 
+---------------------
+
+1) We considered using replacement strings for values beginning with strings like  "PASSWORD ", "PASSWORD=", "PASSWORD: ", "ADMINPW", etc.).  But, this won't work as there are many cases that couldn't be handled as there is nothing identifying that this is sensitive data.  For example:  In a STAX EXECUTE request, you can specify ARGS "['user1', 'myPassword']" or on a PROCESS START request you can specify COMMAND "net use x: /User1 myPassword". 
+
+2) On a QUEUE request to the QUEUE service, even if the message contains private data indicated by the privacy delimiters, the QUEUE servicee leaves the message "as is".  This allows the QUEUE LIST request to mask the private data and allows a service/application/testcase to get to any private data in a message (via the removePrivacyDelimiters() method).  However, it means that the application/service/etc. that is getting/peeking data from the queue is responsible for doing any removal of privacy masks as needed (after unmarshalling the data, if marshalled).  We can't change the QUEUE GET/PEEK request to remove the privacy delimitersx because that can change the length of any private data (e.g. removes the privacy delimiters) which can cause exceptions when unmarshalling the data.  This means that services/applications, etc. that handle queued data are responsible for removing any privacy delimiters in the message as needed. 
+
+3) Service writers are responsible for handling private data and for documenting the service request options that handle private data. 
+
+4) We could add  a flag to mask private data to the unmarshall() method.  For example, in Java, could add a new STAFMarshallingContext.MASK_PRIVATE_DATA flag, which can be specified to mask private data when using unmarshall(() method so that this method would first mask any private data and then unmarshall it. 
+
+  STAFMarshallingContext.unmarshall(value, STAFMarshallingContext.MASK_PRIVATE_DATA); 
+
+which is equivalent to doing it as follows : 
+
+  STAFMarshallingContext.unmarshall(STAFUtil.maskPrivateData(value)); 
+
+However, it's not really a shorthand for doing this (as it's slightly longer), we don't currently plan to implement this. 
+
+5) We chose to implementing these utility methods only once as C APIs and then call these C APIs from all of the other languages that STAF supports (e.g. Java, C++, Python, Perl,Tcl, and REXX).  Instead, we could have implemented these utility methods in each language.  But, then they would have to be written and maintained in each language, so we decided against doing that. 
+
+6) The hooks to call the C APIs from REXX programs will be implemented later. 
+
+
+Backward Compatibility Issues 
+----------------------------- 
+
+1) This feature will only be implemented in the STAF V3 line, not the
+   STAF V2 line.   We need to document that if you want to leverage
+   this feature, you should have all your systems move up to STAF V3.1
+   and STAX V3.1 or later  because if you have an earlier version of
+   STAF installed on a system and pass private data (from a remote
+   system running V3.1) as part of a request (e.g. such as a PROCESS
+   START request), things aren't likely to work. 
+
+
+Here's a cvs diff of many (but not all) of the changes for this Feature:
+
+Index: History
+===================================================================
+RCS file: /cvsroot/staf/src/staf/History,v
+retrieving revision 1.408
+diff -r1.408 History
+12c12
+< Version 3.?.?: ??/??/2005
+---
+> Version 3.1.0: ??/??/2005
+24a25,26
+>   + Provided the ability to mask passwords and other sensitive data
+>     (Feature #622392)
+Index: JSTAF.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/java/JSTAF.cpp,v
+retrieving revision 1.12
+diff -r1.12 JSTAF.cpp
+11a12
+> #include "com_ibm_staf_STAFUtil.h"
+453a455,757
+> /*
+>  * Class:     com_ibm_staf_STAFUtil
+>  * Method:    initialize
+>  * Signature: ()V
+>  */
+> JNIEXPORT void JNICALL Java_com_ibm_staf_STAFUtil_initialize
+>   (JNIEnv *, jclass)
+> {
+>     #if defined(STAF_OS_NAME_HPUX) && !defined(__ia64)
+>         _main();
+>     #endif
+> 
+>     initJVMStrings();
+> }
+> 
+> /*
+>  * Class:     com_ibm_staf_STAFUtil
+>  * Method:    STAFUtilAddPrivacyDelimiters
+>  * Signature: (Ljava/lang/String;)Ljava/lang/String;
+>  */
+> JNIEXPORT jstring JNICALL Java_com_ibm_staf_STAFUtil_STAFUtilAddPrivacyDelimiters
+>   (JNIEnv *env, jclass theObject, jstring data)
+> {
+>     // Check if jstring is null because GetStringUTFChars core dumps if
+>     // pass it a null string.
+>     if (data == 0)
+>     {
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error - data string is null");
+>     }
+> 
+>     const char *dataUTF = env->GetStringUTFChars(data, 0);
+>     
+>     if (dataUTF == 0)
+>     {
+>         // We could not get the UTF-8 version of data, so throw an
+>         // exception
+> 
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error getting UTF-8 data string");
+>         return 0;
+>     }
+> 
+>     STAFString result;
+>     jstring javaResult = 0;
+> 
+>     try
+>     {
+>         result = STAFHandle::addPrivacyDelimiters(dataUTF);
+> 
+>         // Now free up the memory from the Java VM
+> 
+>         env->ReleaseStringUTFChars(data, dataUTF);
+> 
+>         // Now, generate a jstring for the result
+> 
+>         if (result.length() != 0)
+>         {
+>             // Convert the result string for Java to handle null chars
+>             result = result.replace(kUTF8_NULL, kUTF8_NULL2);
+>             result += kUTF8_NULL;
+>             javaResult = env->NewStringUTF(
+>                 const_cast<char *>(result.buffer()));
+>         }
+>         else
+>         {
+>             javaResult = env->NewStringUTF("\00");
+>         }
+> 
+>         if (javaResult == 0)
+>         {
+>             throwSTAFException(env, kSTAFInvalidValue,
+>                                "Error creating result string");
+>         }
+>     }
+>     catch (STAFException e)
+>     {
+>         throwSTAFException(
+>             env, kSTAFInvalidValue,
+>             "Error - STAFHandle::addPrivacyDelimiters() failed");
+>     }
+>     
+>     // Now, return the jstring
+> 
+>     return javaResult;
+> }
+> 
+> /*
+>  * Class:     com_ibm_staf_STAFUtil
+>  * Method:    STAFUtilRemovePrivacyDelimiters
+>  * Signature: (Ljava/lang/String;I)Ljava/lang/String;
+>  */
+> JNIEXPORT jstring JNICALL Java_com_ibm_staf_STAFUtil_STAFUtilRemovePrivacyDelimiters
+>   (JNIEnv *env, jclass theObject, jstring data, jint numLevels)
+> {
+>     // Check if jstring is null because GetStringUTFChars core dumps if
+>     // pass it a null string.
+>     if (data == 0)
+>     {
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error - data string is null");
+>     }
+> 
+>     const char *dataUTF = env->GetStringUTFChars(data, 0);
+>     
+>     if (dataUTF == 0)
+>     {
+>         // We could not get the UTF-8 version of data, so throw an
+>         // exception
+> 
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error getting UTF-8 data string");
+>         return 0;
+>     }
+> 
+>     STAFString result;
+>     jstring javaResult = 0;
+> 
+>     try
+>     {
+>         result = STAFHandle::removePrivacyDelimiters(dataUTF, numLevels);
+> 
+>         // Now free up the memory from the Java VM
+> 
+>         env->ReleaseStringUTFChars(data, dataUTF);
+> 
+>         // Now, generate a jstring for the result
+> 
+>         if (result.length() != 0)
+>         {
+>             // Convert the result string for Java to handle null chars
+>             result = result.replace(kUTF8_NULL, kUTF8_NULL2);
+>             result += kUTF8_NULL;
+>             javaResult = env->NewStringUTF(
+>                 const_cast<char *>(result.buffer()));
+>         }
+>         else
+>         {
+>             javaResult = env->NewStringUTF("\00");
+>         }
+> 
+>         if (javaResult == 0)
+>         {
+>             throwSTAFException(env, kSTAFInvalidValue,
+>                                "Error creating result string");
+>         }
+>     }
+>     catch (STAFException e)
+>     {
+>         throwSTAFException(
+>             env, kSTAFInvalidValue,
+>             "Error - STAFHandle::removePrivacyDelimiters() failed");
+>     }
+>     
+>     // Now, return the jstring
+> 
+>     return javaResult;
+> }
+> 
+> /*
+>  * Class:     com_ibm_staf_STAFUtil
+>  * Method:    STAFUtilMaskPrivateData
+>  * Signature: (Ljava/lang/String;)Ljava/lang/String;
+>  */
+> JNIEXPORT jstring JNICALL Java_com_ibm_staf_STAFUtil_STAFUtilMaskPrivateData
+>   (JNIEnv *env, jclass theObject, jstring data)
+> {
+>     // Check if jstring is null because GetStringUTFChars core dumps if
+>     // pass it a null string.
+>     if (data == 0)
+>     {
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error - data string is null");
+>     }
+> 
+>     const char *dataUTF = env->GetStringUTFChars(data, 0);
+>     
+>     if (dataUTF == 0)
+>     {
+>         // We could not get the UTF-8 version of data, so throw an
+>         // exception
+> 
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error getting UTF-8 data string");
+>         return 0;
+>     }
+> 
+>     STAFString result;
+>     jstring javaResult = 0;
+> 
+>     try
+>     {
+>         result = STAFHandle::maskPrivateData(dataUTF);
+> 
+>         // Now free up the memory from the Java VM
+> 
+>         env->ReleaseStringUTFChars(data, dataUTF);
+> 
+>         // Now, generate a jstring for the result
+> 
+>         if (result.length() != 0)
+>         {
+>             // Convert the result string for Java to handle null chars
+>             result = result.replace(kUTF8_NULL, kUTF8_NULL2);
+>             result += kUTF8_NULL;
+>             javaResult = env->NewStringUTF(
+>                 const_cast<char *>(result.buffer()));
+>         }
+>         else
+>         {
+>             javaResult = env->NewStringUTF("\00");
+>         }
+> 
+>         if (javaResult == 0)
+>         {
+>             throwSTAFException(env, kSTAFInvalidValue,
+>                                "Error creating result string");
+>         }
+>     }
+>     catch (STAFException e)
+>     {
+>         throwSTAFException(
+>             env, kSTAFInvalidValue,
+>             "Error - STAFHandle::maskPrivateData() failed");
+>     }
+>     
+>     // Now, return the jstring
+> 
+>     return javaResult;
+> }
+> 
+> /*
+>  * Class:     com_ibm_staf_STAFUtil
+>  * Method:    STAFUtilEscapePrivacyDelimiters
+>  * Signature: (Ljava/lang/String;)Ljava/lang/String;
+>  */
+> JNIEXPORT jstring JNICALL Java_com_ibm_staf_STAFUtil_STAFUtilEscapePrivacyDelimiters
+>   (JNIEnv *env, jclass theObject, jstring data)
+> {
+>     // Check if jstring is null because GetStringUTFChars core dumps if
+>     // pass it a null string.
+>     if (data == 0)
+>     {
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error - data string is null");
+>     }
+> 
+>     const char *dataUTF = env->GetStringUTFChars(data, 0);
+>     
+>     if (dataUTF == 0)
+>     {
+>         // We could not get the UTF-8 version of data, so throw an
+>         // exception
+> 
+>         throwSTAFException(env, kSTAFInvalidValue,
+>                            "Error getting UTF-8 data string");
+>         return 0;
+>     }
+> 
+>     STAFString result;
+>     jstring javaResult = 0;
+> 
+>     try
+>     {
+>         result = STAFHandle::escapePrivacyDelimiters(dataUTF);
+> 
+>         // Now free up the memory from the Java VM
+> 
+>         env->ReleaseStringUTFChars(data, dataUTF);
+> 
+>         // Now, generate a jstring for the result
+> 
+>         if (result.length() != 0)
+>         {
+>             // Convert the result string for Java to handle null chars
+>             result = result.replace(kUTF8_NULL, kUTF8_NULL2);
+>             result += kUTF8_NULL;
+>             javaResult = env->NewStringUTF(
+>                 const_cast<char *>(result.buffer()));
+>         }
+>         else
+>         {
+>             javaResult = env->NewStringUTF("\00");
+>         }
+> 
+>         if (javaResult == 0)
+>         {
+>             throwSTAFException(env, kSTAFInvalidValue,
+>                                "Error creating result string");
+>         }
+>     }
+>     catch (STAFException e)
+>     {
+>         throwSTAFException(
+>             env, kSTAFInvalidValue,
+>             "Error - STAFHandle::escapePrivacyDelimiters() failed");
+>     }
+>     
+>     // Now, return the jstring
+> 
+>     return javaResult;
+> }
+> 
+Index: makefile.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/java/makefile.java,v
+retrieving revision 1.13
+diff -r1.13 makefile.java
+15a16
+>   $(O)/lang/java/classes/com/ibm/staf/STAFVersion.class\
+26a28
+>                        $(O)/lang/java/com_ibm_staf_STAFUtil.h\
+68a71,76
+> $(O)/lang/java/com_ibm_staf_STAFUtil.h: $(stafif_java_class_targets)
+> 	@echo "*** Creating com_ibm_staf_STAFUtil.h ***"
+> 	@$(CREATE_PATH)
+> 	@$(JAVAH) -jni -d $(OS_O)/lang/java -classpath '$(STAFIF_JAVA_CLASSPATH)' com.ibm.staf.STAFUtil
+> 	-@$(TOUCH) $@
+>         
+Index: classes/STAFUtil.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/java/classes/STAFUtil.java,v
+retrieving revision 1.10
+diff -r1.10 STAFUtil.java
+466,514c466
+>         return STAFUtilAddPrivacyDelimiters(data);
+537,733c490
+>         return STAFUtilRemovePrivacyDelimiters(data, numLevels);
+749,822c506
+>         return STAFUtilMaskPrivateData(data);
+838,871c522
+>         return STAFUtilEscapePrivacyDelimiters(data);
+913,914c525,534
+>     /************************/
+>     /* All the native stuff */
+>     /************************/
+> 
+>     private static native void initialize();
+>     private static native String STAFUtilAddPrivacyDelimiters(String data);
+>     private static native String STAFUtilRemovePrivacyDelimiters(
+>         String data, int numLevels);
+>     private static native String STAFUtilMaskPrivateData(String data);
+>     private static native String STAFUtilEscapePrivacyDelimiters(String data);
+916,943c536,541
+>     // Static initializer - called first time class is loaded.
+>     static
+>     {
+>         System.loadLibrary("STAF");
+>         System.loadLibrary("JSTAF");
+>         initialize();
+
+Index: STAFUG.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/STAFUG.script,v
+retrieving revision 1.36
+diff -r1.36 STAFUG.script
+22a23,24
+> .se private = 'This option will handle private data.'
+> .se maskPrivate = 'Private data will be masked.'
+Index: LogSrv.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/LogSrv.script,v
+retrieving revision 1.29
+diff -r1.29 LogSrv.script
+259a260
+> Any private data in the message will be masked before writing to the log.
+Index: ProcSrv.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/ProcSrv.script,v
+retrieving revision 1.40
+diff -r1.40 ProcSrv.script
+77c77
+< through REXX.EXE. &varres.
+---
+> through REXX.EXE. &varres. &private.
+79c79
+< command. &varres.
+---
+> command. &varres. &private.
+136c136
+< specified with :xph.USERNAME:exph..
+---
+> specified with :xph.USERNAME:exph.. &private.
+542c542
+< password tupass.
+---
+> password tupass and use privacy delimiters to indicate that the password is pr
+ivate.
+544c544
+< :xph.START COMMAND tc2 WORKDIR /testcases USERNAME testuser PASSWORD tupass:ex
+ph.
+---
+> :xph.START COMMAND tc2 WORKDIR /testcases USERNAME testuser PASSWORD !!@tupass
+@!!:exph.
+893c893
+< :c.
+---
+> :c.&maskPrivate.
+948c948
+< :c.
+---
+> :c.&maskPrivate.
+1014c1014
+< :c.
+---
+> :c.&maskPrivate.
+1197c1197
+< :c.
+---
+> :c.&maskPrivate.
+1202c1202
+< :c.
+---
+> :c.&maskPrivate.
+1665a1666
+> :p.Note that the :xph.DEFAULTAUTPASSWORD:exph. option will handle private data
+.
+1688c1689,1690
+< with which processes will be authenticated by default to secret.
+---
+> with which processes will be authenticated by default to secret and using priv
+acy
+> delimiters to indicate that it is private data.
+1690c1692
+< DEFAULTAUTHUSERNAME user1 DEFAULTAUTHPASSWORD secret:exph.
+---
+> DEFAULTAUTHUSERNAME user1 DEFAULTAUTHPASSWORD !!@secret@!!:exph.
+Index: QueueSrv.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/QueueSrv.script,v
+retrieving revision 1.19
+diff -r1.19 QueueSrv.script
+436c436
+< :c.
+---
+> :c.&maskPrivate.
+Index: SrvSrv.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/SrvSrv.script,v
+retrieving revision 1.17
+diff -r1.17 SrvSrv.script
+198c198
+< :c.
+---
+> :c.&maskPrivate.
+Index: TraceSrv.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/TraceSrv.script,v
+retrieving revision 1.12
+diff -r1.12 TraceSrv.script
+52c52
+< :p.:xph.<Message>:exph. is the actual trace message.
+---
+> :p.:xph.<Message>:exph. is the actual trace message. &maskPrivate.
+Index: Services.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/Services.script,v
+retrieving revision 1.12
+diff -r1.12 Services.script
+106c106
+< NAME :4:NAME.
+---
+> NAME :4&colon.NAME.
+109a110,167
+> :i3.private data
+> :h2 id=privatedata.Private Data
+> :p.Some command options allow their values to contain private data which
+> will be handled by the service.  This will be noted in the command
+> options that allow it.
+> :p.
+> Private data is denoted by surrounding the private data, e.g. a password,
+> between an opening privacy delimiter (!!@) and a closing privacy delimiter
+> (@!!).  For example, !!@password@!!.  Because of this special significance
+> of "!!@" and "@!!", if you do not want them to denote private data, use a
+> caret (^), as an escape character for "!!@" and "@!!".
+> Nested private data is allowed.
+> :p.
+> Using privacy delimiters indicates that the data enclosed between opening
+> and closing privacy delimiters should be protected so that if the private
+> data is displayed (e.g. in a :xph.LIST:exph. or :xph.QUERY:exph. request),
+> any private data will be masked (replaced with asterisks).
+>
+> :h4.Examples
+> :p.
+> The Process service's :xph.START:exph. request handles
+> private data in the :xph.COMMAND:exph., :xph.PARMS:exph., and/or
+> :xph.PASSWORD:exph. options.  If the command contains
+> a password (e.g. secret) that you want to keep private, enclose the
+> password between privacy delimiters as follows:
+> :xmp.
+> START SHELL COMMAND "C:/tests/myTest.exe -password !!@secret@!!"
+> :exmp.
+> The above command would be displayed as "myTest.exe -password ************"
+> in a :xph.LIST:exph. or :xph.QUERY:exph. request.
+> :p.If you want to start command "TestA.exe" as another user (e.g.
+> userid testuser and password secret), you can indicate that the
+> password is private as follows:
+> :xmp.
+> START COMMAND C:/tests/TestA.exe USER testuser PASSWORD !!@secret@!!
+> :exmp.
+> :p.If the password in the above example actually contained !!@ or @!!
+> (e.g. pass@!!rd), then you need to escape the privacy delimiter.
+> For example:
+> :xmp.
+> START COMMAND C:/tests/TestA.exe USER testuser PASSWORD !!@pass^@!!rd@!!
+> :exmp.
+> :p.
+> You can nest private data.  For example the following string contains
+> two levels of nested private data:
+> :xmp.
+> !!@Top secret info: password=^!!@secret^@!!.@!!
+> :exmp.
+> Note that a caret (^) is added to escape any !!@ and @!! characters
+> that are nested within another set of privacy delimiters.
+> :p.
+> When specifying private data for a command option in a program, use the
+> method provided by STAF to add privacy delimiters.
+> STAF also provides methods to escape privacy delimiters, to
+> mask privacy delimiters, and to remove privacy delimiters.  See the
+> STAF API documentation for more information.
+> .*---------------------------------------------------------------------
+> .*
+Index: APIRef.script
+===================================================================
+RCS file: /cvsroot/staf/src/staf/docs/userguide/APIRef.script,v
+retrieving revision 1.27
+diff -r1.27 APIRef.script
+66a67
+> Also, STAF provides some APIs for handling private data.
+445a447,487
+>
+> .*
+> .*---------------------------------------------------------------------
+> .*
+> :ih1.C API
+> :i2.Private Data Manipulation APIs
+> :h3.Private Data Manipulation APIs
+> :p.STAF externalizes some APIs for handling private data in STAF command
+> request options.  Here are the definitions for these APIs.
+> :xmp.
+> // This method adds privacy delimiters to the data.
+> // For example, if data passed in is "secret", sets result
+> // to "!!@secret@!!".
+>
+> STAFRC_t STAFAddPrivacyDelimiters(STAFStringConst_t data,
+>                                   STAFString_t *result);
+>
+> // This method removes the specified number of levels of privacy
+> // delimiters from the data.  Set numLevels to 0 to remove all
+> // levels of privacy delimiters.
+> // For example, if data passed in is "!!@secret@!!", sets
+> // result to "secret".
+>
+> STAFRC_t STAFRemovePrivacyDelimiters(STAFStringConst_t data,
+>                                      unsigned int numLevels,
+>                                      STAFString_t *result);
+>
+> // This method masks any private data indicated by the privacy
+> // delimiters by replacing the private data with asterisks.
+> // For example, if data passed in is "!!@secret@!!", sets
+> // result to "************".
+>
+> STAFRC_t STAFMaskPrivateData(STAFStringConst_t data, STAFString_t *result);
+>
+> // This method escapes any privacy delimiters found in the data.
+> // For example, if data passed in is "!!@secret@!!", sets
+> // result to "^!!@secret^@!!".
+>
+> STAFRC_t STAFEscapePrivacyDelimiters(STAFStringConst_t data,
+>                                      STAFString_t *result);
+> :exmp. 
+Index: services/cron/CronService.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/cron/CronService.java,v
+retrieving revision 1.41
+diff -r1.41 CronService.java
+20c20
+<     private final String kVersion = "3.0.0";
+---
+>     private final String kVersion = "3.1.0 Beta 1";
+23c23
+<     private final String kRequiredSTAFVersion = "3.0.0";
+---
+>     private final String kRequiredSTAFVersion = "3.1.0 Beta 1";
+72a73,115
+>
+>             // Resolve the line separator variable for the local machine
+>
+>             res = STAFUtil.resolveInitVar("{STAF/Config/Sep/Line}", fHandle);
+>
+>             if (res.rc != STAFResult.Ok) return res;
+>
+>             fLineSep = res.result;
+>
+>             // Verify that the required version of STAF is running on the
+>             // local service machine.
+>             // Note:  Method compareSTAFVersion was added in STAF V3.1.0
+>
+>             try
+>             {
+>                 res = STAFUtil.compareSTAFVersion(
+>                     "local", fHandle, kRequiredSTAFVersion);
+>
+>                 if (res.rc != STAFResult.Ok)
+>                 {
+>                     if (res.rc == STAFResult.InvalidSTAFVersion)
+>                     {
+>                         return new STAFResult(
+>                             STAFResult.ServiceConfigurationError,
+>                             "Minimum required STAF version for this service "
++
+>                             "is not running." + fLineSep + res.result);
+>                     }
+>                     else
+>                     {
+>                         return new STAFResult(
+>                             STAFResult.ServiceConfigurationError,
+>                             "Error verifying the STAF version. RC: " + res.rc
++
+>                             ", Additional info: " + res.result);
+>                     }
+>                 }
+>             }
+>             catch (Error err)
+>             {
+>                 return new STAFResult(
+>                     STAFResult.ServiceConfigurationError,
+>                     "This service requires STAF Version " +
+>                     kRequiredSTAFVersion + " or later.");
+>             }
+91,104c134,135
+<                 // Note the getJythonVersion method was added in STAF V3.0.0
+<
+<                 try
+<                 {
+<                     fJythonVersion = STAFServiceSharedJython.getJythonVersion(
+);
+<                 }
+<                 catch (Error err)
+<                 {
+<                     return new STAFResult(
+<                         STAFResult.STAFRegistrationError,
+<                         fServiceName + " service V" + kVersion +
+<                         " requires STAF V" + kRequiredSTAFVersion +
+<                         " or later");
+<                 }
+---
+>
+>                 fJythonVersion = STAFServiceSharedJython.getJythonVersion();
+228,235d258
+<             // Resolve the line separator variable for the local machine
+<
+<             res = STAFUtil.resolveInitVar("{STAF/Config/Sep/Line}", fHandle);
+<
+<             if (res.rc != STAFResult.Ok) return res;
+<
+<             fLineSep = res.result;
+<
+489c489,490
+<                         cronIDMap.put("request", theData.fRequest);
+---
+>                         cronIDMap.put("request", STAFUtil.maskPrivateData(
+>                             theData.fRequest));
+Index: services/cron/History
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/cron/History,v
+retrieving revision 1.25
+diff -r1.25 History
+8a9,15
+> 
+> -------------------------------------------------------------------------------
+> 
+> Version 3.0.1: ??/??/2005
+> 
+>   + Provided the ability to mask passwords and other sensitive data
+>     (Feature #622392)
+>   + Updated to require STAF V3.1.0 or later using the new compareSTAFVersion()
+
+>     method since utilizing new privacy methods (Feature #1292268)
+Index: cron.html
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/cron/cron.html,v
+retrieving revision 1.33
+diff -r1.33 cron.html
+22,23c22,23
+< <b>Version 3.0.0</b>
+< <p><b>Last updated: April 18, 2005</b>
+---
+> <b>Version 3.1.0</b>
+> <p><b>Last updated: September 15, 2005</b>
+74c74
+< <p>Install STAF Version 3.0.0 or later by following the
+---
+> <p>Install STAF Version 3.1.0 or later by following the
+77,78c77,78
+< Install the Cron V3.0.0 service:
+< <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Download the CronV300.zip/
+tar
+---
+> Install the Cron V3.1.0 service:
+> <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Download the CronV310.zip/
+tar
+549c549
+<  <p><b>Result:</b>&nbsp; <tt>3.0.0</tt>
+---
+>  <p><b>Result:</b>&nbsp; <tt>3.1.0</tt>
+Index: EventService.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/event/EventService.java,v
+retrieving revision 1.43
+diff -r1.43 EventService.java
+56c56
+<     transient final String kVersion = "3.0.3";
+---
+>     transient final String kVersion = "3.1.0 Beta 1";
+>     // Version of STAF (or later) required for this service
+>     // STAF Version 3.1.0 or later is required so that the privacy methods
+>     // in STAFUtil are available.
+>     transient final String kRequiredSTAFVersion = "3.1.0 Beta 1";
+442a448,482
+>             // Verify that the required version of STAF is running on the
+>             // local service machine.
+>             // Note:  Method compareSTAFVersion was added in STAF V3.1.0
+>
+>             try
+>             {
+>                 res = STAFUtil.compareSTAFVersion(
+>                     "local", fHandle, kRequiredSTAFVersion);
+>
+>                 if (res.rc != STAFResult.Ok)
+>                 {
+>                     if (res.rc == STAFResult.InvalidSTAFVersion)
+>                     {
+>                         return new STAFResult(
+>                             STAFResult.ServiceConfigurationError,
+>                             "Minimum required STAF version for this service "
++
+>                             "is not running." + lineSep + res.result);
+>                     }
+>                     else
+>                     {
+>                         return new STAFResult(
+>                             STAFResult.ServiceConfigurationError,
+>                             "Error verifying the STAF version. RC: " + res.rc
++
+>                             ", Additional info: " + res.result);
+>                     }
+>                 }
+>             }
+>             catch (Error err)
+>             {
+>                 return new STAFResult(
+>                     STAFResult.ServiceConfigurationError,
+>                     "This service requires STAF Version " +
+>                     kRequiredSTAFVersion + " or later.");
+>             }
+>
+1037a1038,1040
+>
+>                             // Note that property values that contain private
+>                             // data will be masked.
+1040a1044
+>
+Index: GenerationManager.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/event/GenerationManager.java,v
+retrieving revision 1.9
+diff -r1.9 GenerationManager.java
+71a72,76
+>             return getPropertyMap(false);
+>         }
+>
+>         public Map getPropertyMap(boolean maskPrivateData)
+>         {
+83c88,92
+<                     propertyMap.put(name, value);
+---
+>
+>                     if (!maskPrivateData)
+>                         propertyMap.put(name, value);
+>                     else
+>                         propertyMap.put(name, STAFUtil.maskPrivateData(value))
+;
+142c151,157
+<             notificationMap.put("propertyMap", eventID.getPropertyMap());
+---
+>
+>             // Currently, getNotificationMap() is only used when listing or
+>             // querying Event IDs, so always get the properties with any
+>             // private data masked, as indicated by passing true for the
+>             // maskPrivateData argument.
+>             notificationMap.put("propertyMap", eventID.getPropertyMap(true));
+>
+Index: event.htm
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/event/event.htm,v
+retrieving revision 1.33
+diff -r1.33 event.htm
+22,23c22,23
+< <b>Version 3.0.3</b>
+< <p><b>Last updated: August 29, 2005</b>
+---
+> <b>Version 3.1.0</b>
+> <p><b>Last updated: September 16, 2005</b>
+179c179
+< <li>Install STAF 3.0.0 or later by following
+---
+> <li>Install STAF 3.1.0 or later by following
+182,183c182,183
+< <li>Install the Event V3.0.3 service:
+< <p>Download the EventV303.zip/tar
+---
+> <li>Install the Event V3.1.0 service:
+> <p>Download the EventV310.zip/tar
+470a471
+> This option will handle private data in the &lt;Value> specified for a propert
+y.
+1288c1289
+< <td>
+---
+> <td>Private data will be masked.
+1407c1408
+< <td>
+---
+> <td>Private data will be masked.
+1673c1673
+< 3.0.3
+---
+> 3.1.0
+Index: History
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/event/History,v
+retrieving revision 1.29
+diff -r1.29 History
+12c12
+< Version 3.0.3: ??/??/2005
+---
+> Version 3.1.0: ??/??/2005
+15,16c15,18
+<     property that only contains a Name instead of Name=Value (Bug #1273518)
+<
+---
+>     property that only contains a Name instead of Name=Value (Bug #1273518)
+>   + Provided the ability to mask private data like passwords specified in
+>     a PROPERTY option value (Feature #622392)
+>   + Updated to require STAF V3.1.0 or later using the new compareSTAFVersion()
+>     method since utilizing new privacy methods (Feature #1292268)
+>Index: services/eventmanager/EventManagerService.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/eventmanager/EventManagerService.java,v
+retrieving revision 1.40
+diff -r1.40 EventManagerService.java
+21c21
+<     private final String kVersion = "3.0.1";
+---
+>     private final String kVersion = "3.1.0 Beta 1";
+24c24,26
+<     private final String kRequiredSTAFVersion = "3.0.0";
+---
+>     // STAF Version 3.1.0 or later is required so that the privacy methods
+>     // in STAFUtil are available.
+>     private final String kRequiredSTAFVersion = "3.1.0 Beta 1";
+82a85,127
+>
+>             // Resolve the line separator variable for the local machine
+>
+>             res = STAFUtil.resolveInitVar("{STAF/Config/Sep/Line}", fHandle);
+>
+>             if (res.rc != STAFResult.Ok) return res;
+>
+>             fLineSep = res.result;
+>
+>             // Verify that the required version of STAF is running on the
+>             // local service machine.
+>             // Note:  Method compareSTAFVersion was added in STAF V3.1.0
+>
+>             try
+>             {
+>                 res = STAFUtil.compareSTAFVersion(
+>                     "local", fHandle, kRequiredSTAFVersion);
+>
+>                 if (res.rc != STAFResult.Ok)
+>                 {
+>                     if (res.rc == STAFResult.InvalidSTAFVersion)
+>                     {
+>                         return new STAFResult(
+>                             STAFResult.ServiceConfigurationError,
+>                             "Minimum required STAF version for this service "
++
+>                             "is not running." + fLineSep + res.result);
+>                     }
+>                     else
+>                     {
+>                         return new STAFResult(
+>                             STAFResult.ServiceConfigurationError,
+>                             "Error verifying the STAF version. RC: " + res.rc
++
+>                             ", Additional info: " + res.result);
+>                     }
+>                 }
+>             }
+>             catch (Error err)
+>             {
+>                 return new STAFResult(
+>                     STAFResult.ServiceConfigurationError,
+>                     "This service requires STAF Version " +
+>                     kRequiredSTAFVersion + " or later.");
+>             }
+101,114c146,147
+<                 // Note the getJythonVersion method was added in STAF V3.0.0
+<
+<                 try
+<                 {
+<                     fJythonVersion = STAFServiceSharedJython.getJythonVersion(
+);
+<                 }
+<                 catch (Error err)
+<                 {
+<                     return new STAFResult(
+<                         STAFResult.STAFRegistrationError,
+<                         fServiceName + " service V" + kVersion +
+<                         " requires STAF V" + kRequiredSTAFVersion +
+<                         " or later");
+<                 }
+---
+>
+>                 fJythonVersion = STAFServiceSharedJython.getJythonVersion();
+262,269d294
+<
+<             // Resolve the line separator variable for the local machine
+<
+<             res = STAFUtil.resolveInitVar("{STAF/Config/Sep/Line}", fHandle);
+<
+<             if (res.rc != STAFResult.Ok) return res;
+<
+<             fLineSep = res.result;
+532c532,533
+<                         emIDMap.put("request", theData.fRequest);
+---
+>                         emIDMap.put("request", STAFUtil.maskPrivateData(
+>                             theData.fRequest));
+Index: services/eventmanager/History
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/eventmanager/History,v
+retrieving revision 1.30
+diff -r1.30 History
+11a12,18
+> Version 3.1.0: ??/??/2005
+> 
+>   + Provided the ability to mask passwords and other sensitive data
+>     (Feature #622392)
+>    
+> -------------------------------------------------------------------------------
+Index: eventmanager.html
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/eventmanager/eventmanager.html,v
+retrieving revision 1.36
+diff -r1.36 eventmanager.html
+22,23c22,23
+< <b>Version 3.0.1</b>
+< <p><b>Last updated: June 27, 2005</b>
+---
+> <b>Version 3.1.0</b>
+> <p><b>Last updated: September 14, 2005</b>
+70c70
+< <li>Install STAF Version 3.0.0 or later by following
+---
+> <li>Install STAF Version 3.1.0 or later by following
+78c78
+< <p><b>Note:</b> The version of the Event service must be 3.0.0 or later.
+---
+> <p><b>Note:</b> The version of the Event service must be 3.1.0 or later.
+80c80
+< <li>Install the EventManager service by downloading the EventManagerV301.zip/t
+ar
+---
+> <li>Install the EventManager service by downloading the EventManagerV310.zip/t
+ar
+595c595
+<  <p><b>Result:</b>&nbsp; <tt>3.0.1</tt>
+---
+>  <p><b>Result:</b>&nbsp; <tt>3.1.0</tt>
+Index: HTTP.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/http/HTTP.java,v
+retrieving revision 1.38
+diff -r1.38 HTTP.java
+74c74,79
+<     private static final String VERSIONINFO = "3.0.0 Beta 9";
+---
+>     private static final String VERSIONINFO = "3.0.0 Beta 10";
+>
+>     // Version of STAF (or later) required for this service
+>     // STAF Version 3.1.0 or later is required so that the privacy methods
+>     // in STAFUtil are available.
+>     private static final String REQUIREDSTAFVERSION = "3.1.0 Beta 1";
+508c513
+<                 authHostMap.put("password", "XXXXXX");
+---
+>                 authHostMap.put("password", "*******");
+560c565
+<                     formMap.put("value", value);
+---
+>                     formMap.put("value", STAFUtil.maskPrivateData(value));
+1092c1097,1099
+<             pwd = res.result;
+---
+>             // Remove privacy delimiters.  Can remove since never show
+>             // true value of a authentication password on a query request.
+>             pwd = STAFUtil.removePrivacyDelimiters(res.result);
+2753,2754d2759
+<     // Get the line separator for the local machine
+<
+2756a2762,2804
+>     // Resolve the line separator variable for the local machine
+>
+>     res = STAFUtil.resolveInitVar("{STAF/Config/Sep/Line}", sHandle);
+>
+>     if (res.rc != STAFResult.Ok) return res;
+>
+>     String lineSep = res.result;
+>
+>     // Verify that the required version of STAF is running on the
+>     // local service machine.
+>     // Note:  Method compareSTAFVersion was added in STAF V3.1.0
+>
+>     try
+>     {
+>         res = STAFUtil.compareSTAFVersion(
+>             "local", sHandle, REQUIREDSTAFVERSION);
+>
+>         if (res.rc != STAFResult.Ok)
+>         {
+>             if (res.rc == STAFResult.InvalidSTAFVersion)
+>             {
+>                 return new STAFResult(
+>                     STAFResult.ServiceConfigurationError,
+>                     "Minimum required STAF version for this service " +
+>                     "is not running." + lineSep + res.result);
+>             }
+>             else
+>             {
+>                 return new STAFResult(
+>                     STAFResult.ServiceConfigurationError,
+>                     "Error verifying the STAF version. RC: " + res.rc +
+>                     ", Additional info: " + res.result);
+>             }
+>         }
+>     }
+>     catch (Error err)
+>     {
+>         return new STAFResult(
+>             STAFResult.ServiceConfigurationError,
+>             "This service requires STAF Version " + REQUIREDSTAFVERSION +
+>             " or later.");
+>     }
+>
+Index: History
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/http/History,v
+retrieving revision 1.31
+diff -r1.31 History
+11a12,20
+> Version 3.0.0 Beta 10: ??/??/2005
+>
+>   + Provided the ability to mask passwords and other sensitive data
+>     (Feature #622392)
+>   + Updated to require STAF V3.1.0 or later using the new compareSTAFVersion()
+
+>     method since utilizing new privacy methods (Feature #1292268)
+>
+> ------------------------------------------------------------------------------
+-
+>
+Index: Http.html
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/http/Http.html,v
+retrieving revision 1.31
+diff -r1.31 Http.html
+23,24c23,24
+< <p><b>Version 3.0.0 Beta 9</b></p>
+< <p><b>Last updated: May 25, 2005</b>
+---
+> <p><b>Version 3.0.0 Beta 10</b></p>
+> <p><b>Last updated: September 15, 2005</b>
+120c120
+<   <LI>STAF 3.0.0</LI>
+---
+>   <LI>STAF 3.1.0 or later</LI>
+127c127
+< Install the HTTP service by downloading the HTTPV300Beta9.zip/tar file from
+---
+> Install the HTTP service by downloading the HTTPV300Beta10.zip/tar file from
+Index: Http.html
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/http/Http.html,v
+retrieving revision 1.32
+diff -r1.32 Http.html
+24c24
+< <p><b>Last updated: September 15, 2005</b>
+---
+> <p><b>Last updated: September 19, 2005</b>
+701c701,702
+< This option will resolve variables.</P>
+---
+> This option will resolve variables.  This option will handle private data
+> in the <tt>Value</tt> specified for the parameter.</P>
+900a902
+> Use privacy delimiters to protect the password.
+903c905
+< PARAMETER form_pw=password PARAMETER login=Login+With+SSL SESSION 1 RETURNNOCO
+NTENT<BR>
+---
+> PARAMETER form_pw=!!@password@!! PARAMETER login=Login+With+SSL SESSION 1 RETU
+RNNOCONTENT<BR>
+976c978,982
+< This command provides information about a specific authentication host. When d
+irected to a secure site that exists on a host in the authentication hosts list,
+ the HTTP service will preemptively attempt to authenticate a secure session wit
+h the site using the user and password associated with the host. The HTTP servic
+e supports Basic, Digest, and NTLM authentication schemes.</P>
+---
+> This command provides information about a specific authentication host.
+> When directed to a secure site that exists on a host in the authentication hos
+ts
+> list, the HTTP service will preemptively attempt to authenticate a secure sess
+ion
+> with the site using the user and password associated with the host.
+> The HTTP service supports Basic, Digest, and NTLM authentication schemes.</P>
+1028c1034
+< <td>
+---
+> <td>This data will be masked.
+1039c1045
+< <li>The "Password" value will be displayed as <tt>XXXXXX</tt> if a password wa
+s
+---
+> <li>The "Password" value will be displayed as <tt>*******</tt> if a password w
+as
+1061c1067
+< Password : XXXXXX
+---
+> Password : *******
+1091c1097
+< This option will resolve variables.</P>
+---
+> This option will resolve variables.  This option will handle private data.</P>
+
+1113,1114c1119,1121
+< in session 3 to user Bob and password myCat.</P>
+< <P><b>Syntax:</b> <tt>SET AUTHENTICATIONHOST www.mysite.com AUTHENTICATIONUSER
+ Bob AUTHENTICATIONPASSWORD myCat SESSION 3</tt>
+---
+> in session 3 to user Bob and password myCat and use privacy delimiters
+> to protect the password.</P>
+> <P><b>Syntax:</b> <tt>SET AUTHENTICATIONHOST www.mysite.com AUTHENTICATIONUSER
+ Bob AUTHENTICATIONPASSWORD !!@myCat@!! SESSION 3</tt>
+1801a1809
+> <td>Private data will be masked.
+1805a1814
+> <td>
+2070c2079
+< This option will resolve variables.</P>
+---
+> This option will resolve variables.  This option will handle private data.</P>
+
+2581c2590,2591
+< replace the value for the form_pw parameter with your password):
+---
+> replace the value for the form_pw parameter with your password, using privacy
+delimiters to
+> protect your password):
+2584c2594
+< C:\><b>STAF local HTTP DOPOST URL http://sourceforge.net/account/login.php PAR
+AMETER form_loginname=user PARAMETER form_pw=password PARAMETER login=Login+With
++SSL SESSION 1 RETURNNOCONTENT</b></tt>
+---
+> C:\><b>STAF local HTTP DOPOST URL http://sourceforge.net/account/login.php PAR
+AMETER form_loginname=user PARAMETER form_pw=!!@password@!! PARAMETER login=Logi
+n+With+SSL SESSION 1 RETURNNOCONTENT</b></tt>
+3521c3531
+<     &nbsp;&nbsp;SET FORM form_1 CONTROLNAME pwd_1 VALUE pwd
+---
+>     &nbsp;&nbsp;SET FORM form_1 CONTROLNAME pwd_1 VALUE !!@pwd@!!
+3607a3618
+> Use privacy delimiters to protect the password.
+3611c3622
+< PARAMETER form_pw=password PARAMETER login=Login+With+SSL SESSION 1 RETURNNOCO
+NTENT RETURNHEADERS
+---
+> PARAMETER form_pw=!!@password@!! PARAMETER login=Login+With+SSL SESSION 1 RETU
+RNNOCONTENT RETURNHEADERS
+3617c3628
+< must be answered though user/password pop-up prompt. This is an examples
+---
+> must be answered though user/password pop-up prompt. This is an example
+3618a3630
+> Use privacy delimiters to protect the password.
+3620c3632
+< <tt>SET AUTHENTICATIONHOST www.theSite.com AUTHENTICATIONUSER user AUTHENTICAT
+IONPASSWORD pwd</tt>
+---
+> <tt>SET AUTHENTICATIONHOST www.theSite.com AUTHENTICATIONUSER user AUTHENTICAT
+IONPASSWORD !!@pwd@!!</tt>
+Index: WebSession.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/http/WebSession.java,v
+retrieving revision 1.12
+diff -r1.12 WebSession.java
+32a33
+> import com.ibm.staf.STAFUtil;
+1026c1027,1028
+<                     String value = (String) pair.elementAt(1);
+---
+>                     String value = STAFUtil.removePrivacyDelimiters(
+>                         (String) pair.elementAt(1));
+Index: services/log/STAFLogService.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/log/STAFLogService.cpp,v
+retrieving revision 1.43
+diff -r1.43 STAFLogService.cpp
+3176c3176
+<     writeStringToFile(logfile, logRecord.message);
+---
+>     writeStringToFile(logfile, STAFHandle::maskPrivateData(logRecord.message));
+Index: services/stax/History
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/History,v
+retrieving revision 1.210
+diff -r1.210 History
+12c12
+< Version 3.0.?: ??/??/2005
+---
+> Version 3.1.0: ??/??/2005
+15a16,17
+>   + Provided the ability to mask passwords and other sensitive data
+>     (Feature #622392)
+Index: services/stax/docs/userguide/staxug.html
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/docs/userguide/staxug.html,v
+retrieving revision 1.123
+diff -r1.123 staxug.html
+24c24
+< <p><b>August 15, 2005</b>
+---
+> <p><b>August 26, 2005</b>
+6446a6447,6466
+> <td>parms
+> <td>Parms
+> <td><tt>&lt;String></tt>
+> <td>
+> <tr>
+> <td>title
+> <td>Title
+> <td><tt>&lt;String></tt>
+> <td>
+> <tr>
+> <td>workdir
+> <td>Workdir
+> <td><tt>&lt;String></tt>
+> <td>
+> <tr>
+> <td>workload
+> <td>Workload
+> <td><tt>&lt;String></tt>
+> <td>
+> <tr>
+Index: staxug.html
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/docs/userguide/staxug.html,v
+retrieving revision 1.125
+diff -r1.125 staxug.html
+24c24
+< <p><b>September 6, 2005</b>
+---
+> <p><b>September 19, 2005</b>
+969c969,970
+< This element is optional.</li>
+---
+> This element is optional.
+> </li>
+4208a4210,4211
+> Note that any private data contained in a message will be masked (replaced wit
+h asterisks)
+> before the message is sent.
+4656c4659
+< Install STAF 3.0.0 or later by following the installation instructions in the
+STAF documentation.
+---
+> Install STAF 3.1.0 or later by following the installation instructions in the
+STAF documentation.
+4771a4775
+> This option will handle private data.
+4795a4800
+> This option will handle private data.
+5003a5009,5019
+> <b>Goal:</b> Execute a job defined by an XML file named /test/serverTest.xml
+> located on the local machine, starting at function Main, and pass a
+> map that contains the name of a server and a password as the
+> arguments to the function.  Use privacy delimiters to protect the password.
+> <p><tt>EXECUTE FILE /test/serverTest.xml
+> FUNCTION Main ARGS "{ 'server': 'server1', 'password': '!!@secret@!!' }"</tt>
+> <p><b>Output:</b>  If the request is submitted from the command line and the
+> job is started successfully with job ID 8, the result, in default format, coul
+d look like:
+> <pre>8</pre>
+> <p>
+> <li>
+5692c5708
+< <td>
+---
+> <td>Private data will be masked.
+5697c5713
+< <td>
+---
+> <td>Private data will be masked.
+5751c5767
+< <td>
+---
+> <td>Private data will be masked.
+6078c6094
+< <td>
+---
+> <td>Private data will be masked.
+6083c6099
+< <td>
+---
+> <td>Private data will be masked.
+6449c6465
+< <td>
+---
+> <td>Private data will be masked.
+6464c6480
+< <td>
+---
+> <td>Private data will be masked.
+6504c6520
+< <td>
+---
+> <td>This field will be masked.
+6581a6598,6599
+> <li>The "Password" value will be set to <tt>&lt;None></tt> if no password is
+> specified or <tt>*******</tt> if a password is specified.
+6637c6655
+< <td>
+---
+> <td>Private data will be masked.
+8054c8072
+< <li><b>Result</b> - A "string" version of the Job Result.
+---
+> <li><b>Result</b> - A "string" version of the Job Result.  Private data will b
+e masked.
+9425c9443
+<   aString = STAFMarshalling.marsahll(myMap, myContext)
+---
+>   aString = STAFMarshalling.marshall(myMap, myContext)
+Index: services/stax/service/STAX.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAX.java,v
+retrieving revision 1.89
+diff -r1.89 STAX.java
+1382c1382,1385
+<                 job.setScript(code);
+---
+> 
+>                 // Store the scripts with private data masked since only used
+>                 // for display by a QUERY JOB <JobID> request
+>                 job.setScript(STAFUtil.maskPrivateData(code));
+2237c2240,2241
+<             jobInfoMap.put("arguments",   job.getStartFuncArgs());
+---
+>             jobInfoMap.put("arguments",
+>                            STAFUtil.maskPrivateData(job.getStartFuncArgs()));
+Index: services/stax/service/STAXLogAction.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAXLogAction.java,v
+retrieving revision 1.3
+diff -r1.3 STAXLogAction.java
+147c147
+<                 " " + fMessage);
+---
+>                 " " + STAFUtil.maskPrivateData(fMessage));
+Index: services/stax/service/STAXMessageAction.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAXMessageAction.java,v
+retrieving revision 1.7
+diff -r1.7 STAXMessageAction.java
+38c38
+<         fUnevalMessageValue = messageValue; 
+---
+>         fUnevalMessageValue = messageValue;
+71c71,72
+<         info += ">" + fUnevalMessageValue + "</message>";
+---
+>         info += ">" + STAFUtil.maskPrivateData(fUnevalMessageValue) +
+>             "</message>";
+78c79,82
+<         int msgLength = fMessageValue.length();
+---
+>         String info = STAFUtil.maskPrivateData(fMessageValue);
+> 
+>         int msgLength = info.length();
+> 
+80c84
+<             return fMessageValue.substring(0, 40) + "...";
+---
+>             return info.substring(0, 40) + "...";
+82c86
+<             return fMessageValue;
+---
+>             return info;
+87c91
+<         return "MessageValue:" + fMessageValue +
+---
+>         return "MessageValue:" + STAFUtil.maskPrivateData(fMessageValue) +
+139c143
+<             " " + fMessageValue);
+---
+>             " " + STAFUtil.maskPrivateData(fMessageValue));
+Index: services/stax/service/STAXProcessAction.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAXProcessAction.java,v
+retrieving revision 1.24
+diff -r1.24 STAXProcessAction.java
+338c338
+<             result += ";Password:" + fPassword;
+---
+>             result += ";Password:" + "*******";
+1593c1593
+<         processMap.put("command", fCommand);
+---
+>         processMap.put("command", STAFUtil.maskPrivateData(fCommand));
+1595c1595
+<         processMap.put("parms", fParms);
+---
+>         processMap.put("parms", STAFUtil.maskPrivateData(fParms));
+1649c1649
+<         processMap.put("password", fPassword);
+---
+>         processMap.put("password", "*******");
+1723c1723
+<         processMap.put("command", fCommand);
+---
+>         processMap.put("command", STAFUtil.maskPrivateData(fCommand));
+1725c1725
+<         processMap.put("parms", fParms);
+---
+>         processMap.put("parms", STAFUtil.maskPrivateData(fParms));
+Index: services/stax/service/STAXProcessActionFactory.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAXProcessActionFactory.java,v
+retrieving revision 1.14
+diff -r1.14 STAXProcessActionFactory.java
+690,691c690,695
+<                     processMap.put("command", process.getCommand());
+<                     processMap.put("parms", process.getParms());
+---
+>                     processMap.put("command",
+>                                    STAFUtil.maskPrivateData(
+>                                        process.getCommand()));
+>                     processMap.put("parms",
+>                                    STAFUtil.maskPrivateData(
+>                                        process.getParms()));
+742c746,747
+<             processMap.put("command", process.getCommand());
+---
+>             processMap.put("command",
+>                            STAFUtil.maskPrivateData(process.getCommand()));
+753c758,759
+<                 processMap.put("parms", process.getParms());
+---
+>                 processMap.put("parms",
+>                                STAFUtil.maskPrivateData(process.getParms()));
+789a796
+>             // Mask the true value for the password 
+791c798
+<                 processMap.put("password", process.getPassword());
+---
+>                 processMap.put("password", "*******");
+Index: services/stax/service/STAXSTAFCommandAction.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAXSTAFCommandAction.java,v
+retrieving revision 1.14
+diff -r1.14 STAXSTAFCommandAction.java
+367c367
+<             stafCmdMap.put("request", fRequest);
+---
+>             stafCmdMap.put("request", STAFUtil.maskPrivateData(fRequest));
+403c403
+<         stafCmdMap.put("request", fRequest);
+---
+>         stafCmdMap.put("request", STAFUtil.maskPrivateData(fRequest));
+458c458
+<         stafCmdMap.put("request", fRequest);
+---
+>         stafCmdMap.put("request", STAFUtil.maskPrivateData(fRequest));
+Index: services/stax/service/STAXSTAFCommandActionFactory.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/service/STAXSTAFCommandActionFactory.java,v
+retrieving revision 1.8
+diff -r1.8 STAXSTAFCommandActionFactory.java
+245c245,247
+<                     stafcmdMap.put("request", command.getRequest());
+---
+>                     stafcmdMap.put("request",
+>                                    STAFUtil.maskPrivateData(
+>                                        command.getRequest()));
+290c292,293
+<             stafcmdMap.put("request", command.getRequest());
+---
+>             stafcmdMap.put("request",
+>                            STAFUtil.maskPrivateData(command.getRequest()));
+Index: stafif/STAF.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAF.h,v
+retrieving revision 1.5
+diff -r1.5 STAF.h
+125a126,142
+>     // This method returns the data with privacy delimiters added.
+>     // For example, if pass in "secret", it returns "!!@secret@!!".
+>     static STAFString addPrivacyDelimiters(const STAFString &data);
+> 
+>     // This method removes any privacy delimiters from the data.
+>     // For example, if pass in "!!@secret@!!", it returns "secret".
+>     static STAFString removePrivacyDelimiters(const STAFString &data);
+> 
+>     // This method masks any private data indicated by the privacy delimiters
+>     // by replacing the private data with asterisks.
+>     // For example, if pass in "!!@secret@!!", it returns "************".
+>     static STAFString maskPrivateData(const STAFString &data);
+> 
+>     // This method checks if the data contains any private data and
+>     // returns true if it does or false if it doesn't.
+>     static bool containsPrivateData(const STAFString &data);
+> 
+Index: stafif/STAFInlImpl.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFInlImpl.cpp,v
+retrieving revision 1.8
+diff -r1.8 STAFInlImpl.cpp
+106a107,248
+> STAF_INLINE STAFString STAFHandle::addPrivacyDelimiters(const STAFString &data)
+> {
+>     // XXX: Will want to define kUTF8_BANG in STAFString.h and define its
+>     //      hex and UTF8 representation in the map in STAFString.h
+>     
+>     // XXX: Add check if already has the privacy delimiters at the
+>     //      beginning and end of the string, then don't add additional
+>     //      privacy delimiters.
+>     // XXX: Add code to escape @!! instances with a caret (e.g. ^@!!),
+>     //      and if the string argument already contains ^@!! in it,
+>     //      escape it with another caret (e.g. ^^@!!).
+> 
+>     if (data.length() == 0) return data;
+> 
+>     STAFString outString("!");  // XXX: STAFString outString(kUTF8_BANG);
+>     outString += "!";           // XXX: outString += kUTF8_BANG;
+>     outString += kUTF8_AT;
+>     outString += data;
+>     outString += kUTF8_AT;
+>     outString += "!";           // XXX: outString += kUTF8_BANG;
+>     outString += "!";           // XXX: outString += kUTF8_BANG;
+>     
+>     return outString;
+> }
+> 
+>     
+> STAF_INLINE STAFString STAFHandle::removePrivacyDelimiters(
+>     const STAFString &data)
+> {
+>     // XXX: Use kUTF8_BANG and kUTF8_AT instead of "!!@" and define
+>     //      privacyPrefix as a global variable
+>     // XXX: Doesn't handle nested privacy prefixes
+>     // XXX: Doesn't handle escaped privacy delimiters
+>     
+>     if (data.length() == 0) return data;
+> 
+>     STAFString privacyDelimiter1 = "!!@";
+>     STAFString privacyDelimiter2 = "@!!";
+> 
+>     if (data.find(privacyDelimiter1) == STAFString::kNPos)
+>         return data;
+>     
+>     STAFString outString("");
+>     unsigned int pos = 0;
+>     unsigned int startIndex;
+>     
+>     while ((startIndex = data.find(privacyDelimiter1, pos))
+>             != STAFString::kNPos)
+>     {
+>         unsigned int endIndex = data.find(
+>             privacyDelimiter2, startIndex + privacyDelimiter1.length());
+> 
+>         if (endIndex == STAFString::kNPos) break;
+> 
+>         outString += data.subString(pos, startIndex - pos);
+> 
+>         outString += data.subString(
+>             startIndex + privacyDelimiter1.length(),
+>             endIndex - (startIndex + privacyDelimiter1.length()));
+>         
+>         pos = endIndex + privacyDelimiter2.length();
+> 
+>         if (pos >= data.length()) break;
+>     }
+> 
+>     if (pos < data.length())
+>     {
+>         outString += data.subString(pos);
+>     }
+>     
+>     return outString;
+> }
+>     
+> 
+> STAF_INLINE STAFString STAFHandle::maskPrivateData(const STAFString &data)
+> {
+>     // XXX: Use kUTF8_BANG and kUTF8_AT instead of "!!@" and define
+>     //      privacyPrefix as a global variable
+>     // XXX: Doesn't handle nested privacy prefixes
+>     // XXX: Doesn't handle escaped privacy delimiters
+> 
+>     if (data.length() == 0) return data;
+> 
+>     STAFString privacyDelimiter1 = "!!@";
+>     STAFString privacyDelimiter2 = "@!!";
+> 
+>     if (data.find(privacyDelimiter1) == STAFString::kNPos)
+>         return data;
+> 
+>     STAFString outString("");
+>     unsigned int pos = 0;
+>     unsigned int startIndex;
+> 
+>     while ((startIndex = data.find(privacyDelimiter1, pos))
+>            != STAFString::kNPos)
+>     {
+>         unsigned int endIndex = data.find(
+>             privacyDelimiter2, startIndex + privacyDelimiter1.length());
+> 
+>         if (endIndex == STAFString::kNPos) break;
+> 
+>         outString += data.subString(pos, startIndex - pos);
+> 
+>         // Replace the privacy delimiters and data with "*"s
+> 
+>         unsigned int replaceLength = endIndex - startIndex +
+>             privacyDelimiter2.length();
+>         
+>         for (unsigned int i = 1; i <= replaceLength; i++)
+>         {
+>             outString += "*";
+>         }
+>         
+>         pos = endIndex + privacyDelimiter2.length();
+> 
+>         if (pos >= data.length()) break;
+>     }
+> 
+>     if (pos < data.length())
+>     {
+>         outString += data.subString(pos);
+>     }
+> 
+>     return outString;
+> }
+> 
+> 
+> STAF_INLINE bool STAFHandle::containsPrivateData(const STAFString &data)
+> {
+>     // XXX: Doesn't handle escaped privacy delimiters
+> 
+>     STAFString privacyDelimiter1 = "!!@";
+> 
+>     if (data.length() == 0) return false;
+>     
+>     if (data.find(privacyDelimiter1) == STAFString::kNPos)
+>         return false;
+>     else
+>         return true;
+> }
+> 
+> 
+Index: stafif/STAFTrace.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFTrace.cpp,v
+retrieving revision 1.5
+diff -r1.5 STAFTrace.cpp
+130c130
+< 
+---
+>         
+138c138,139
+<                  << ";" << STAFString(message) << endl;
+---
+>                  << ";" << STAFHandle::maskPrivateData(STAFString(message))
+>                  << endl;
+145c146,147
+<                  << ";" << STAFString(message) << endl;
+---
+>                  << ";" << STAFHandle::maskPrivateData(STAFString(message))
+>                  << endl;
+152c154,156
+<                             << dec << ";" << STAFString(message) << endl;
+---
+>                             << dec << ";"
+>                             << STAFHandle::maskPrivateData(STAFString(message))
+>                             << endl;
+Index: stafproc/STAFProcessService.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFProcessService.cpp,v
+retrieving revision 1.54
+diff -r1.54 STAFProcessService.cpp
+1515,1523c1515,1538
+<     startData.command        = process->command.getImpl();
+<     startData.parms          = (process->parms.length() != 0)
+<                                    ? process->parms.getImpl(): 0;
+<     startData.title          = (process->title.length() != 0)
+<                                    ? process->title.getImpl() : 0;
+<     startData.workdir        = (process->workdir.length() != 0)
+<                                    ? process->workdir.getImpl() : 0;
+<     startData.workload       = (process->workload.length() != 0)
+<                                    ? process->workload.getImpl() : 0;
+---
+>     STAFString commandNoPrivacyDelimiters = STAFHandle::removePrivacyDelimiters(
+>         process->command);
+> 
+>     startData.command = commandNoPrivacyDelimiters.getImpl();
+>     
+>     if (process->parms.length() != 0)
+>     {
+>         STAFString parmsNoPrivacyDelimiters = STAFHandle::removePrivacyDelimiters(
+>             process->parms);
+>         startData.parms = parmsNoPrivacyDelimiters.getImpl();
+>     }
+>     else
+>     {
+>         startData.parms = 0;
+>     }
+> 
+>     startData.title = (process->title.length() != 0) ?
+>         process->title.getImpl() : 0;
+> 
+>     startData.workdir = (process->workdir.length() != 0) ?
+>         process->workdir.getImpl() : 0;
+> 
+>     startData.workload = (process->workload.length() != 0) ?
+>         process->workload.getImpl() : 0;
+1540c1555,1559
+<         startData.password = password.getImpl();
+---
+>     {
+>         STAFString passwordNoPrivacyDelimiters =
+>             STAFHandle::removePrivacyDelimiters(password);
+>         startData.password = passwordNoPrivacyDelimiters.getImpl();
+>     }
+1543a1563
+> 
+1544a1565,1567
+>         {
+>             defaultPassword = STAFHandle::removePrivacyDelimiters(
+>                 defaultPassword);
+1545a1569
+>         }
+1546a1571
+>         {
+1547a1573
+>         }
+2012c2038,2039
+<             processMap->put("command", process->command);
+---
+>             processMap->put("command",
+>                             STAFHandle::maskPrivateData(process->command));
+2145c2172
+<                 rc, "Error setting DEFAULTAUTHPASSWORD to " + password);
+---
+>                 rc, "Error setting DEFAULTAUTHPASSWORD");
+2341c2368
+<     queryMap->put("command", process->command);
+---
+>     queryMap->put("command", STAFHandle::maskPrivateData(process->command));
+2346c2373
+<         queryMap->put("parms", process->parms);
+---
+>         queryMap->put("parms", STAFHandle::maskPrivateData(process->parms));
+Index: stafproc/STAFQueueService.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFQueueService.cpp,v
+retrieving revision 1.24
+diff -r1.24 STAFQueueService.cpp
+938c938,939
+<         queueEntryMap->put("message", message.message);
+---
+>         queueEntryMap->put("message",
+>                            STAFHandle::maskPrivateData(message.message));
+Index: stafproc/STAFServiceService.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFServiceService.cpp,v
+retrieving revision 1.20
+diff -r1.20 STAFServiceService.cpp
+497c497,498
+<                                 STAFString(serviceRequest->fRequest));
+---
+>                                 STAFHandle::maskPrivateData(
+>                                     STAFString(serviceRequest->fRequest)));
+Index: test/makefile.java
+===================================================================
+RCS file: /cvsroot/staf/src/staf/test/makefile.java,v
+retrieving revision 1.4
+diff -r1.4 makefile.java
+10a11
+>   $(REL)/bin/TestPrivateData.class\
+39a41
+> 	-@$(DEL) $(REL)/bin/TestPrivateData.class $(OUT_ERR_TO_DEV_NULL)
+Index: test/makefile.staf
+===================================================================
+RCS file: /cvsroot/staf/src/staf/test/makefile.staf,v
+retrieving revision 1.11
+diff -r1.11 makefile.staf
+29a30
+>     $(REL)/bin/testprivatedata$(OS_EE) \
+62a64
+> $(REL)/bin/testprivatedata$(OS_EE):    OBJS = $(testprivatedata_objs)
+86c88,89
+< testmarshalling2_objs    := testmarshalling2
+---
+> testmarshalling2_objs   := testmarshalling2
+> testprivatedata_objs    := testprivatedata
+109a113
+>     $(testprivatedata_objs) \
+132a137
+> testprivatedata_objs := $(foreach obj,$(testprivatedata_objs),$(O)/test/$(obj)$(OS_OE))
+208a214,216
+> $(REL)/bin/testprivatedata$(OS_EE): $(testprivatedata_objs) $(LIB_STAF_FP)
+> 	$(LINK_IT)
+>         
+233a242
+> 	-@$(DEL) $(REL)/bin/testprivatedata$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+Index: STAF.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAF.h,v
+retrieving revision 1.7
+diff -r1.7 STAF.h
+60a61,69
+> STAFRC_t STAFAddPrivacyDelimiters(STAFStringConst_t data,
+>                                   STAFString_t *result);
+> STAFRC_t STAFRemovePrivacyDelimiters(STAFStringConst_t data,
+>                                      unsigned int numLevels,
+>                                      STAFString_t *result);
+> STAFRC_t STAFMaskPrivateData(STAFStringConst_t data, STAFString_t *result);
+> STAFRC_t STAFEscapePrivacyDelimiters(STAFStringConst_t data,
+>                                      STAFString_t *result);
+>
+Index: STAF.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAF.cpp,v
+retrieving revision 1.8
+diff -r1.8 STAF.cpp
+15a16,31
+> static const STAFString sBang(kUTF8_BANG);
+> static const STAFString sAt(kUTF8_AT);
+> static const STAFString sCaret(kUTF8_CARET);
+> 
+> // Opening Privacy Delimiter, !!@
+> static const STAFString sOpenPD(sBang + sBang + sAt);
+> 
+> // Closing Privacy Delimiter, @!!
+> static const STAFString sClosePD(sAt + sBang + sBang);
+> 
+> // Escaped Opening Privacy Delimiter, ^!!@
+> static const STAFString sEscOpenPD(sCaret + sOpenPD);
+> 
+> // Escaped Closing Privacy Delimiter, ^@!!
+> static const STAFString sEscClosePD(sCaret + sClosePD);
+> 
+536a553,945
+> 
+> STAFRC_t STAFAddPrivacyDelimiters(STAFStringConst_t inData,
+>                                   STAFString_t *result)
+> {
+>     if (inData == 0) return kSTAFInvalidObject;
+> 
+>     STAFRC_t rc = kSTAFOk;
+>     
+>     try
+>     {
+>         STAFString data(inData);
+> 
+>         if (data.length() == 0)
+>         {
+>             *result = data.adoptImpl();
+>             return rc;
+>         }
+> 
+>         // Check if data already has privacy delimiters at beginning and end
+> 
+>         if (data.find(sOpenPD) == 0)
+>         {
+>             int index = data.length() - sClosePD.length();
+> 
+>             if (index >= sOpenPD.length())
+>             {
+>                 if ((data.subString(index) == sClosePD) &&
+>                     (data.subString(index - 1) != sEscClosePD))
+>                 {
+>                     // Don't add additional privacy delimiters.
+>                     *result = data.adoptImpl();
+>                     return rc;
+>                 }
+>             }
+>         }
+> 
+>         // 1) Add an opening privacy delimiter, !!@, to the beginning of the
+>         //    data.
+>         //
+>         // 2) Escape all occurrences of the opening and closing privacy
+>         //    delimiters.  That is, replace all occurrences of !!@ with
+>         //    ^!!@ and replace all occurrences of @!! with ^@!!.
+>         //
+>         //    Note:  Escape the closing privacy delimiters before escaping the
+>         //    opening privacy delimiters to avoid a problem if the data
+>         //    includes back to back closing privacy delimiters, ^@!!@!!, which
+>         //    could be mistaken for an opening privacy delimiter, !!@, if the
+>         //    closing privacy delimiters were not escaped first.
+>         //
+>         // 3) Add a closing privacy delimiter, @!!, to the end of the data.
+> 
+>         data = STAFString(sOpenPD +
+>                           (data.replace(sClosePD, sEscClosePD)).
+>                            replace(sOpenPD, sEscOpenPD) +
+>                           sClosePD);
+>         
+>         *result = data.adoptImpl();
+>     }
+>     catch (...)
+>     {
+>         rc = kSTAFUnknownError;
+>     }
+> 
+>     return rc;
+> }
+> 
+> STAFRC_t STAFRemovePrivacyDelimiters(STAFStringConst_t data,
+>                                      unsigned int numLevels,
+>                                      STAFString_t *outString)
+> {
+>     if (data == 0) return kSTAFInvalidObject;
+> 
+>     STAFRC_t rc = kSTAFOk;
+>     
+>     try
+>     {
+>         STAFString result(data);
+>         
+>         if ((result.length() == 0) ||
+>             (result.find(sOpenPD) == STAFString::kNPos))
+>         {
+>             *outString = result.adoptImpl();
+>             return rc;
+>         }
+> 
+>         unsigned int index = 0;
+>         unsigned int nextIndex = 0;
+>         unsigned int openIndex = 0;
+>         unsigned int closeIndex = 0;
+>         unsigned int level = 0;
+> 
+>         // numLevels = 0 means to remove all privacy masks.
+>         // numLevels = 1+ means to remove up to the specified number of levels
+>         //             of privacy data.
+> 
+>         // Remove privacy delimiters for the specified number of levels
+> 
+>         for (; ((numLevels == 0) || (level < numLevels)); ++level)
+>         {
+>             // Check if any more unescaped opening privacy delimiters.
+> 
+>             nextIndex = 0;
+> 
+>             while ((index = result.find(sOpenPD, nextIndex)) !=
+>                    STAFString::kNPos)
+>             {
+>                 if ((index > 0) && (result.sizeOfChar(index - 1) == 1) &&
+>                     (result.subString(index - 1, 1) == sCaret))
+>                 {
+>                     nextIndex = index + sOpenPD.length();
+>                 }
+>                 else
+>                 {
+>                     openIndex = index;
+>                     break;
+>                 }
+>             }
+> 
+>             // If no more unescaped opening privacy delimiters, exit the loop
+>             // since no more levels of private data
+> 
+>             if (index == STAFString::kNPos)
+>                 break;
+> 
+>             // Check if any more unescaped closing privacy delimiters after
+>             // the position of the opening unescaped privacy delimiter.
+> 
+>             nextIndex = openIndex + sOpenPD.length();
+> 
+>             while ((index = result.find(sClosePD, nextIndex)) !=
+>                    STAFString::kNPos)
+>             {
+>                 if ((index > 0) && (result.sizeOfChar(index - 1) == 1) &&
+>                     (result.subString(index - 1, 1) == sCaret))
+>                 {
+>                     nextIndex = index + sClosePD.length();
+>                 }
+>                 else
+>                 {
+>                     closeIndex = index;
+>                     break;
+>                 }
+>             }
+> 
+>             // If no more unescaped closing privacy delimiters, exit the loop
+>             // since no more levels of private data
+> 
+>             if (index == STAFString::kNPos)
+>                 break;
+> 
+>             // Handle all opening and closing privacy delimiters at this level
+> 
+>             while (true)
+>             {
+>                 // If there are any escaped privacy delimiters between this
+>                 // opening privacy delimiter and the closing privacy delimiter,
+>                 // remove the escape character (^) from them.
+> 
+>                 unsigned int nextOpenIndex = result.find(
+>                    sEscOpenPD, openIndex + sOpenPD.length());
+> 
+>                 for (; ((nextOpenIndex != STAFString::kNPos) &&
+>                         (nextOpenIndex < closeIndex));)
+>                 {
+>                     result = result.subString(0, nextOpenIndex) +
+>                              result.subString(nextOpenIndex + 1);
+> 
+>                     closeIndex--;
+> 
+>                     nextOpenIndex = result.find(
+>                         sEscOpenPD, nextOpenIndex + sOpenPD.length());
+>                 }
+> 
+>                 unsigned int nextCloseIndex = result.find(
+>                     sEscClosePD, openIndex + sOpenPD.length());
+> 
+>                 for (; ((nextCloseIndex != STAFString::kNPos) &&
+>                         (nextCloseIndex < closeIndex));)
+>                 {
+>                     result = result.subString(0, nextCloseIndex) +
+>                         result.subString(nextCloseIndex + 1);
+> 
+>                     closeIndex--;
+> 
+>                     nextCloseIndex = result.find(
+>                         sEscClosePD, nextCloseIndex + sClosePD.length());
+>                 }
+> 
+>                 // Remove these opening and closing privacy delimiters
+> 
+>                 unsigned int beginPos = openIndex + sOpenPD.length();
+> 
+>                 if (openIndex == 0)
+>                 {
+>                     result = result.subString(beginPos, closeIndex - beginPos) +
+>                              result.subString(closeIndex + sClosePD.length());
+>                 }
+>                 else
+>                 {
+>                     result = result.subString(0, openIndex) +
+>                              result.subString(beginPos, closeIndex - beginPos) +
+>                              result.subString(closeIndex + sClosePD.length());
+>                 }
+> 
+>                 // Check if any more unescaped opening privacy delimiters after
+>                 // this closing delimiter.
+> 
+>                 nextIndex = closeIndex;
+> 
+>                 while ((index = result.find(sOpenPD, nextIndex)) !=
+>                        STAFString::kNPos)
+>                 {
+>                     if ((index > 0) && (result.sizeOfChar(index - 1) == 1) &&
+>                         (result.subString(index - 1, 1) == sCaret))
+>                     {
+>                         nextIndex = index + sOpenPD.length();
+>                     }
+>                     else
+>                     {
+>                         openIndex = index;
+>                         break;
+>                     }
+>                 }
+> 
+>                 if (index == STAFString::kNPos)
+>                     break;
+> 
+>                 // Check if any more unescaped closing privacy delimiters after
+>                 // the position of the opening unescaped privacy delimiter.
+> 
+>                 nextIndex = openIndex + sOpenPD.length();
+> 
+>                 while ((index = result.find(sClosePD, nextIndex)) !=
+>                        STAFString::kNPos)
+>                 {
+>                     if ((index > 0) && (result.sizeOfChar(index - 1) == 1) &&
+>                         (result.subString(index - 1, 1) == sCaret))
+>                     {
+>                         nextIndex = index + sClosePD.length();
+>                     }
+>                     else
+>                     {
+>                         closeIndex = index;
+>                         break;
+>                     }
+>                 }
+> 
+>                 if (index == STAFString::kNPos)
+>                     break;
+>             }
+>         }
+> 
+>         // Replace any escaped closing privacy delimiters, ^@!!, with
+>         // unescaped closing privacy delimiters, @!!.
+>         result = result.replace(sEscClosePD, sClosePD);
+> 
+>         // Replace any escaped opening privacy delimiters, ^!!@, with
+>         // unescaped opening privacy delimiters, !!@.
+>         result = result.replace(sEscOpenPD, sOpenPD);
+> 
+>         *outString = result.adoptImpl();
+>     }
+>     catch (...)
+>     {
+>         rc = kSTAFUnknownError;
+>     }
+> 
+>     return rc;
+> }
+> 
+> STAFRC_t STAFMaskPrivateData(STAFStringConst_t inData, STAFString_t *result)
+> {
+>     if (inData == 0) return kSTAFInvalidObject;
+> 
+>     STAFRC_t rc = kSTAFOk;
+>     
+>     try
+>     {
+>         STAFString data(inData);
+>         
+>         if ((data.length() == 0) ||
+>             (data.find(sOpenPD) == STAFString::kNPos))
+>         {
+>             *result = data.adoptImpl();
+>             return rc;
+>         }
+> 
+>         STAFString outString("");
+>         unsigned int index = 0;
+>         unsigned int openIndex = 0;
+>         unsigned int closeIndex = 0;
+> 
+>         // Find all unescaped opening privacy delimiters with matching 
+>         // unescaped closing privacy delimiters and replace all data between 
+>         // these privacy delimiters with asterisks.
+> 
+>         while ((openIndex = data.find(sOpenPD, closeIndex)) !=
+>                STAFString::kNPos)
+>         {
+>             if ((openIndex > 0) && (data.sizeOfChar(openIndex - 1) == 1) &&
+>                 (data.subString(openIndex - 1, 1) == sCaret))
+>             {
+>                 // Found an escaped privacy delimiter
+>                 closeIndex = openIndex + sOpenPD.length();
+>                 continue;
+>             }
+> 
+>             // Find position of first unescaped closing privacy delimiter
+>             // after this unescaped opening delimiter.
+> 
+>             closeIndex = data.find(sClosePD, openIndex + sOpenPD.length());
+> 
+>             while (closeIndex != STAFString::kNPos)
+>             {
+>                 if ((data.sizeOfChar(closeIndex - 1) == 1) &&
+>                     (data.subString(closeIndex - 1, 1) == sCaret))
+>                 {
+>                     // Escaped; Find next unescaped closing privacy delimiter
+> 
+>                     closeIndex = data.find(
+>                         sClosePD, closeIndex + sClosePD.length()); 
+>                 }
+>                 else
+>                 {
+>                     break;  // Found unescaped closing privacy delimiter
+>                 }
+>             }
+> 
+>             if (closeIndex == STAFString::kNPos)
+>             {
+>                 break;  // Exit since no unescaped closing @!! strings left
+>             }
+> 
+>             outString += data.subString(index, openIndex - index);
+> 
+>             // Replace the privacy delimiters and data with "*"s
+> 
+>             unsigned int replaceLength = closeIndex - openIndex +
+>                 sClosePD.length();
+> 
+>             for (unsigned int i = 1; i <= replaceLength; i++)
+>             {
+>                 outString += "*";
+>             }
+> 
+>             index = closeIndex + sClosePD.length();
+> 
+>             if (index >= data.length()) break;
+>         }
+> 
+>         if (index < data.length())
+>         {
+>             outString += data.subString(index);
+>         }
+> 
+>         *result = outString.adoptImpl();
+>     }
+>     catch (...)
+>     {
+>         rc = kSTAFUnknownError;
+>     }
+> 
+>     return rc;
+> }
+> 
+> STAFRC_t STAFEscapePrivacyDelimiters(STAFStringConst_t inData,
+>                                      STAFString_t *result)
+> {
+>     if (inData == 0) return kSTAFInvalidObject;
+> 
+>     STAFRC_t rc = kSTAFOk;
+>     
+>     try
+>     {
+>         STAFString data(inData);
+>         
+>         if (data.length() != 0)
+>         {
+>             // Escape all opening or closing delimiters.
+> 
+>             data = data.replace(sClosePD, sEscClosePD);
+>             data = data.replace(sOpenPD, sEscOpenPD);
+>         }
+> 
+>         *result = data.adoptImpl();
+>     }
+>     catch (...)
+>     {
+>         rc = kSTAFUnknownError;
+>     }
+> 
+>     return rc;
+> }
+Index: STAFInlImpl.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFInlImpl.cpp,v
+retrieving revision 1.10
+diff -r1.10 STAFInlImpl.cpp
+109,112c109,113
+>     STAFString_t result = 0;
+> 
+>     STAFRC_t rc = STAFAddPrivacyDelimiters(data.getImpl(), &result);
+> 
+>     STAFException::checkRC(rc, "STAFAddPrivacyDelimiters");
+>     return STAFString(result, STAFString::kShallow);
+164c122
+>     STAFString_t result = 0;
+166,176c124,125
+>     STAFRC_t rc = STAFRemovePrivacyDelimiters(
+>         data.getImpl(), numLevels, &result);
+178,355c127
+>     STAFException::checkRC(rc, "STAFRemovePrivacyDelimiters");
+357c129
+>     return STAFString(result, STAFString::kShallow);
+363c135,137
+>     STAFString_t result = 0;
+> 
+>     STAFRC_t rc = STAFMaskPrivateData(data.getImpl(), &result);
+365,443c139
+>     STAFException::checkRC(rc, "STAFMaskPrivateData");
+445c141
+>     return STAFString(result, STAFString::kShallow);
+452c148
+>     STAFString_t result = 0;
+454,468c150
+>     STAFRC_t rc = STAFEscapePrivacyDelimiters(data.getImpl(), &result);
+469a152
+>     STAFException::checkRC(rc, "STAFEscapePrivacyDelimiters");
+471,541c154
+>     return STAFString(result, STAFString::kShallow);
+
+Index: STAFString.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFString.h,v
+retrieving revision 1.11
+diff -r1.11 STAFString.h
+54c54,55
+<     kUTF8_TAB      = 29    /* Tab                                            *
+/
+---
+>     kUTF8_TAB      = 29,   /* Tab                                            *
+/
+>     kUTF8_BANG     = 30    /* Bang (a.k.a, exclaimation mark)                *
+/
+
+Administrator@lucas /cygdrive/c/dev/sf/src/staf/stafif
+$ cvs diff STAFString.cpp
+slucas@cvs.sourceforge.net's password:
+Index: STAFString.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFString.cpp,v
+retrieving revision 1.12
+diff -r1.12 STAFString.cpp
+67c67,68
+<     { "\x26",     1, 1, 1 }, { "\x40", 1, 1, 1 }, { "\x09", 1, 1, 1 }
+---
+>     { "\x26",     1, 1, 1 }, { "\x40", 1, 1, 1 }, { "\x09", 1, 1, 1 },
+>     { "\x21",     1, 1, 1 }
+Index: STAF.def
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/win32/STAF.def,v
+retrieving revision 1.28
+diff -r1.28 STAF.def
+112a113,116
+> STAFAddPrivacyDelimiters
+> STAFRemovePrivacyDelimiters
+> STAFMaskPrivateData
+> STAFEscapePrivacyDelimiters
+Index: STAF.def.new
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/win32/STAF.def.new,v
+retrieving revision 1.4
+diff -r1.4 STAF.def.new
+108a109,112
+> STAFAddPrivacyDelimiters
+> STAFRemovePrivacyDelimiters
+> STAFMaskPrivateData
+> STAFEscapePrivacyDelimiters
+Index: STAF.ia64.def
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/win32/STAF.ia64.def,v
+retrieving revision 1.9
+diff -r1.9 STAF.ia64.def
+112a113,116
+> STAFAddPrivacyDelimiters
+> STAFRemovePrivacyDelimiters
+> STAFMaskPrivateData
+> STAFEscapePrivacyDelimiters
+Index: STAF.x64.def
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/win32/STAF.x64.def,v
+retrieving revision 1.1
+diff -r1.1 STAF.x64.def
+112a113,116
+> STAFAddPrivacyDelimiters
+> STAFRemovePrivacyDelimiters
+> STAFMaskPrivateData
+> STAFEscapePrivacyDelimiters
+Index: PYSTAF.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/python/PYSTAF.cpp,v
+retrieving revision 1.7
+diff -r1.7 PYSTAF.cpp
+25a26,29
+> static PyObject * PySTAFAddPrivacyDelimiters(PyObject *self, PyObject *argv);
+> static PyObject * PySTAFEscapePrivacyDelimiters(PyObject *self, PyObject *argv
+);
+> static PyObject * PySTAFMaskPrivateData(PyObject *self, PyObject *argv);
+> static PyObject * PySTAFRemovePrivacyDelimiters(PyObject *self, PyObject *argv
+);
+31a36,43
+>     { "STAFAddPrivacyDelimiters", PySTAFAddPrivacyDelimiters,
+>        METH_VARARGS, "Add Privacy Delimiters" },
+>     { "STAFEscapePrivacyDelimiters", PySTAFEscapePrivacyDelimiters,
+>        METH_VARARGS, "Escape Privacy Delimiters" },
+>     { "STAFMaskPrivateData", PySTAFMaskPrivateData,
+>        METH_VARARGS, "Mask Private Data" },
+>     { "STAFRemovePrivacyDelimiters", PySTAFRemovePrivacyDelimiters,
+>        METH_VARARGS, "Remove Privacy Delimiters" },
+129a142,194
+> PyObject * PySTAFAddPrivacyDelimiters(PyObject *self, PyObject *argv)
+> {
+>     char *data = 0;
+>
+>     if (!PyArg_ParseTuple(argv, "s", &data)) return NULL;
+>
+>     // Need to add a null character at the end
+>     STAFString result = STAFHandle::addPrivacyDelimiters(
+>         STAFString(data)) + STAFString(kUTF8_NULL);
+>
+>     return Py_BuildValue("s", result.toCurrentCodePage()->buffer());
+> }
+>
+> PyObject * PySTAFEscapePrivacyDelimiters(PyObject *self, PyObject *argv)
+> {
+>     char *data = 0;
+>
+>     if (!PyArg_ParseTuple(argv, "s", &data)) return NULL;
+>
+>     // Need to add a null character at the end
+>     STAFString result = STAFHandle::escapePrivacyDelimiters(
+>         STAFString(data)) + STAFString(kUTF8_NULL);
+>
+>     return Py_BuildValue("s", result.toCurrentCodePage()->buffer());
+> }
+>
+> PyObject * PySTAFMaskPrivateData(PyObject *self, PyObject *argv)
+> {
+>     char *data = 0;
+>
+>     if (!PyArg_ParseTuple(argv, "s", &data)) return NULL;
+>
+>     // Need to add a null character at the end
+>     STAFString result = STAFHandle::maskPrivateData(
+>         STAFString(data)) + STAFString(kUTF8_NULL);
+>
+>     return Py_BuildValue("s", result.toCurrentCodePage()->buffer());
+> }
+>
+> PyObject * PySTAFRemovePrivacyDelimiters(PyObject *self, PyObject *argv)
+> {
+>     char *data = 0;
+>     int numLevels = 0;
+>
+>     if (!PyArg_ParseTuple(argv, "si", &data, &numLevels)) return NULL;
+>
+>     // Need to add a null character at the end
+>     STAFString result = STAFHandle::removePrivacyDelimiters(
+>         STAFString(data), numLevels) + STAFString(kUTF8_NULL);
+>
+>     return Py_BuildValue("s", result.toCurrentCodePage()->buffer());
+> }
+>
+Index: PySTAF.py
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/python/PySTAF.py,v
+retrieving revision 1.14
+diff -r1.14 PySTAF.py
+18a19,38
+> # Privacy utility methods
+>
+> def STAFAddPrivacyDelimiters(data):
+>     return "%s" % (PYSTAF.STAFAddPrivacyDelimiters(data))
+>
+> def STAFEscapePrivacyDelimiters(data):
+>     return "%s" % (PYSTAF.STAFEscapePrivacyDelimiters(data))
+>
+> def STAFMaskPrivateData(data):
+>     return "%s" % (PYSTAF.STAFMaskPrivateData(data))
+>
+> def STAFRemovePrivacyDelimiters(data, numLevels = 0):
+>     return "%s" % (PYSTAF.STAFRemovePrivacyDelimiters(data, numLevels))
+>
+> # Allows you to access these functions using either name
+> addPrivacyDelimiters = STAFAddPrivacyDelimiters
+> escapePrivacyDelimiters = STAFEscapePrivacyDelimiters
+> maskPrivateData = STAFMaskPrivateData
+> removePrivacyDelimiters = STAFRemovePrivacyDelimiters
+>
+Index: TestPython.py
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/python/TestPython.py,v
+retrieving revision 1.6
+diff -r1.6 TestPython.py
+558a559,635
+> # Test privacy methods
+>
+> password = 'secret';
+> pwWithPD = STAFAddPrivacyDelimiters(password)
+> print 'STAFAddPrivacyDelimiters(%s)=%s' % (password, pwWithPD)
+> print 'STAFEscapePrivacyDelimiters(%s)=%s' % (pwWithPD, STAFEscapePrivacyDelim
+iters(pwWithPD))
+> print 'STAFMaskPrivateData(%s)=%s' % (pwWithPD, STAFMaskPrivateData(pwWithPD))
+
+> print 'STAFRemovePrivacyDelimiters(%s)=%s' % (pwWithPD, STAFRemovePrivacyDelim
+iters(pwWithPD))
+>
+> password = 'secret';
+> pwWithPD = addPrivacyDelimiters(password)
+> print 'addPrivacyDelimiters(%s)=%s' % (password, pwWithPD)
+> print 'escapePrivacyDelimiters(%s)=%s' % (pwWithPD, escapePrivacyDelimiters(pw
+WithPD))
+> print 'maskPrivateData(%s)=%s' % (pwWithPD, maskPrivateData(pwWithPD))
+> print 'removePrivacyDelimiters(%s)=%s' % (pwWithPD, removePrivacyDelimiters(pw
+WithPD))
+>
+> # Test private data methods
+>
+> testData = ['secret', 'secret', '!!@secret@!!', 'Pw: !!@pw@!!', '^!!@secret@!!
+',
+>             '^!!@secret^@!!', '!!@secret', '!!@secret^@!!',
+>             'Pw1=%s, Pw2=%s.' % (addPrivacyDelimiters('a'), addPrivacyDelimite
+rs('pw')),
+>             '^%s^%s' % (addPrivacyDelimiters('a'), addPrivacyDelimiters('b')),
+
+>             'Pw1=!!@secret, !!@pw@!!.', 'Pw1=!!@secret@!!, !!@pw.',
+>             'Msg: !!@Pw: ^!!@pw^@!!@!!', '@!!a!!@b@!!', '' ]
+>
+> print ("KEY:\n  apd() = STAFUtil.addPrivacyDelimiters()\n" +
+>        "  mpd() = STAFUtil.maskPrivateData()\n" +
+>        "  rpd() = STAFUtil.removePrivacyDelimiters()\n" +
+>        "  epd() = STAFUtil.escapePrivacyDelimiters()\n")
+>
+> numErrors = 0;
+>
+> for i in range(0, len(testData)):
+>   data = testData[i]
+>
+>   print '\n%s)  data: %s\n'  % ((i+1), data)
+>
+>   maskedData2 = maskPrivateData(data)
+>   print "mpd(" + data + "): " + maskedData2 + "\n"
+>
+>   dataWithPrivacy = addPrivacyDelimiters(data)
+>   print "apd(" + data + "): " + dataWithPrivacy
+>
+>   dataWithPrivacyRemoved = removePrivacyDelimiters(dataWithPrivacy, 1)
+>   print "rpd(" + dataWithPrivacy + ", 1): " + dataWithPrivacyRemoved
+>
+>   dataWithPrivacyRemoved2 = removePrivacyDelimiters(dataWithPrivacy, 2)
+>   print "rpd(" + dataWithPrivacy + ", 2): " + dataWithPrivacyRemoved2
+>
+>   dataWithAllPrivacyRemoved = removePrivacyDelimiters(dataWithPrivacy, 0)
+>   print "rpd(" + dataWithPrivacy + ", 0): " + dataWithAllPrivacyRemoved
+>
+>   escapedData = escapePrivacyDelimiters(data)
+>   print "\nepd(" + data + "): " + escapedData
+>
+>   dataWithPrivacy = addPrivacyDelimiters(escapedData)
+>   print "apd(" + escapedData + "): " + dataWithPrivacy
+>
+>   dataWithPrivacyRemoved = removePrivacyDelimiters(dataWithPrivacy, 1)
+>   print "rpd(" + dataWithPrivacy + ", 1): " + dataWithPrivacyRemoved
+>
+>   if (dataWithPrivacyRemoved != data):
+>     print "ERROR: removePrivacyDelimiters(" + dataWithPrivacyRemoved + ", 1) !
+= " + data
+>     numErrors = numErrors + 1
+>
+>   dataWithAllPrivacyRemoved = removePrivacyDelimiters(dataWithPrivacy)
+>   print "rpd(" + dataWithPrivacy + ", 0): " + dataWithAllPrivacyRemoved
+>
+>   if (dataWithAllPrivacyRemoved != data):
+>     print "ERROR: removePrivacyDelimiters(" + dataWithAllPrivacyRemoved + ", 0
+) != " + data
+>     numErrors = numErrors + 1
+>
+> if (numErrors == 0):
+>   print "\nTest completed successfully"
+> else:
+>   print "\nTest failed with " + numErrors +" errors"
+>
+Index: TCLSTAF.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/tcl/TCLSTAF.cpp,v
+retrieving revision 1.4
+diff -r1.4 TCLSTAF.cpp
+18a19,26
+> static STAFString addPrivacyDelimitersString(
+>     STAFString("STAF::AddPrivacyDelimiters") + kUTF8_NULL);
+> static STAFString escapePrivacyDelimitersString(
+>     STAFString("STAF::EscapePrivacyDelimiters") + kUTF8_NULL);
+> static STAFString maskPrivateDataString(
+>     STAFString("STAF::MaskPrivateData") + kUTF8_NULL);
+> static STAFString removePrivacyDelimitersString(
+>     STAFString("STAF::RemovePrivacyDelimiters") + kUTF8_NULL);
+42a51,62
+> int AddPrivacyDelimitersCmd(ClientData clientData, Tcl_Interp *interp,
+>                             int objc, Tcl_Obj *CONST objv[]);
+> 
+> int EscapePrivacyDelimitersCmd(ClientData clientData, Tcl_Interp *interp,
+>                                int objc, Tcl_Obj *CONST objv[]);
+> 
+> int MaskPrivateDataCmd(ClientData clientData, Tcl_Interp *interp,
+>                        int objc, Tcl_Obj *CONST objv[]);
+> 
+> int RemovePrivacyDelimitersCmd(ClientData clientData, Tcl_Interp *interp,
+>                                int objc, Tcl_Obj *CONST objv[]);
+> 
+64a85,104
+>     /* Register STAFAddPrivacyDelimiters() */
+>     Tcl_CreateObjCommand(interp, getBuffer(addPrivacyDelimitersString),
+>                          AddPrivacyDelimitersCmd, (ClientData)NULL,
+>                          (Tcl_CmdDeleteProc *)NULL);
+> 
+>     /* Register STAFEscapePrivacyDelimiters() */
+>     Tcl_CreateObjCommand(interp, getBuffer(escapePrivacyDelimitersString),
+>                          EscapePrivacyDelimitersCmd, (ClientData)NULL,
+>                          (Tcl_CmdDeleteProc *)NULL);
+> 
+>     /* Register STAFMaskPrivateData() */
+>     Tcl_CreateObjCommand(interp, getBuffer(maskPrivateDataString),
+>                          MaskPrivateDataCmd, (ClientData)NULL,
+>                          (Tcl_CmdDeleteProc *)NULL);
+> 
+>     /* Register STAFRemovePrivacyDelimiters() */
+>     Tcl_CreateObjCommand(interp, getBuffer(removePrivacyDelimitersString),
+>                          RemovePrivacyDelimitersCmd, (ClientData)NULL,
+>                          (Tcl_CmdDeleteProc *)NULL);
+> 
+164c204
+<            return TCL_ERROR;
+---
+>         return TCL_ERROR;
+192a233,404
+> 
+> int AddPrivacyDelimitersCmd(ClientData clientData, Tcl_Interp *interp,
+>                             int objc, Tcl_Obj *CONST objv[])
+> {
+>     if (objc != 2)
+>     {
+>         STAFString usage("Usage: STAF::AddPrivacyDelimiters data");
+>         usage += kUTF8_NULL;
+>         Tcl_WrongNumArgs(interp, 1, objv, getBuffer(usage));
+>         return TCL_ERROR;
+>     }
+>     
+>     /* Get data argument (type String) and convert to type STAFString_t */
+> 
+>     int dataLength = 0;
+>     char *dataPtr = Tcl_GetStringFromObj(objv[1], &dataLength);
+>     STAFString_t data = 0;
+>     STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>     STAFString_t result = 0;
+> 
+>     STAFAddPrivacyDelimiters(data, &result);
+> 
+>     /* Convert result to a Tcl string object */
+> 
+>     unsigned int resultLength = 0;
+>     const char *resultBuffer = 0;
+>     
+>     STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+> 
+>     Tcl_SetStringObj(Tcl_GetObjResult(interp),
+>                      const_cast<char *>(resultBuffer),
+>                      static_cast<int>(resultLength));
+> 
+>     STAFStringDestruct(&data, 0);
+>     STAFStringDestruct(&result, 0);
+> 
+>     return TCL_OK;
+> }
+> 
+> 
+> int EscapePrivacyDelimitersCmd(ClientData clientData, Tcl_Interp *interp,
+>                                int objc, Tcl_Obj *CONST objv[])
+> {
+>     if (objc != 2)
+>     {
+>         STAFString usage("Usage: STAF::EscapePrivacyDelimiters data");
+>         usage += kUTF8_NULL;
+>         Tcl_WrongNumArgs(interp, 1, objv, getBuffer(usage));
+>         return TCL_ERROR;
+>     }
+>     
+>     /* Get data argument (type String) and convert to type STAFString_t */
+> 
+>     int dataLength = 0;
+>     char *dataPtr = Tcl_GetStringFromObj(objv[1], &dataLength);
+>     STAFString_t data = 0;
+>     STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>     STAFString_t result = 0;
+> 
+>     STAFEscapePrivacyDelimiters(data, &result);
+> 
+>     /* Convert result to a Tcl string object */
+> 
+>     unsigned int resultLength = 0;
+>     const char *resultBuffer = 0;
+>     
+>     STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+> 
+>     Tcl_SetStringObj(Tcl_GetObjResult(interp),
+>                      const_cast<char *>(resultBuffer),
+>                      static_cast<int>(resultLength));
+> 
+>     STAFStringDestruct(&data, 0);
+>     STAFStringDestruct(&result, 0);
+> 
+>     return TCL_OK;
+> }
+> 
+> 
+> 
+> int MaskPrivateDataCmd(ClientData clientData, Tcl_Interp *interp,
+>                        int objc, Tcl_Obj *CONST objv[])
+> {
+>     if (objc != 2)
+>     {
+>         STAFString usage("Usage: STAF::MaskPrivateData data");
+>         usage += kUTF8_NULL;
+>         Tcl_WrongNumArgs(interp, 1, objv, getBuffer(usage));
+>         return TCL_ERROR;
+>     }
+>     
+>     /* Get data argument (type String) and convert to type STAFString_t */
+> 
+>     int dataLength = 0;
+>     char *dataPtr = Tcl_GetStringFromObj(objv[1], &dataLength);
+>     STAFString_t data = 0;
+>     STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>     STAFString_t result = 0;
+> 
+>     STAFMaskPrivateData(data, &result);
+> 
+>     /* Convert result to a Tcl string object */
+> 
+>     unsigned int resultLength = 0;
+>     const char *resultBuffer = 0;
+>     
+>     STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+> 
+>     Tcl_SetStringObj(Tcl_GetObjResult(interp),
+>                      const_cast<char *>(resultBuffer),
+>                      static_cast<int>(resultLength));
+> 
+>     STAFStringDestruct(&data, 0);
+>     STAFStringDestruct(&result, 0);
+> 
+>     return TCL_OK;
+> }
+> 
+> 
+> int RemovePrivacyDelimitersCmd(ClientData clientData, Tcl_Interp *interp,
+>                                int objc, Tcl_Obj *CONST objv[])
+> {
+>     if (objc != 2 && objc != 3)
+>     {
+>         STAFString usage(
+>             "Usage: STAF::RemovePrivacyDelimiters data [numLevels]");
+>         usage += kUTF8_NULL;
+>         Tcl_WrongNumArgs(interp, 1, objv, getBuffer(usage));
+>         return TCL_ERROR;
+>     }
+>     
+>     /* Get data argument (type String) and convert to type STAFString_t */
+> 
+>     int dataLength = 0;
+>     char *dataPtr = Tcl_GetStringFromObj(objv[1], &dataLength);
+>     STAFString_t data = 0;
+>     STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>     /* The numLevels argument is optional.  Defaults to 0 */
+> 
+>     int numLevels = 0;
+>     
+>     if (objc == 3)
+>     {
+>         Tcl_GetIntFromObj(interp, objv[2], &numLevels);
+>     }
+> 
+>     STAFString_t result = 0;
+> 
+>     STAFRemovePrivacyDelimiters(data, numLevels, &result);
+> 
+>     /* Convert result to a Tcl string object */
+> 
+>     unsigned int resultLength = 0;
+>     const char *resultBuffer = 0;
+>     
+>     STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+> 
+>     Tcl_SetStringObj(Tcl_GetObjResult(interp),
+>                      const_cast<char *>(resultBuffer),
+>                      static_cast<int>(resultLength));
+> 
+>     STAFStringDestruct(&data, 0);
+>     STAFStringDestruct(&result, 0);
+> 
+>     return TCL_OK;
+> }
+> 
+> 
+Index: TestTcl.tcl
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/tcl/TestTcl.tcl,v
+retrieving revision 1.5
+diff -r1.5 TestTcl.tcl
+179a180,245
+> ##########################
+> # Test privacy functions #
+> ##########################
+> 
+> puts "Testing privacy functions"
+> 
+> set data "secret"
+> set dataWithPD [STAF::AddPrivacyDelimiters $data]
+> 
+> set expectedResult "!!@secret@!!"
+> if {[STAF::AddPrivacyDelimiters $data] != $expectedResult} {
+>     puts "Error: \[STAF::AddPrivacyDelimiters $data\] : [STAF::AddPrivacyDelimiters $data]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set expectedResult "^!!@secret^@!!"
+> if {[STAF::EscapePrivacyDelimiters $dataWithPD] != $expectedResult} {
+>     puts "Error: \[STAF::EscapePrivacyDelimiters $dataWithPD\] = [STAF::EscapePrivacyDelimiters $dataWithPD]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set expectedResult "************"
+> if {[STAF::MaskPrivateData $dataWithPD] != $expectedResult} {
+>     puts "Error: \[STAF::MaskPrivateData $dataWithPD\] = [STAF::MaskPrivateData $dataWithPD]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set expectedResult "secret"
+> if {[STAF::RemovePrivacyDelimiters $dataWithPD] != $expectedResult} {
+>     puts "Error: \[STAF::RemovePrivacyDelimiters $dataWithPD\] = [STAF::RemovePrivacyDelimiters $dataWithPD]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set data "!!@Msg: ^!!@Pw is ^^!!@secret^^@!!.^@!!@!!"
+> set expectedResult "Msg: Pw is secret."
+> if {[STAF::RemovePrivacyDelimiters $data] != $expectedResult} {
+>     puts "Error: \[STAF::RemovePrivacyDelimiters $data\] = [STAF::RemovePrivacyDelimiters $data]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set expectedResult "Msg: Pw is secret."
+> if {[STAF::RemovePrivacyDelimiters $data 0] != $expectedResult} {
+>     puts "Error: \[STAF::RemovePrivacyDelimiters $data 0\] = [STAF::RemovePrivacyDelimiters $data 0]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set expectedResult "Msg: !!@Pw is !!@secret@!!.@!!"
+> if {[STAF::RemovePrivacyDelimiters $data 1] != $expectedResult} {
+>     puts "Error: \[STAF::RemovePrivacyDelimiters $data 1\] = [STAF::RemovePrivacyDelimiters $data 1]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+> set expectedResult "Msg: Pw is !!@secret@!!."
+> if {[STAF::RemovePrivacyDelimiters $data 2] != $expectedResult} {
+>     puts "Error: \[STAF::RemovePrivacyDelimiters $data 2\] = [STAF::RemovePrivacyDelimiters $data 2]"
+>     puts "       Should return the following instead: $expectedResult"
+>     exit 1
+> }
+> 
+651d716
+< 
+Index: PLSTAF.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/perl/PLSTAF.cpp,v
+retrieving revision 1.7
+diff -r1.7 PLSTAF.cpp
+192a193,386
+> XS(XS_STAF_AddPrivacyDelimiters)
+> {
+>     dXSARGS;
+>     if (items != 1)
+>         Perl_croak(aTHX_ "Usage: STAF::AddPrivacyDelimiters(data)");
+>     {
+>         // Convert the Perl string argument to a STAFString_t
+> 
+>         #ifdef STAF_OS_NAME_ZOS
+>             char *dataPtr = (char *)SvPVbyte(ST(0), dataLength);
+>         #else
+>             STRLEN dataLength = 0;
+>             char *dataPtr = (char *)SvPVutf8(ST(0), dataLength);
+>         #endif
+> 
+>         STAFString_t data = 0;
+>         STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>         // Call the C API to add privacy delimiters
+> 
+>         STAFString_t result = 0;
+>         dXSTARG;
+>         STAFAddPrivacyDelimiters(data, &result);
+> 
+>         // Convert result (STAFString_t) to a Perl string object
+> 
+>         unsigned int resultLength = 0;
+>         const char *resultBuffer = 0;
+>         STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+>         SV *retval = newSVpvn(resultBuffer, resultLength);
+> 
+>         #ifndef STAF_OS_NAME_ZOS
+>             SvUTF8_on(retval);
+>         #endif
+> 
+>         STAFStringDestruct(&data, 0);
+>         STAFStringDestruct(&result, 0);
+> 
+>         // Return the result string (with privacy delimiters added)
+> 
+>         XSprePUSH;
+>         PUSHs(retval);
+>     }
+>     XSRETURN(1);
+> }
+> 
+> XS(XS_STAF_EscapePrivacyDelimiters)
+> {
+>     dXSARGS;
+>     if (items != 1)
+>         Perl_croak(aTHX_ "Usage: STAF::EscapePrivacyDelimiters(data)");
+>     {
+>         // Convert the Perl string argument to a STAFString_t
+> 
+>         #ifdef STAF_OS_NAME_ZOS
+>             char *dataPtr = (char *)SvPVbyte(ST(0), dataLength);
+>         #else
+>             STRLEN dataLength = 0;
+>             char *dataPtr = (char *)SvPVutf8(ST(0), dataLength);
+>         #endif
+> 
+>         STAFString_t data = 0;
+>         STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>         // Call the C API to add privacy delimiters
+> 
+>         STAFString_t result = 0;
+>         dXSTARG;
+>         STAFEscapePrivacyDelimiters(data, &result);
+> 
+>         // Convert result (STAFString_t) to a Perl string object
+> 
+>         unsigned int resultLength = 0;
+>         const char *resultBuffer = 0;
+>         STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+>         SV *retval = newSVpvn(resultBuffer, resultLength);
+> 
+>         #ifndef STAF_OS_NAME_ZOS
+>             SvUTF8_on(retval);
+>         #endif
+> 
+>         STAFStringDestruct(&data, 0);
+>         STAFStringDestruct(&result, 0);
+> 
+>         // Return the result string (with privacy delimiters escaped)
+> 
+>         XSprePUSH;
+>         PUSHs(retval);
+>     }
+>     XSRETURN(1);
+> }
+> 
+> XS(XS_STAF_MaskPrivateData)
+> {
+>     dXSARGS;
+>     if (items != 1)
+>         Perl_croak(aTHX_ "Usage: STAF::MaskPrivateData(data)");
+>     {
+>         // Convert the Perl string argument to a STAFString_t
+> 
+>         #ifdef STAF_OS_NAME_ZOS
+>             char *dataPtr = (char *)SvPVbyte(ST(0), dataLength);
+>         #else
+>             STRLEN dataLength = 0;
+>             char *dataPtr = (char *)SvPVutf8(ST(0), dataLength);
+>         #endif
+> 
+>         STAFString_t data = 0;
+>         STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>         // Call the C API to add privacy delimiters
+> 
+>         STAFString_t result = 0;
+>         dXSTARG;
+>         STAFMaskPrivateData(data, &result);
+> 
+>         // Convert result (STAFString_t) to a Perl string object
+> 
+>         unsigned int resultLength = 0;
+>         const char *resultBuffer = 0;
+>         STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+>         SV *retval = newSVpvn(resultBuffer, resultLength);
+> 
+>         #ifndef STAF_OS_NAME_ZOS
+>             SvUTF8_on(retval);
+>         #endif
+> 
+>         STAFStringDestruct(&data, 0);
+>         STAFStringDestruct(&result, 0);
+> 
+>         // Return the result string (with private data masked)
+> 
+>         XSprePUSH;
+>         PUSHs(retval);
+>     }
+>     XSRETURN(1);
+> }
+> 
+> XS(XS_STAF_RemovePrivacyDelimiters)
+> {
+>     dXSARGS;
+>     if (items != 1 && items != 2)
+>     {
+>         Perl_croak(
+>             aTHX_ "Usage: STAF::RemovePrivacyDelimiters(data, numLevels = 0)");
+>     }
+>     {
+>         int numLevels = 0;
+> 
+>         if (items == 2)
+>         {
+>             numLevels = (STAFSyncOption_t)SvUV(ST(1));
+>         }
+> 
+>         // Convert the Perl string argument to a STAFString_t
+> 
+>         #ifdef STAF_OS_NAME_ZOS
+>             char *dataPtr = (char *)SvPVbyte(ST(0), dataLength);
+>         #else
+>             STRLEN dataLength = 0;
+>             char *dataPtr = (char *)SvPVutf8(ST(0), dataLength);
+>         #endif
+> 
+>         STAFString_t data = 0;
+>         STAFStringConstruct(&data, dataPtr, dataLength, 0);
+> 
+>         // Call the C API to add privacy delimiters
+> 
+>         STAFString_t result = 0;
+>         dXSTARG;
+>         STAFRemovePrivacyDelimiters(data, numLevels, &result);
+> 
+>         // Convert result (STAFString_t) to a Perl string object
+> 
+>         unsigned int resultLength = 0;
+>         const char *resultBuffer = 0;
+>         STAFStringGetBuffer(result, &resultBuffer, &resultLength, 0);
+>         SV *retval = newSVpvn(resultBuffer, resultLength);
+> 
+>         #ifndef STAF_OS_NAME_ZOS
+>             SvUTF8_on(retval);
+>         #endif
+> 
+>         STAFStringDestruct(&data, 0);
+>         STAFStringDestruct(&result, 0);
+> 
+>         // Return the result string (with privacy delimiters removed)
+> 
+>         XSprePUSH;
+>         PUSHs(retval);
+>     }
+>     XSRETURN(1);
+> }
+> 
+212a407,410
+>         newXS("STAF::AddPrivacyDelimiters", XS_STAF_AddPrivacyDelimiters, thisFile);
+>         newXS("STAF::EscapePrivacyDelimiters", XS_STAF_EscapePrivacyDelimiters, thisFile);
+>         newXS("STAF::MaskPrivateData", XS_STAF_MaskPrivateData, thisFile);
+>         newXS("STAF::RemovePrivacyDelimiters", XS_STAF_RemovePrivacyDelimiters, thisFile);
+Index: PLSTAF.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/perl/PLSTAF.h,v
+retrieving revision 1.2
+diff -r1.2 PLSTAF.h
+13a14,17
+> XS(XS_STAF_AddPrivacyDelimiters); /* prototype to pass -Wmissing-prototypes */
+> XS(XS_STAF_EscapePrivacyDelimiters); /* prototype to pass -Wmissing-prototypes */
+> XS(XS_STAF_MaskPrivateData); /* prototype to pass -Wmissing-prototypes */
+> XS(XS_STAF_RemovePrivacyDelimiters); /* prototype to pass -Wmissing-prototypes */
+Index: TestPerl.pl
+===================================================================
+RCS file: /cvsroot/staf/src/staf/lang/perl/TestPerl.pl,v
+retrieving revision 1.5
+diff -r1.5 TestPerl.pl
+56a57,193
+> # Test the privacy APIs
+> 
+> print "\nTesting Privacy APIs...\n";
+> 
+> my $pw = "secret";
+> my $pwWithPD = STAF::AddPrivacyDelimiters($pw);
+> my $expectedResult = "!!@secret@!!";
+> print "  STAF::AddPrivacyDelimiters($pw): $pwWithPD\n";
+> if ($pwWithPD != $expectedResult) {
+>     print "Error: STAF::AddPrivacyDelimiters($pw): $pwWithPD\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $outString = STAF::EscapePrivacyDelimiters($pwWithPD);
+> my $expectedResult = "^!!@secret^@!!";
+> print "  STAF::EscapePrivacyDelimiters($pwWithPD): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::EscapePrivacyDelimiters($pwWithPD): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $outString = STAF::MaskPrivateData($pwWithPD);
+> my $expectedResult = "************";
+> print "  STAF::MaskPrivateData($pwWithPD): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::MaskPrivateData($pwWithPD): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $outString = STAF::RemovePrivacyDelimiters($pwWithPD);
+> my $expectedResult = "secret";
+> print "  STAF::RemovePrivacyDelimiters($pwWithPD): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($pwWithPD): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $dataWith3LevelsPD = '!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!';
+> my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD);
+> my $expectedResult = "Msg: Pw is !!@secret!!@";
+> print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 0);
+> print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 0): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 0): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 3);
+> print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 3): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 3): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $expectedResult = 'Msg: !!@Pw is ^^!!@secret^^@!!.@!!';
+> my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1);
+> print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $expectedResult = 'Msg: Pw is !!@secret@!!.';
+> my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 2);
+> print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 2): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 2): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $expectedResult = 'Msg: !!@Pw is ^^!!@secret^^@!!.@!!';
+> my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1);
+> print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $expectedResult = 'Msg: Pw is !!@secret@!!.';
+> my $outString = STAF::RemovePrivacyDelimiters($outString, 1);
+> print "  STAF::RemovePrivacyDelimiters($outString, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>     print "Error: STAF::RemovePrivacyDelimiters($outString, 1): $outString\n";
+>     print "       Should return the following instead: $expectedResult";
+>     exit 1;
+> }
+> 
+> my $data = '';
+> my $expectedResult = '';
+> my $outString = STAF::AddPrivacyDelimiters($data);
+> print "  STAF::AddPrivacyDelimiters($data, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>    print "Error: STAF::AddPrivacyDelimiters($data): $outString\n";
+>    print "       Should return the following instead: $expectedResult";
+>    exit 1;
+> }
+> 
+> my $outString = STAF::EscapePrivacyDelimiters($data);
+> print "  STAF::EscapePrivacyDelimiters($data, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>    print "Error: STAF::EscapePrivacyDelimiters($data): $outString\n";
+>    print "       Should return the following instead: $expectedResult";
+>    exit 1;
+> }
+> 
+> my $outString = STAF::MaskPrivateData($data);
+> print "  STAF::MaskPrivateData($data, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>    print "Error: STAF::MaskPrivateData($data): $outString\n";
+>    print "       Should return the following instead: $expectedResult";
+>    exit 1;
+> }
+> 
+> my $outString = STAF::RemovePrivacyDelimiters($data);
+> print "  STAF::RemovePrivacyDelimiters($data, 1): $outString\n";
+> if ($outString != $expectedResult) {
+>    print "Error: STAF::RemovePrivacyDelimiters($data): $outString\n";
+>    print "       Should return the following instead: $expectedResult";
+>    exit 1;
+> }
+> 

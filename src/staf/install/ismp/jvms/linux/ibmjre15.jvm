@@ -1,0 +1,28 @@
+DESC: IBM Java Runtime Environment (JRE) 1.5 for Linux
+JVM_EXE: jre/bin/java
+CLASSPATH: "-cp "
+CLASSPATH_SEPARATOR: :
+SYSTEM: "-D"
+SYSTEM_SEPARATOR: =
+INITIAL_HEAP_SIZE: "-Xms"
+MAXIMUM_HEAP_SIZE: "-Xmx"
+JVM_PROPERTIES:
+  "java.vendor=IBM..."
+  "java.version=1.5..."
+/:
+SET_ENV_FOR_WIZARD:
+    JAVA2D_USEAWTFONTS=0
+/:
+PLATFORM_HINT:
+  JAVA_HOME
+  JAVAHOME
+  JDKHOME
+/:
+PATH_HINT:
+  "/opt/IBMJava2-15/"
+  "/usr/IBMJava2-15/"
+  "/usr/local/IBMJava2-15/"
+  "/opt/jre15"
+  "/usr/jre15"
+  "/usr/local/jre15"
+/:

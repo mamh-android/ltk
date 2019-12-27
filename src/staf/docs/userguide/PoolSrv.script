@@ -1,0 +1,1166 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : PoolSrv SCRIPT Version 1.0
+.*  Descriptive Name   : Software Test Automation Framework
+.*                       Resource Pool (ResPool) Service
+.*  Detail:
+.*
+.*     This file describes the STAF Resource Pool service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+.se respoolvars = 'All return codes from RESPOOL are documented in ??.'
+:i1.Resource Pool service
+:ih1.services
+:i2.Resource Pool service
+:h2 id=ressrv.Resource Pool (ResPool) Service
+:h3.Description
+The Resource Pool service is an external STAF service that
+allows you to manipulate resource pools and contents of the
+resource pools via the following functions.:
+:ul compact.
+:li.LIST    - Display a list of resource pools or the settings for the service
+:li.CREATE  - Creates a resource pool
+:li.DELETE  - Deletes a resource pool
+:li.ADD     - Adds a unique resource entry to a specified pool
+:li.REMOVE  - Removes a resource entry from a specified pool
+:li.QUERY   - Displays information about a specified pool
+:li.REQUEST - Requests exclusive access to an available resource in a
+specified pool
+:li.RELEASE - Releases exclusive access from a resource entry in a specified
+pool
+:li.CANCEL  - Cancels a pending request for a resource entry in a specified
+pool
+:li.&help.
+:eul.
+The purpose of the Resource Pool service is to manage exclusive access to
+the entries within resource pools.  For example, if you had a group of VM
+UserIDs and passwords for a particular VM system that needed to be shared
+amongst numerous testcases, you could create a resource pool for them and
+then testcases that required a logon to that VM system could request a UserID
+and password from this resource pool, perform the test, and then release the
+UserID and password back to the resource pool.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.Resource Pool service
+:h3.Registration
+The Resource Pool service is an external service and must be registered with
+the SERVICE configuration statement. The syntax is:
+:xmp.
+SERVICE <Name> LIBRARY STAFPool [PARMS <Parameters>]
+:exmp.
+:p.:xph.<Name>:exph. is the name by which the Resource Pool service will be
+known on this machine.
+:p.:xph.<Parameters>:exph. are valid Resource Pool parameters
+described below.
+:h4.Example
+:xmp.
+service respool library STAFPool
+service respool library STAFPool parms "Directory {STAF/Config/BootDrive}/STAF/ResPool"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.parameters
+:i2.Resource Pool service
+:h3 id=respoolparms.Parameters
+:p.The Resource Pool service accepts a parameter string in the following format:
+:xmp.
+&lbrk.DIRECTORY <Resource Pool Directory Root>&rbrk.
+:exmp.
+:p.:xph.DIRECTORY:exph. specifies the root directory under which resource pool
+files are stored.  The default is :xph.{STAF/DataDir}/service/&lt;Service Name (lower-case)>:exph..
+:note.Previously, in STAF 2.x, the default root directory was
+:xph.{STAF/Config/STAFRoot}/data/&lt;Service Name (lower-case)>:exph..
+So, if you want to continue to use the STAF 2.x resource pools with the
+current version of STAF, move the resource pool files to the new default root
+directory or specify the old root directory for the :xph.DIRECTORY:exph. parameter.:enote.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.Resource Pool service
+:h3.LIST
+:p.LIST displays a list of resource pools and their descriptions.
+:h4.Syntax
+:xmp.
+LIST [POOLS | SETTINGS]
+:exmp.
+:p.:xph.POOLS:exph. indicates to list the resource pools.
+This is the default.
+:p.:xph.SETTINGS:exph. indicates to list the operational settings for
+the Resource Pool service.
+
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+LIST also returns the return codes documented in
+:hdref refid=rprcode..
+:h4.Results
+
+:ul.
+:li.The result buffer for a :xph.LIST:exph. or :xph.LIST POOLS:exph. request
+will contain a marshalled :xph.<List> of <Map&colon.STAF/Service/ResPool/Pool>:exph.
+representing the resource pools that have been created.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/ResPool/Pool
+:tnote text='Description'.This map class represents a resource pool.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.poolName
+:c.Pool Name
+:c.&stringObj.
+:c.
+:row.
+:c.description
+:c.Description
+:c.&stringObj.
+:c.
+:etable.
+:p.
+:li.The result buffer for a :xph.LIST SETTINGS:exph. request
+will contain a marshalled :xph.<Map&colon.STAF/Service/ResPool/Settings>:exph.
+representing the operational settings for the service.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/ResPool/Service
+:tnote text='Description'.This map class represents the settings for the service.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.directory
+:c.Directory
+:c.&stringObj.
+:c.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List all of the resource pools
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST:exph. or :xph.LIST POOLS:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Pool Name           Description
+------------------- ------------------------------------------
+AUSVMR              UserIDs and Passwords for VM System AUSVMR
+AutoTester_Licenses License numbers for AutoTester
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List the operational settings for the RESPOOL service
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result could look like:
+:p.
+:xmp.Directory: C:\STAF\data\STAF\service\respool:exmp.
+:eul.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.CREATE
+:i3.Resource Pool service
+:h3 id=create.CREATE
+:p.Creates a resource pool.
+:h4.Syntax
+:xmp.
+CREATE POOL <PoolName> DESCRIPTION <Description>
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool you want to create.  &varres.
+:p.Note that the pool name will be used in the name of a file that will be
+created in the resource pool directory root, (e.g.
+:xph.<ResourcePoolDirectoryRoot>/<PoolName>.rpl:exph.).
+So, avoid specifying a character that the file system doesn't allow in a file
+name such as the following characters:  :xph.< > &colon. " / \ | ? *:exph.
+:p.:xph.DESCRIPTION:exph. specifies the description of the resource pool.  &varres.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+CREATE also returns the return codes documented in
+:hdref refid=rprcode..
+:h4.Results
+:p.The result buffer will contain no data upon return from a CREATE command.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Create a resource pool called AUSVMR with the description
+"UserIDs and Passwords for VM System AUSVMR"
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.CREATE POOL AUSVMR DESCRIPTION "UserIDs and Passwords for VM System AUSVMR":exph.
+:eul.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.Resource Pool service
+:h3 id=delete.DELETE
+:p.Deletes a resource pool and all its entries.
+:h4.Syntax
+:xmp.
+DELETE POOL <PoolName> CONFIRM &lbrk.FORCE&rbrk.
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool you want to delete.  &varres.
+:p.:xph.CONFIRM:exph. confirms you really want to delete the resource pool.
+:p.:xph.FORCE:exph. allows you to force the deletion of the resource pool, even
+if there are pending requests.  If this option is not specified, you will
+receive an error if you try to delete a resource pool which has pending
+requests.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+DELETE also returns the return codes documented in
+:hdref refid=rprcode..
+:h4.Results
+:p.The result buffer will contain no data upon return from a DELETE command.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete resource pool AUSVMR, but only if there are no pending
+requests
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE POOL AUSVMR CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete resource pool AUSVM1, even if there are pending requests
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE POOL AUSVM1 CONFIRM FORCE:exph.
+:eul.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.ADD
+:i3.Resource Pool service
+:h3.ADD
+:p.ADD allows you to add a resource entry to an existing resource pool.  You
+may add multiple entries to a resource pool with a single request.  Note,
+a resource pool may not contain duplicate entries.  If one or more duplicate
+entries are specified with a single request, none of the entries specified are
+added.
+:h4.Syntax
+:xmp.
+ADD POOL <PoolName> ENTRY <Value> &lbrk.ENTRY <Value>&rbrk....
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool to which you
+want to add a resource entry.  &varres.
+:p.:xph.ENTRY:exph. specifies the actual entry to be added to the resource
+pool.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+ADD also returns the return codes documented in
+:hdref refid=rprcode..
+:h4.Results
+:p.The result buffer will contain no data upon return from the ADD command.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Add the entries "User1 Password1" and "User2 Password2" to
+resource pool AUSVMR
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD POOL AUSVMR ENTRY "User1 Password1" ENTRY "User2 Password2":exph.
+:p.
+:li.:hp2.Goal::ehp2. Add entry 1047923 to resource pool AutoTester_Licenses
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD POOL AutoTester_Licenses ENTRY 1047923:exph.
+:eul.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.REMOVE
+:i3.Resource Pool service
+:h3.REMOVE
+:p.REMOVE removes a resource entry from an existing resource pool.  The
+resource entry may only be removed if the resource is not in use or if the
+FORCE option is specified.  Note, you may remove multiple entries from a
+resource pool with a single request.  If one or more invalid entries are 
+specified with a single request, none of the entries specified are removed.
+:h4.Syntax
+:xmp.
+REMOVE POOL <PoolName> ENTRY <Value> &lbrk.ENTRY <Value>&rbrk.... CONFIRM &lbrk.FORCE&rbrk.
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool from which you
+want to remove an entry.  &varres.
+:p.:xph.ENTRY:exph. specifies the actual entry to be removed.
+:p.:xph.CONFIRM:exph. confirms you really want to remove the resource entry.
+:p.:xph.FORCE:exph. allows you to force the removal of a resource entry which
+is currently owned.  By default, you may only remove a resource entry if it is
+not currently owned.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+REMOVE also returns the return codes documented in
+:hdref refid=rprcode..
+:h4.Results
+:p.The result buffer will contain no data upon return from the REMOVE command.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Remove entry "User1 Password1" from resource pool AUSVMR, but
+only if the entry is not currently owned.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.REMOVE POOL AUSVMR ENTRY "User1 Password1" CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Remove entries 1137849 and 1075234 from resource pool
+AutoTester_Licenses regardless of whether the are currently owned
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.REMOVE POOL AutoTester_Licenses ENTRY 1137849 ENTRY 107523 CONFIRM FORCE:exph.
+:eul.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.Resource Pool service
+:h3 id=query.QUERY
+:p.Allows you to get information on a resource pool, including a list of
+entries in the pool and the status of each entry, as well as a list of the
+pending requests for entries in the resource pool.  The pending requests
+will shown in ascending order by priority, and within the same priority
+by the request timestamp.
+:h4.Syntax
+:xmp.
+QUERY POOL <PoolName>
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool you want to query.  &varres.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+QUERY also returns the return codes documented in
+:hdref refid=rprcode..
+:h4.Results
+:p.
+The result buffer for a :xph.QUERY:exph. request will contain a marshalled
+:xph.<Map&colon.STAF/Service/ResPool/PoolInfo>:exph., representing
+information about the specified resource pool.
+:p.
+The maps used in representing a resource pool are defined as follows:
+:table cols='* * 3* *'.
+:tcap.Definition of map class STAF/Service/ResPool/PoolInfo
+:tnote text='Description'.This map class represents a resource pool.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.description
+:c.Description
+:c.&stringObj.
+:c.
+:row.
+:c.requestList
+:c.Pending Requests
+:c.:xph.<List> of <Map&colon.STAF/Service/ResPool/Request>:exph.
+:c.
+:row.
+:c.resourceList
+:c.Resources
+:c.:xph.<List> of <Map&colon.STAF/Service/ResPool/Resource>:exph.
+:c.
+:tnote text='Notes'.
+For each pending request in the request list for the pool, information
+about the priority, the requested timestamp, the requested entry
+(if any), and the originator of the pending request is provided.
+For each entry in the resource list for the pool, the resource entry
+and owner information is provided.
+:etnote.
+:etable.
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/ResPool/Request
+:tnote text='Description'.This map class represents a pending request for a resource in a resource pool:etnote.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.priority
+:c.Priority
+:c.&stringObj. | &noneObj.
+:c.:xph.'1' - '99':exph.
+:row.
+:c.requestedTimestamp
+:c.Date-Time Requested
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.requestedEntry
+:c.Requested Entry
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+:c.&stringObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.:xph.<Authenticator>://<User ID>:exph.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.:xph.<Interface>://<System Identifier>[@<Port>]:exph.
+:row.
+:c.gc
+:c.Perform Garbage Collection
+:c.&stringObj.
+:c.:xph.'Yes' | 'No':exph.
+:tnote text='Notes'.
+:ol.
+:li.The "Priority" field contains the priority of the pending request.
+:li.The "Date-Time Requested" contains the timestamp when the pending
+request was submitted.
+:li.The "Requested Entry" contains the specified entry if the ENTRY option
+was specified to request a particular entry in a resource pool (instead of
+the first or a random entry).  Otherwise, it will be &noneObj..
+:li.The "Machine", "Handle Name", "Handle", "User", and "Endpoint" fields
+provide information about who submitted (aka originated) the request.
+:li.The "Perform Garbage Collection" field indicates whether or not
+garbage collection will be performed when the handle that submitted the
+request no longer exists.
+:eol.
+:etnote.
+:etable.
+.*************************************
+:table cols='* * 2* *'.
+:tcap.Definition of map class STAF/Service/ResPool/Resource
+:tnote text='Description'.This map class represents a resource in the pool:etnote.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.entry
+:c.Entry
+:c.&stringObj.
+:c.
+:row.
+:c.owner
+:c.Owner
+:c.&noneObj. |
+.br
+:xph.<Map&colon.STAF/Service/ResPool/ResourceOwner>:exph.
+:c.
+:tnote text='Notes'.
+If the resource entry is not owned, the owner will be &noneObj..
+:etnote.
+:etable.
+.***************************************
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/ResPool/ResourceOwner
+:tnote text='Description'.This map class represents a owner of a resource:etnote.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+:c.&stringObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.:xph.<Authenticator>://<User ID>:exph.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.:xph.<Interface>://<System Identifier>[@<Port>]:exph.
+:row.
+:c.requestedTimestamp
+:c.Date-Time Requested
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.acquiredTimestamp
+:c.Date-Time Acquired
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.gc
+:c.Perform Garbage Collection
+:c.&stringObj.
+:c.:xph.'Yes' | 'No':exph.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Query resource pool AUSVMR
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY POOL AUSVMR:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in verbose format, could look like
+the following if the resource pool contained three
+entries (where each entry consisted of a user id and a password)
+and two of the entries were currently owned.
+:xmp keep=5.
+{
+  Description     : UserIDs and Passwords for VM System AUSVMR
+  Pending Requests: []
+  Resources       : [
+    {
+      Entry: USER1 PASSWORD1
+      Owner: {
+        Machine                   : client3.austin.ibm.com
+        Handle Name               : CM2_Test
+        Handle                    : 19
+        User                      : none://anonymous
+        Endpoint                  : tcp://client3.austin.ibm.com@6500
+        Date-Time Requested       : 20070430-15:58:30
+        Date-Time Acquired        : 20070430-15:58:30
+        Perform Garbage Collection: Yes
+      }
+    }
+    {
+      Entry: USER2 PASSWORD2
+      Owner: {
+        Machine                   : client1.austin.ibm.com
+        Handle Name               : My Test
+        Handle                    : 23
+        User                      : none://anonymous
+        Endpoint                  : tcp://client1.austin.ibm.com@6500
+        Date-Time Requested       : 20070430-15:58:19
+        Date-Time Acquired        : 20070430-15:58:19
+        Perform Garbage Collection: No
+      }
+    }
+    {
+      Entry: USER3 PASSWORD3
+      Owner: <None>
+    }  
+  ]
+}
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query resource pool AUSVMR
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY POOL AUSVMR:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in verbose format, could look like
+the following if the resource pool contained two
+entries (where each entry consisted of a user id and a password) and
+all of the entries were currently owned, with three pending requests.
+:xmp keep=3.
+{
+  Description     : UserIDs and Passwords for VM System AUSVMR
+  Pending Requests: [
+    {
+      Priority                  : 1    
+      Date-Time Requested       : 20100230-16:56:55
+      Requested Entry           : USER1 PASSWORD1
+      Machine                   : client1.austin.ibm.com
+      Handle Name               : My Test
+      Handle                    : 23
+      User                      : none://anonymous
+      Endpoint                  : tcp://client1.austin.ibm.com@6500
+      Perform Garbage Collection: No
+    }
+    {
+      Priority                  : 50    
+      Date-Time Requested       : 20100230-16:54:58
+      Requested Entry           : <None>
+      Machine                   : client2.austin.ibm.com
+      Handle Name               : User Access Test
+      Handle                    : 28
+      User                      : none://anonymous
+      Endpoint                  : tcp://client2.austin.ibm.com@6500
+      Perform Garbage Collection: Yes
+    }
+    {
+      Priority                  : 50    
+      Date-Time Requested       : 20100230-16:55:02
+      Requested Entry           : <None>
+      Machine                   : client3.austin.ibm.com
+      Handle Name               : CM3_Test
+      Handle                    : 21
+      User                      : none://anonymous
+      Endpoint                  : tcp://client3.austin.ibm.com@6500
+      Perform Garbage Collection: Yes
+    }
+  ]
+  Resources       : [
+    {
+      Entry: USER1 PASSWORD1
+      Owner: {
+        Machine                   : client3.austin.ibm.com
+        Handle Name               : CM2_Test
+        Handle                    : 19
+        User                      : none://anonymous
+        Endpoint                  : tcp://client3.austin.ibm.com@6500
+        Date-Time Requested       : 20100230-15:58:30
+        Date-Time Acquired        : 20100230-15:58:30
+        Perform Garbage Collection: Yes
+      }
+    }
+    {
+      Entry: USER2 PASSWORD2
+      Owner: {
+        Machine                   : client1.austin.ibm.com
+        Handle Name               : My Test
+        Handle                    : 23
+        User                      : none://anonymous
+        Endpoint                  : tcp://client1.austin.ibm.com@6500
+        Date-Time Requested       : 20100230-15:58:19
+        Date-Time Acquired        : 20100230-15:58:19
+        Perform Garbage Collection: No
+      }
+    }
+  ]
+}
+:exmp.
+:eul.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.REQUEST
+:i3.Resource Pool service
+:h3.REQUEST
+:p.Obtains exclusive access to an entry from the resource pool.
+:p.
+If an entry is available that meets the specified criteria in
+the request, then the entry will become owned by the STAF handle
+on the machine that submitted the REQUEST POOL request to the
+RESPOOL service.
+If an entry is not currently available that meets the specified
+criteria in the request, the request will be added to the "Pending
+Requests" list in ascending order by "priority" and then by
+the timestamp when the request was submitted.
+:p.
+:h4.Understanding how Garbage Collection effects Resource Pools
+:p.
+The STAF handle on the machine that submitted a REQUEST POOL request
+to the RESPOOL service will be the "owner" of the resource pool entry.
+Note that when a STAF handle that requested a resource is deleted,
+STAF performs garbage collection for the handle by default, unless you
+specified not to perform garbage collection when requesting a resource.
+Performing garbage collection means when a handle that requested a
+resource is deleted, the RESPOOL service will be notified, and it will
+release any resource pool entries that handle owns and will remove any
+pending requests for resources submitted by that handle. 
+:p.
+If you submit a REQUEST POOL request to the RESPOOL service
+using the STAF command executable (e.g. from a command prompt or from a
+shell script), it's important to understand that a STAF command does the
+following:
+:ul compact.
+:li.Creates a STAF handle (if not using a static handle)
+:li.Submits the request
+:li.Deletes the STAF handle when the request completes (if not using
+a static handle)
+:eul.
+:p.
+So, when using the STAF command executable to submit a REQUEST POOL
+request to the RESPOOL service, in order to retain ownership of the
+resource pool entry (due to garbage collection), you either need to
+specify not to perform garbage collection or you need to use a static
+handle when submitting the request.
+See :hdref refid=ressrvCmdEx. for examples of how to do this. 
+
+:h4.Syntax
+:xmp.
+REQUEST POOL <PoolName>
+        &lbrk.FIRST | RANDOM | ENTRY <Value> &lbrk.RELEASE&rbrk.&rbrk. &lbrk.PRIORITY <Number>&rbrk.
+        &lbrk.TIMEOUT <Number>[s|m|h|d|w]&rbrk. &lbrk.GARBAGECOLLECT <Yes | No>&rbrk.
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool from which you
+are requesting a resource.  &varres.
+:p.:xph.TIMEOUT:exph. specifies a timeout duration indicating the longest
+you are willing to wait for a resource to become available.
+If this option is not specified, the request will wait indefinitely
+until a resource is available.  &varres.
+The time duration may be expressed in milliseconds, seconds, minutes,
+hours, days, weeks, or years.  Its format is <Number>[s|m|h|d|w],
+where <Number> is an integer >= 0 and indicates milliseconds unless one
+of the following case-insensitive suffixes is specified:
+:ul compact.
+:li.s (for seconds)
+:li.m (for minutes)
+:li.h (for hours)
+:li.d (for days)
+:li.w (for weeks).
+:eul.
+Note that the calculated timeout cannot exceed 4294967294 milliseconds.
+So, the maximum values in each time category that can be specified are:
+:ul compact.
+:li.4294967294 (4294967294 milliseconds)
+:li.4294967s (4294967 seconds)
+:li.71582m (71582 minutes)
+:li.1193h (1193 hours)
+:li.49d (49 days)
+:li.7w (7 weeks)
+:eul.
+:p.:xph.FIRST:exph. specifies that the first available entry in the resource
+list should be returned.
+:p.:xph.RANDOM:exph. specifies that a random available entry should be
+returned.  This is the default.
+:p.:xph.ENTRY:exph. specifies a particular entry in the resource list that
+should be returned.
+:p.:xph.RELEASE:exph. specifies to release the entry after requesting it
+(i.e. performs an atomic release and request).  This option can only be
+specified when requesting an entry that is already owned by the handle
+submitting the request.  This can be useful when you want to re-gain
+ownership of the entry before any lesser-priority pending requests.
+:p.:xph.PRIORITY:exph. specifies the priority of the request.  It must be
+a number from 1 to 99, where 1 indicates the highest priority.  The
+default is 50.
+If an entry is not currently available that meets the specified
+criteria in the request, the request will be added to the "Pending
+Requests" list in ascending order by "priority" and then by
+the timestamp when the request was submitted.
+Pending requests with priority 1 will be satisfied first if
+possible, followed by pending requests with priority 2, and so on.
+This option will resolve variables.
+:p.:xph.GARBAGECOLLECT:exph. specifies whether to perform garbage collection
+when the STAF handle that requested a resource is deleted.  Valid values are
+:xph.Yes:exph. and :xph.No:exph., not case-sensitive.
+The default is :xph.Yes:exph. which means that garbage collection will be
+performed for the handle that requested the resource.  &varres.
+:p.
+For example, if you need a resource to be owned for a long period of time and
+the STAF handle that you're going to use to submit the request may not exist
+for that period of time, then you must specify not to perform garbage collection
+when requesting a resource.  This ensures that the resource will not be released
+until a RELEASE ENTRY request for that resource pool entry is submitted.
+
+:h4.Security
+:p.&seclvl. 3.
+
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+REQUEST also returns the return codes documented in
+:hdref refid=rprcode..
+
+:h4.Results
+:p.On successful return, the result buffer will contain the entry given to the
+process.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.  Request, and wait indefinitely for, the first available entry
+from resource pool AUSVMR.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL AUSVMR FIRST:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request a random entry from resource pool AutoTester_Licenses.
+If no entry is available within five minutes, timeout.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL AutoTester_Licenses TIMEOUT 5m:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request a random machine from resource pool MachinePool and
+specify not to perform garbage collection because you need the resource
+to be owned for a long period of time and the STAF handle you're using
+to submit the request is short-lived.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL MachinePool GARBAGECOLLECT No:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request entry "machine1" from resource pool MachinePool and
+wait indefinitely for this entry to become available.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL MachinePool ENTRY machine1:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request entry "machine2" from resource pool MachinePool and
+wait for up to 1 hour for this entry to become available.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL MachinePool ENTRY machine2 TIMEOUT 1h:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request a random entry from resource pool MachinePool and
+specify the highest priority so that if all resources are currently in use, your
+request will be added to the "Pending Request" list at the highest priority such
+that your request will be satisfied before other pending requests with lower
+priority.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL MachinePool PRIORITY 1:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Request entry "machine1" from resource pool MachinePool and
+specify the lowest priority so that if the resource is currently in use, your
+request will be added to the "Pending Request" list at the lowest priority such
+that other pending requests with higher priority will be satisfied before your
+request.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL MachinePool ENTRY machine1 PRIORITY 1:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Let's assume that you already own entry "machine1" in
+resource pool MachinePool.  Perform an atomic release and request of entry
+"machine1" by specifying the RELEASE option on a REQUEST ENTRY request and
+specify priority 30 such that your request will be added to the "Pending Request"
+list at priority 30 before releasing entry "machine1".  This means that your
+request for entry "machine1" will be satisfied before other pending requests
+with a lesser priority.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.REQUEST POOL MachinePool ENTRY machine1 RELEASE PRIORITY 30:exph.
+:eul.
+
+:h4 id=ressrvCmdEx.Command Line Example
+
+:p.Say you had a resource pool named MachinePool that contained
+two entries and you submit a REQUEST POOL request to the RESPOOL service
+using the STAF command (instead of submitting the request via a Java program,
+etc).  If you didn't specify not to perform garbage collection and if
+you didn't use a static handle, the resource entry obtained by the
+REQUEST POOL request would show up as available (Unowned) when submitting
+a QUERY POOL request to the RESPOOL service because when the STAF command
+deleted the handle it created to submit the REQUEST POOL request, that
+triggered garbage collection to be performed.
+
+:xmp.
+C:\>STAF local RESPOOL REQUEST POOL MachinePool
+Response
+--------
+machine1
+
+C:\>STAF local RESPOOL QUERY POOL MachinePool
+Response
+--------
+{
+  Description     : Test Machine Pool
+  Pending Requests: []
+  Resources       : [
+    {
+      Entry: machine1
+      Owner: <None>
+    }
+    {
+      Entry: machine2
+      Owner: <None>
+    }
+  ]
+}
+:exmp.
+:p.
+Instead, you need to specify not to perform garbage collection when submitting
+the REQUEST POOL request to the RESPOOL service using the STAF command.
+Here's an example shown using the STAF command from a Windows
+command prompt:
+
+:xmp.
+C:\>STAF local RESPOOL REQUEST POOL MachinePool GARBAGECOLLECT No
+Response
+--------
+machine1
+
+C:\>STAF local RESPOOL QUERY POOL MachinePool
+Response
+--------
+{
+  Description     : Test Machine Pool
+  Pending Requests: []
+  Resources       : [
+    {
+      Entry: machine1
+      Owner: {
+        Machine                   : client1.company.com
+        Handle Name               : STAF/Client
+        Handle                    : 49
+        User                      : none://anonymous
+        Endpoint                  : local://local
+        Date-Time Requested       : 20070430-14:11:18
+        Date-Time Acquired        : 20070430-14:11:18
+        Perform Garbage Collection: Yes
+      }
+    }
+    {
+      Entry: machine2
+      Owner: <None>
+    }
+  ]
+}:exmp.
+
+Or, you need to first create a static handle and set environment
+variable STAF_STATIC_HANDLE to the static handle's number before 
+submitting a REQUEST POOL request to the RESPOOL service using the
+STAF command so that the static handle can retain ownership of the
+resource entry until it releases the entry (or until you delete the
+static handle).  See :hdref refid=stafshs. for more information on
+special environment variable STAF_STATIC_HANDLE.
+Here's an example shown using the STAF command from a Windows
+command prompt:
+:xmp.
+C:\>STAF local HANDLE CREATE HANDLE NAME ResourcePoolHandle
+Response
+--------
+51
+
+C:\>set STAF_STATIC_HANDLE=51
+
+C:\>STAF local RESPOOL REQUEST POOL MachinePool
+Response
+--------
+machine1
+
+C:\>STAF local RESPOOL QUERY POOL MachinePool
+Response
+--------
+{
+  Description     : Test Machine Pool
+  Pending Requests: []
+  Resources       : [
+    {
+      Entry: machine1
+      Owner: {
+        Machine                   : client1.company.com
+        Handle Name               : ResourcePoolHandle
+        Handle                    : 51
+        User                      : none://anonymous
+        Endpoint                  : local://local
+        Date-Time Requested       : 20070430-14:15:18
+        Date-Time Acquired        : 20070430-14:15:18
+        Perform Garbage Collection: Yes
+      }
+    }
+    {
+      Entry: machine2
+      Owner: <None>
+    }
+  ]
+}  
+:exmp.
+
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.RELEASE
+:i3.Resource Pool service
+:h3.RELEASE
+:p.RELEASE allows you to release exclusive access of a resource entry in a
+resource pool.
+:h4.Syntax
+:xmp.
+RELEASE POOL <PoolName> ENTRY <Value> &lbrk.FORCE&rbrk.
+:exmp.
+:p.:xph.POOL:exph. specifies the name of the resource pool to which you are
+releasing exclusive access of an entry.  &varres.
+:p.:xph.ENTRY:exph. specifies the actual entry to which you are releasing
+exclusive access.
+:p.:xph.FORCE:exph. allows you to force the release of the resource entry.
+By default, only the owner of the resource entry (e.g. the handle on
+the machine that submitted the :xph.REQUEST POOL:exph. request) may
+:xph.RELEASE:exph. the entry.
+
+:h4.Security
+:p.Command :xph.RELEASE:exph. requires trust level 3.
+:p.Command :xph.RELEASE FORCE:exph. requires trust level 4.
+
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+RELEASE also returns the return codes documented in
+:hdref refid=rprcode..
+
+:h4.Results
+:p.The result buffer will contain no data upon return from the RELEASE
+command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Release exclusive access of entry "User2 Password2" to resource
+pool AUSVMR
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.RELEASE POOL AUSVMR ENTRY "User2 Password2":exph.
+:p.
+:li.:hp2.Goal::ehp2.  Force the release of entry 1137849 which is a member of resource
+pool AutoTester_Licenses.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.RELEASE POOL AutoTester_Licenses ENTRY 1137849 FORCE:exph.
+:eul.
+.*
+.* -------------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.CANCEL
+:i3.Resource Pool service
+:h3.CANCEL
+:p.Cancels a pending request for a resource pool entry.
+By default, it cancels the last pending request in the Pending
+Requests list (which is sorted in ascending order by priority, and
+then by the request timestamp) that was submitted by the same
+handle/machine submitting the CANCEL request.  You may specify
+additional selection criteria (such as machine, handle number or
+name, entry, priority, or first) to specify to cancel a different
+pending request.
+
+:h4.Syntax
+:xmp.
+CANCEL POOL <PoolName>
+       &lbrk.FORCE &lbrk.MACHINE <Machine>&rbrk. &lbrk.HANDLE <Handle #> | NAME <Handle Name>&rbrk.&rbrk.
+       &lbrk.ENTRY <Value>&rbrk. &lbrk.PRIORITY <Number>&rbrk. &lbrk.FIRST | LAST&rbrk.
+:exmp.
+:p.
+:xph.POOL:exph. specifies the name of the resource pool from which you
+want to cancel a request in its Pending Requests list.  &varres.
+:p.
+:xph.FORCE:exph. allows you to force cancelling the pending request.
+By default, only the requester (e.g. the handle on the machine
+that submitted the REQUEST POOL request) may CANCEL the pending
+request unless the :xph.FORCE:exph. option is specified, along with
+the :xph.MACHINE:exph. and/or :xph.HANDLE:exph./:xph.NAME:exph. options.
+:p.
+:xph.MACHINE:exph. specifies the machine that submitted a
+request in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the machine submitting the
+CANCEL request.  &varres.
+:p.
+:xph.HANDLE:exph. specifies the handle number that submitted
+a request in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the number of the handle
+submitting the CANCEL request.  &varres.
+:p.
+:xph.NAME:exph. specifies the name of a handle that submitted
+a request in the Pending Requests list that you want to cancel.
+If not specified, it defaults to the name of the handle
+submitting the CANCEL request.  &varres.
+:p.
+:xph.ENTRY:exph. specifies a resource entry that matches the
+"Requested Entry" field in the Pending Requests list for the
+request that you want to cancel.  It can be specified only
+if a particular resource entry was specified by the REQUEST
+request that you want to cancel.
+:p.
+:xph.PRIORITY:exph. specifies the priority of the request you
+want to cancel.  It must be a number from 1 to 99, where 1
+indicates the highest priority.  &varres.
+:p.
+:xph.FIRST:exph. specifies to cancel the first entry in the Pending
+Requests list (which is sorted in ascending order by priority and
+then by the request timestamp) that matches the selection criteria.
+:p.
+:xph.LAST:exph. specifies to cancel the last entry in the Pending
+Requests list (which is sorted in ascending order by priority and
+then by the request timestamp) that matches the selection criteria.
+This is the default.
+
+:h4.Security
+:p.Command CANCEL requires trust level 3.
+:p.Command CANCEL FORCE requires trust level 4 if you are not
+the requester (e.g. the handle on the machine that submitted
+the REQUEST POOL request that you are trying to cancel).
+
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+CANCEL also returns the return codes documented in
+:hdref refid=rprcode..
+
+:h4.Results
+:p.On successful return, the result buffer will contain no data.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2.  Cancel the last pending request in the
+Pending Requests list for resource pool "TestMachines" that was
+submitted by my handle.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.CANCEL POOL TestMachines:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Cancel the first pending request in the
+Pending Requests list for resource pool "TestMachines" that was
+submitted by a handle named "STAX/Job/3" on my machine.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.CANCEL POOL TestMachines FORCE NAME STAX/Job/3 FIRST:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Cancel the last pending request in the
+Pending Requests list for resource pool "TestMachine" with
+priority 30 and with requested entry "system1" that was
+submitted by handle number 43 on machine "client1.company.com".
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.CANCEL POOL MachinePool FORCE MACHINE client1.company.com HANDLE 43 ENTRY system1 PRIORITY 30:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.error codes
+:i2.Resource Pool service
+:h3 id=rprcode.Resource Pool Error Code Reference
+:p.In addition to STAF return codes (see :hdref refid=retcode. for additional
+information), the following Resource Pool return codes are defined:
+:table id     = rperr
+       headhi = 3
+       frame  = box
+       cols   = '* 2* 4*'
+       align  = 'c l l'.
+:tcap.Resource Pool Service Return Codes
+:thd.
+:c.Error Code
+:c.Meaning
+:c.Comment
+:ethd.
+:row.
+:c.:hp2.4005:ehp2.
+:c.Not entry owner
+:c.You are not the owner of the entry you are trying to RELEASE.  Use the
+FORCE option if you are sure that the correct entry is specified.
+:row.
+:c.:hp2.4006:ehp2.
+:c.Pool has pending requests
+:c.The resource pool you are trying to DELETE has pending requests.  If
+necessary, use the FORCE option.
+:row.
+:c.:hp2.4007:ehp2.
+:c.No entries available
+:c.The resource pool has no entries.
+:row.
+:c.:hp2.4008:ehp2.
+:c.Create pool path error
+:c.The directory specified by the :xph.DIRECTORY:exph. parameter when 
+registering the service or the default directory could not be created.
+:row.
+:c.:hp2.4009:ehp2.
+:c.Invalid pool file format
+:c.An error occurred reading the resource pool file due to an error in the
+file format.  If you are using the latest version of the Resource Pool
+service, contact the STAF authors.
+:row.
+:c.:hp2.4010:ehp2.
+:c.Entry is owned
+:c.A resource pool entry you specified to REMOVE is owned.  Use the
+FORCE option if you are sure that the correct entry is specified.
+:row.
+:c.:hp2.4011:ehp2.
+:c.Not pending requester
+:c.You cannot cancel a pending request your handle did not submit
+unless you specify the FORCE option.
+:etable.

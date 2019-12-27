@@ -1,0 +1,23 @@
+<!--
+   STAF Namespaces Document Type Definition (DTD)
+
+   This DTD module is identified by the SYSTEM identifier:
+
+     SYSTEM 'Namespaces.dtd'
+
+-->
+
+<!ELEMENT namespaces     (namespace)*>
+
+<!ELEMENT namespace      (var*, namespace*)>
+<!ATTLIST namespace
+          name           CDATA    #REQUIRED
+          description    CDATA    #REQUIRED
+>
+
+<!ELEMENT var            (#PCDATA)>
+<!ATTLIST var
+          key            CDATA    #REQUIRED
+          value          CDATA    #REQUIRED
+>
+

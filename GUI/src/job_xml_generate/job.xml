@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CTKJob> 
+    <General> 
+	<platform>EDEN</platform>
+	<purpose>massive test</purpose>
+	<datetime>2014/03/10 14:33:40</datetime>
+	<update_image>no</update_image>
+	<update_ltk>no</update_ltk>
+	<log_autoupload>no</log_autoupload>
+    </General>
+    <ImageConfig>
+	<location>10.38.116.40</location>
+	<path>/autobuild/android/</path>
+	<platform>eden</platform>
+	<branch>2014-03-13_eden-kk4.4</branch>
+	<burnmode>SWDownloader</burnmode>
+	<type>latest</type>
+    </ImageConfig>
+    <LTKConfig>
+	<location>10.38.164.22</location>
+	<path>/Daily_Build/Build_History/</path>
+	<version>build_log_2014-04-24</version>
+	<branch>pxa1928dkb-kk4.4</branch>
+	<type>latest</type>
+    </LTKConfig>
+    <LogConfig>
+	<upload_location></upload_location>
+	<upload_path></upload_path>
+    </LogConfig>  
+	<CaseList>
+	<testcase>
+	    <id>TC_LCD_01</id>
+	    <path>/lcd</path>
+	    <duration>600</duration>
+	    <loops>1</loops>
+	</testcase>
+	<testcase>
+	    <id>TC_LCD_02</id>
+	    <path>/lcd</path>
+	    <duration>600</duration>
+	    <loops>1</loops>
+	</testcase>    
+	</CaseList>
+</CTKJob>

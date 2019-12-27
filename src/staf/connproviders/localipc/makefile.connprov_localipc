@@ -1,0 +1,51 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFLIPC = $(subst Name,STAFLIPC,$(DLL))
+
+staf_connprov_localipc_targets += $(REL)/lib/$(LIB_STAFLIPC)
+
+Targets += $(staf_connprov_localipc_targets)
+CleanupTargets += cleanup_staf_connprov_localipc
+
+$(staf_connprov_localipc_targets): SUBSYS_REL := connproviders/localipc
+SUBSYS_REL := connproviders/localipc
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(staf_connprov_localipc_targets): LIBS = STAF
+$(staf_connprov_localipc_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+$(REL)/lib/$(LIB_STAFLIPC)    : OBJS = $(staf_connprov_localipc_objs)
+
+staf_connprov_localipc_objs :=\
+  STAFLocalIPCConnProvider
+
+staf_connprov_localipc_objs := $(foreach obj,$(staf_connprov_localipc_objs),$(O)/connproviders/localipc/$(obj)$(OS_OE))
+staf_connprov_localipc_dependents := $(staf_connprov_localipc_objs:$(OS_OE)=.d)
+
+ifeq ($(OS_NAME),win32)
+    staf_connprov_localipc_objs += $(SR_SRC)/STAFLIPC.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(staf_connprov_localipc_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAF Local IPC connection provider targets
+
+$(REL)/lib/$(LIB_STAFLIPC): $(staf_connprov_localipc_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+
+cleanup_staf_connprov_localipc:
+	-@$(DEL) $(O)/connproviders/localipc/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAFLIPC) $(OUT_ERR_TO_DEV_NULL)

@@ -1,0 +1,46 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+demo_class_targets =\
+  $(O)/samples/demo/STAFDemoController.class \
+  $(O)/samples/demo/STAFDemoDialog.class \
+  $(O)/samples/demo/TestProcess.class \
+  $(O)/samples/demo/STAFProcess.class
+demo_targets += $(demo_class_targets)\
+                $(REL)/samples/demo/STAFDemo.jar
+Targets += $(demo_targets)
+CleanupTargets += cleanup_demo
+
+$(demo_targets): SUBSYS_REL := samples/demo
+SUBSYS_REL := samples/demo
+
+# Include inference rules
+include $(InferenceRules)
+
+$(demo_targets): $(REL)/lib/JSTAF.zip
+
+DEMO_CLASSPATH = $(OS_O)/samples/demo$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define DEMO_JAVA_COMPILE_IT
+   @echo "*** Compiling Demo Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/samples/demo -classpath '$(DEMO_CLASSPATH)' $(OS_SRC)/samples/demo/*.java
+endef
+
+$(O)/samples/demo/%.class: $(SRC)/samples/demo/%.java
+	$(DEMO_JAVA_COMPILE_IT)
+
+# DEMO Java targets
+
+$(REL)/samples/demo/STAFDemo.jar: $(demo_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@$(CREATE_PATH)
+	@cd $(O)/samples/demo; $(JAR) cfM '$(OS_@)' `find . -name "*.class" -print`
+
+cleanup_demo:
+	-@$(DEL) $(O)/samples/demo/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/JSTAF.zip $(OUT_ERR_TO_DEV_NULL)

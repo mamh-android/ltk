@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="begin_tests"/>
+
+  <script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  </script>
+
+  <function name="begin_tests">
+
+    <sequence>
+
+      <import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      <block name="'Run Processes in Parallel'">
+
+        <parallel>
+
+          <call function="'main'">{ 'parms' : '40 1 0' }</call>
+          <call function="'main'">{ 'parms' : '15 2 0' }</call>
+          <call function="'main'">{ 'parms' : '10 2 0' }</call>
+
+        </parallel>
+
+      </block>
+
+      <call function="'main'">{ 'parms' : '5 3 0' }</call>
+
+    </sequence>
+
+  </function>
+
+</stax>

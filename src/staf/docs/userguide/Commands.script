@@ -1,0 +1,545 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Commands SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Commands
+.*  Detail:
+.*
+.*     This file contains a description of the STAF Commands.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.STAFProc command
+:ih1.commands
+:i2.STAFProc
+:h1 id=commands.Commands
+:h2 id=stproc.STAFProc
+:p.STAFProc is what starts STAF running on a machine.
+:h4.Syntax
+:xmp.
+STAFProc &lbrk.STAF Configuration File&rbrk.
+:exmp.
+:h4.Examples
+:xmp.
+STAFProc d:\staf\bin\mystaf.cfg
+:exmp.
+:p.If :xph.&lbrk.STAF Configuration File&rbrk.:exph. is not specified, STAFProc
+will try to use the file staf.cfg.  It will search for this file in the current
+directory, as well as the directory in which STAFProc resides.
+:note text=Warning.In order to stop the STAFProc daemon process, you should
+enter the command ":xph.STAF local shutdown shutdown:exph." (or use the
+associated program in your "Start" menu on Windows systems).  Pressing CTRL-C (or
+issuing a "kill" command) will terminate STAFProc, but will not allow it
+to properly cleanup, which may cause problems and/or delays when trying
+to restart STAFProc.  See section :hdref refid=shutds. for more information
+on the SHUTDOWN service.:enote.
+:note.
+Any changes made to the STAF Configuration File after STAFProc has been started
+will not take effect until you shutdown and restart STAFProc.
+:enote.
+:h3 id=multipleinstances.Running Multiple Instances of STAFProc
+:p.Multiple instances of STAFProc can be run at the same time on the
+same system .  This makes it possible to use STAF to install/upgrade STAF itself.
+To run multiple instances of STAF, system-specific resources need to be
+differentiated.  There is a special environment variable, STAF_INSTANCE_NAME,
+that can be used to specify a name for each STAFProc instance to differentiate
+between multiple instances of STAF.  If this environment variable is not set, the
+default value, "STAF", is used for the instance name.
+If the STAF_INSTANCE_NAME environment variable is not set to a unique value
+prior to starting a new instance of STAFProc, you will see a
+"STAFProc already started" error.
+:p.
+For each instance of STAFProc running on a system, the following settings must be unique:
+:ul.
+:li.Ports used by TCP Connection Providers:
+:p.The ports used by STAF TCP connection providers must be unique,
+otherwise, you'll get a "Error starting tcp interface" error when starting STAFProc.
+If one instance of STAF is running using a ssl interface with port 6550 and
+a tcp interface port 6500,
+then to start another instance of STAF that also uses a ssl and tcp interface,
+you must specify a different ports in its STAF configuration file.  For example:
+:xmp.
+interface tcp library STAFTCP option SECURE=Yes option PORT=6551
+interface tcp library STAFTCP option SECURE=No  option PORT=6501
+:exmp.
+:li.Data directory:
+:p.Each STAFProc instance must use a different data directory.
+However, since the default setting for the data directory
+is {STAF/Config/STAFRoot}/data/{STAF/Config/InstanceName}, the data
+directory names will be different if they are not overridden using
+the DATADIR operational setting (and as long as the STAF_INSTANCE_NAME
+environment variable is set to a unique value).
+If the data directory for a STAFProc instance is not unique, you'll get a
+"Data directory is already in use" error when starting STAFProc
+:eul.
+:p.
+The installer creates a STAFEnv script file in the root STAF install
+location that can be used to set the required environment variables
+for a version of STAF.  On Windows, the script file is called
+STAFEnv.bat and on Unix, the script file is called STAFEnv.sh.
+The STAFEnv script files are especially useful if you are going to be
+running two versions of STAF on the same machine and need a convenient
+way to switch settings for each version of STAF.
+An optional argument specifying the STAF instance name can be passed
+to a STAFEnv script file.
+A similar STAFEnv script file will also be created for setting up the
+environment for STAF V2, if STAF V2 is installed on the same machine
+as STAF V3.
+:p.
+Here's a sample STAFEnv.bat file for Windows: 
+:xmp.
+@echo off
+REM STAF environment variables for 3.0.2
+set PATH=C:\STAF\bin;%PATH%
+set CLASSPATH=C:\STAF\bin\JSTAF.jar;C:\STAF\samples\demo\STAFDemo.jar;%CLASSPATH%
+set STAFCONVDIR=C:\STAF\codepage
+if "%1" EQU "" set STAF_INSTANCE_NAME=STAF
+if "%1" NEQ "" set STAF_INSTANCE_NAME=%1
+:exmp.
+:p.
+Here's a sample STAFEnv.sh file for Linux: 
+:xmp.
+#!/bin/sh
+# STAF environment variables for 3.0.2
+PATH=/usr/local/staf/bin&colon.$PATH
+LD_LIBRARY_PATH=/usr/local/staf/lib&colon.$LD_LIBRARY_PATH
+CLASSPATH=/usr/local/staf/lib/JSTAF.jar&colon./usr/local/staf/samples/demo/STAFDemo.jar&colon.$CLASSPATH
+STAFCONVDIR=/usr/local/staf/codepage
+if [ $# = 0 ]
+then
+    STAF_INSTANCE_NAME=STAF
+else
+    STAF_INSTANCE_NAME=$1
+fi
+export PATH LD_LIBRARY_PATH CLASSPATH STAFCONVDIR STAF_INSTANCE_NAME
+:exmp.
+:p.
+The sample scripts that are created automatically by STAF will use
+the actual install directories in the STAFEnv script files.
+:p.
+Here's an example of starting STAF V2 and STAF V3 on a Windows system,
+where STAF V2 is installed in C:\STAF and STAF V3 is installed in
+C:\STAF3.  The STAF configuration file used by each STAFProc
+instance specify different port numbers for each TCP Connection Provider.
+:xmp.
+  C:
+  cd \STAF
+  STAFEnv.bat
+  STAFProc
+:exmp.
+In another command prompt:
+:xmp.
+  C:
+  cd \STAF3
+  STAFEnv.bat
+  STAFProc
+:exmp.
+:p.
+Here's an example of starting two instances of STAF V3 on a Unix system,
+specifying instance name STAF (the default) for one instance and
+instance name STAF2 for another instance.  The STAF configuration file
+used by each STAFProc instance specify different port numbers for each
+TCP Connection Provider.
+:xmp.
+  cd /usr/local/staf
+  . ./STAFEnv.sh
+  STAFProc /usr/local/staf/bin/STAF.cfg &
+  
+  . ./STAFEnv.sh STAF2
+  STAFProc /usr/local/staf/bin/STAF2.cfg &
+:exmp.
+
+:note.
+The STAF_INSTANCE_NAME environment variable must be set to the same
+value for a given STAFProc daemon and any applications/testcases that want
+to communicate to the instance of STAF.
+:p.
+:h3 id=winvista.Running STAFProc on Windows with User Account Controls (UAC) Enabled
+:p.
+On Windows Vista and Windows Server 2008 and later (including Windows 7, Windows 8,
+and Windows Server 2012, etc) with User Account Controls (UAC)
+enabled, STAFProc is run using the least amount of privileges (e.g. that of a standard
+user) even if you are logged in as an administrator.  If you want to run a process via
+the STAF PROCESS START request that requires administrative privileges,
+such as an install program, and not get UAC prompts, you may need to
+run STAFProc as an administrator.  There are several ways to do this:
+:ul compact.
+:li.Find STAFProc.exe (e.g. C:\STAF\bin\STAFProc.exe) via Windows Explorer and
+right mouse click on it.  To change just this one instance of starting STAFProc,
+select "Run as administrator".
+:li.Or, find STAFProc.exe (e.g. C:\STAF\bin\STAFProc.exe) via Windows Explorer and
+right mouse click on it.  Select "Properties" and then select the "Compatibility" tab,
+and check the box under "Privilege Level" labeled "Run the program as an administrator"
+and select OK.  Now, any time you start STAFProc it will be run as an administrator.
+:li.Or find "Command Prompt" and right mouse on it and select "Run as administrator".
+Any program such as STAFProc that is run from an "Administrator: Command Prompt", will be
+run as an administrator.
+:eul.
+:p.
+:note.When STAFProc.exe is run as an Administrator, you must also run STAF.exe
+as an Administrator if you want to submit STAF requests from a command prompt
+on the local Windows sytems.  Otherwise, you'll get "Error registering with STAF, RC: 21".
+The same is true if you run a program on this Windows system that submits
+STAF service requests using the STAF APIs for Java, C/C++, Perl, Python, Tcl, etc,
+such as the STAX Monitor Java application.  The program must also be
+run as an Administrator (e.g. by running it from an "Administrator: Command Prompt"). 
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.STAF command
+:ih1.commands
+:i2.STAF
+:h2 id=stafexecmd.STAF
+:p.STAF is an executable that is used to submit requests to STAF from the
+command line.  Please see :hdref refid=stafshs. for more information
+on using the STAF command from within shell-scripts.
+:h4.Syntax
+:xmp.
+STAF [-verbose] <Endpoint> <Service> <Request>
+:exmp.
+:p.
+:ul.
+:li.:xph.-verbose:exph. specifies to force the use of the verbose mode for
+the output.
+:p.
+:li.:xph.<Endpoint>:exph. is either LOCAL, if you wish to make a request of the
+local machine, or the name of the machine of which you wish to make a request.
+When making a STAF request to a remote system, in addition to specifying
+the machine name, you may also specify the network interface over which
+communication will take place.  The format for this is: 
+:xmp.  [<Interface>://]<System Identifier>[@<Port>]:exmp.
+where:
+  :ul compact.
+  :li.:xph.<Interface>:exph. is the name of the network interface.
+  If not specified, the default interface is used.
+  :li.:xph.<System Identifier>:exph. is a valid network identifier for
+  the interface in question.  You may specify logical or physical
+  identifiers.  For example, for a TCP/IP interface, the physical identifier
+  for a system is the IP address, while the logical identifier is the hostname.
+  :li.:xph.<Port>:exph. is a valid port to use for a TCP/IP interface.
+  If not specified, the port for the default interface is used.
+  One of the things this allows you to do is communicate with an instance of
+  STAF that is using a different TCP/IP port.  Note that the port specified
+  does not have to be configured on the machine submitting the request.
+  :eul.
+:p.
+:li.:xph.<Service>:exph. is the name of the service to which you are
+submitting a request.  Note the name of a service is case-insensitive.
+:p.
+:li.:xph.<Request>:exph. is the actual request string that you wish to submit
+to the service.  Note that the options for requests to STAF services are
+case-insensitive.
+:eul.
+
+:h4.Examples
+:xmp.
+STAF local PING PING
+STAF local sem event SynchSem post
+STAF testmach1 PROCESS START COMMAND notepad
+STAF testmach1.company.com PROCESS LIST
+STAF -verbose testmach1.company.com PROCESS LIST
+STAF ssl&colon.//testmach1 PROCESS START SHELL COMMAND /tests/myTest RETURNSTDOUT STDERRTOSTDOUT WAIT
+STAF tcp&colon.//testmach1 TRUST LIST
+STAF alt-tcp2&colon.//9.3.283.13 SERVICE LIST
+STAF testmach1@6600 PROCESS START COMMAND notepad NOTIFY ONEND
+STAF tcp&colon.//testmach.company.com@6500 MISC WHOAMI
+STAF local ECHO ECHO "Hi there"
+STAF 9.3.823.20 LOG MACHINE LOGNAME MyLog LEVEL info MESSAGE "This is a message"
+STAF local var set SYSTEM var "SomeName=Some  text  string"
+:exmp.
+:h4.Notes
+:ol.
+:li.Take a closer look at the last three examples.  Quotes are required around the
+value to the echo, message, and set options because their values contain spaces.
+When calling STAF APIs directly from testcases/applications, you should normally use the
+colon-length-colon delimited format described in :hdref refid=ovform..
+:li.Older versions of STAF (prior to V2.1.0) required extra effort when
+quoting things on the command line.  If you should need to resort to the
+old command line handling algorithm, simply set the environment variable
+STAF_OLDCLI to any non-empty value.
+:li.If running multiple instances of STAFProc, the STAF_INSTANCE_NAME
+environment variable must be set to the instance name of the STAFProc
+daemon that you want the STAF command to talk to.  For example:
+:xmp.
+set STAF_INSTANCE_NAME=MySTAF
+staf local ping ping
+:exmp.
+:eol.
+
+:h4.Output
+:p.On a successful STAF request (i.e., a request with a zero return code), the
+output from the STAF command will be as follows
+:xmp.
+Response
+--------
+<Result string>
+:exmp.
+:p.where :xph.<Result string>:exph. is any information that was returned from
+the STAF service request.
+:p.For example, the output of :xph.STAF LOCAL PING PING:exph. should be
+:xmp.
+Response
+--------
+PONG
+:exmp.
+:p.On an unsuccessful STAF request (i.e., a request with a non-zero return
+code), the output from the STAF command will be as follows
+:xmp.
+Error submitting request, RC: <Return code>
+Additional info
+---------------
+<Result string>
+:exmp.
+:p.where :xph.<Return code>:exph. is the actual return code from the request,
+and :xph.<Result string>:exph. is any information returned from the request.
+:xph.<Result string>:exph. usually contains information that explains why the
+error occurred.  Note, the "Additional info" will only be present if a non-empty
+result string was returned.  Additionally, you may refer to
+:hdref refid=retcode. for information about the :xph.<Return code>:exph.
+:p.For example, the output of :xph.STAF LOCAL SEM LIST:exph. should be
+:xmp.
+Error submitting request, RC: 7
+Additional info
+---------------
+You must have at least 1, but no more than 1 of the option(s), MUTEX EVENT
+:exmp.
+:note.If the :xph.<Result string>:exph. from a STAF command contains any null
+characters, you can set the environment variable STAF_REPLACE_NULLS
+to any non-empty value.  This will cause the STAF command to replace any null
+characters in the :xph.<Result string>:exph. with the specified value.
+Otherwise, the :xph.<Result string>:exph. will be truncated at the first null
+character found.
+:p.When structured data (see :hdref refid=marshall.) is returned in the result
+strings above, the STAF command will automatically unmarshall the data and
+print it in the most appropriate format.  If the data is a
+:xph.<List> of <String>:exph., then each entry in the list will be printed
+on its own line.  For example,
+:xmp.
+C:\> staf local fs list directory c:\
+Response
+--------
+AUTOEXEC.BAT
+boot.ini
+CONFIG.SYS
+Documents and Settings
+i387
+IO.SYS
+MSDOS.SYS
+My Music
+NTDETECT.COM
+ntldr
+PAGEFILE.SYS
+Program Files
+Recycled
+RECYCLER
+System Volume Information
+temp
+WINNT
+:exmp.
+:p.If the data is a :xph.<Map>:exph. (or :xph.<Map:<Class>>:exph.) which
+has values which are all of type &stringObj., then each key/value pair will
+be printed on its own line.  For example,
+:xmp.
+C:\> staf local monitor list settings
+Response
+--------
+Max Record Size    : 1024
+Resolve Message    : Disabled
+Resolve Message Var: Disabled
+:exmp.
+:p.The above two types of formatted output are frequently referred to as
+"default format".
+:p.If the data is a :xph.<List> of <Map:<Class>>:exph. where every item in
+the list is an instance of the same map class, then the data will be printed
+out in a tabular format, called "table format".  For example,
+:xmp.
+$ staf local handle list handles
+Response
+--------
+Handle Handle Name                     State      Last Used Date-Time
+------ ------------------------------- ---------- -------------------
+1      STAF_Process                    InProcess  20040929-13:57:40
+2      STAF/Service/STAFServiceLoader1 InProcess  20040929-16:06:47
+5      STAF/Service/LOG                InProcess  20040929-13:57:52
+7      STAF/Service/RESPOOL            InProcess  20040929-13:58:04
+51     STAF/Service/MONITOR            InProcess  20040929-16:06:47
+57     STAF/Client                     Registered 20040929-16:09:35
+:exmp.
+:p.
+The column headings in the table format are determined using the display name
+specified for each key.  Short display names may be used as column headings
+by the STAF executable when displaying the result in a tabular form if the
+total width of the display names exceeds 80 characters.
+:p.
+By default a single record in the table format will only display the first
+20 lines (the last line will show "(More...)" to indicate that there were
+more lines in the record).  You can override the maximum number of lines that
+are displayed per record by setting the environment variable
+STAF_TABLE_LINES_PER_RECORD to the maximum number of lines.
+:p.You can disable the output of tables by setting the environment variable
+STAF_PRINT_NO_TABLES to any value.  If you disable the output of tables, their
+data will show up in the more verbose mode (described below).
+:p.If the data is more complex than the above (or tables have been turned off),
+the output will be printed in a hierarchical nested format, called "verbose
+format".  The best way to describe it is with an example.
+:xmp.
+C:\> staf local sem query event Test
+Response
+--------
+{
+  State      : Reset
+  Last Posted: {
+    Machine    : crankin3
+    Handle Name: STAF/Client
+    Handle     : 62
+    User       : none://anonymous
+    Date-Time  : 20040929-16:20:56
+  }
+  Last Reset : {
+    Machine    : crankin3
+    Handle Name: STAF/Client
+    Handle     : 65
+    User       : none://anonymous
+    Date-Time  : 20040929-16:21:43
+  }
+  Waiters    : [
+    {
+      Machine    : crankin3
+      Handle Name: TestHandle
+      Handle     : 67
+      User       : none://anonymous
+      Date-Time  : 20040929-16:22:16
+    }
+  ]
+}
+:exmp.
+:p.You can change the amount of indentation used by setting the environment
+variable STAF_INDENT_DELTA to any non-negative integer.
+:p.You can use the -verbose option to force the use of the verbose
+mode on a command basis.  For example,
+:xmp.
+C:\> staf -verbose local fs list directory c:\
+Response
+--------
+[
+  AUTOEXEC.BAT
+  boot.ini
+  CONFIG.SYS
+  Documents and Settings
+  i387
+  IO.SYS
+  MSDOS.SYS
+  My Music
+  NTDETECT.COM
+  ntldr
+  PAGEFILE.SYS
+  Program Files
+  Recycled
+  RECYCLER
+  System Volume Information
+  temp
+  WINNT
+]
+:exmp.
+:p.You can force the exclusive use of the verbose mode by setting the
+environment variable STAF_PRINT_MODE to "verbose".  For example,
+:xmp.
+C:\> set STAF_PRINT_MODE=verbose
+
+C:\> staf local fs list directory c:\
+Response
+--------
+[
+  AUTOEXEC.BAT
+  boot.ini
+  CONFIG.SYS
+  Documents and Settings
+  i387
+  IO.SYS
+  MSDOS.SYS
+  My Music
+  NTDETECT.COM
+  ntldr
+  PAGEFILE.SYS
+  Program Files
+  Recycled
+  RECYCLER
+  System Volume Information
+  temp
+  WINNT
+]
+:exmp.
+:p.If you should ever need to get at the raw result string (instead of the
+structured output), you can set the environment variable STAF_PRINT_MODE to "raw".
+For example,
+:xmp.
+C:\> set STAF_PRINT_MODE=raw
+
+C:\> staf local fs list directory C:/temp/docs
+Response
+--------
+@SDT/*:267&colon.@SDT/{&colon.26::13&colon.map-class-map@SDT/{&colon.0&colon.@SDT/[10:218&colon.@SDT/$S:11&colon.STAFTcl.h
+tm@SDT/$S:12&colon.STAFPerl.htm@SDT/$S:14&colon.STAFPython.htm@SDT/$S:7&colon.History@SDT/$S&colon.12&colon.ST
+AFCMDS.htm@SDT/$S:11&colon.STAFFAQ.htm@SDT/$S:10&colon.STAFGS.pdf@SDT/$S:12&colon.STAFHome.htm@SDT
+/$S:10&colon.STAFRC.htm@SDT/$S:10&colon.STAFUG.htm
+:exmp.
+:p.Note, by default, any &stringObj. value that looks as though it, itself,
+is a marshalled data structure will be recursively unmarshalled.  For example,
+if someone marshalls a data structure and uses the resultant string as the
+message for a log request, and then you query the log, the data structure
+in the log message string will automatically be unmarshalled.  If you want
+to turn off this behavior from the command line, and, instead, see the
+marshalled string in the message, set the environment variable
+STAF_IGNORE_INDIRECT_OBJECTS to any value.
+:h4 id=stafshs.Using the STAF command from shell-scripts
+:p.There are two special environment variables that can be used to make the
+STAF command blend in with shell-scripts.  The first is STAF_QUIET_MODE.
+Setting this environment variable to any non-null value will cause the STAF
+command to only output the :xph.<Result string>:exph. that the request
+generated.  For example, the "STAF local ping ping" command above would simply
+return
+:xmp.
+PONG
+:exmp.
+:p.This makes it easy to call STAF from shell-scripts.  For example,
+:xmp.
+export STAF_QUIET_MODE=1
+
+STAFResult=`STAF local ping ping`
+
+if [ $? -ne 0 ]; then
+   echo "Non-zero return code from ping request";
+elif [ "$STAFResult" != "PONG" ]; then
+   echo "Expected PONG, received $STAFResult";
+else
+   echo "ping request succeeded"
+fi
+:exmp.
+:p.The second environment variable is STAF_STATIC_HANDLE.  If this environment
+variable is set, the STAF command will use the handle number indicated by this
+environment variable.  This ensures that the shell-script can use the same
+handle throughout its execution.  You may obtain a static handle in one of two
+ways.  The first is using the CREATE command of the HANDLE service
+(see :hdref refid=handcrt.).  For example,
+:xmp.
+export STAF_STATIC_HANDLE=`STAF local handle create handle name "My Test"`
+:exmp.
+:p.In this case, you are responsible for deleting the shell-scripts handle prior
+to your shell-script exiting.  For example,
+:xmp.
+STAF local handle delete handle $STAF_STATIC_HANDLE
+:exmp.
+:p.The second way is by using the STATICHANDLENAME option when starting your
+script through the PROCESS service (see :hdref refid=procstr.).  In this case
+the STAF_STATIC_HANDLE environment variable will already be set for you.  In
+addition, the handle will automatically be deleted by STAF when your
+shell-script completes.
+:p.You can test for the existence of the STAF_STATIC_HANDLE environment variable
+to determine if your shell-script was started via STAF, or whether it was
+started by hand from the command line.

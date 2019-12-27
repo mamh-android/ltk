@@ -1,0 +1,75 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="David Bender">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <title>Prerequisites for Hands-On Automation with STAF/STAX 3 Exercises</title>
+</head>
+<body>
+
+<h1>
+<font face="Arial,Helvetica">Prerequisites for Hands-On Automation with STAF/STAX 3 Exercises</font></h1>
+
+<hr>
+
+<ol>
+<li><font face="Arial,Helvetica">
+It is recommended that you run these exercises on a Windows 2000/XP machine.
+At least 50MB of hard drive space is required for the exercises.
+</font></li><br>
+<li><font face="Arial,Helvetica">
+It is recommended that you have network connectivity on the machine where you will
+be running the exercises (only exercise 1.9 requires network connectivity).
+</font></li><br>
+<li><font face="Arial,Helvetica">
+Install Java 1.4 SDK or later on the machine where you will be running the exercises.
+Installing a JRE is *NOT* sufficient.  You must install an SDK so that the Java
+compiler will be available.  Do not install Java to C:/Program Files/...  
+Instead install it to a directory like c:/ibmsdk1.4.2.  To verify that you have
+an SDK, must sure the "javac.exe" file exists in c:/ibmsdk1.4.2/bin
+</font></li><br>
+<li><font face="Arial,Helvetica">
+Add the following to your machine's System PATH environment variable:
+<pre>
+c:\ibmsdk1.4.2\jre\bin;c:\ibmsdk1.4.2\bin
+</pre>
+</font></li>
+<li><font face="Arial,Helvetica">
+If you have User environment variables for PATH and/or CLASSPATH, ensure
+that they have references to the System PATH/CLASSPATH:
+<pre>
+c:\abc\xyz;%PATH%
+c:\abc\xyz;%CLASSPATH%
+</pre>
+</font></li>
+<li><font face="Arial,Helvetica">
+Create a directory on the machine where you will be running the exercises 
+called "c:\STAFCD".  Download the education package to this directory and
+unzip the file (by using PKZip or WinZip).  The education package can
+be downloaded from:
+http://prdownloads.sourceforge.net/staf/STAF-STAX-HandsOn-Education-331.zip
+</font></li><br>
+<li><font face="Arial,Helvetica">
+If you have a c:\winnt\system32\java.exe file, rename it or remove it for the class.
+</font></li><br>
+<li><font face="Arial,Helvetica">
+Print a copy of the exercises 
+(c:\STAFCD\Part1\Part1-Exercises.html)
+(c:\STAFCD\Part2\Part2-Exercises.html)
+(c:\STAFCD\Part3\Part3-Exercises.html)
+(c:\STAFCD\Part4\Part4-Exercises.html)
+and bring these printouts to the class.
+</font></li><br>
+<li><font face="Arial,Helvetica">
+To view the presentations in PowerPoint format (.ppt), you will need Microsoft
+PowerPoint.  To view the presentations in OpenDocument format (.odp), you will
+need IBM Lotus Symphony, which can be downloaded from the
+<a href="http://symphony.lotus.com/software/lotus/symphony/home.nsf/home">
+IBM Lotus Symphony web site</a>, or another tool that supports the
+OpenDocument format.
+</font></li><br>
+</ol>
+
+</body>
+</html>

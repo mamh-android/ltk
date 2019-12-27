@@ -1,0 +1,1151 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2007
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : LifeCycleSrv SCRIPT Version 1.0
+.*  Descriptive Name   : Software Test Automation Framework LifeCycle Service
+.*  Detail:
+.*
+.*     This file describes the STAF LifeCycle Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.lifecycle service
+:ih1.services
+:i2.LifeCycle service
+:h2 id=lifecyclesrv.LifeCycle Service
+:h3.Description
+The LifeCycle service is one of the internal STAF services.  It allows STAF
+service requests to be run when STAFProc starts up or shuts down.
+:p.The LifeCycle service provides the following commands.
+:ul compact.
+:li.REGISTER - Allows you to register a STAF service request to be run either
+when STAFProc starts up or shuts down
+:li.UNREGISTER - Allows you to unregister a STAF service request
+:li.UPDATE - Allows you to update fields in a registration
+:li.LIST - Allows you to list information about the STAF service requests
+that are registered
+:li.QUERY - Allows you to get information about a STAF service
+request that is registered
+:li.TRIGGER - Allows you to submit a single registered STAF service request,
+or to submit all STAF service requests registered to be run when STAFProc
+starts up or shuts down.  It is useful for testing the registrations.
+:li.ENABLE - Allows you to enable a STAF service request that is registered
+:li.DISABLE - Allows you to disable a STAF service request that is registered
+:li.&help.
+:eul.
+:p.
+The registrations for the LifeCycle service are persistent.  This means
+that if STAF is shutdown and restarted (or if the machine is rebooted),
+the prior registration information for the LifeCycle service will still exist.
+When STAFProc starts, it reads in the existing registration data and executes
+the enabled registered STAF service requests with the "Startup" phase specified.
+When STAFProc is shutdown, it reads in the existing registration data and
+executes the enabled registered STAF service requests with the "Shutdown" phase
+specified.  The LifeCycle service's registration data is stored in file
+:xph.{STAF/DataDir}/service/lifecycle/lifecycle.reg:exph..
+:p.
+The STAF LifeCycle service maintains a STAF machine log where it writes
+information about the STAF service requests that have been registered with
+the LifeCycle service and that it has submitted.  When debugging a problem
+with a registration for the LifeCycle service, be sure to check the LifeCycle
+service log to determine the results of STAF service requests submitted by
+the LifeCycle service.  See :hdref refid=lifecycleServiceLog. for more
+information on the LifeCycle service log.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.REGISTER
+:i3.LifeCycle service
+:h3.REGISTER
+Allows you to register STAF service requests to be run either when
+STAFProc starts up or shuts down.
+:p.
+Each STAF service request that is registered will be submitted
+synchronously when STAFProc starts up or shuts down, or is triggered
+via a :xph.TRIGGER:exph. request.  This means that if you register
+a STAF service request that never completes (e.g. a :xph.PROCESS START
+WAIT:exph. request without a :xph.TIMEOUT:exph. option for a command
+that never completes, or a :xph.SEM MUTEX REQUEST:exph. request with a
+:xph.TIMEOUT:exph. option for a mutex semaphore that never becomes
+available), then if registered for the :xph.Startup:exph. phase, STAFProc
+will not complete starting up.  Or, if registered for the :xph.Shutdown:exph.
+phase, STAFProc will not complete shutting down.
+
+:h4.Syntax
+:xmp.
+REGISTER PHASE <Startup | Shutdown>
+         MACHINE <Machine> SERVICE <Service> REQUEST <Request>
+         [ONCE] [PRIORITY <Priority>] [DESCRIPTION <Description>]
+:exmp.
+:p.:xph.PHASE:exph. specifies when the service request will be submitted.
+Valid values are "Startup" and "Shutdown" (case-insensitive).
+Specifying "Startup" indicates to submit the service request when
+STAFProc starts up.  Specifying "Shutdown" indicates to submit the
+service request when STAFProc shuts down.
+&varres.
+:p.:xph.MACHINE:exph. specifies the endpoint for a machine where the
+service request will be submitted.
+:p.:xph.SERVICE:exph. specifies the name of the STAF service to which
+a request will be submitted.
+:p.:xph.REQUEST:exph. specifies the request to be submitted to the
+specified service.
+:p.:xph.ONCE:exph. specifies that the STAF service request should only be
+executed once. After the STAF service request has been submitted at Startup or
+Shutdown (depending on the specified phase), the ID for this request will
+be unregistered.
+:p.:xph.PRIORITY:exph. specifies the priority of the registration which is
+used in determining the order in which the registration will be submitted
+(if there is more than one registration) when STAFProc starts up or shuts
+down.  It must be a number from 1 to 99.  The default is 50.
+Registrations with priority 1 will be submitted first, followed by
+registrations with priority 2, and so on.
+Registrations with the same priority will be submitted in order by
+registration ID.
+&varres.
+:p.:xph.DESCRIPTION:exph. specifies a description of the registration.
+It is for informational purposes only and is optional.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain the registration ID.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Register to start a process that runs command
+"C:/tests/TestA.exe" on machine client1.company.com whenever STAFProc
+starts up and specify priority 25 for the registration.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.REGISTER PHASE Startup MACHINE client1.company.com SERVICE Process
+REQUEST "START SHELL COMMAND C:/tests/TestA.exe" DESCRIPTION "Start TestA":exph.
+:p.
+:li.:hp2.Goal::ehp2. Register to run STAX job /test/TestA.xml on machine
+server1 whenever STAFProc starts up.  Pass the STAX job's main function a
+Python map of arguments as follows:  {'testMachine': 'client1', 'serverMach': 'server1'}
+:p.:hp2.Syntax::ehp2.
+:p.:xph.REGISTER PHASE Startup MACHINE server1 SERVICE STAX REQUEST 
+"EXECUTE FILE /tests/TestA.xml ARGS \"{'testMach': 'client1',
+'serverMach': 'server1'}\"":exph.
+:p.
+:li.:hp2.Goal::ehp2. Register to start a process that runs command
+"C:/tests/TestB.exe" on the local machine whenever STAFProc is shut down and
+give it description "Start TestB".
+:p.:hp2.Syntax::ehp2.
+:p.:xph.REGISTER PHASE Shutdown MACHINE local SERVICE Process REQUEST
+"START SHELL COMMAND C:/tests/TestB.exe" DESCRIPTION "Start TestB":exph.
+:p.
+:li.:hp2.Goal::ehp2. Register to send a "STAF Startup" type message to the
+queue of a handle named MyTestHandle on machine server1 the next time
+STAFProc starts up (and then unregister this ID so the message is only sent
+once).
+:p.:hp2.Syntax::ehp2.
+:p.:xph.REGISTER PHASE Startup MACHINE server1 SERVICE QUEUE REQUEST 
+"QUEUE NAME MyTestHandle TYPE &colon.12&colon.STAF Startup MESSAGE &colon.0&colon." ONCE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.UNREGISTER
+:i3.LifeCycle service
+:h3.UNREGISTER
+Allows you to unregister STAF service requests with the LifeCycle service.
+
+:h4.Syntax
+:xmp.
+UNREGISTER ID <Registration ID>
+:exmp.
+:p.:xph.ID:exph. specifies the registration ID of the STAF service request
+to be unregistered.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will be empty.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Unregister the service request with registration ID 2.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.UNREGISTER ID 2:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.UPDATE
+:i3.LifeCycle service
+:h3.UPDATE
+Allows you to update one or more fields for a registration.
+
+:h4.Syntax
+:xmp.
+UPDATE ID <Registration ID> [PRIORITY <Priority>] [ONCE <True | False>]
+          [MACHINE <Machine>] [SERVICE <Service>] [REQUEST <Request>]
+          [PHASE <Startup | Shutdown>] [DESCRIPTION <Description>]
+:exmp.
+:p.:xph.ID:exph. specifies the registration ID of the STAF service request
+to be updated.
+:p.:xph.PRIORITY:exph. specifies the priority of the registration which is
+used in determining the order in which the registration will be submitted
+(if there is more than one registration) when STAFProc starts up or shuts
+down.  It must be a number from 1 to 99.
+Registrations with priority 1 will be submitted first, followed by
+registrations with priority 2, and so on.
+Registrations with the same priority will be submitted in order by
+registration ID.
+&varres.
+:p.:xph.ONCE:exph. specifies whether the STAF service request should only be
+executed once. Valid values are "True" and "False" (case-insensitive).
+Specifying "True" indicates to submit the STAF service request only once
+which means after the STAF service request has been submitted at Startup or
+Shutdown (depending on the specified phase), this registration will be
+unregistered.  Specifying "False" indicates that the STAF service request
+should be submitted each time STAFProc starts up or shuts down (depending
+on the specified phase).
+&varres.
+:p.:xph.MACHINE:exph. specifies the endpoint for a machine where the
+service request will be submitted.
+:p.:xph.SERVICE:exph. specifies the name of the STAF service to which
+a request will be submitted.
+:p.:xph.REQUEST:exph. specifies the request to be submitted to the
+specified service.
+:p.:xph.PHASE:exph. specifies when the service request will be submitted.
+Valid values are "Startup" and "Shutdown" (case-insensitive).
+Specifying "Startup" indicates to submit the service request when
+STAFProc starts up.  Specifying "Shutdown" indicates to submit the
+service request when STAFProc shuts down.
+&varres.
+:p.:xph.DESCRIPTION:exph. specifies a description of the registration.
+It is for informational purposes only and is optional.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will be empty.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Update the priority of registration ID 2 to have
+priority 25 and description "Run TestA".
+:p.:hp2.Syntax::ehp2.
+:p.:xph.UPDATE ID 2 PRIORITY 25 DESCRIPTION "Run TestA":exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.LifeCycle service
+:h3.LIST
+Allows you to list the information about the STAF service requests
+registered with the LifeCycle service.  The registrations will be
+listed in the order in which they will be submitted, which is by
+phase (Startup registrations first, followed by Shutdown registrations),
+and then in ascending order by priority within the same phase, and then
+in ascending order by registration ID within the same phase/priority.
+
+:h4.Syntax
+:xmp.
+LIST &lbrk.PHASE <Startup | Shutdown>&rbrk. &lbrk.LONG&rbrk.
+:exmp.
+:p.:xph.PHASE:exph. specifies to list only the registrations with a
+matching phase.  Valid values for "Startup" and "Shutdown" (case-insensitive).
+&varres.
+:p.:xph.LONG:exph. specifies to include all of the registration information,
+including the description for each registration.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain information
+about the request based on the options specified: 
+:ul.
+:li.The result buffer for a :xph.LIST:exph. request without the
+:xph.LONG:exph. option will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/LifeCycle/Reg>:exph. representing the matching
+registrations for the LifeCycle service.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/LifeCycle/Reg
+:tnote text='Description'.This map class represents information about
+a registration.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.phase
+:c.Phase
+:c.&stringObj.
+:c.'Startup' | 'Shutdown'
+:row.
+:c.priority
+:c.Priority
+.br(P)
+:c.&stringObj.
+:c.'1' - '99'
+:row.
+:c.id
+:c.ID
+:c.&stringObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.'Enabled' | 'Disabled'
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.Private data will be masked
+:row.
+:c.once
+:c.Once
+:c.&stringObj.
+:c.'True' | 'False'
+:etable.
+:p.
+:li.
+:p.The result buffer for a :xph.LIST:exph. with the :xph.LONG:exph.
+option will contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/LifeCycle/RegDetails>:exph. representing the
+matching registrations for the LifeCycle service. 
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/LifeCycle/RegDetails
+:tnote text='Description'.This map class represents detailed 
+information about a registration.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.phase
+:c.Phase
+:c.&stringObj.
+:c.'Startup' | 'Shutdown'
+:row.
+:c.priority
+:c.Priority
+.br(P)
+:c.&stringObj.
+:c.'1' - '99'
+:row.
+:c.id
+:c.ID
+:c.&stringObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.'Enabled' | 'Disabled'
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.Private data will be masked
+:row.
+:c.description
+:c.Description
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.once
+:c.Once
+:c.&stringObj.
+:c.'True' | 'False'
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List all the registrations for the LifeCycle service.
+:p.:hp2.Syntax::ehp2. :xph.LIST:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp keep=12.
+Phase   P  ID State   Machine Service Request                              Once
+------- -- -- ------- ------- ------- ------------------------------------ ----
+Startup 25 1  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestA.e Fals
+                                      xe                                   e
+Startup 25 4  Enabled client1 PROCESS START SHELL COMMAND C:/test/TestB.ex Fals
+                                      e WAIT                               e
+Startup 40 3  Disable local   PROCESS START SHELL COMMAND C:/test/TestC.ex Fals
+              d                       e WAIT                               e
+Startup 50 5  Enabled server1 STAX    EXECUTE FILE C:/stax/jobA.xml        Fals
+                                                                           e
+Shutdow 25 2  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestTer True
+n                                     m.exe                                
+Shutdow 50 6  Enabled server1 STAX    EXECUTE FILE C:/stax/jobTerm.xml     Fals
+n                                                                          e
+:exmp.
+:p.
+:li.
+:hp2.Goal::ehp2. List the startup registrations for the LifeCycle service.
+:p.:hp2.Syntax::ehp2. :xph.LIST PHASE Startup:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp keep=8.
+Phase   P  ID State   Machine Service Request                              Once
+------- -- -- ------- ------- ------- ------------------------------------ ----
+Startup 25 1  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestA.e Fals
+                                      xe                                   e
+Startup 25 4  Enabled client1 PROCESS START SHELL COMMAND C:/test/TestB.ex Fals
+                                      e WAIT                               e
+Startup 40 3  Disable local   PROCESS START SHELL COMMAND C:/test/TestC.ex Fals
+              d                       e WAIT                               e
+Startup 50 5  Enabled server1 STAX    EXECUTE FILE C:/stax/jobA.xml        Fals
+                                                                           e 
+:exmp.
+:p.
+:li.
+:hp2.Goal::ehp2. List the shutdown registrations for the LifeCycle service.
+:p.:hp2.Syntax::ehp2. :xph.LIST PHASE Shutdown:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp keep=5.
+Phase    P  ID State   Machine Service Request                             Once
+-------- -- -- ------- ------- ------- ----------------------------------- ----
+Shutdown 25 2  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestTe True
+                                       rm.exe
+Shutdown 50 6  Enabled server1 STAX    EXECUTE FILE C:/stax/jobTerm.xml    Fals
+                                                                           e
+:exmp.
+:p.
+:li.
+:hp2.Goal::ehp2. List the startup registrations for the LifeCycle service
+in the long format.
+:p.:hp2.Syntax::ehp2. :xph.LIST PHASE Startup LONG:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp keep=10.
+Phase   P  ID State   Machine Service Request                 Description Once
+------- -- -- ------- ------- ------- ----------------------- ----------- -----
+Startup 25 1  Enabled local   PROCESS START SHELL COMMAND C:/ Run TestA   False
+                                      tests/TestA.exe                                 
+Startup 25 4  Enabled client1 PROCESS START SHELL COMMAND C:/ Run TestB   False
+                                      test/TestB.exe WAIT
+Startup 40 3  Disable local   PROCESS START SHELL COMMAND C:/ Run TestC   False
+              d                       test/TestC.exe WAIT                             
+Startup 50 5  Enabled server1 STAX    EXECUTE FILE C:/stax/jo Run STAX Jo False
+                                      bA.xml                  bA          
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.LifeCycle service
+:h3.QUERY
+Allows you to get information about a STAF service request
+registered with the LifeCycle service.
+
+:h4.Syntax
+:xmp.
+QUERY ID <Registration ID>
+:exmp.
+:p.:xph.ID:exph. specifies the registration ID of the STAF service request
+to be queried.
+&varres.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/LifeCycle/RegQuery>:exph. representing
+information about the registration.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/LifeCycle/RegQuery
+:tnote text='Description'.This map class represents information about
+a registration.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.phase
+:c.Phase
+:c.&stringObj.
+:c.'Startup' | 'Shutdown'
+:row.
+:c.priority
+:c.Priority
+:c.&stringObj.
+:c.'1' - '99'
+:row.
+:c.id
+:c.ID
+:c.&stringObj.
+:c.
+:row.
+:c.state
+:c.State
+:c.&stringObj.
+:c.'Enabled' | 'Disabled'
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.Private data will be masked
+:row.
+:c.description
+:c.Description
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.once
+:c.Once
+:c.&stringObj.
+:c.'True' | 'False'
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Query registration ID 5 for the LifeCycle service.
+:p.:hp2.Syntax::ehp2. :xph.QUERY 5:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp keep=8.
+Phase      : Startup
+Priority   : 50
+ID         : 5
+State      : Enabled
+Machine    : server1
+Service    : STAX
+Request    : EXECUTE FILE C:/stax/jobA.xml
+Description: Run STAX JobA
+Once       : False
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.TRIGGER
+:i3.LifeCycle service
+:h3.TRIGGER
+Allows you to submit a single registered STAF service request, or to
+submit all STAF service requests registered to be run at the Startup
+or Shutdown phase.  It is useful for testing the registrations without
+requiring that STAFProc be started or shutdown.
+:p.
+Only enabled STAF requests will be submitted by a :xph.TRIGGER PHASE:exph.
+request.  A :xph.TRIGGER ID:exph. request will submit enabled and disabled
+STAF requests.  Each STAF service request that is triggered will be
+submitted synchronously (e.g. waits for the STAF service request to complete)
+before returning or submitting the next STAF service request if the
+:xph.PHASE:exph. option was specified and there are more STAF service
+requests registered for the specified phase.  This means that if you register
+a STAF service request that never completes (e.g. a :xph.PROCESS START:exph.
+request using the :xph.WAIT:exph. option but not the :xph.TIMEOUT:exph. option,
+or a :xph.SEM MUTEX REQUEST:exph. request without a :xph.TIMEOUT:exph. option
+for a mutex semaphore that never becomes available), then the
+:xph.TRIGGER:exph. request will never complete.
+Note that if the submitted STAF service request was registered with the
+ONCE option, triggering the STAF command will not cause the registration
+to be unregistered.
+
+:h4.Syntax
+:xmp.
+TRIGGER <ID <Registration ID> { PHASE <Startup | Shutdown>> CONFIRM
+:exmp.
+:p.:xph.ID:exph. specifies the registration ID of the STAF service request
+to be triggered.
+&varres.
+:p.:xph.PHASE:exph. specifies to trigger all the registrations with
+a matching phase.  Valid values are "Startup" and "Shutdown"
+(case-insensitive).
+&varres.
+:p.:xph.CONFIRM:exph. specifies you really want to trigger submitting
+the STAF service requests specified by the matching registration(s).
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will contain information
+about the request based on the options specified: 
+:ul.
+:li.The result buffer for a :xph.TRIGGER ID:exph. request will contain
+a marshalled :xph.<Map&colon.STAF/Service/LifeCycle/TriggerId>:exph.
+representing information about the submitted STAF service request.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/LifeCycle/TriggerId
+:tnote text='Description'.This map class represents information about
+the submitted STAF service request.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.Private data will be masked
+:row.
+:c.rc
+:c.RC
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj | :xph.<Marshalling Context>:exph..
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."RC" contains the return code from submitting the STAF service request.
+:li."Result" contains the result from submitting the STAF service request.
+If the service request returns marshalled data, the "Result" will contain
+a marshalling context representing the result from submitting the STAF
+service request.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.The result buffer for a :xph.TRIGGER PHASE:exph. request will
+contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/LifeCycle/TriggerIds>:exph. representing
+information about each submitted STAF service request.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/LifeCycle/TriggerIds
+:tnote text='Description'.This map class represents information about
+the submitted STAF service requests.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.id
+:c.ID
+:c.&stringObj.
+:c.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.service
+:c.Service
+:c.&stringObj.
+:c.
+:row.
+:c.request
+:c.Request
+:c.&stringObj.
+:c.Private data will be masked
+:row.
+:c.rc
+:c.RC
+:c.&stringObj.
+:c.
+:row.
+:c.result
+:c.Result
+:c.&stringObj | :xph.<Marshalling Context>:exph..
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li."RC" contains the return code from submitting the STAF service request.
+:li."Result" contains the result from submitting the STAF service request.
+If the service request returns marshalled data, the "Result" will contain
+a marshalling context representing the result from submitting the STAF
+service request.
+:eol.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Submit the STAF service request specified for
+registration ID 5.
+:p.:hp2.Syntax::ehp2. :xph.TRIGGER ID 5 CONFIRM:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like the following if the
+registration submitted a "EXECUTE FILE C:/stax/jobA.xml" request to the
+STAX service on machine server1:
+:xmp keep=5.
+    Machine: server1
+    Service: STAX
+    Request: EXECUTE FILE C:/stax/jobA.xml
+    RC     : 0
+    Result : 4
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Submit the STAF service request(s) specified to run
+when STAFProc starts up.
+:p.:hp2.Syntax::ehp2. :xph.TRIGGER PHASE Startup CONFIRM:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like the following:
+:xmp keep=9.
+    [
+      {
+        ID     : 1
+        Machine: local
+        Service: PROCESS
+        Request: START SHELL COMMAND C:/tests/TestA.exe
+        RC     : 0
+        Result : 58
+      }
+      {
+        ID     : 4
+        Machine: client1
+        Service: PROCESS
+        Request: START SHELL COMMAND C:/test/TestB.exe WAIT
+        RC     : 0
+        Result : {
+          Return code: 0
+          Key        : <None> 
+          Files      : [
+            {
+              Return code: 0
+              Data       : TestB was successful
+            }
+          ]
+        }
+      }
+      {
+        ID     : 5
+        Machine: server1
+        Service: STAX
+        Request: EXECUTE FILE C:/stax/jobA.xml
+        RC     : 0
+        Result : 4
+      }
+    ]
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Submit the STAF service request(s) specified to run
+when STAFProc shuts down.
+:p.:hp2.Syntax::ehp2. :xph.TRIGGER PHASE Shutdown CONFIRM:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in tabular format, could look like the following:
+:xmp keep=8.
+    ID Machine Service Request          RC Result
+    -- ------- ------- ---------------- -- ----------------------------------------
+    2  local   PROCESS START SHELL COMM 0  293
+                       AND C:/tests/Tes
+                       tTerm.exe
+    6  server1 STAX    EXECUTE FILE C:/ 16 STAFConnectionProviderConnect: Timed out
+                       stax/jobTerm.xml     connecting to endpoint: select() timeou
+                                           t: 22, Endpoint: tcp://server1
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.ENABLE
+:i3.LifeCycle service
+:h3.ENABLE
+Allows you to enable a registration for the LifeCycle service.
+This means that the STAF service request for this registration will be
+submitted when STAFProc starts up or shuts down (depending on the phase
+specified for the registration).
+
+:h4.Syntax
+:xmp.
+ENABLE ID <Registration ID>
+:exmp.
+:p.:xph.ID:exph. specifies the registration ID which is to be enabled.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will be empty.
+Note that an error will not be returned if the registration ID is already
+enabled.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Enable registration ID 2.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.ENABLE ID 2:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DISABLE
+:i3.LifeCycle service
+:h3.DISABLE
+Allows you to disable a registration for the LifeCycle service.
+This means that the STAF service request for this registration will not be
+submitted when STAFProc starts up or shuts down (depending on the phase
+specified for the registration).
+
+:h4.Syntax
+:xmp.
+DISABLE ID <Registration ID>
+:exmp.
+:p.:xph.ID:exph. specifies the registration ID which is to be disabled.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.If successful, the result buffer will be empty.
+Note that an error will not be returned if the registration ID is already
+disabled.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Enable registration ID 2.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.ENABLE ID 2:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.error codes
+:i2.LifeCycle service
+:h3.LifeCycle Error Code Reference
+:p.All return codes from the LifeCycle service are documented in :hdref refid=retcode..
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service logging
+:i2.LifeCycle service
+:h3 id=lifecycleServiceLog.LifeCycle Service Logging
+:p.
+The STAF LifeCycle service maintains a STAF machine log where it writes
+information about the STAF service requests that have been registered with
+the LifeCycle service and that it has submitted.  When debugging a problem
+with a registration for the LifeCycle service, be sure to check the LifeCycle
+service log to determine the results of STAF service requests submitted by
+the LifeCycle service.
+:p.
+The logname for the STAF LifeCycle service is LIFECYCLE.
+Note that tags like :xph.[ID=<id>]:exph. in the log entries can be useful
+when querying the LifeCycle service log by using the :xph.CONTAINS:exph.
+option in the LOG QUERY request.
+:p.
+For example:
+:p.
+:ul.
+:li.To query the entries for registration ID 1 in the LifeCycle service log
+on the local machine, you could specify:
+:p.
+:xmp.
+STAF local LOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME LIFECYCLE CONTAINS "[ID=1]"
+Response
+--------
+Date-Time         Level Message
+----------------- ----- -------------------------------------------------------
+20071127-17:45:19 Info  [ID=1] [client10.company.com, STAF/Client, 24] Register
+                         request: register phase Startup machine local service
+                        PROCESS request &colon.38&colon.START SHELL COMMAND C:/tests/TestA.
+                        exe priority 25 description &colon.9&colon.Run TestA
+20071127-18:05:56 Info  [ID=1] [client10.company.com, STAF/Client, 48] [TRIGGER
+                         Startup] Submitted: STAF local PROCESS START SHELL COM
+                        MAND C:/tests/TestA.exe
+20071127-18:05:56 Info  [ID=1] [client10.company.com, STAF/Client, 48] [TRIGGER
+                         Startup] Completed. RC=0, Result=49
+20071128-11:37:37 Info  [ID=1] [client10.company.com, STAF_Process, 1] [TRIGGER
+                         Startup] Submitted: STAF local PROCESS START SHELL COM
+                        MAND C:/tests/TestA.exe
+20071128-11:37:37 Info  [ID=1] [client10.company.com, STAF_Process, 1] [TRIGGER
+                         Startup] Completed. RC=0, Result=22
+:exmp.
+:p.
+:li.To query the entries for registration ID 2 in the LifeCycle service log
+on the local machine, you could specify:
+:p.
+:xmp.
+STAF local lOG QUERY MACHINE {STAF/Config/MachineNickname} LOGNAME LIFECYCLE CONTAINS "[ID=2]"
+Response
+--------
+Date-Time         Level Message
+----------------- ----- -------------------------------------------------------
+20071127-17:46:18 Info  [ID=2] [client10.company.com, STAF/Client, 25] Register
+                         request: register phase Shutdown machine local service
+                         PROCESS request &colon.41&colon.START SHELL COMMAND C:/tests/TestT
+                        erm.exe priority 25
+20071127-18:08:54 Info  [ID=2] [client10.company.com, STAF/Client, 50] [TRIGGER
+                         Shutdown] Submitted: STAF local PROCESS START SHELL CO
+                        MMAND C:/tests/TestTerm.exe
+20071127-18:08:54 Info  [ID=2] [client10.company.com, STAF/Client, 50] [TRIGGER
+                         Shutdown] Completed. RC=0, Result=51
+20071128-11:36:27 Info  [ID=2] [client10.company.com, STAF_Process, 1] [TRIGGER
+                         Shutdown] Submitted: STAF local PROCESS START SHELL CO
+                        MMAND C:/tests/TestTerm.exe
+20071128-11:36:27 Info  [ID=2] [client10.company.com, STAF_Process, 1] [TRIGGER
+                         Shutdown] Completed. RC=0, Result=78
+:exmp.
+:eul.
+:p.
+The LifeCycle service will log an entry when the following actions occur:
+:ul.
+:li.When a :xph.REGISTER:exph. request is received, a log entry with level
+"Info" is logged with message:
+:p.
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] Register request: <request>
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:li.:xph.<request>:exph. is the :xph.REGISTER:exph. request.
+:eul.
+:p.
+:li.When a :xph.UNREGISTER:exph. request is received, a log entry with
+level "Info" is logged with message:
+:p.
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] Unregistered.
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:eul.
+:p.
+:li.When STAFProc is started or when a :xph.TRIGGER PHASE Startup:exph.
+request is submitted, each enabled registration with phase "Startup"
+will have its STAF service request submitted and a log entry with level
+"Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] [TRIGGER Startup] 
+Submitted: STAF <machine> <service> <request>
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:li.:xph.<machine>:exph. is where the STAF service request was submitted,
+:li.:xph.<service>:exph. is the service to which the STAF service request was submitted,
+:li.:xph.<request>:exph. is the STAF service request submitted.
+:eul.
+:p.
+:li.When STAFProc is shutdown or when a :xph.TRIGGER PHASE Shutdown:exph.
+request is submitted, each enabled registration with phase "Shutdown"
+will have its STAF service request submitted and a log entry with level
+"Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] [TRIGGER Shutdown] 
+Submitted: STAF <machine> <service> <request>
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:li.:xph.<machine>:exph. is where the STAF service request was submitted,
+:li.:xph.<service>:exph. is the service to which the STAF service request was submitted,
+:li.:xph.<request>:exph. is the STAF service request submitted.
+:eul.
+:p.
+:li.When a :xph.TRIGGER ID:exph. request for a registration (enabled or
+disabled) is submitted, its STAF service request will be submitted and
+a log entry with level "Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] [TRIGGER ID] 
+Submitted: STAF <machine> <service> <request>
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:li.:xph.<machine>:exph. is where the STAF service request was submitted,
+:li.:xph.<service>:exph. is the service to which the STAF service request was submitted,
+:li.:xph.<request>:exph. is the STAF service request submitted.
+:eul.
+:p.
+:li.When STAFProc is started or when a :xph.TRIGGER PHASE Startup:exph.
+request is submitted, for each disabled registration with phase "Startup",
+a log entry with level "Info" is logged with message:
+:xph.
+[ID=<id>] ID is disabled.  STAF service request not submitted.
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID of the disabled registration.
+:eul.
+:p.
+:li.When STAFProc is shutdown or when a :xph.TRIGGER PHASE Shutdown:exph.
+request is submitted, for each disabled registration with phase "Shutdown",
+a log entry with level "Info" is logged with message:
+:xph.
+[ID=<id>] ID is disabled.  STAF service request not submitted.
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID of the disabled registration.
+:eul.
+:p.
+:li.When a submitted STAF service request has completed, a log entry
+with level "Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] 
+Completed. RC=<rc>, Result=<result>
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:li.:xph.<rc>:exph. is the return code from the STAF service request that was submitted,
+:li.:xph.<result>:exph. is the result from the STAF service request that was submitted.
+:eul.
+:p.
+:li.When an :xph.UPDATE:exph. request is received, a log entry with
+level "Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] 
+Update request: <request>
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:li.:xph.<request>:exph. is the UPDATE request.
+:eul.
+:p.
+:li.When an :xph.ENABLE:exph. request is received, a log entry with
+level "Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] Enabled.
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:eul.
+:p.
+:li.When a :xph.DISABLE:exph. request is received, a log entry with
+level "Info" is logged with message:
+:xph.
+[ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] Disabled.
+:exph.
+:p.
+where:
+:ul compact.
+:li.:xph.<id>:exph. is the registration ID,
+:li.:xph.<orgMachine>:exph. is the machine that originated the request,
+:li.:xph.<orgHandleName>:exph. is the name or the handle that originated the request,
+:li.:xph.<orgHandle#>:exph. is the handle number that originated the request,
+:eul.
+:eul.

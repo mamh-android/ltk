@@ -1,0 +1,92 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+Pkg_Targets += \
+  $(PKG)/STAFInst \
+  $(PKG)/STAFInst.mfs \
+  $(PKG)/bin/STAFProc$(OS_EE) \
+  $(PKG)/bin/STAF$(OS_EE) \
+  $(PKG)/bin/FmtLog$(OS_EE) \
+  $(PKG)/bin/STAFReg$(OS_EE) \
+  $(PKG)/bin/STAF.cfg \
+  $(PKG)/lib/libSTAF.so \
+  $(PKG)/lib/libSTAFLIPC.so \
+  $(PKG)/lib/libSTAFTCP.so \
+  $(PKG)/lib/libSTAFDSLS.so \
+  $(PKG)/lib/libSTAFMon.so \
+  $(PKG)/lib/libSTAFLog.so \
+  $(PKG)/lib/libSTAFPool.so \
+  $(PKG)/lib/libSTAFZip.so \
+  $(PKG)/lib/libSTAFZlib.so \
+  $(PKG)/docs/History \
+  $(PKG)/docs/STAFCMDS.htm \
+  $(PKG)/docs/STAFFAQ.htm \
+  $(PKG)/docs/STAFGS.pdf \
+  $(PKG)/docs/STAFRC.htm \
+  $(PKG)/docs/STAFUG.htm \
+  $(PKG)/docs/STAFHome.htm \
+  $(PKG)/docs/STAFDiag.htm \
+  $(PKG)/include/STAF.h \
+  $(PKG)/include/STAFInlImpl.cpp \
+  $(PKG)/include/STAFCommandParser.h \
+  $(PKG)/include/STAFCommandParserInlImpl.cpp \
+  $(PKG)/include/STAFDynamicLibrary.h \
+  $(PKG)/include/STAFDynamicLibraryInlImpl.cpp \
+  $(PKG)/include/STAFError.h \
+  $(PKG)/include/STAFFileSystem.h \
+  $(PKG)/include/STAFFileSystemInlImpl.cpp \
+  $(PKG)/include/STAFEventSem.h \
+  $(PKG)/include/STAFEventSemInlImpl.cpp \
+  $(PKG)/include/STAFException.h \
+  $(PKG)/include/STAFLogService.h \
+  $(PKG)/include/STAFMonitorService.h \
+  $(PKG)/include/STAFMutexSem.h \
+  $(PKG)/include/STAFMutexSemInlImpl.cpp \
+  $(PKG)/include/STAFOSTypes.h \
+  $(PKG)/include/STAFRefPtr.h \
+  $(PKG)/include/STAFResPoolService.h \
+  $(PKG)/include/STAFServiceInterface.h \
+  $(PKG)/include/STAFString.h \
+  $(PKG)/include/STAFStringInlImpl.cpp \
+  $(PKG)/include/STAFThread.h \
+  $(PKG)/include/STAFTimestamp.h \
+  $(PKG)/include/STAFTimestampInlImpl.cpp \
+  $(PKG)/include/STAFUtil.h \
+  $(PKG)/include/STAFProcess.h \
+  $(PKG)/include/STAFProcessInlImpl.cpp \
+  $(PKG)/include/STAFTrace.h \
+  $(PKG)/include/STAFTraceInlImpl.cpp \
+  $(PKG)/include/STAF_fstream.h \
+  $(PKG)/include/STAF_iostream.h \
+  $(PKG)/samples/c/LogIt.c \
+  $(PKG)/samples/cpp/LogIt.cpp \
+  $(PKG)/samples/misc/OldVars.cfg \
+  $(PKG)/codepage/alias.txt \
+  $(subst $(SRC),$(PKG),$(subst ucm,bin,$(shell find $(SRC) -name "*.ucm")))
+
+Targets += $(Pkg_Targets) \
+           $(PKG_ROOT)/stafpkg_$(OS_NAME).tar
+
+CleanupTargets += Pkg_cleanup
+
+# Standard inference rule for copying files from REL tree to PKG tree
+
+$(PKG)/%: $(REL)/%
+	$(COPY_FILE)
+
+# Special rule for Win32 for copying files from REL/lib tree to PKG/bin
+
+$(PKG)/bin/%: $(REL)/lib/%
+	$(COPY_FILE)
+
+$(PKG_ROOT)/stafpkg_$(OS_NAME).tar: $(Pkg_Targets)
+	@echo "*** Creating $(@F) ***"
+	-@$(DEL) $@ $(OUT_ERR_TO_DEV_NULL)
+	@cd $(PKG_ROOT); tar cf $@ *
+
+Pkg_cleanup:
+	-@$(DEL) -Rf $(PKG) $(OUT_ERR_TO_DEV_NULL)

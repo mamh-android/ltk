@@ -1,0 +1,528 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>STAF Command Reference</TITLE>
+<!-- Begin Header Records  ========================================== -->
+<!-- /opt/dev/autobuild/build/src/staf/docs/userguide/CmdRef.script   -->
+<!-- converted by b2h R4.3 (362) (LINUX) on 16 Dec 2013 at 12:16:49   -->
+<META HTTP-EQUIV="updated" CONTENT="Sun, 15 Dec 2013 12:07:55">
+<META HTTP-EQUIV="review" CONTENT="Mon, 15 Dec 2014 12:07:55">
+<META HTTP-EQUIV="expires" CONTENT="Tue, 15 Dec 2015 12:07:55">
+</HEAD><BODY BGCOLOR=WHITE>
+<!-- End Header Records  ============================================ -->
+<A NAME="Top_Of_Page"></A>
+<P>
+<HR><H1><A NAME="HDRCMDREF">Service Command Reference</A></H1>
+<BR>
+<P><B><A NAME="TBLCMDTAB">Table 1. STAF Service Command Reference</A></B><BR>
+<TABLE  BORDER>
+<TR>
+<TH ALIGN="LEFT" VALIGN="TOP" WIDTH="20%">Command
+</TH><TH ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Syntax
+</TH></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>CONFIG</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Provides a way to save the current STAF configuration to a file,
+reflecting any changes made since STAFProc was started
+<P>
+<PRE>
+SAVE [FILE &lt;Name&gt;] [VARS &lt;Current | Startup&gt;]
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>DELAY</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Delay (or sleep) for a specified amount of time.
+<P>
+<PRE>
+DELAY &lt;Number&gt;[s|m|h|d|w]
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>DIAG</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows diagnostics to be recorded, listed, enabled, disabled, and reset.
+<P>
+<PRE>
+RECORD TRIGGER &lt;Trigger&gt; SOURCE &lt;Source&gt;
+ 
+LIST   &lt; &#91;TRIGGER &lt;Trigger&gt; | SOURCE &lt;Source&gt; | TRIGGERS | SOURCES&#93;
+         &#91;SORTBYCOUNT | SORTBYTRIGGER | SORTBYSOURCE&#93; &gt; |
+       SETTINGS
+ 
+RESET  FORCE
+ 
+ENABLE
+ 
+DISABLE
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>ECHO</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Echo a return string from other STAF clients.
+<P>
+<PRE>
+ECHO &lt;Message&gt;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>FS</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manipulate files and directories and get information about file system entries.
+<P>
+<PRE>
+COPY   FILE &lt;Name&gt; &#91;TOFILE &lt;Name&gt; | TODIRECTORY &lt;Name&gt;&#93;  &#91;TOMACHINE &lt;Machine&gt;&#93;
+       &#91;TEXT &#91;FORMAT &lt;Format&gt;&#93;&#93;  &#91;FAILIFEXISTS | FAILIFNEW&#93;
+ 
+COPY   DIRECTORY &lt;Name&gt; &#91;TODIRECTORY &lt;Name&gt;&#93;  &#91;TOMACHINE &lt;Machine&gt;&#93;
+       &#91;NAME &lt;Pattern&gt;&#93;  &#91;EXT &lt;Pattern&gt;&#93; &#91;CASESENSITIVE | CASEINSENSITIVE&#93;
+       &#91;TEXTEXT &lt;Pattern&gt;... &#91;FORMAT &lt;Format&gt;&#93;&#93;
+       &#91;RECURSE &#91;KEEPEMPTYDIRECTORIES | ONLYDIRECTORIES&#93;&#93;
+       &#91;IGNOREERRORS&#93; &#91;FAILIFEXISTS | FAILIFNEW&#93;
+ 
+MOVE   FILE &lt;Name&gt; &lt;TOFILE &lt;Name&gt; | TODIRECTORY &lt;Name&gt;&gt;
+ 
+MOVE   DIRECTORY &lt;Name&gt; TODIRECTORY &lt;Name&gt;
+ 
+GET    FILE &lt;Name&gt; &#91;&#91;TEXT | BINARY&#93; &#91;FORMAT &lt;Format&gt;&#93;&#93;
+ 
+GET    ENTRY &lt;Name&gt; &lt;TYPE | SIZE | MODTIME | LINKTARGET |
+                     CHECKSUM &#91;&lt;Algorithm&gt;&#93;&gt;
+QUERY  ENTRY &lt;Name&gt;
+ 
+CREATE DIRECTORY &lt;Name&gt; &#91;FULLPATH&#93; &#91;FAILIFEXISTS&#93;
+ 
+LIST   DIRECTORY &lt;Name&gt; &#91;RECURSE&#93; &#91;LONG &#91;DETAILS&#93; | SUMMARY&#93; &#91;TYPE &lt;Types&gt;&#93;
+       &#91;NAME &lt;Pattern&gt;&#93; &#91;EXT &lt;Pattern&gt;&#93; &#91;CASESENSITIVE | CASEINSENSITIVE&#93;
+       &#91;SORTBYNAME | SORTBYSIZE | SORTBYMODTIME&#93;     
+ 
+LIST   COPYREQUESTS &#91;LONG&#93; &#91;INBOUND&#93; &#91;OUTBOUND&#93;
+       &#91;FILE &#91;&#91;BINARY&#93; &#91;TEXT&#93;&#93;&#93; &#91;DIRECTORY&#93;
+ 
+LIST   SETTINGS
+ 
+DELETE ENTRY &lt;Name&gt; CONFIRM &#91;RECURSE&#93; &#91;IGNOREERRORS&#93;
+       &#91; CHILDREN &#91;TYPE &lt;Types&gt;&#93; &#91;NAME &lt;Pattern&gt;&#93; &#91;EXT &lt;Pattern&gt;&#93;
+                  &#91;CASESENSITIVE | CASEINSENSITIVE&#93; &#93;
+                  
+SET    STRICTFSCOPYTRUST &lt;Enabled | Disabled&gt;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>HANDLE</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to query information on various process handles and to manage static handles.
+<P>
+<PRE>
+CREATE HANDLE NAME &lt;Handle Name&gt;
+ 
+DELETE HANDLE &lt;Number&gt;
+ 
+QUERY HANDLE &lt;Handle&gt;
+ 
+LIST &#91; HANDLES &lt;&#91;NAME &lt;Handle Name&gt;&#93; &#91;LONG&#93; &#91;PENDING&#93; &#91;REGISTERED&#93;
+                &#91;INPROCESS&#93; &#91;STATIC&#93;&gt; | &#91;SUMMARY&#93; &#93;
+ 
+LIST NOTIFICATIONS &#91;HANDLE &lt;Handle&gt; | MACHINE &lt;Machine&gt;&#93; &#91;LONG&#93;
+ 
+AUTHENTICATE USER &lt;User Identifier&gt; CREDENTIALS &lt;Credentials&gt;
+             &#91;AUTHENTICATOR &lt;Authenticator Name&gt;&#93;
+ 
+UNAUTHENTICATE
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>HELP</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">List and query STAF return codes.  Allows services to register their own
+return codes.
+<P>
+<PRE>
+REGISTER   SERVICE &lt;Name&gt; ERROR &lt;Number&gt; INFO &lt;String&gt; DESCRIPTION &lt;String&gt;
+ 
+UNREGISTER SERVICE &lt;Name&gt; ERROR &lt;Number&gt;
+ 
+&#91;SERVICE &lt;Name&gt;&#93; ERROR &lt;Number&gt;
+ 
+LIST SERVICES | &#91;SERVICE &lt;Name&gt;&#93; ERRORS
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>LIFECYCLE</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows STAF service requests to be submitted automatically when STAFProc starts
+up or shuts down.  Also, allows managing registration of the STAF service requests
+to be submitted.
+<P>
+<PRE>
+REGISTER   PHASE &lt;Startup | Shutdown&gt;
+           MACHINE &lt;Machine&gt; SERVICE &lt;Service&gt; REQUEST &lt;Request&gt;
+           [ONCE] [PRIORITY &lt;Priority&gt;] [DESCRIPTION &lt;Description&gt;]
+ 
+UNREGISTER ID &lt;Registration ID&gt;
+ 
+UPDATE     ID &lt;Registration ID&gt; [PRIORITY &lt;Priority&gt;] [ONCE &lt;True | False&gt;]
+           [MACHINE &lt;Machine&gt;] [SERVICE &lt;Service&gt;] [REQUEST &lt;Request&gt;]
+           [PHASE &lt;Startup | Shutdown&gt;] [DESCRIPTION &lt;Description&gt;]
+ 
+LIST       [PHASE &lt;Startup | Shutdown&gt;] [LONG]
+ 
+QUERY      ID &lt;Registration ID&gt;
+ 
+TRIGGER    &lt;ID &lt;Registration ID&gt; | PHASE &lt;Startup | Shutdown&gt;&gt; CONFIRM
+ 
+ENABLE     ID &lt;Registration ID&gt;
+ 
+DISABLE    ID &lt;Registration ID&gt;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>LOG</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows for robust data-logging and log file querying and manipulation.
+<P>
+<PRE>
+LOG    &lt;GLOBAL | MACHINE | HANDLE&gt; LOGNAME &lt;Logname&gt; LEVEL &lt;Level&gt;
+       MESSAGE &lt;Message&gt; &#91;RESOLVEMESSAGE | NORESOLVEMESSAGE&#93;
+ 
+QUERY  &lt;GLOBAL | MACHINE &lt;Machine&gt; &#91;HANDLE &lt;Handle&gt;&#93;&gt; LOGNAME &lt;Logname&gt;
+       &#91;LEVELMASK &lt;Mask&gt;&#93; &#91;QMACHINE &lt;Machine&gt;&#93;... &#91;QHANDLE &lt;Handle&gt;&#93;...
+       &#91;NAME &lt;Name&gt;&#93;... &#91;USER &lt;User&gt;&#93;... &#91;ENDPOINT &lt;Endpoint&gt;&#93;...
+       &#91;CONTAINS &lt;String&gt;&#93;... &#91;CSCONTAINS &lt;String&gt;&#93;...
+       &#91;STARTSWITH &lt;String&gt;&#93;... &#91;CSSTARTSWITH &lt;String&gt;&#93;...
+       &#91;FROM &lt;Timestamp&gt; | AFTER &lt;Timestamp&gt;&#93;
+       &#91;BEFORE &lt;Timestamp&gt; | TO &lt;Timestamp&gt;&#93;
+       &#91;FROMRECORD &lt;Num&gt;&#93; &#91;TORECORD &lt;Num&gt;&#93;
+       &#91;FIRST &lt;Num&gt; | LAST &lt;Num&gt; | ALL&#93; &#91;TOTAL | STATS | LONG&#93;
+       &#91;LEVELBITSTRING&#93;
+ 
+LIST   GLOBAL | MACHINES | MACHINE &lt;Machine&gt; &#91;HANDLE &lt;Handle&gt; | HANDLES&#93; |
+       SETTINGS
+ 
+DELETE &lt;GLOBAL | MACHINE &lt;Machine&gt; &#91;HANDLE &lt;Handle&gt;&#93;&gt;
+        LOGNAME &lt;Logname&gt; CONFIRM
+ 
+PURGE  &lt;GLOBAL | MACHINE &lt;Machine&gt; &#91;HANDLE &lt;Handle&gt;&#93;&gt; LOGNAME &lt;Logname&gt;
+       CONFIRM | CONFIRMALL
+       &#91;LEVELMASK &lt;Mask&gt;&#93; &#91;QMACHINE &lt;Machine&gt;&#93;... &#91;QHANDLE &lt;Handle&gt;&#93;...
+       &#91;NAME &lt;Name&gt;&#93;... &#91;USER &lt;User&gt;&#93;... &#91;ENDPOINT &lt;Endpoint&gt;&#93;...
+       &#91;CONTAINS &lt;String&gt;&#93;... &#91;CSCONTAINS &lt;String&gt;&#93;...
+       &#91;STARTSWITH &lt;String&gt;&#93;... &#91;CSSTARTSWITH &lt;String&gt;&#93;...
+       &#91;FROM &lt;Timestamp&gt; | AFTER &lt;Timestamp&gt;&#93;
+       &#91;BEFORE &lt;Timestamp&gt; | TO &lt;Timestamp&gt;&#93;
+       &#91;FROMRECORD &lt;Num&gt;&#93; &#91;TORECORD &lt;Num&gt;&#93;
+       &#91;FIRST &lt;Num&gt; | LAST &lt;Num&gt;&#93;
+ 
+SET    &#91;MAXRECORDSIZE &lt;Size&gt;&#93; &#91;DEFAULTMAXQUERYRECORDS &lt;Number&gt;&#93;
+       &#91;ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&#93;
+       &#91;RESOLVEMESSAGE | NORESOLVEMESSAGE&#93;
+ 
+VERSION
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>MISC</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Provides miscellaneous services such as VERSION, WHOAMI, and WHOAREYOU
+information, allows for listing and querying enabled interfaces, allows
+you to set operational parameters for STAF and show their settings,
+and allows you to list and purge the endpoint cache used by automatic
+interface cycling.
+<P>
+<PRE>
+VERSION
+ 
+WHOAMI
+ 
+WHOAREYOU
+ 
+LIST  INTERFACES | SETTINGS | ENDPOINTCACHE
+ 
+QUERY INTERFACE &lt;Name&gt;
+ 
+SET   &#91;CONNECTATTEMPTS &lt;Number&gt;&#93; &#91;CONNECTRETRYDELAY &lt;Number&gt;&#91;s|m|h|d|w&#93;&#93;
+      &#91;MAXQUEUESIZE &lt;Number&gt;&#93; &#91;HANDLEGCINTERVAL &lt;Number&gt;&#91;s|m|h|d&#93;&#93;
+      &#91;INTERFACECYCLING &lt;Enabled | Disabled&gt;&#93;
+      &#91;DEFAULTINTERFACE &lt;Name&gt;&#93;  &#91;DEFAULTAUTHENTICATOR &lt;Name&gt;&#93;
+      &#91;RESULTCOMPATIBILITYMODE &lt;Verbose | None&gt;&#93;
+      
+PURGE ENDPOINTCACHE &lt;ENDPOINT &lt;Endpoint&gt;... | CONFIRM&gt;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>MONITOR</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows test cases the ability to log and query status messages.
+<P>
+<PRE>
+LOG    MESSAGE &lt;Message&gt; [NAME &lt;Name&gt;] &#91;RESOLVEMESSAGE | NORESOLVEMESSAGE&#93;
+ 
+QUERY  MACHINE &lt;Machine&gt; &lt; HANDLE &lt;Handle&gt; | NAME &lt;Name&gt; &gt;
+ 
+LIST   &lt;MACHINES | MACHINE &lt;Machine&gt; [NAMES] | SETTINGS&gt;
+ 
+DELETE &#91;BEFORE &lt;Timestamp&gt;&#93; CONFIRM
+ 
+SET    &#91;RESOLVEMESSAGE | NORESOLVEMESSAGE&#93;
+       &#91;OLDRETURNCODES | NEWRETURNCODES&#93; &#91;MAXRECORDSIZE &lt;Size&gt;&#93;
+       &#91;ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&#93;
+ 
+VERSION
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>PING</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to ping other STAF clients.
+<P>
+<PRE>
+PING &#91;MACHINE &lt;Machine&gt;&#93;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>PROCESS</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to start, stop, and manage processes.
+<P>
+<PRE>
+START &#91;SHELL &#91;&lt;Shell&gt;&#93;&#93; COMMAND &lt;Command&gt; &#91;PARMS &lt;Parms&gt;&#93; &#91;WORKDIR &lt;Directory&gt;&#93;
+      &#91;VAR &lt;Variable&gt;=&lt;Value&gt;&#93;... &#91;ENV &lt;Variable&gt;=&lt;Value&gt;&#93;... &#91;USEPROCESSVARS&#93;
+      &#91;WORKLOAD &lt;Name&gt;&#93; &#91;TITLE &lt;Title&gt;&#93; &#91;WAIT &#91;&lt;Number&gt;[s|m|h|d|w]&#93; | ASYNC&#93;
+      &#91;STOPUSING &lt;Method&gt;&#93; &#91;STATICHANDLENAME &lt;Name&gt;&#93;
+      &#91;NEWCONSOLE | SAMECONSOLE&#93; &#91;FOCUS &lt;Background | Foreground | Minimized&gt;&#93;
+      &#91;USERNAME &lt;User name&gt; &#91;PASSWORD &lt;Password&gt;&#93;&#93;
+      &#91;DISABLEDAUTHISERROR | IGNOREDISABLEDAUTH&#93;
+      &#91;STDIN &lt;File&gt;&#93; &#91;STDOUT &lt;File&gt; | STDOUTAPPEND &lt;File&gt;&#93;
+      &#91;STDERR &lt;File&gt; | STDERRAPPEND &lt;File&gt; | STDERRTOSTDOUT&#93;
+      &#91;RETURNSTDOUT&#93; &#91;RETURNSTDERR&#93; &#91;RETURNFILE &lt;File&gt;&#93;...
+      &#91;NOTIFY ONEND &#91;HANDLE &lt;Handle&gt; | NAME &lt;Name&gt;&#93;
+      &#91;MACHINE &lt;Machine&gt;&#93; &#91;PRIORITY &lt;Priority&gt;&#93; &#91;KEY &lt;Key&gt;&#93;&#93;
+ 
+STOP  &lt;ALL CONFIRM | WORKLOAD &lt;Name&gt; | HANDLE &lt;Handle&gt;&gt; &#91;USING &lt;Method&gt;&#93;
+ 
+KILL  PID &lt;Pid&gt; CONFIRM &#91;USING &lt;Method&gt;&#93;
+ 
+LIST  &#91;HANDLES&#93; &#91;RUNNING&#93; &#91;COMPLETED&#93; &#91;WORKLOAD &lt;Name&gt;&#93; &#91;LONG&#93;
+LIST  SETTINGS
+ 
+QUERY HANDLE &lt;Handle&gt;&gt;
+ 
+FREE  &lt;ALL | WORKLOAD &lt;Name&gt; | HANDLE &lt;Handle&gt;&gt;
+ 
+NOTIFY REGISTER   ONENDOFHANDLE &lt;Handle&gt; &#91;HANDLE &lt;Handle&gt; | NAME &lt;Name&gt;&#93;
+                  &#91;MACHINE &lt;Machine&gt;&#93; &#91;PRIORITY &lt;Priority&gt;&#93;
+ 
+NOTIFY UNREGISTER ONENDOFHANDLE &lt;Handle&gt; &#91;HANDLE &lt;Handle&gt; | NAME &lt;Name&gt;&#93;
+                  &#91;MACHINE &lt;Machine&gt;&#93; &#91;PRIORITY &lt;Priority&gt;&#93;
+                  
+NOTIFY LIST       ONENDOFHANDLE &lt;Handle&gt;
+ 
+SET   &#91;DEFAULTSTOPUSING &lt;Method&gt;&#93; &#91;DEFAULTCONSOLE &lt;New | Same&gt;&#93;
+      &#91;DEFAULTFOCUS &lt;Background | Foreground | Minimized&gt;&#93;
+      &#91;PROCESSAUTHMODE &lt;Auth Mode&gt;&#93;
+      &#91;DEFAULTAUTHUSERNAME &lt;User Name&gt;&#93; &#91;DEFAULTAUTHPASSWORD &lt;Password&gt;&#93;
+      &#91;DEFAULTAUTHDISABLEDACTION &lt;Error | Ignore&gt;&#93; &#91;DEFAULTSHELL &lt;Shell&gt;&#93;
+      &#91;DEFAULTNEWCONSOLESHELL &lt;Shell&gt;&#93; &#91;DEFAULTSAMECONSOLESHELL &lt;Shell&gt;&#93;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>QUEUE</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manipulate and manage queues.
+<P>
+<PRE>
+QUEUE  MESSAGE &lt;Message&gt;
+       &#91;HANDLE &lt;Handle&gt;&#93; | &#91;NAME &lt;Name&gt;&#93; &#91;PRIORITY &lt;Priority&gt;&#93; &#91;TYPE &lt;Type&gt;&#93;
+ 
+GET    &#91;PRIORITY &lt;Priority&gt;&#93;... &#91;MACHINE &lt;Endpoint&gt;&#93;... &#91;NAME &lt;Name&gt;&#93;...
+       &#91;HANDLE &lt;Handle&gt;&#93;... &#91;USER &lt;User&gt;&#93;... &#91;TYPE &lt;Type&gt;&#93;...
+       &#91;CONTAINS &lt;String&gt;&#93;... &#91;ICONTAINS &lt;String&gt;&#93;...
+       &#91;FIRST &lt;Number&gt; | ALL&#93;
+       &#91;WAIT &#91;&lt;Number&gt;[s|m|h|d|w]&#93;&#93;
+ 
+PEEK   &#91;PRIORITY &lt;Priority&gt;&#93;... &#91;MACHINE &lt;Endpoint&gt;&#93;... &#91;NAME &lt;Name&gt;&#93;...
+       &#91;HANDLE &lt;Handle&gt;&#93;... &#91;USER &lt;User&gt;&#93;... &#91;TYPE &lt;Type&gt;&#93;...
+       &#91;CONTAINS &lt;String&gt;&#93;... &#91;ICONTAINS &lt;String&gt;&#93;...
+       &#91;FIRST &lt;Number&gt; | ALL&#93;
+       &#91;WAIT &#91;&lt;Number&gt;[s|m|h|d|w]&#93;&#93;
+ 
+DELETE &#91;PRIORITY &lt;Priority&gt;&#93;... &#91;MACHINE &lt;Endpoint&gt;&#93;... &#91;NAME &lt;Name&gt;&#93;...
+       &#91;HANDLE &lt;Handle&gt;&#93;... &#91;USER &lt;User&gt;&#93;... &#91;TYPE &lt;Type&gt;&#93;...
+       &#91;CONTAINS &lt;String&gt;&#93;... &#91;ICONTAINS &lt;String&gt;&#93;...
+ 
+LIST   &#91;HANDLE &lt;Handle&gt;&#93;
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>RESPOOL</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manage exclusive access to entries within resource pools.
+<P>
+<PRE>
+CREATE  POOL &lt;PoolName&gt; DESCRIPTION &lt;Pooltext&gt;
+ 
+DELETE  POOL &lt;PoolName&gt; CONFIRM &#91;FORCE&#93;
+ 
+QUERY   POOL &lt;PoolName&gt;
+ 
+REQUEST POOL &lt;PoolName&gt;
+        &#91;FIRST | RANDOM | ENTRY &lt;Value&gt; &#91;RELEASE&#93;&#93; &#91;PRIORITY &lt;Number&gt;&#93;
+        &#91;TIMEOUT &lt;Number&gt;[s|m|h|d|w]&#93; &#91;GARBAGECOLLECT &lt;Yes | No&gt;&#93;
+ 
+RELEASE POOL &lt;PoolName&gt; ENTRY &lt;Value&gt; &#91;FORCE&#93;
+ 
+CANCEL  POOL &lt;PoolName&gt;
+        &#91;FORCE &#91;MACHINE &lt;Machine&gt;&#93; &#91;HANDLE &lt;Handle #&gt; | NAME &lt;Handle Name&gt;&#93;&#93;
+        &#91;ENTRY &lt;Entry&gt;&#93; &#91;PRIORITY &lt;Number&gt;&#93; &#91;FIRST | LAST&#93;
+ 
+ADD     POOL &lt;PoolName&gt; ENTRY &lt;Value&gt; &#91;ENTRY &lt;Value&gt;&#93;...
+ 
+REMOVE  POOL &lt;PoolName&gt; ENTRY &lt;Value&gt; &#91;ENTRY &lt;Value&gt;&#93;... CONFIRM &#91;FORCE&#93;
+ 
+LIST    [POOLS | SETTINGS]
+ 
+VERSION
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>SEM</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manipulate and manage mutex and event semaphores.
+<P>
+<PRE>
+REQUEST MUTEX &lt;Name&gt; &#91;TIMEOUT &lt;Number&gt;[s|m|h|d|w]&#93; &#91;GARBAGECOLLECT &lt;Yes | No&gt;&#93;
+RELEASE MUTEX &lt;Name&gt; &#91;FORCE&#93;
+CANCEL  MUTEX &lt;Name&gt;
+        &#91;FORCE [MACHINE &lt;Machine&gt;&#93; &#91;HANDLE &lt;Handle #&gt; | NAME &lt;Handle Name&gt;&#93;&#93;
+        &#91;FIRST | LAST&#93;
+ 
+POST    EVENT &lt;Name&gt;
+RESET   EVENT &lt;Name&gt;
+PULSE   EVENT &lt;Name&gt;
+WAIT    EVENT &lt;Name&gt; &#91;TIMEOUT &lt;Number&gt;[s|m|h|d|w]&#93;
+ 
+DELETE  MUTEX &lt;Name&gt; | EVENT &lt;Name&gt;
+QUERY   MUTEX &lt;Name&gt; | EVENT &lt;Name&gt;
+LIST    MUTEX | EVENT
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>SERVICE</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manage STAF services and requests.
+<P>
+<PRE>
+LIST    &#91; SERVICES | SERVICELOADERS | AUTHENTICATORS |
+          REQUESTS &lt;&#91;PENDING&#93; &#91;COMPLETE&#93; &#91;LONG&#93;&gt; | &#91;SUMMARY&#93; &#93;
+ 
+QUERY   SERVICE &lt;Service Name&gt; | SERVICELOADER &lt;ServiceLoader Name&gt; |
+        AUTHENTICATOR &lt;Authenticator Name&gt; | REQUEST &lt;Request Number&gt;
+ 
+ADD     SERVICE &lt;Service Name&gt; LIBRARY &lt;Library Name&gt;
+        &#91;EXECUTE &lt;Executable&gt;&#93; &#91;OPTION &lt;Name=&#91;=Value&#93;&gt;&#93;...
+        &#91;PARMS &lt;Parameters&gt;&#93;
+ 
+REMOVE  SERVICE &lt;Service Name&gt;
+ 
+FREE    REQUEST &lt;Request Number&gt; [FORCE]
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>SHUTDOWN</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manage the STAFProc daemon process.
+<P>
+<PRE>
+SHUTDOWN
+ 
+NOTIFY REGISTER   &#91;MACHINE &lt;Machine&gt;&#93; &#91;HANDLE &lt;Handle&gt; | NAME &lt;Name&gt;&#93;
+                  &#91;PRIORITY &lt;Priority&gt;&#93;
+ 
+NOTIFY UNREGISTER &#91;MACHINE &lt;Machine&gt;&#93; &#91;HANDLE &lt;Handle&gt; | NAME &lt;Name&gt;&#93;
+                  &#91;PRIORITY &lt;Priority&gt;&#93;
+ 
+NOTIFY LIST
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>TRACE</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to turn tracing on and off at the service and tracepoint level.
+<P>
+<PRE>
+ENABLE ALL  &#91; TRACEPOINTS | SERVICES &#93;
+ENABLE TRACEPOINTS &lt;Trace point list&gt; | SERVICES &lt;Service list&gt;
+ENABLE TRACEPOINT &lt;Trace point&gt; &#91;TRACEPOINT &lt;Trace point&gt;&#93;...
+ENABLE SERVICE &lt;Service&gt; &#91;SERVICE &lt;Service&gt;&#93;...
+ 
+DISABLE ALL  &#91; TRACEPOINTS | SERVICES &#93;
+DISABLE TRACEPOINTS &lt;Trace point list&gt; | SERVICES &lt;Service list&gt;
+DISABLE TRACEPOINT &lt;Trace point&gt; &#91;TRACEPOINT &lt;Trace point&gt;&#93;...
+DISABLE SERVICE &lt;Service&gt; &#91;SERVICE &lt;Service&gt;&#93;...
+ 
+SET DESTINATION TO &lt; &#91;STDOUT | STDERR&#93; &#91;FILE &lt;File name&gt; [APPEND]&#93; &gt;
+SET DEFAULTSERVICESTATE &lt; Enabled | Disabled &gt;
+ 
+LIST &#91;SETTINGS&#93;
+ 
+PURGE
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>TRUST</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manipulate and manage trust levels (security).
+<P>
+<PRE>
+SET &lt; MACHINE &lt;Machine&gt; | USER &lt;User&gt; | DEFAULT &gt; LEVEL &lt;Level&gt;
+ 
+GET MACHINE &lt;Machine&gt; &#91;USER &lt;User&gt;&#93;
+ 
+DELETE MACHINE &lt;Machine&gt; | USER &lt;User&gt;
+ 
+LIST
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>VAR</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows you to manipulate and manage system, shared and process specific variable pools.
+<P>
+<PRE>
+SET &#91;SYSTEM | SHARED | HANDLE &lt;Handle&gt;&#93; &#91;FAILIFEXISTS&#93;
+    VAR &lt;Name=Value&gt; &#91;VAR &lt;Name=Value&gt;&#93;...
+ 
+GET &#91;SYSTEM | SHARED | HANDLE &lt;Handle&gt;&#93; VAR &lt;Name&gt;
+ 
+DELETE &#91;SYSTEM | SHARED | HANDLE &lt;Handle&gt;&#93; VAR &lt;Name&gt; &#91;VAR &lt;Name&gt;&#93;...
+ 
+LIST &#91;SYSTEM | SHARED | HANDLE &lt;Handle&gt; | ASHANDLE &lt;Handle&gt; | REQUEST &#91;&lt;Number&gt;&#93;&#93;
+ 
+RESOLVE &#91;SYSTEM | SHARED | HANDLE &lt;Handle&gt; | ASHANDLE &lt;Handle&gt; | REQUEST &#91;&lt;Number&gt;&#93;&#93;
+        STRING &lt;String&gt; &#91;STRING &lt;String&gt;&#93;...
+ 
+HELP
+</PRE>
+</TD></TR><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="20%"><B>ZIP</B>
+</TD><TD ALIGN="LEFT" VALIGN="TOP" WIDTH="80%">Allows for unzipping, listing, and adding/deleting entries in Zip archives which are
+PKZip, WinZip and Jar compatible.
+<P>
+<PRE>
+UNZIP  ZIPFILE &lt;Name&gt; TODIRECTORY &lt;Name&gt;
+       &#91;FILE &lt;Name&gt;&#93;... &#91;DIRECTORY &lt;Name&gt;&#93;...
+       &#91;RESTOREPERMISSION&#93; &#91;REPLACE&#93;
+       
+ADD    ZIPFILE &lt;Name&gt; &lt; FILE &lt;Name&gt; | DIRECTORY &lt;Name&gt; &#91;RECURSE&#93; &gt;
+       &#91;RELATIVETO &lt;Directory&gt;&#93;
+ 
+DELETE ZIPFILE &lt;Name&gt; FILE &lt;Name&gt; &#91;FILE &lt;Name&gt;&#93;... CONFIRM
+ 
+LIST   ZIPFILE &lt;Name&gt;
+ 
+VERSION
+ 
+HELP
+</PRE>
+</TD></TR></TABLE>
+<P>
+<A NAME="Bot_Of_Page"></A>
+</BODY></HTML>

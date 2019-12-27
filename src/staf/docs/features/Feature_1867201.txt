@@ -1,0 +1,438 @@
+Feature ID  : 1867201
+Title       : Ability to pipe jython "print" statements to job log
+
+Description
+-----------
+
+Provide the ability to run redirect Jython "print" statements to the STAX Job
+User Log and/or to the "Message" tab in the STAX Monitor for the currently
+running STAX job, instead of being printed in the STAX JVM Log.
+
+
+Problem(s) Solved
+-----------------
+
+The JVM Log gives no real context for which job a printed message may have
+originated.  Also, if multiple STAX jobs are running simultaneously that use
+Jython "print" statements, their output will be intermingled.  Also, someone
+is more likely to look in the STAX Job User Log than the JVM Log when searching
+for the output from Jython "print" statements.
+
+
+Related Features
+----------------
+
+None
+
+
+External Changes
+----------------
+
+a) Changes to STAX Service Parameters:
+
+Added "PythonOutput" and "PythonLogLevel" as new parameters when
+registering the STAX service.
+
+  SERVICE <Name> LIBRARY JSTAF EXECUTE <STAX Jar File Name>
+               [OPTION <Name[=Value]>]...
+               [PARMS <"> [EVENTSERVICEMACHINE <EventMachine>]
+                          [EVENTSERVICENAME <EventName>]
+                          [NUMTHREADS <NumThreads>]
+                          [PROCESSTIMEOUT <ProcessTimeout>]
+                          [FILECACHING <Enabled | Disabled>]
+                          [MAXFILECACHESIZE <Max Files>]
+                          [CLEARLOGS <Enabled | Disabled>]
+                          [LOGTCELAPSEDTIME <Enabled | Disabled>]
+                          [LOGTCNUMSTARTS <Enabled | Disabled>]
+                          [LOGTCSTARTSTOP <Enabled | Disabled>]
+                          [PYTHONOUTPUT <Python Output>]
+                          [PYTHONLOGLEVEL <Log Level>]
+                          [EXTENSIONXMLFILE <Extension XML File> |
+                           EXTENSIONFILE <Extension Text File>]
+                          [EXTENSION <Extension Jar File>...
+                      <">]
+
+PYTHONOUTPUT specifies where Python stdout/stderr should be redirected
+(e.g. if you use the print statement in a <script> element in a STAX job).
+Valid values are "JobUserLog", "Message", "JobUserLogAndMsg", and "JVMLog",
+not case-sensitive.  The default is "JobUserLog".  This option will resolve
+STAF variables.
+
+- "JobUserLog" indicates to log the data in the STAX Job User log.
+- "Message" indicates to send the data as a message to the STAX Monitor.
+- "JobUserLogAndMsg" indicates to log the data in the STAX Job User log
+  and to send the data as a message to the STAX Monitor.
+- "JVMLog" indicates to log the data in the JVM Log for the STAX service.
+  Data written to the JVM log will use the format:
+    <Timestamp> [JobID: <JobID>] <Message>
+
+PYTHONLOGLEVEL specifies the STAF log level to use when Python stdout is
+redirected to the STAX Job User Log (so it only has an effect if PYTHONOUTPUT
+is set to "JobUserLog" or "JobUserLogAndMsg").  Valid values are the STAF log
+levels (e.g. Info, Error, Warning, Debug, Trace, User1, etc).  The default is "Info".  Note that Python stderr output uses log level "Error" if PYTHONOUTPUT
+is set to "JobUserLog" or "JobUserLogAndMsg".  This option will resolve STAF
+variables.
+
+b) Changes to the STAX LIST SETTINGS Request:
+
+Added "Python Output" and "Python Log Level" as settings for the STAX service.
+For example:
+
+STAF local STAX LIST SETTINGS
+Response
+--------
+{
+  Event Machine      : local
+  Event Service Name : Event
+  Number of Threads  : 5
+  Process Timeout    : 60000
+  File Caching       : Enabled
+  Max File Cache Size: 20
+  Clear Logs         : Disabled
+  Log TC Elapsed Time: Enabled
+  Log TC Num Starts  : Enabled
+  Log TC Start/Stop  : Disabled
+  Python Output      : JobUserLog
+  Python Log Level   : Info
+  Extensions         : []
+  Extension File     : C:/staf/services/extensions.xml
+}
+
+c) Changes to the STAX SET Request:
+
+Provided the ability to dynamically change the PYTHONOUTPUT and
+PYTHONLOGLEVEL settings for the STAX service:
+
+SET       [CLEARLOGS <Enabled | Disabled>]
+          [LOGTCELAPSEDTIME <Enabled | Disabled>]
+          [LOGTCNUMSTARTS <Enabled | Disabled>]
+          [LOGTCSTARTSTOP <Enabled | Disabled>]
+          [PYTHONOUTPUT <Python Output>]
+          [PYTHONLOGLEVEL <Log Level>]
+          [FILECACHING <Enabled | Disabled>]
+          [MAXFILECACHESIZE <Max Files>]
+
+See the description for the PYTHONOUTPUT and PYTHONLOGLEVEL options above
+when describing changes to STAX service parameters.
+
+d) Changes to the STAX EXECUTE Request:
+
+Added PYTHONOUTPUT and PYTHONLOGLEVEL options to the STAX EXECUTE request
+to allow overriding these settings set when registering the STAX service.
+
+EXECUTE   < <FILE <XML File Name> [MACHINE <Machine Name>]> | DATA <XML Data> >
+          [JOBNAME <Job Name>] [FUNCTION <Function ID>] [ARGS <Arguments>]
+          [SCRIPTFILE <File Name>... [SCRIPTFILEMACHINE <Machine Name>]]
+          [SCRIPT <Python Code>]... [CLEARLOGS [<Enabled | Disabled>]]
+          [ HOLD | TEST [RETURNDETAILS] | WAIT [Timeout] [RETURNRESULT] ]
+          [ NOTIFY ONEND [BYNAME] [PRIORITY <Priority>] [KEY <Key>] ]
+          [LOGTCELAPSEDTIME <Enabled | Disabled>]
+          [LOGTCNUMSTARTS <Enabled | Disabled>]
+          [LOGTCSTARTSTOP <Enabled | Disabled>]
+          [PYTHONOUTPUT <Python Output>] [PYTHONLOGLEVEL <Log Level>]
+
+PYTHONOUTPUT specifies where Python stdout/stderr should be redirected
+(e.g. if you use the print statement in a <script> element).
+Valid values are "JobUserLog", "Message", "JobUserLogAndMsg", and "JVMLog",
+not case-sensitive.  This option overrides the service setting for "Python
+Output".  This option will resolve STAF variables.
+
+For a description of the valid values, see a) above.
+
+PYTHONLOGLEVEL specifies the STAF log level to use when Python stdout is
+redirected to the STAX Job User Log (so it only has an effect if PYTHONOUTPUT
+is set to "JobUserLog" or "JobUserLogAndMsg").  Valid values are the STAF log
+levels (e.g. Info, Error, Warning, Debug, Trace, User1, etc).  This option
+overrides the service setting for "Python Log Level".  This option will resolve
+STAF variables.
+
+e) Changes to the STAX QUERY JOB Request:
+
+Added "Python Output" and "Python Log Level" to show their settings when
+querying a STAX job.
+
+f) Changes to the <job> element:
+
+Added new attributes:  pythonoutput and pythonloglevel
+
+- pythonoutput:  specifies where Python stdout/stderr should be redirected
+  (e.g. if you use the print statement in a <script> element in the sub-job).
+  This attribute is equivalent to the PYTHONOUTPUT option for a STAX EXECUTE
+  command.  The value must evaluate via Python to one of the following (not
+  case-sensitive): 
+
+  o 'parent' - specifies to use the same value that was specified for the
+    parent job.  This is the default. 
+  o 'default' - specifies to use the default STAX service setting for "Python
+    Output". 
+  o 'jobuserlog' - specifies to redirect Python stdout/stderr to the STAX Job
+     User Log
+  o 'message' - specifies to redirect Python stdout/stderr to the Messages panel
+     in the STAX Monitor.
+  o 'jobuserlogandmsg' - specifies to redirect Python stdout/stderr to the STAX
+    Job User Log and to the Messages panel in the STAX Monitor.
+  o 'jvmlog' - specifies to redirect Python stdout/stderr to the JVM Log for the
+    STAX service.
+
+  Otherwise, if it evaluates to something else, an error will occur when
+  the job is submitted for execution and the RC variable will be set to 47 
+  (Invalid value) with additional information in the STAFResult variable.
+
+- pythonloglevel:  specifies the STAF log level to use when Python stdout is
+  redirected to the STAX Job User Log (so it only has an effect if PYTHONOUTPUT
+  is set to "JobUserLog" or "JobUserLogAndMsg"). This attribute is equivalent
+  to the PYTHONLOGLEVEL option for a STAX EXECUTE command.  The value must
+  evaluate via Python to one of the following (not case-sensitive):
+
+  o 'parent' - specifies to use the same value that was specified for the
+    parent job.  This is the default. 
+  o 'default' - specifies to use the default STAX service setting for "Python
+    Log Level".
+  o A valid STAF log level as documented in the STAF User's Guide.  For example:
+    'Info', 'Error', 'Warning', 'Debug', 'Trace', 'User1', etc.).
+
+  Otherwise, if it evaluates to something else, an error will occur when
+  the job is submitted for execution and and the RC variable will be set to 47
+  (Invalid value) with additional information in the STAFResult variable.
+
+f) Changes to the STAX Monitor panel when submitting a STAX job:
+
+  Added "Python Output" and "Python Log Level" as drop-down combo boxes
+  to the "Log Options" tab:
+
+  Python Output   : A drop-down list containing the following entries: 
+                    Default, Job User Log, Message, Job User Log & Message,
+                    and JVM Log.
+                    Defaults to "Default" which means to use the "Python Output"
+                    setting for the STAX service.
+
+  Python Log Level: A drop-down list containing Default and all of the STAF
+                    log levels (e.g. Info, Fatal, Error, Warning, Trace, Debug,
+                    User1, etc).
+                    Defaults to "Default" which means to use the "Python Log
+                    Level" setting for the STAX service.
+
+g) Changes to the STAX Monitor panel when looking at details for a STAX job
+   or STAX sub-job:
+
+  Added "Python Output" and "Python Log Level" fields to show what was
+  specified for the job.
+
+h) Assigned two new STAX variables:
+
+   - STAXPythonOutput
+     Description: the value specified for "Python Output" for the STAX job.
+                  ('e.g. 'JobUserLog', 'Message', 'JobUserLogAndMsg', or                           'JVMLog')
+     Assigned:    once at the beginning of the execution of a STAX job
+     Type:        string
+
+   - STAXPythonLogLevel
+     Description: the value specified for "Python Log Level" for the STAX job.
+                  ('e.g. 'Info', 'Error', 'User1', etc.)
+     Assigned:    once at the beginning of the execution of a STAX job
+     Type:        string
+
+
+Internal Changes
+----------------
+
+a) Update service/STAX.java as follows:
+
+   - Add options PYTHONOUTPUT and PYTHONLOGLEVEL to the fParmsParser
+     and verify that the values specified for them are valid.
+
+   - Add options PYTHONOUTPUT and PYTHONLOGLEVEL to the fExecuteParser
+     and verify that the values specified for them are valid.
+
+   - Add options PYTHONOUTPUT and PYTHONLOGLEVEL to the fSetParser
+     and verify that the values specified for them are valid.
+
+   - Update the fSettingsMapClass by adding the following two keys
+     to the result when submitting a LIST SETTINGS request:
+
+     fSettingsMapClass.addKey("pythonOutput", "Python Output");
+     fSettingsMapClass.addKey("pythonLogLevel", "Python Log Level");
+
+     settingsMap.put("pythonOutput",
+                     STAXPythonOutput.getPythonOutputAsString(
+                         getPythonOutput()));
+     settingsMap.put("pythonLogLevel", getPythonLogLevel());
+
+   - Update the fQueryJobMapClass by adding the following two keys
+     to the result when submitting a QUERY JOB request:
+
+     fQueryJobMapClass.addKey("pythonOutput", "Python Output");
+     fQueryJobMapClass.addKey("pythonLogLevel", "Python Log Level");
+
+     jobInfoMap.put("pythonOutput",
+                    STAXPythonOutput.getPythonOutputAsString(
+                        job.getPythonOutput()));
+     jobInfoMap.put("pythonLogLevel", job.getPythonLogLevel());
+
+b) Change service/STAXJob.java as follows:
+
+   - Provide get/set methods for the Python Output flag set for the STAX job.
+   - Add calls to the setPythonInterpreterStdout() and 
+     setPythonInterpreterStderr() methods on the main thread, passing a new 
+     instance of the custom output stream (STAXPythonOutput), in order to 
+     redirect the Python Interpreter's stdout and stderr to the Job User Log 
+     and/or STAX Monitor, or JVM log.
+   - Set two new STAX variables, STAXPythonOutput and STAXPythonLogLevel, to
+     show where Python output for this job is redirected and to show the log
+    level used for Python stdout if redirected to the STAX Job User Log.
+
+c) Change service/STAXThread.java as follows:
+
+  - Create a new PySystemState for the main thread and to share this same 
+    PySystemState with it's child threads.
+  - Added a setPythonInterpreterStdout method that sets the PythonInterpreter's
+    stdout to a custom output stream. 
+  - Added a setPythonInterpreterStderr method that sets the PythonInterpreter's
+    stderr to a custom output stream.
+
+d) Change service/STAXPythonInterpreter.java as follows:
+
+  - Deprecate the previous constructors used by the main thread and child
+    threads to create a new STAXPythonInterpreter
+  - Add a new constructor with the following signature:
+      public STAXPythonInterpreter(PyObject locals, PySystemState pySystemState)
+    so that the same PySystemState is shared by the Python Interpreters used by
+    all threads in a STAX job.
+  - Update the clonePyi method to use the new STAXPythonInterpreter's 
+    constructor so that child threads share the same PySystemState used by the 
+    main thread.
+      return new STAXPythonInterpreter(clonedGlobals, fPySystemState);
+
+e) Add a new class named service/STAXPythonOutput.java that extends the
+   OutputStream class.
+
+  - This class is used to redirect stdout/stderr from a STAX Job's Python 
+    Interpreter (e.g. from a print statement within a <script> element in a STAX 
+    job) by calling setOut() and setErr() on the Python Interpreter at the 
+    beginning of the job.  The constructor is passed a STAXJob object and it 
+    gets the "Python Output" value from the job to know whether to redirect 
+    Python stdout/stderr by logging to the STAX Job User log and/or by sending a 
+    message to the STAX Monitor, or to write to the JVM Log for the STAX 
+    service.  This class does this by implementing write() and flush() methods 
+    to write to the specified location.  Data written to the JVM log will use 
+    the format: 
+
+      <Timestamp> [JobID: <JobID>] <Message>
+
+    Private data will be masked using:  
+
+      STAFUtil.maskPrivateData(fData.toString()))
+
+    Also, includes the following static methods:
+
+    /**
+     * Checks if a specified python output value is valid.
+     * @param output A String containing the python output
+     * @return STAFResult A STAFResult object.  If not valid, returns a
+     * STAFResult with an InvalidValue RC and an error message in the result.
+     * If valid, returns RC 0 with the integer version of the python output
+     * string value in the result.
+     */
+    public static STAFResult isValidPythonOutput(String output)
+
+    /**
+     * Converts an int Python Output flag to it's string representation.
+     * @param output An int representing the Python Output flag
+     */
+    public static String getPythonOutputAsString(int output)
+
+    /**
+     * Checks if a log level is valid.
+     * Note: Extensions, etc should not use this method as we will probably
+     * move this static method into JSTAF (e.g. STAFUtil.java) in the future.
+     * @param level A String containing the log level
+     * @return STAFResult A STAFResult object.  If not valid, returns a
+     * STAFResult with an InvalidValue RC and an error message in the result.
+     * If valid, returns RC 0 with the "pretty" version of the log level in
+     * the result.
+     */ 
+    public static STAFResult isValidLogLevel(String level)
+
+f) Change service/STAXJobActionFactory.java as follows:
+   - Add the pythonoutput and pythonloglevel atttributes to the STAX DTD for the
+     job element.
+   - Check if the pythonoutput and/or pythonloglevel attributes were specified
+     and assigns their values to the STAXJobAction instance it creates.
+
+g) Change service/STAXJobAction.java as follows:
+   - Evaluates the pythonoutput and pythonloglevel values.
+   - If the pythonoutput attribute is not specified, defaults to the parent
+     job's PythonOutput value.
+   - If the pythonloglevel attribute is not specified, defaults to the parent
+     job's PythonLogLevel value.
+   - Adds the PYTHONOUTPUT and PYTHONLOGLEVEL options to the STAX EXECUTE
+     request it generates and submits.
+   - Adds "pythonoutput" and "pythonloglevel" to the subJobMap used when
+     generating the start event for a sub-job.
+
+h) Change monitor/STAXMonitor.java as follows:
+   - Check if any value other than "Default" was specified for the 
+     PYTHONOUTPUT and PYTHONLOGLEVEL options when submitting a STAX EXECUTE
+     request, so that the PYTHONOUTPUT option and/or the PYTHONLOGLEVEL
+     option are added to the STAX EXECUTE request.
+   - Create a new combo box for Python Output and populates it with valid
+     values.
+   - Create a new combo box for Python Log Level and populates it with valid
+     values.
+   - Add these two new combo boxes to the "Log Options" tab.
+   - Add "pythonOutput" and "pythonLogLevel" to the job parameters that are
+     stored when saving job submission data.
+   - Gets the "pythonOutput" and "pythonLogLevel" values for the job parameters
+     when a saved job is selected to be run via the STAX Monitor.
+
+i) Change monitor/STAXMonitorFrame.java as follows:
+   - Update the STAXMonitorFrame constructors to add pythonOutput and
+     pythonLogLevel as new arguments.
+
+j) Change monitor/STAXMonitorSubJob.java as follows:
+   - Add the values used for "Python Output" and "Python Log Level" for a
+     STAX job when selecting to get more information about a STAX job.
+   - Check if any value other than "Default" was specified for the 
+     PYTHONOUTPUT and PYTHONLOGLEVEL options when submitting a STAX EXECUTE
+     request, so that the PYTHONOUTPUT option and/or the PYTHONLOGLEVEL
+     option are added to the STAX EXECUTE request.
+   - Get the pythonOutput and pythonLogLevel from the propertyMap and add
+     a row for "Python Output" and "Python Log Level" to the subjobDataVector
+     with these values.
+
+k) Change makefile.stax by adding STAXPythonOutput.class to the STAX service
+   objects for the STAX service.
+
+Design Considerations
+---------------------
+
+1) If logging to the STAX Job User Log and the log request fails, the message
+   will be written to the JVM Log (so it doesn't "vanish").
+
+2) The default for "Python Output" is to log the message to the STAX Job User
+   Log instead of the JVM Log, as it was in previous versions of STAX.
+
+3) Decided to use "Info" for the default log level for messages logged in
+   the STAX Job User Log that came from Python stdout.  This log level can be
+   changed by setting PYTHONLOGLEVEL at the STAX service or STAX job level.
+
+4) Decided to use "Error" for the log level for messages logged in the STAX
+   Job User Log that came from Python stderr.  This cannot currently be
+   overridden.  Note, in a STAX job, you can specify to write to stderr as
+   follows:
+
+     <script>
+        import sys
+        print >>sys.stderr, "Error message"</script>
+     </script>
+
+
+Backward Compatibility Issues
+-----------------------------
+ 
+- We are still providing the ability to have the output from Python "print"
+statements ,etc. go to the STAX service's JVM Log.  However, this is no longer
+the default so someone would have to configure the STAX service and/or job 
+to retain the old behavior.  Also, note that all data written to the JVM log
+will now use the new format:  <Timestamp> [JobID: <JobID>] <Message>
+

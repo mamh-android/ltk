@@ -1,0 +1,264 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+/* GenWLParse.rxl - Generic Workload Parseing Routines */
+#Function All
+
+/*************************************
+
+   process.0
+   process.i.!Name
+   process.i.!Command
+   process.i.!Parms
+   process.i.!WorkDir
+   process.i.!Env.0
+   process.i.!Env.i
+   process.i.!Var.0
+   process.i.!Var.i
+
+   machine.i.!Name
+   machine.i.!Var.0
+   machine.i.!Var.j
+   machine.i.!Process.0
+   machine.i.!Process.j.!Name
+   machine.i.!Process.j.!Type
+   machine.i.!Process.j.!Command
+   machine.i.!Process.j.!Parms
+   machine.i.!Process.j.!WorkDir
+   machine.i.!Process.j.!Env.0
+   machine.i.!Process.j.!Env.i
+   machine.i.!Process.j.!Var.0
+   machine.i.!Process.j.!Var.i
+
+   var.0
+   var.i
+
+   workload
+
+*************************************/
+
+ParseStatement: PROCEDURE EXPOSE (ExposeList)
+
+    if CurrToken() = "WORKLOAD" then
+    do
+        if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+        workload = CurrValue()
+    end
+    else if CurrToken() = "MACHINE" then
+    do
+        if ParseMachine() \= 0 then RETURN 1
+    end
+    else if CurrToken() = "VAR" then
+    do
+        if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+        var.0 = var.0 + 1
+        varIndex = var.0
+        var.varIndex = CurrValue()
+
+        if POS('=', var.varIndex) = 0 then
+        do
+            say "Invalid variable definition," var.varIndex", line",
+                Tokens.parsepos.!Line
+            RETURN 1
+        end
+    end
+    else if CurrToken() = "PROCESS" then
+    do
+         if ParseProcess("GLOBAL") \= 0 then RETURN 1
+    end
+    else
+    do
+        call PrintParseError "WORKLOAD MACHINE PROCESS VAR", CurrPos()
+        RETURN 1
+    end
+
+    call NextToken
+
+    RETURN 0
+
+/* End of ParseStatement */
+
+
+ParseMachine: PROCEDURE EXPOSE (ExposeList)
+
+    if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+    machine.0 = machine.0 + 1
+    machineIndex = machine.0
+
+    machine.machineIndex.!Name = CurrValue()
+    machine.machineIndex.!Process.0 = 0
+    machine.machineIndex.!Var.0 = 0
+
+    call NextToken
+
+    do while (CurrToken() \= "END") & (CurrToken() \= "EOF")
+
+        if CurrToken() = "PROCESS" then
+        do
+            if ParseProcess("MACHINE") \= 0 then RETURN 1
+        end
+        else if CurrToken() = "PROCREF" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            processIndex = machine.machineIndex.!Process.0 + 1
+            machine.machineIndex.!Process.0 = processIndex
+            machine.machineIndex.!Process.processIndex.!Type = "PROCREF"
+            machine.machineIndex.!Process.processIndex.!ProcRef = CurrValue()
+        end
+        else if CurrToken() = "VAR" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            machine.machineIndex.!Var.0 = machine.machineIndex.!Var.0 + 1
+            varIndex = machine.machineIndex.!Var.0
+            machine.machineIndex.!Var.varIndex = CurrValue()
+
+            if POS('=', machine.machineIndex.!Var.varIndex) = 0 then
+            do
+                say "Invalid variable definition,",
+                    machine.machineIndex.!Var.varIndex", line",
+                    Tokens.parsepos.!Line
+                RETURN 1
+            end
+        end
+        else
+        do
+            call PrintParseError "PROCESS PROCREF VAR END", CurrPos()
+            RETURN 1
+        end
+
+        call NextToken
+
+    end  /* while not done with machine definition */
+
+    RETURN 0
+
+/* End of ParseMachine */
+
+
+ParseProcess: PROCEDURE EXPOSE (ExposeList)
+
+    arg machineOrGlobal
+
+    if machineOrGlobal = "GLOBAL" then
+        processStem = "process"
+    else if machineOrGlobal = "MACHINE" then
+        processStem = "machine.machineIndex.!Process"
+    else
+    do
+        say "Invalid argument to ParseProcess, near line" Tokens.parsepos.!Line
+        RETURN 1
+    end
+
+    call VALUE processStem".0", VALUE(processStem".0") + 1
+    processIndex = VALUE(processStem".0")
+
+    call VALUE processStem".processIndex.!Name", ""
+    call VALUE processStem".processIndex.!Command", ""
+    call VALUE processStem".processIndex.!Parms", ""
+    call VALUE processStem".processIndex.!Title", ""
+    call VALUE processStem".processIndex.!WorkDir", ""
+    call VALUE processStem".processIndex.!Env.0", 0
+    call VALUE processStem".processIndex.!Var.0", 0
+
+    call NextToken
+
+    do while (CurrToken() \= "END") & (CurrToken() \= "EOF")
+
+        if CurrToken() = "NAME" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!Name", CurrValue()
+        end
+        else if CurrToken() = "COMMAND" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!Command", CurrValue()
+        end
+        else if CurrToken() = "PARMS" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!Parms", CurrValue()
+        end
+        else if CurrToken() = "TITLE" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!Title", CurrValue()
+        end
+        else if CurrToken() = "WORKDIR" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!WorkDir", CurrValue()
+        end
+        else if CurrToken() = "ENV" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!Env.0",,
+                       VALUE(processStem".processIndex.!Env.0") + 1
+            envIndex = VALUE(processStem".processIndex.!Env.0")
+            call VALUE processStem".processIndex.!Env.envIndex", CurrValue()
+
+            if POS('=', VALUE(processStem".processIndex.!Env.envIndex")) = 0 then
+            do
+                say "Invalid environment variable definition,",
+                    VALUE(processStem".processIndex.!Env.envIndex") ||,
+                    ", line" Tokens.parsepos.!Line
+                RETURN 1
+            end
+        end
+        else if CurrToken() = "VAR" then
+        do
+            if NextTokenMustBe("STRING") \= 0 then RETURN 1
+
+            call VALUE processStem".processIndex.!Var.0",,
+                 VALUE(processStem".processIndex.!Var.0") + 1
+
+            varIndex = VALUE(processStem".processIndex.!Var.0")
+
+            call VALUE processStem".processIndex.!Var.varIndex", CurrValue()
+
+            if POS('=', VALUE(processStem".processIndex.!Var.varIndex")) = 0 then
+            do
+                say "Invalid variable definition,",
+                    VALUE(processStem".processIndex.!Var.varIndex") ||,
+                    ", line" Tokens.parsepos.!Line
+                RETURN 1
+            end
+        end
+        else
+        do
+            call PrintParseError "NAME COMMAND PARMS TITLE WORKDIR ENV VAR",
+                                 "END", CurrPos()
+            RETURN 1
+        end
+
+        call NextToken
+
+    end  /* while not done with machine definition */
+
+    if machine.machineIndex.!Process.processIndex.!Command = "" then
+    do
+        say "Error near line" Tokens.parsepos.!Line
+        say "You must specify the COMMAND for a PROCESS"
+        RETURN 1
+    end
+
+    RETURN 0
+
+/* End of ParseProcess */
+
+#End

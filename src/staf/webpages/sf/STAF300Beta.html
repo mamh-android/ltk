@@ -1,0 +1,1205 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.76 [en] (Windows NT 5.0; U) [Netscape]">
+   <title>STAF V3.0.0 Beta 5 Readme</title>
+</head>
+<body bgcolor="#FFFFFF">
+<!-- End Header Records  ============================================ -->
+<a NAME="Top_Of_Page"></a>
+<h1>
+STAF V3.0.0 Beta 7 Readme</h1>
+<br>
+<p><b>December 14, 2004</b>
+<hr>
+<h2>Introduction</h2>
+<p>We are providing early releases (Betas) for STAF V3.0 to get feedback
+on new functions being provided in STAF V3.0 and to make existing STAF V2.x
+customers aware of the changes that will occur when they migrate to STAF V3.0.
+Beta 7 is the last beta we plan to release before the final GA version of
+STAF V3.0.0 is released.  We plan to release the final GA version of STAF V3.0
+by mid-March, 2005.  We're waiting for some OSSC/legal approvals which has
+caused a delay.
+<p>
+We are also providing updated STAF V3.0.0 Beta 7 versions for all our external
+STAF services that support STAF V3.0.0.
+<p>
+We encourage you to report any problems that you find with STAF Beta 7
+via the STAF Help forum, staf-users mailing list, or by submitting a bug.
+Please make sure to indicate that you are using STAF V3.0.0 Beta 7.
+We welcome any comments.
+<p>
+<b>Warnings:
+<ol>
+<li>Do not use STAF V3.0.0 Beta 7 with previous STAF 3.0.0 Betas (1 - 6). 
+    This is not supported.</b>
+<p>
+Using STAF V3.0.0 Beta 7 with previous STAF V3.0.0 Betas or with services
+at previous STAF V3.0.0 Beta versions is not supported as the service
+interface levels and formats have changed.  If you installed previous 
+STAF V3.0.0 Betas, uninstall and reinstall STAF V3.0.0 Beta 7 on all these machines.
+If you are using any of the external STAF V3.0.0 services, only the Beta 7
+versions of these services are supported with STAF V3.0.0 Beta 7.
+</ol>
+<p>
+<h3 id="Install">Installing STAF V3.0.0 Beta 7</h3>
+<p>
+The installation has been enhanced in STAF V3.0.0 Beta 7.
+We now use a new version of InstallShieldX (10.5) which includes support for
+more operating systems (including newer versions of Linux).
+You can upgrade from a previous version of STAF (e.g. another STAF V3.0.0 Beta or
+STAF V2.x) to STAF V3.0.0 Beta 7 without first uninstalling STAF, or you can install
+STAF V3.0.0 Beta 7 to a different directory.  Note that for STAF V3.0.0 Beta 5 and
+earlier, including STAF V2.x, we will actually be doing an uninstall and an install,
+instead of an actual upgrade due to an InstallShieldX bug.
+<p>
+In addition, you may now install multiple versions of STAF on the same
+machine.  For example, if you already have STAF V2.x installed, and you
+want to try out STAF V3.0.0 Beta 7, the installation allows you to
+install STAF V3.0.0 in a different directory without overriding the
+STAF V2.x installation.
+To run multiple versions of STAF at the same time, you may need to set
+environment variable STAF_INSTANCE_NAME to differentiate between multiple
+instances of STAF and you must specify different ports for the tcp interface
+in the STAF configuration file.
+<p>
+When you install STAF V3.0.0 Beta 7 on a Windows system that already has
+STAF 2.x installed (at a different location), only the STAF V3.0.0 Beta 7
+uninstall is available in Add/Remove Programs.  To uninstall STAF 2.x,
+you will need to open a command prompt, go to the _uninst directory in
+the root STAF 2.x installation directory, and run "uninstaller.exe".
+<p>
+<h3>Migration Utility</h3>
+To help current STAF 2.x customers prepare for migrating from STAF 2.x to 3.0,
+a new DIAG (Diagnostics) internal service was provided in STAF V2.6.x which
+allows for the recording of diagnostics data.  The DIAG service is being used
+to track any invocation of a command that will be changing in STAF 3.0.
+The DIAG service will record the diagnostic trigger (in this case, the
+service/request whose syntax and/or results will be changing in STAF 3.0)
+along with the source of the trigger (the machine/handle/handle name that
+originated the request). By running with diagnostics enabled, users are able
+to identify which test cases, applications, and services they have written
+will need to be updated to work with STAF V3.0.0. See the "STAF V3.0 Migration
+Preparation" section in the STAF V2.6.x User's Guide for more information.
+<p>
+<h3>Known Problems in STAF V3.0.0 Beta 7</h3>
+<p>
+<ol>
+<li>If you dynamically remove a C++ or Java STAF service on some Linux versions,
+STAFProc may crash.  This does not occur on other Unix platforms.
+</ol>
+<p>
+<hr>
+<h2>New Functions in STAF V3.0.0</h2>
+<p>
+<h4>New Features in STAF V3.0.0 Beta 7</h4>
+<p>
+<ul>
+<li>Install Enhancements
+    <p>
+    <ol>
+    <li>Added support for uninstalling upgrade versions of STAF that are not
+    recognized by InstallShield 10.5
+    </ol>
+<p>
+<li>Marshalling updates
+    <p>
+    <ol>
+    <li>Added toString and formatObject APIs to the STAFMarshallingContext
+        class to provide "pretty print" capabilities for marshalled data.
+    <li>Updated pretty print verbose format to not show quotes/commas by default
+    <li>NamedCounter Service - Updated to provided a marshalled map for a LIST request
+    <li>STAX Service - Changed to "pretty print" the marshalled queued message when logging a
+    "No listener found" warning for better readability
+    </ol>
+<p>
+<li>Communication Interface Enhancements
+    <p>
+    <ol>
+    <li>Added operational parameter STRICTFSCOPYTRUST to change default to do
+    lenient trust checking on a FS COPY request
+    <li>Added physicalInterfaceID to request structure for C++/Java, etc. services
+    </ol> 
+<p>
+<li>Bug Fixes
+    <p>
+    <ul>
+    <li>Install:
+        <ol>
+            <li>Fixed problem where the STAF and STAFTCP library files were not being 
+                installed during -silent or -console installs
+            <li>Added STAFDataTypes.h and STAFDataTypesInlImpl.cpp in the include directory
+        </ol>
+    <p>
+    <li>Zip Service:
+        <ol>
+            <li>Fixed "zero bytes when unzipping JAR archives" issue
+            <li>Fixed unzip symbolic link issue
+            <li>Added "move Zip archive handling out of STAFZipFile class"
+        </ol>
+    <p>
+    <li>Event Service:
+        <ol>
+            <li>Changed to use endpoint instead of machine name when generating queued messages
+            <li>Fixed how resolved variables in requests
+        </ol>
+    <p>
+    <li>STAX Service:
+        <ol>
+            <li>Fixed job hang problem that could occur if a Python evaluation error occurs
+                evaluating a list such as iterate's "in" attribute
+            <li>Fixed race condition in call element
+            <li>Fixed bug where PyDictionaries (aka maps) were not being cloned using a
+                deep-copy when creating a new STAX Thread, unlike other Python objects such
+                as PyLists
+            <li>Fixed bug where viewing STAX Job logs by right-clicking from "Sub-jobs" tab
+                fails if the machine nickname has been overridden
+            <li>Fixed problem getting Monitor service messages for processes
+            <li>Fixed problems running STAX Monitor in a STAF 2.x/STAX.3x environment
+            <li>Changed STAX Monitor to use "local" if specified for the STAX/Event machine
+                in the properties and via process and stafcmd elements
+        </ol>
+    </ul>
+</ul>
+<p>
+<h4>New Features in STAF V3.0.0 Beta 6</h4>
+<p>
+<ul>
+<li>Install Enhancements
+    <p>
+    <ol>
+    <li>Updated STAF install to use InstallShield 10.5 which supports some of the
+        newer operating systems such as newer versions of Linux.
+    <li>Added ability to select IPv6 support for STAF during the install
+    <li>Updated STAFInst to create the STAFEnv.sh script file during installation
+    </ol>
+<p>
+<li>Communication Interface Enhancements
+    <p>
+    <ol>
+    <li>Removed the CONNECTTIMEOUT operational setting and added an option named
+      CONNECTTIMEOUT that can be specified when configuring a TCP interface.
+    <li>Changed MACHINE operational parameter to be named MACHINENICKNAME
+        instead to better reflect its usage
+    <li>Added WhoAreYou request to the MISC service
+    </ol>
+<p>
+<li>Marshalling updates
+    <p>
+    <ol>
+    <li>Added Python marshalling and unmarshalling APIs
+    <li>Added ability to specify "short" column headings for a map class that
+      will be used by the STAF command if the column heading is longer than
+      the longest data in the column in a table format
+    <li>Added wrapping to the STAF command table format so that long data for
+      a field will be wrapped within the column
+    <li>Added a -verbose option to the STAF command which can be used to get the
+      result in a verbose format (without setting STAF_PRINT_MODE=verbose)  
+    <li>Added LONG option to the PROCESS LIST request to include workload
+    </ol>
+<p>
+<li>Log Service changes:
+    <p>
+    <ol>
+    <li>Added a default maximum number of records of 100 to be used when querying
+    a log file if you do not specify FIRST/LAST/ALL/TOTAL/STATS.  This setting
+    is configurable (DefaultMaxQueryRecords setting) and added an ALL option
+    to the LOG QUERY request.
+    <li>Changed LOG QUERY request so that it only returns date-time, level, and
+    message and added a LONG option which returns all fields, added a ENDPOINT
+    option to query by endpoint
+    </ol>
+<p>
+<li>Garbage Collection changes:
+    <p>
+    <ul>
+    <li>Implemented machine polling to provide additional garbage collection for
+    handles on machines that are no longer available (rebooted, STAF shutdown, etc.)
+    </ul>
+</ul>
+<p>
+<h4>New Features in STAF V3.0.0 Beta 5</h4>
+<p>
+<ul>
+<li>Install Enhancements
+    <p>
+    <ol>
+    <li>Support installation upgrades
+    <li>Allow installation of different versions of STAF on the same system
+    <li>Changed all STAF install tar files to unpack into a single directory 
+    </ol>
+    <p>
+    See section <a href="#Install">Installing STAF V3.0.0 Beta 5</a> for more
+    information on installation upgrades and installing different versions of
+    STAF on the same system.
+<p>
+<li>New Format for Messages Queued by STAF and its Services
+    <p>
+    <ol>
+    <li>Added a new option called TYPE to the Queue service's QUEUE/GET/PEEK/DELETE
+    requests.
+    <li>Changed all messages queued by STAF and its services to specify a type
+    for each message
+    <li>Changed request complete, process complete, and event queued messages
+    so that the message being queued is a marshalled map and so that the type
+    of the queued message is STAF/RequestComplete, STAF/Process/End,
+    or STAF/Service/Event respectively.
+    </ol>
+    <p>
+    See table <a href="#QueuedMsgTable">STAF V3.0 Queued Messages</a> for more
+    information on the new queued message format for STAF V3.0.0.
+<p>
+<li>Additional Changes for "Multi-Valued" Results
+    <p>
+    Updated the following external Java services which have requests that can produce
+    "multi-valued" results to provide the results in the marshalled form
+    of a data structure:
+    <ol>
+    <li>Event Service - Updated LIST and QUERY results
+    <li>EventManager Service - Updated LIST results
+    <li>Cron Service - Updated LIST results
+    <li>HTTP Service - Updated LIST, QUERY, REQUEST|DOGET|POST, SUBMIT FORM, and FOLLOW LINK results
+    </ol>
+<p>
+<li>Communication Interface Enhancements
+    <p>
+    <ol>
+    <li>Removed the USELONGNAMES operational setting
+    <li>Removed the STAF/Config/EffectiveMachine system variable
+    <li>Added the STAF/Config/MachineNickname system variable
+    <li>Updated FS Copy File/Directory APIs to determine trust based on machine and user  
+    <li>Added endpoint information to various services to provide more information
+        about the originator of a request  
+    </ol>
+<p>
+<li>Service Interface Changes
+    <p>
+    <ol>
+    <li>Changed the service request interface for all services and changed the
+        min/max interface levels to be 30 for all STAF V3.0.0 services
+    <li>Changed services to return init/term result strings so that additional
+        information about an error when registering (or unregistering) a service
+        can be provided
+    </ol>
+    <p>
+    Any custom services that you have written will have to be updated to
+    use the new interface level (30) to work with STAF V3.0.0.
+</ul>
+<p>
+<h4>New Features in STAF V3.0.0 Beta 4</h4>
+<ul>
+<li>New format for "Multi-Valued" Results
+    <p>
+    While all services technically return strings in the result buffer,
+    now this string for many results will actually be the marshalled form 
+    of a data structure (e.g. list of strings, list of maps, a map, etc..
+    <p>
+    <ol>
+    <li>Added APIs for C/C++ and Java for structured data and to marshall
+        and unmarshall results and also added APIs for Perl to unmarshall
+        results.
+    <li>Updated STAF command to provide "pretty printing" so that when
+        structured data is returned in the result string, the STAF command will
+        automatically unmarshall the data and print it in the most
+        appropriate format.
+    <li>Updated all internal services which have requests that can produce
+        "multi-valued" results to provide the results in the marshalled form
+        of a data structure.  Also, updated the following external services:
+        LOG, MONITOR, RESPOOL, ZIP, and STAX.
+    <li>Updated the STAF Demo to handle marshalled results from QUERY requests
+        to the Log and Monitor services.
+    <li>Updated the STAX Monitor to handle marshalled results from QUERY/LIST,
+        etc. requests to the STAX, LOG, MONITOR, and QUEUE services.
+    </ol>
+<p>
+<li>Changed the syntax of following service requests (mostly due to the
+    new format for multi-valued results):
+    <p>
+    <ol>
+      <li>LOG service:  Added STARTSWITH/CSSTARTSWITH options to LOG QUERY/PURGE
+        requests.
+      <li>VAR service:  Removed the DELIMIT option from the RESOLVE request
+        when resolving multiple strings in a single request since it is no
+        longer needed due to the new multi-valued result format.
+      <li>FS service:  For a LIST DIRECTORY request, changed the FORMAT option
+        to the DETAILS option and changed the default format when using the
+        LONG option.
+      <li>MISC service:  Removed the MACHINE request since you will no longer
+      be able to configure STAF to use long vs short machine names so it no
+      longer serves any purpose.
+    </ol>
+<p>
+<li>Garbage Collected Handle Support
+<p>Implemented garbage collection for the Sem and ResPool services so that
+   when handles terminate without freeing semaphores or resource entries,
+   these services will automatically free them.
+<!--
+<p>
+<li>Added Support for Perl Services
+<p>Added the ability to implement STAF services in Perl.  Previously, STAF
+    services could only be written in C/C++, Java, and REXX.
+-->    
+</ul>
+<p>
+<h4>New Features in STAF V3.0.0 Beta 3</h4>
+<p>
+<ul>
+<li>Communication Interface Enhancements
+<p>Provided additional enhancements for this feature including:
+    <p>
+    <ol>
+    <li>Added support for IPv6 to the STAFTCP network interface.  We provided
+        new STAF install files for Windows 2000+, Linux, and Solaris 2.8+ with
+        support for IPv6.
+        <p>
+        <b>Notes:</b>
+        <ol>
+        <li>The operating system must support IPv6 to use these versions of STAF.
+        <li>No documentation and no python/perl/rexx support is currently
+            provided in the STAF Linux IPv6 versions.
+        <li>No documentation is currently provided in the STAF Solaris IPv6 versions.
+        </ol>
+    <p>
+    <li>Added support to allow multiple copies of STAF to run on the same system
+    <p>
+    <li>Added ability to show information on which interfaces are enabled (via
+    LIST/QUERY requests in the MISC service)
+    </ol>
+    <p>
+    <b>Note:</b>  Changed to use "://" instead of ":" used in previous Betas to separate
+    interface and machine identifier, e.g. local://local, tcp://server1.austin.ibm.com.
+    Also changed to use "://" instead of ":" to separate authenticator
+    and user identifier, e.g. SampleAuth://User1
+<p>
+<li>Standardized Request Strings for Services
+<p>Changed the syntax of following service requests:
+    <ol>
+    <li>PROCESS service:  Modified its QUERY request and added a LIST request
+    <li>HANDLE service:  Modified its QUERY request and added a LIST request
+    <li>SEM service:  Modified the syntax for almost all its requests
+    </ol>
+<p>
+<li>Removed Deprecated Utilities, Executables, and Messages
+<p>
+    <ol>
+    <li>Removed deprecated messages in STAF and the Log, Respool, and Monitor
+    services and removed settings for old/new return codes
+    <li>Removed the following deprecated utilities and executables:
+    GenWl, STAF.cmd and CSTAF
+    </ol>
+<p>
+<li>Added support for Windows IA64
+    <p>
+    These enhancements provide support for:
+    <ul>
+    <li>Building and installing a 64-bit version of STAF on Windows IA64
+    </ul>
+<p>
+<li>Bug fixes in STAF V3.0.0 Beta 3 include:
+    <ol>
+    <li>Fixed Java Support on AIX (Bug #951438)  
+    <li>Fixed RC 22 on HP-UX for all local requests (Bug #951417)
+    <li>Fixed problem where the STAFInst script did not have execute permission (Bug #944947)
+    <li>Fixed problem where the AIX STAF install failed with "Null" error (Bug #965002)
+    <li>Fixed problem where the Linux STAF Python and TCL support was not being
+    installed via STAFInst (Bug #968922)
+    <li>When a "InProcess" service (e.g. C++ or REXX) is removed, un-register its handle
+        (Feature #966079)
+    </ol>
+</ul>
+
+<p>
+<h4>New Features in STAF V3.0.0 Beta 2</h4>
+<p>
+<ul>
+<li>Providing/Using Data Directory for STAF and its Services</li>
+<p>
+These enhancements provide support for:
+<ol>
+<li>Providing a DATADIR operational parameter (in the STAF configuration file)
+that specifies the location for STAF and its services to write data.
+<li>Using the specified data directory whenever STAF or one of its services
+needs to write data.
+<li>This allows STAF to be installed in a location that is read-only when
+STAFProc is running (e.g. in a place that is accessible via a mounted
+drive or in a directory that STAFProc will not have write permissions).
+<li>We are also standardizing where data within the directory specified
+by DATADIR should be stored, e.g. a service should write its data to a
+directory named {STAF/DataDir}/service/&lt;Service Name (lower-case)>.
+</ol>
+<p>
+<li>Changed Syntax for VAR Service</li>
+<p>
+These enhancements provide support for:
+<ol>
+<li>Updating the VAR service syntax to follow standard guidelines for STAF
+services (as part of a larger initiative to update all of STAF's services)
+<li>Completing the updates needed for shared variables (provided mostly in Beta 1)
+<li>Updating the STAF services we provide to use the new VAR service
+syntax.
+</ol>
+<p>
+<li>Added New TRACE Service</li>
+<p>
+These enhancements provide support for:
+<ol>
+<li>Providing a new TRACE service whose syntax follows standard guidelines
+for STAF services (as part of a larger initiative to update all of
+STAF's services)
+<li>Removing the trace commands from the MISC service
+</ol>
+<p>
+<li>Added Support for HP-UX IA64, both 32-bit and 64-bit
+<p>
+These enhancements provide support for:
+<ol>
+<li>Building and installing a 32-bit version of STAF on HP-UX IA64
+<li>Building and installing a 64-bit version of STAF on HP-UX IA64
+</ol>
+</ul>
+<p>
+<h4>New Features in STAF V3.0.0 Beta 1</h4>
+<p>
+<ul>
+<li>Communication Interface Enhancements</li>
+<p>
+These enhancements provide support for:
+<ol>
+<li>Removing the constraints on network name specification
+  <ol type="a">
+  <li>Support mixed long and short names for machine names on requests
+  <li>Support IP addresses for machine names on requests
+  </ol>
+<li>Allowing trust specifications to contain wildcards and IP addresses
+<li>Allowing multiple pluggable network communication interfaces
+</ol>
+<p>
+<li>User Security (Trust) Enhancements</li>
+<p>
+These enhancements provide support for:
+<ol>
+<li>Allowing user level security (trust), in addition to the existing machine level
+security currently provided
+<li>Allowing pluggable security mechanisms (Authenticators)
+</ol>
+<p>
+<li>Variable Enhancements</li>
+<p>
+These enhancements provide support for:
+<ol>
+<li>Sending a STAF handle's variable pool across the network for use in
+variable resolution on remote systems
+<li>Splitting the current global variable pool into a global (system-specific)
+variable pool and a "shared" variable pool which is system-wide, but which
+will be sent across the network and used in variable resolution on remote
+systems.
+</ol>
+</ul>
+
+<h3>New Format for "Multi-Valued" Results</h3>
+<p>
+Changed the format for "multi-valued" results from QUERY/LIST, etc. requests
+for all the internal services and for the LOG, MONITOR, RESPOOL, ZIP, STAX,
+EVENT, EVENTMANAGER, CRON, and HTTP external services.
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0
+User's Guide:
+<ul>
+<li>5.2, "STAF"
+<li>6.1, "Marshalling Structured Data"
+<li>6.2.9 "Data Structure and Marshalling APIs"
+<li>New C++ APIs for marshalling structured data are documented in section 6.3.
+<li>New Java APIs for marshalling structured data are documented in section 6.5
+<li>7.4, "Service Result Definition"
+<li>The new format for multi-valued results is documented for each service
+    within section 8.0, "Service Reference".
+<li>The new format for multi-valued results is documented for the STAX service
+    in the STAX User's Guide in the "Request Syntax" section for LIST and
+    QUERY requests.
+<li>The new format for multi-valued results is documented for the Event service
+    in the Event Service User's Guide in the "Request Syntax" section for LIST and
+    QUERY requests.
+<li>The new format for multi-valued results is documented for the EventManager service
+    in the EventManager Service User's Guide in the "Request Syntax" section for
+    the LIST request.
+<li>The new format for multi-valued results is documented for the Cron service
+    in the Cron User's Guide in the "Request Syntax" section for the LIST request.
+<li>The new format for multi-valued results is documented for the HTTP service
+    in the HTTP Service User's Guide in the "Request Syntax" sections for LIST,
+    QUERY, REQUEST|POST|DOGET, FOLLOW LINK, and SUBMIT FORM requests.
+</ul>
+
+<h3>Garbage Collected Handle Support</h3>
+<p>
+Implemented garbage collection for the Sem and ResPool services so that
+when handles terminate without freeing semaphores or resource entries,
+these services will automatically free them.
+<p>
+Note that when you submit a SEM MUTEX REQUEST, etc.
+request using the STAF command executable from the command line, unless you've set
+STAF_STATIC_HANDLE to a static handle, when you do a LIST/QUERY of the
+semaphore, you'll see that the semaphore is not owned by you because
+garbage collection will have already taken place for the handle that is
+automatically created and deleted for you by the STAFF command executable.
+<p>
+Similarly, when you submit a RESPOOL REQUEST request using the STAF command executable
+from the command line, unless you've set STAF_STATIC_HANDLE to a static
+handle, when you do a LIST/QUERY of the pool, you'll see that the
+resource entry is no longer owned by you because garbage collection
+will have already taken place for the handle that is automatically
+created and deleted for you by the STAF command executable.
+
+<!--
+<h3>Added Support for Perl Services</h3>
+<p>
+Added the ability to implement STAF services in Perl.  Previously, STAF
+services could only be written in C/C++, Java, and REXX.
+<p>
+A sample Perl service is available via CVS on SourceForge.
+<p>
+For more information on how to write a STAF service in Perl, see
+section 9.0 "Perl STAF Services" in the STAF Service Developer's Guide.
+-->
+
+<h3>Standardized Request Strings for Services</h3>
+<p>
+Changed the syntax of following service requests to follow standard
+guidelines for STAF services:
+<ol>
+<li>Updated the HANDLE service's syntax by changing its QUERY request
+    syntax and adding a LIST request as follows:
+<pre>
+LIST HANDLES [NAME &lt;Handle Name>] [PENDING] [REGISTERED] [INPROCESS] [STATIC]
+QUERY HANDLE &lt;Handle>
+</pre>    
+
+<li>Updated the PROCESS service's syntax by changing its QUERY request
+    syntax and adding a LIST request as follows:
+<pre>
+LIST  HANDLES [WORKLOAD &lt;name>] [RUNNING] [COMPLETED]
+QUERY HANDLE &lt;Handle>
+</pre>
+<li>Updated the SEM service's syntax by changing most its request
+    syntax to use the standard &lt;verb> &lt;noun> syntax instead of
+    a &lt;noun> &lt;verb> syntax.
+<pre>
+REQUEST MUTEX &lt;Name> [TIMEOUT &lt;Timeout>]
+RELEASE MUTEX &lt;Name> [FORCE]
+
+POST    EVENT &lt;Name>
+PULSE   EVENT &lt;Name>
+RESET   EVENT &lt;Name>
+WAIT    EVENT &lt;Name>
+
+DELETE  MUTEX &lt;Name> | EVENT &lt;Name>
+QUERY   MUTEX &lt;Name> | EVENT &lt;Name>
+</pre>
+</ol>
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0
+User's Guide:
+<ul>
+<li>8.5, "Handle Service"
+<li>8.11, "Process Service"
+<li>8.15, "Semaphore (SEM) Service"
+</ul>
+
+<h3>Added Support for Windows IA64</h3>
+<p>
+Added STAF install files for installing a 64-bit version of STAF on
+Windows IA64.
+
+<h3>Providing/Using Data Directory for STAF and its Services</h3>
+<p>
+Currently, STAF and its services write data in several different locations (the
+primary location being {STAF/Config/STAFRoot/data}, and in most cases,
+this writeable location is not configurable.  Some customers want to install
+STAF in a location that is read-only when STAFProc is running (e.g. in a
+location that is accessible via a mounted drive or in a directory that
+STAFProc will not have write permissions), but in STAF 2.x, this is not
+possible.
+<p>
+Now you can specify the location that STAF and its services can write data
+by using the new DATADIR operational parameter in the STAF configuration file.
+STAF 3.0.0 and the services that we provide have been updated to use this location
+to write data.  There is a system variable called STAF/DataDir which is assigned
+the value of the DATADIR operational parameter.
+<p>In addition, in the next STAF 3.0.0 Beta, we will allow
+multiple instances of STAFProc to run on the same machine if a different
+data directory is specified for each instance of STAFProc via its STAF
+configuration file.
+<p>
+We have standardized where data within the directory specified
+by DATADIR should be stored.  For example:
+<ul>
+<li>A service should write its data to a directory named
+{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<li>Temporary data can be stored in the {STAF/DataDir}/tmp directory.
+Note that the contents of the {STAF/DataDir}/tmp directory will be removed
+whenever STAFProc is restarted.
+<li>Other user data (e.g. from testcases or applications) can be stored in the
+{STAF/DataDir}/user directory, creating a subdirectories within it for each
+application.
+</ul>
+<p>If you have any custom services that write data, you should change them
+to use the writeLocation field made available to services in
+Java class STAFServiceInterfaceLevel5.InitInfo for Java services and in
+the STAFServiceInitLevel2 or STAFServiceInfoLevel3 structures defined in
+STAFServiceInfoLevel3 for C++ services.
+<p>
+Here's a table showing the location that STAF V3.0 services write data
+compared to the location that STAF V2.x services write data.
+If you want to use existing data for a STAF V2.x service, then you will
+have to copy the directory or files from the old STAF V2.X location to
+the new STAF V3.0 location.
+<br><br>
+<table border=1 width=page>
+<tr>
+<td><b>Service</b></td>
+<td><b>Directory or Files to Copy</b></td>
+<td><b>STAF 3.0 Location</b></td>
+<td><b>STAF 2.x Location</b></td>
+</tr>
+<tr>
+<td>Log Service</td>
+<td>Directory</td>
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)></td>
+<td>{STAF/Config/STAFRoot}/data/log</td>
+</tr>
+<tr>
+<td>ResPool Service
+<td>Directory
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<td>{STAF/Config/STAFRoot}/data/&lt;Service name (lower-case)>
+</tr>
+<tr>
+<td>EventManager Service
+<td>Directory
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<td>{STAF/Config/STAFRoot}/data/eventmanagerdata
+</tr>
+<tr>
+<td>Cron Service
+<td>Directory
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<td>&lt;System.getProperty(user.home)>/crondata
+</tr>
+<tr>
+<td>Event Service
+<td>Files
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>/GenManager.out and
+RegManager.out
+<td>&lt;Directory where STAFProc was started>/GenManager.out and RegManager.out
+</tr>
+<tr>
+<td>NamedCounter Service
+<td>File
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>/namedCounter.ser
+<td>&lt;Directory where STAFProc was started>/<Service name>.ser
+</tr>
+<tr>
+<td>Timer Service
+<td>Files
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>/tlist.ser and wlist.ser
+<td>{STAF/Config/STAFRoot}/bin/tlist.ser and wlist.ser
+</tr>
+</table>
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0
+User's Guide:
+<ul>
+<li>2.4, "Variables" - Added a new STAF/DataDir variable to show the
+data directory being used for this instance of STAFProc.
+<li>4.4.3, "JSTAF service proxy library"
+<li>4.7, "Operation parameters" - Added a new DATADIR operational parameter
+<li>4.12.1, "Default Configuration File" - Added setting the DATADIR
+operational parameter to the default location {STAF/Config/STAFRoot}/data.
+<li>8.7.3, "Parameters (for the Log Service)"
+<li>8.13.3, "Parameters (For the ResPool Service)"
+</ul>
+
+<h3>VAR Service Syntax Changes</h3>
+<p>
+Updated the VAR service syntax to follow standard guidelines for STAF
+services (as part of a larger initiative to update all of STAF's services).
+<p>
+Here is the new syntax for the VAR service:
+<pre>
+VAR Service Help
+
+SET [SYSTEM | SHARED | HANDLE &lt;Handle>] VAR &lt;Name=Value> [VAR &lt;Name=Value>]...
+
+GET [SYSTEM | SHARED | HANDLE &lt;Handle>] VAR &lt;Name>
+
+DELETE [SYSTEM | SHARED | HANDLE &lt;Handle>] VAR &lt;Name> [VAR &lt;Name>]...
+
+LIST [SYSTEM | SHARED | HANDLE &lt;Handle> | ASHANDLE &lt;Handle> |
+      REQUEST [&lt;Request Number>] ]
+
+RESOLVE [SYSTEM | SHARED | HANDLE &lt;Handle> | ASHANDLE &lt;Handle> |
+         REQUEST [&lt;Request Number>] ]
+        STRING &lt;String> [STRING &lt;String>]...
+HELP
+</pre>
+<p>
+Also, the external services we provide have been updated to use the new
+variable syntax.  Note that any custom services that you write will
+need to be updated to use the new VAR service syntax if the services
+uses any STAF variables.
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0
+User's Guide:
+<ul>
+<li>4.8, "Variables"
+<li>7.3, "Variable Resolution"
+<li>8.19, "Variable (VAR) Service"
+<li>4.12.2, "Configuration File Example"
+<li>8.20, "Variable (VAR) Service"
+</ul>
+
+<h3>Added a TRACE Service (and Removed from MISC Service)</h3>
+<p>
+In STAF 2.x, the tracing functions were part of the MISC service.  In STAF 3.0.0,
+a new TRACE service was added and the tracing functions were removed 
+from the MISC service.
+<p>The syntax also changed for turning on tracing via the STAF configuration file:
+<pre>
+TRACE ALL  [ TRACEPOINTS | SERVICES ]
+TRACE TRACEPOINTS &lt;Trace point list> | SERVICES &lt;Service list>
+TRACE SET DESTINATION TO &lt; STDOUT | STDERR | FILE &lt;Filename> >
+</pre>
+<p>
+Here is the syntax for the new TRACE service:
+<pre>
+Trace service help
+
+ENABLE ALL  [ TRACEPOINTS | SERVICES ]
+ENABLE TRACEPOINTS &lt;Trace point list> | SERVICES &lt;Service list>
+ENABLE TRACEPOINT &lt;Trace point> [TRACEPOINT &lt;Trace point>]...
+ENABLE SERVICE &lt;Service> [SERVICE &lt;Service>]...
+
+DISABLE ALL  [ TRACEPOINTS | SERVICES ]
+DISABLE TRACEPOINTS &lt;Trace point list> | SERVICES &lt;Service list>
+DISABLE TRACEPOINT &lt;Trace point> [TRACEPOINT &lt;Trace point>]...
+DISABLE SERVICE &lt;Service> [SERVICE &lt;Service>]...
+
+SET DESTINATION TO &lt; STDOUT | STDERR | FILE &lt;Filename> >
+
+LIST [SETTINGS]
+
+PURGE
+
+HELP
+</pre>
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0 User's
+Guide:
+<ul>
+<li>4.11, "Tracing"
+<li>4.12, "Configuration File Examples"
+<li>8.8, "Misc Service"
+<li>8.18, "Trace Service"
+</ul>
+
+<h3>Added Support for HP-UX IA64, both 32-bit and 64-bit</h3>
+<p>
+Added STAF install files for installing a 32-bit version of STAF on
+HP-UX IA64 and for installing a 64-bit version of STAF on HP-UX IA64.
+<p>
+Note that the HP-UX IA64 64-bit version of STAF requires Java 1.4.1 or later
+and when registering a Java service, you must specify the -d64 option for its JVM.
+<p>
+For more information on the external changes made in STAF V3.0.0 for 
+these enhancements, please see the following sections in the STAF 3.0.0 User's
+Guide:
+<ul>
+<li>3.6, "HP-UX IA64 64-bit installation"
+<li>4.4.3, "JSTAF service proxy library"
+</ul>
+
+<h3>Communication Interface Enhancements</h3>
+<p>
+Currently, STAF 2.x provides one and only one network communication mechanism.
+That mechanism is TCP/IP.  There is no way to configure multiple TCP/IP
+interfaces, or to enable SSL, or to communicate over any other protocol,
+such as a Serial Line or older protocols like NetBIOS or SNA, or to specify
+that traffic should be directed to a specific adapter.  This feature will
+open up the network communication mechanism of STAF to enable users to
+create network communication mechanisms, called Connection Providers, which
+can then communicate via any mechanism they choose.  In STAF V3.0,
+the STAF team has provided a Connection Provider that is equivalent to our
+current implementation, i.e. unencrypted TCP/IP v4 socket traffic, and also
+supports IPv6 (assuming the operating system supports IPv6).
+<p>
+One advantage to making the communication interfaces pluggable (as opposed
+to implementing the interface within STAF itself) is that users can create
+their own Connection Providers without having to redistribute all of STAF
+(and without having to rebuild STAF on their own).  Note that since the
+Connection Provider interfaces are C/C++ based, new Connection Providers will
+be platform specific.  We will be providing more information in the future
+on how to write a Connection Provider for STAF.
+<p>In conjunction with Feature #626917 (Add notify key to Process service)
+that was implemented in STAF V2.6.0, these enhancements will resolve many
+of the problems that people see when using services like STAX, where the use
+of IP addresses (or mismatching long vs. short names) can cause a job to
+hang.  It will also go a long way to solving DHCP problems as well, although
+you will still need to be able to resolve the hostname and/or know the IP
+address of the target system at runtime.  Other facilities/services can be
+added on to STAF to enable "on the fly" registration of DHCP addresses from
+target systems and is not covered by these enhancements.
+<p>
+STAF's current trust mechanism requires that you grant trust on a single
+system by single system basis.  This is tedious when you want to grant
+access to all the systems from a given DNS domain, and is particularly
+problematic when the system to which you want to grant access doesn't
+actually have a DNS record.  These enhancements enable wild cards to be
+used in trust specifications so that you can grant access to groups of systems
+at once.  Additionally, you are now able to grant access to IP addresses.
+<p>
+Added support to allow multiple copies of STAF to run on the same system.
+This allows you to use STAF to upgrade STAF, itself, on a given system.
+A new environment variable called STAF_INSTANCE_NAME has been added to 
+differentiate between multiple instances of STAF.  The STAF_INSTANCE_NAME
+environment variable must be set to the same thing for a given STAFProc
+daemon and any applications/testcases that want to talk to the instance
+of STAF.  In a future Beta, we will also change the STAF install to allow
+multiple versions of STAF to be installed on a given system.
+<p>
+Added LIST/QUERY requests to MISC service to show information on which 
+interfaces are enabled
+<p>
+Added support for the DEFAULTINTERFACE operational parameter and
+provided a new system variable, STAF/Config/DefaultInterface
+<p>
+Removed the USELONGNAMES operational settings and the STAF/Config/EffectiveMachine
+variable as STAF V3.0 always uses long names.
+<p>
+Added the STAF/Config/MachineNickname system variable which reflects the
+nickname for the machine.  The nickname defaults to the systems logical
+network identifier (e.g. long host name for TCP), but can be changed
+using the MACHINE operational setting in the STAF configuration file.
+Note that the machine nickname is not used for network communication by STAF.
+It is used by the LOG and MONITOR services to indicate the machine name
+for machine logs and monitor messages.
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0
+User's Guide:
+<ul>
+<li>4.3, "Network Interfaces"
+<li>2.5, "Security"
+<li>5.1.1 Running Multiple Instances of STAFProc
+<li>5.2, "STAF" - describes that you can now specify physical or logical
+system identifiers (host names or IP addresses) when submitting a request
+to a remote system, as well as the network interface.
+<li>4.9, "Trust"
+<li>8.18, "Trust Service"
+<li>8.8, "Misc Service":
+    <ol>
+    <li>8.8.4, "WHOAMI" - added a WHOAMI request to the Misc service.  WHOAMI will 
+    display information about who a system thinks you are. This can be useful in
+    debugging trust issues and other problems.
+    <li>8.8.5, "LIST" - added a LIST request to the Misc service to
+    list enabled interfaces
+    <li>8.8.6, "QUERY" - added a QUERY request to the Misc service to
+    query an interface
+    </ol>
+</ul>
+
+<h3>User Security (Trust)</h3>
+<p>
+Currently, STAF only supports machine level trust, but some users have
+expressed a need for user level trust as well.  For example, you might
+want to specify trust levels for particular users, in addition (or instead of)
+particular machines.
+<p>
+Different methods to authenticate a user are supported by the use of
+authenticators.  We are providing a sample authenticator to let
+you experiment with using user level security.
+It is not part of the STAF install package.  The sample authenticator jar file is
+available for download <a href="http://prdownloads.sourceforge.net/staf/AuthSample.jar">here</a>
+or from the <a href="../getcurrent30.php">STAF 3.0 Download</a> page.
+<p>
+Note that how user identifiers and credentials are created and authenticated
+depends on the authenticator(s) that you provide.
+<p>
+If the user can be authenticated, then the user authentication overrides the
+machine authentication.
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0 User's
+Guide:
+<ul>
+<li>4.6, "Authenticator Registration"
+<li>4.6.2, "Sample Authenticator" - provides more information about using the
+sample authenticator provided on the STAF SourceForge website.
+<li>2.5, "Security"
+<li>4.9, "Trust"
+<li>8.18, "Trust Service"
+<li>8.8.4, "WHOAMI" - added a WHOAMI request to the Misc service.  WHOAMI will 
+display information about who a system thinks you are. This can be useful in
+debugging trust issues and other problems.
+</ul>
+
+<h3>Variable Enhancements</h3>
+<p>
+Currently, a STAF handle's variable pool is only used in variable resolution
+if the request is processed locally.  If a request is made to a remote
+system, the STAF handle's variable pool is not delivered to the target
+system and used in variable resolution.  On remote systems, only the remote
+system's global variable pool is used.
+<p>
+This leads to issues where variables such as a handle's log mask are not propagated
+to remote systems.  However, of possibly larger consequence is that this flaw
+limits the ability of services to provide configurability on a per handle basis.
+For example, the Log service could potentially allow for a default logging level
+to be specified in a STAF variable.  But, currently, this would only work for
+systems doing local logging.  With the addition of these enhancements, STAF
+services will be able to start leveraging STAF variables for defining configurable
+behavior.
+<p>
+A new "SHARED" option has been added to the VAR service SET, GET, DELETE, LIST, and
+RESOLVE requests.  On SET, GET, and DELETE requests, this option will direct the
+request to the system's shared variable pool.  On a RESOLVE request, the SHARED option
+will resolve variables in the context of the system's shared variable pool.
+On a LIST request, this option will list the contents of the system's shared
+variable pool.
+<p>
+For more information on the external changes made in STAF V3.0.0 for
+these enhancements, please see the following sections in the STAF 3.0.0 User's
+Guide:
+<ul>
+<li>2.4, "Variables"
+<li>8.19, "Variable (VAR) Service"
+</ul>
+<p>
+<hr>
+<h2>STAF Configuration File Changes</h2>
+
+<p>Here is the new default STAF configuration file provided with STAF V3.0:
+<pre>
+# Turn on tracing of internal errors and deprecated options
+trace enable tracepoints "error deprecated"
+
+# Enable TCP/IP connections
+interface tcp library STAFTCP
+
+# Set default local trust
+trust machine local://local level 5
+
+# Add default service loader
+serviceloader library STAFDSLS
+</pre>
+<p>
+<h4>Notes:</h4>
+<ol>
+<li>The syntax for turning on tracing has changed.
+<p>
+<li>The syntax for the interface line has changed.  Also, you can
+now register multiple network interfaces.  For example:
+<pre>
+interface tcp  library STAFTCP
+interface tcp2 library STAFTCP option port=6700
+</pre>
+<p>
+Note that requests from the local system will now appear as though
+they came from an interface named "local" and a system identifier of "local".
+This allows you to specify a trust level for local requests (in previous
+versions of STAF, local requests were automatically granted a trust level of 5.
+<p>
+<li>
+Machine trust specifications now can contain IP addresses or long hostnames
+(short host names are no longer supported).
+<pre>
+trust machine 9.3.224.82 level 5
+trust machine server1.austin.ibm.com level 5
+</pre>
+<p>
+You can now specify user trust specifications.  For example:
+<pre>
+trust user JohnDoe@us.ibm.com level 4
+trust user Jane@company.com level 5
+</pre>
+Note that you can specify wild cards ('*' for zero or more of any
+character, '?' for any single character) in trust specifications for machines
+and users.
+<pre>
+trust machine 9.3.194.* level 3
+trust user *@us.ibm.com level 4
+</pre>
+</ol>
+
+<p>
+<hr>
+<h2>New Format for Queued Messages Generated by STAF and its Services</h2>
+<p>
+Messages queued by STAF V3.x and it's services have a different format than in
+STAF V2.x.  A new TYPE option was added in STAF V3.0 to identify the type of
+message being queued.  STAF V3.x and it's services specify a type for all the
+message that they generate because queued messages can contain various marshalled
+data structures, such as a map, so the type let's you know the structure of the
+message.
+<p>
+Here's a table showing the new format of the messages queued by STAF V3.0
+and it's services, as well as showing the format of these messages queued by
+STAF V2.x clients to a STAF V3.0 machine.
+<p>
+<table id="QueuedMsgTable" border>
+<thead>
+<tr>
+<th colspan="2">STAF V3.0 Queued Messages
+</tr>
+<tr>
+<th width=40%>Queued Messages from STAF V3.0
+<th width=60%>Queued Messages from STAF V2.x
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>TYPE: STAF/RequestComplete</tt>
+<br>
+<tt>MESSAGE</tt> A map containing the request completion information as follows:
+<pre>
+{
+  'requestNumber': &lt;Request #>,
+  'rc'           : &lt;Request Return Code>,
+  'result'       : &lt;Request Result Buffer>
+}
+</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE</tt> A string containing request completion information as follows:
+<p><tt>STAF/RequestComplete &lt;Request #>;&lt;Request return code>;&lt;Request result buffer></tt>
+<tr>
+<td><tt>TYPE: STAF/Process/End</tt>
+<br>
+<tt>MESSAGE:</tt> A map containing the process completion information as follows:
+<pre>
+{
+  'handle'      : &lt;Handle #>,
+  'endTimestamp': &lt;YYYMMDD-HH:MM:SS>,
+  'rc'          : &lt;Process Return Code>,
+  'key'         : &lt;Key> | &lt;None>,
+  'fileList'    : [
+    {
+      'rc'  : &lt;Returned File #1 RC>,
+      'data': &lt;Returned File #1 Data>
+    }
+  ]
+}
+</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing process completion information as follows:
+<p><tt>STAF/PROCESS/END &lt;Handle>;&lt;Timestamp>;&lt;Return Code>[;&lt;Returned file data>]</tt>
+<tr>
+<td><tt>TYPE: STAF/Start</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAF/START</tt>.
+<tr>
+<td><tt>TYPE: STAF/Shutdown</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAF/SHUTDOWN</tt>.
+<tr>
+<td><tt>TYPE: STAF/Service/Event</tt>
+<br>
+<tt>MESSAGE:</tt> A map containing the event information as follows:
+<pre>
+{
+  'eventID'         : &lt;Event ID>,
+  'eventServiceName': &lt;Event Service Name>,
+  'handle'          : &lt;Handle #>,
+  'handleName'      : &lt;Handle Name>,
+  'machine'         : &lt;Machine>,
+  'propertyMap'     : {
+    &lt;Name>: &lt;Value>,
+    ...
+  },
+  'subtype'         : &lt;Subtype>,
+  'timestamp'       : &lt;YYYYDDMM-HH:MM:SS>,
+  'type'            : &lt;Type>
+}
+</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing the event information as follows:
+<p><tt>STAF/SERVICE/&lt;Event Service Name>/;&lt;Event ID>;&lt;Generating Machine>;&lt;Generating Process>;&lt;Generating Handle>;&lt;TimeStamp>;&lt;Type>;&lt;Subtype>;
+[&lt;Name>=&lt;Value>;]...</tt>
+<tr>
+<td><tt>TYPE: STAF/Service/EventManager/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>EventManager/End</tt>.
+<tr>
+<td><tt>TYPE: STAF/Service/Cron/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>Cron/End</tt>.
+<tr>
+<td><tt>TYPE: STAF/Service/STAX/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAX/End</tt>.
+<tr>
+<td><tt>TYPE: STAF/Service/STAX/JobWaitComplete/<JobID></tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAX/Job/Wait/Complete/<JobID></tt>.
+<tr>
+<td><tt>TYPE: STAF/STAXMonitor/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAXMonitorJob/End</tt> or <tt>STAXJobMonitor/End</tt>.
+<tr>
+<td><tt>TYPE: STAF/STAFDemo/Stop</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAFDemo/End</tt>.
+</table>
+<p>
+<hr>
+<h2>Future Enhancements Planned for STAF V3.0</h2>
+<p>
+The enhancements that have not been provided yet in STAF V3.0.0 Beta 7,
+but are planned for the STAF V3.0.0 GA Release (or STAF V3.1) are:
+<ul> 
+<li>Provide additional changes for marshalling:
+    <ol type="a">
+    <li>Update additional external services (FSExt, SXE, and Timer)
+    to provide marshalled output for "multi-valued" results
+    <li>Provide Perl marshalling APIs (unmarshalling is already provided) and
+    Python/Tcl/Rexx marshalling and unmarshalling APIs
+    </ol>
+<li>Provide a secure TCP/IP connection provider using OpenSSL
+    (pending approval from our export/legal folks in time for the GA)
+<li>For IBM internal customers, provide an authenticator that uses
+    the IBM Intranet Password API (pending the approval of including
+    the secure TCP/IP connection provider)
+<li>Provide support for STAF services written in Perl (this support may be
+    pushed out to STAF V3.1)
+</ul>
+</html>

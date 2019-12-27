@@ -1,0 +1,255 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_HELLO = $(subst Name,Hello,$(DLL))
+
+test_targets += $(REL)/lib/$(LIB_HELLO) \
+    $(REL)/bin/listdir$(OS_EE) \
+    $(REL)/bin/testfs$(OS_EE) \
+    $(REL)/bin/testfs2$(OS_EE) \
+    $(REL)/bin/createpath$(OS_EE) \
+    $(REL)/bin/testtime$(OS_EE) \
+    $(REL)/bin/testrwsem$(OS_EE) \
+    $(REL)/bin/testlock$(OS_EE) \
+    $(REL)/bin/testcommandparser$(OS_EE) \
+    $(REL)/bin/testbufflen$(OS_EE) \
+    $(REL)/bin/testbufflen2$(OS_EE) \
+    $(REL)/bin/testlogbufflen$(OS_EE) \
+    $(REL)/bin/testlogbufflen2$(OS_EE) \
+    $(REL)/bin/testprocess$(OS_EE) \
+    $(REL)/bin/testconn$(OS_EE) \
+    $(REL)/bin/testcodepage$(OS_EE) \
+    $(REL)/bin/testcodepage2$(OS_EE) \
+    $(REL)/bin/testauthentication$(OS_EE) \
+    $(REL)/bin/testmarshalling$(OS_EE) \
+    $(REL)/bin/testmarshalling2$(OS_EE) \
+    $(REL)/bin/testMarshallingPerf$(OS_EE) \
+    $(REL)/bin/testprivatedata$(OS_EE) \
+    $(REL)/bin/STAFDumb$(OS_EE) \
+    $(REL)/bin/STAFLoop$(OS_EE)
+Targets += $(test_targets)
+CleanupTargets += cleanup_test
+
+$(test_targets): SUBSYS_REL := test
+SUBSYS_REL := test
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(REL)/lib/$(LIB_HELLO): OBJS = $(helloservice_objs)
+$(REL)/lib/$(LIB_HELLO): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+$(REL)/bin/listdir$(OS_EE):            OBJS = $(listdir_objs)
+$(REL)/bin/testfs$(OS_EE):             OBJS = $(testfs_objs)
+$(REL)/bin/testfs2$(OS_EE):            OBJS = $(testfs2_objs)
+$(REL)/bin/createpath$(OS_EE):         OBJS = $(createpath_objs)
+$(REL)/bin/testtime$(OS_EE):           OBJS = $(testtime_objs)
+$(REL)/bin/testrwsem$(OS_EE):          OBJS = $(testrwsem_objs)
+$(REL)/bin/testlock$(OS_EE):           OBJS = $(testlock_objs)
+$(REL)/bin/testcommandparser$(OS_EE):  OBJS = $(testcommandparser_objs)
+$(REL)/bin/testbufflen$(OS_EE):        OBJS = $(testbufflen_objs)
+$(REL)/bin/testbufflen2$(OS_EE):       OBJS = $(testbufflen2_objs)
+$(REL)/bin/testlogbufflen$(OS_EE):     OBJS = $(testlogbufflen_objs)
+$(REL)/bin/testlogbufflen2$(OS_EE):    OBJS = $(testlogbufflen2_objs)
+$(REL)/bin/testprocess$(OS_EE):        OBJS = $(testprocess_objs)
+$(REL)/bin/testconn$(OS_EE):           OBJS = $(testconn_objs)
+$(REL)/bin/testcodepage$(OS_EE):       OBJS = $(testcodepage_objs)
+$(REL)/bin/testcodepage2$(OS_EE):      OBJS = $(testcodepage2_objs)
+$(REL)/bin/testauthentication$(OS_EE): OBJS = $(testauthentication_objs)
+$(REL)/bin/testmarshalling$(OS_EE):    OBJS = $(testmarshalling_objs)
+$(REL)/bin/testmarshalling2$(OS_EE):   OBJS = $(testmarshalling2_objs)
+$(REL)/bin/testMarshallingPerf$(OS_EE): OBJS = $(testMarshallingPerf_objs)
+$(REL)/bin/testprivatedata$(OS_EE):    OBJS = $(testprivatedata_objs)
+$(REL)/bin/STAFLoop$(OS_EE):           OBJS = $(stafloop_objs)
+$(REL)/bin/STAFDumb$(OS_EE):           OBJS = $(stafdumb_objs)
+$(test_targets): LIBS = STAF
+
+helloservice_objs       := hello
+listdir_objs            := listdir
+testfs_objs             := testfs
+testfs2_objs            := testfs2
+createpath_objs         := createpath
+testtime_objs           := testtime
+testrwsem_objs          := testrwsem
+testlock_objs           := testlock
+testcommandparser_objs  := testcommandparser
+testbufflen_objs        := testbufflen
+testbufflen2_objs       := testbufflen2
+testlogbufflen_objs     := testlogbufflen
+testlogbufflen2_objs    := testlogbufflen2
+testprocess_objs        := testprocess
+testconn_objs           := testconn
+testcodepage_objs       := testcodepage
+testcodepage2_objs      := testcodepage2
+testauthentication_objs := testauthentication
+testmarshalling_objs    := testmarshalling
+testmarshalling2_objs   := testmarshalling2
+testMarshallingPerf_objs := testMarshallingPerf
+testprivatedata_objs    := testprivatedata
+stafloop_objs           := STAFLoop
+stafdumb_objs           := STAFDumb
+
+test_all_objs := $(helloservice_objs) \
+    $(listdir_objs) \
+    $(testfs_objs) \
+    $(testfs2_objs) \
+    $(createpath_objs) \
+    $(testtime_objs) \
+    $(testrwsem_objs) \
+    $(testlock_objs) \
+    $(testcommandparser_objs) \
+    $(testbufflen_objs) \
+    $(testbufflen2_objs) \
+    $(testlogbufflen_objs) \
+    $(testlogbufflen2_objs) \
+    $(testprocess_objs) \
+    $(testconn_objs) \
+    $(testcodepage_objs) \
+    $(testcodepage2_objs) \
+    $(testauthentication_objs) \
+    $(testmarshalling_objs) \
+    $(testmarshalling2_objs) \
+    $(testMarshallingPerf_objs) \
+    $(testprivatedata_objs) \
+    $(stafloop_objs) \
+    $(stafdumb_objs)
+
+helloservice_objs    := $(foreach obj,$(helloservice_objs),$(O)/test/$(obj)$(OS_OE))
+listdir_objs         := $(foreach obj,$(listdir_objs),$(O)/test/$(obj)$(OS_OE))
+testfs_objs          := $(foreach obj,$(testfs_objs),$(O)/test/$(obj)$(OS_OE))
+testfs2_objs         := $(foreach obj,$(testfs2_objs),$(O)/test/$(obj)$(OS_OE))
+createpath_objs      := $(foreach obj,$(createpath_objs),$(O)/test/$(obj)$(OS_OE))
+testtime_objs        := $(foreach obj,$(testtime_objs),$(O)/test/$(obj)$(OS_OE))
+testrwsem_objs       := $(foreach obj,$(testrwsem_objs),$(O)/test/$(obj)$(OS_OE))
+testlock_objs        := $(foreach obj,$(testlock_objs),$(O)/test/$(obj)$(OS_OE))
+testcommandparser_objs := $(foreach obj,$(testcommandparser_objs),$(O)/test/$(obj)$(OS_OE))
+testbufflen_objs     := $(foreach obj,$(testbufflen_objs),$(O)/test/$(obj)$(OS_OE))
+testbufflen2_objs    := $(foreach obj,$(testbufflen2_objs),$(O)/test/$(obj)$(OS_OE))
+testlogbufflen_objs     := $(foreach obj,$(testlogbufflen_objs),$(O)/test/$(obj)$(OS_OE))
+testlogbufflen2_objs     := $(foreach obj,$(testlogbufflen2_objs),$(O)/test/$(obj)$(OS_OE))
+testprocess_objs     := $(foreach obj,$(testprocess_objs),$(O)/test/$(obj)$(OS_OE))
+testconn_objs        := $(foreach obj,$(testconn_objs),$(O)/test/$(obj)$(OS_OE))
+testcodepage_objs    := $(foreach obj,$(testcodepage_objs),$(O)/test/$(obj)$(OS_OE))
+testcodepage2_objs   := $(foreach obj,$(testcodepage2_objs),$(O)/test/$(obj)$(OS_OE))
+testauthentication_objs := $(foreach obj,$(testauthentication_objs),$(O)/test/$(obj)$(OS_OE))
+testmarshalling_objs := $(foreach obj,$(testmarshalling_objs),$(O)/test/$(obj)$(OS_OE))
+testmarshalling2_objs := $(foreach obj,$(testmarshalling2_objs),$(O)/test/$(obj)$(OS_OE))
+testMarshallingPerf_objs := $(foreach obj,$(testMarshallingPerf_objs),$(O)/test/$(obj)$(OS_OE))
+testprivatedata_objs := $(foreach obj,$(testprivatedata_objs),$(O)/test/$(obj)$(OS_OE))
+stafloop_objs        := $(foreach obj,$(stafloop_objs),$(O)/test/$(obj)$(OS_OE))
+stafdumb_objs        := $(foreach obj,$(stafdumb_objs),$(O)/test/$(obj)$(OS_OE))
+test_all_objs        := $(foreach obj,$(test_all_objs),$(O)/test/$(obj)$(OS_OE))
+test_all_dependents  := $(test_all_objs:$(OS_OE)=.d)
+$(test_all_dependents): SUBSYS_REL := test
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(test_all_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# Test targets
+
+$(REL)/lib/$(LIB_HELLO): $(helloservice_objs) $(LIB_STAF_FP)
+	$(SHARED_LIB_IT)
+
+$(REL)/bin/listdir$(OS_EE): $(listdir_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testfs$(OS_EE): $(testfs_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testfs2$(OS_EE): $(testfs2_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/createpath$(OS_EE): $(createpath_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testtime$(OS_EE): $(testtime_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testrwsem$(OS_EE): $(testrwsem_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testlock$(OS_EE): $(testlock_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testcommandparser$(OS_EE): $(testcommandparser_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testbufflen$(OS_EE): $(testbufflen_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testbufflen2$(OS_EE): $(testbufflen2_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testlogbufflen$(OS_EE): $(testlogbufflen_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testlogbufflen2$(OS_EE): $(testlogbufflen2_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testprocess$(OS_EE): $(testprocess_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testconn$(OS_EE): $(testconn_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testcodepage$(OS_EE): $(testcodepage_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testcodepage2$(OS_EE): $(testcodepage2_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/testauthentication$(OS_EE): $(testauthentication_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+        
+$(REL)/bin/testmarshalling$(OS_EE): $(testmarshalling_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+        
+$(REL)/bin/testmarshalling2$(OS_EE): $(testmarshalling2_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+        
+$(REL)/bin/testMarshallingPerf$(OS_EE): $(testMarshallingPerf_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+        
+$(REL)/bin/testprivatedata$(OS_EE): $(testprivatedata_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+        
+$(REL)/bin/STAFLoop$(OS_EE): $(stafloop_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+$(REL)/bin/STAFDumb$(OS_EE): $(stafdumb_objs) $(LIB_STAF_FP)
+	$(LINK_IT)
+
+cleanup_test:
+	-@$(DEL) $(O)/test/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_HELLO) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/listdir$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testfs$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testfs2$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/createpath$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testtime$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testrwsem$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testcommandparser$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testbufflen$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testbufflen2$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testprocess$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testconn$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testcodepage$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testcodepage2$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testauthentication$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testmarshalling$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testmarshalling2$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testMarshallingPerf$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testprivatedata$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testlogbufflen$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/testlock$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAFLoop$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAFDumb$(OS_EE) $(OUT_ERR_TO_DEV_NULL)

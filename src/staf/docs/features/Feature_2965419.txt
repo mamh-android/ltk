@@ -1,0 +1,968 @@
+Feature ID  : 2965419
+Title       : Add ability for STAX to use a different caching
+              algorithm
+
+Description
+-----------
+
+Provide the ability for STAX to use the Least Frequently (LFU)
+cache replacement algorithm instead of the Least Recently Used
+(LRU) replacement algorithm for a better file cache hit ratio,
+and thus, better performance.  Also, allow a combination of
+the LFU and LRU algorithms by selecting the LFU algorithm with
+a maximum age specified to remove any "stale" documents in the
+cache (that haven't been used within the maximum age period),
+before removing the documents with the least number of hits.
+
+Problem(s) Solved
+-----------------
+
+Here's a description of what a STAF user wants:
+
+I would like STAX to have the ability to use a caching algorithm
+other than Least Recently Used (LRU) for file caching.
+We run 300+ jobs per day. Each job is different but each job
+imports the same 37 files. We would like these 37 files to stay
+in the cache all the time. However, when we start up multiple
+jobs at once many of the 37 imported files are kicked out of the
+cache. This causes a major slow down in the running of jobs. If
+the Least Frequently Used replacement algorithm was used instead
+of the Least Recently Used cache replacement algorithm, it would
+be much more likely that the imported files would remain in the
+cache.
+
+Related Features/Patches
+------------------------
+
+None
+
+External Changes
+----------------
+
+a) Add two new optional parameters when registering the STAX
+   service in the STAF.cfg file:  FILECACHEALGORITHM and
+   MAXFILECACHEAGE.
+
+Syntax:
+
+PARMS "[FILECACHEALGORITHM <LRU | LFU>
+        [MAXFILECACHEAGE <Number>[s|m|h|d|w]]]"
+
+FILECACHEALGORITHM specifies the cache algorithm (aka replacement
+algorithm) for the file cache.  When the cache is full (or when
+the size of the cache is changed to a smaller value), this
+algorithm chooses which files to discard to make room for the new
+files.  Valid values are LRU or LFU.
+
+- LRU specifies the "Least Recently Used" cache algorithm which
+  removes the least recently used file first (e.g. the file with
+  the oldest "Last Hit Date-Time").  This is the default.
+
+- LFU specifies the "Least Frequently Used" cache algorithm which
+  removes the file that is used least ofem (e.g. the file with
+  the least number of "Hits").  If cached files have the same
+  number of hits, the file with the oldest "Last Hit Date-Time"
+  will be removed.
+ 
+  In addition, you can set a maximum age for a file in the file
+  cache by specifying the MAXFILECACHEAGE parameter so that this
+  algorithm will also take into account if a file hasn't been
+  used for the specified maximum age which means it is
+  considered to be stale.  The maximum age is 0 by default,
+  which means that there is no maximum age.  If you set the
+  maximum age to a non-zero value, this indicates that a file
+  in the cache will be considered to be "stale" if it hasn't
+  been used (last hit) for this maximum age.  Stale files with
+  the oldest "Last Hit Date-Time" will be removed before any
+  non-stale files.
+
+MAXFILECACHEAGE specifies the maximum age for a file in the
+cache and is only used if the FILECACHEALGORITHM is set to LFU.
+The maximum age may be expressed in seconds, minutes, hours,
+days, or weeks.  Its format is <Number>[s|m|h|d|w] where <Number>
+must be an integer from 0 to 2147483647 and indicates seconds
+unless one of the following case-insensitive suffixes is
+specified: s (for seconds), m (for minutes), h (for hours),
+d (for days), or w (for weeks).  If <Number> is 0, this means
+that there is no maximum age.  Examples:
+  - 0 (no maximum age)
+  - 30 (30 seconds)
+  - 30s (30 seconds)
+  - 5m (5 minutes)
+  - 2h (2 hours)
+  - 1d (1 day)
+  - 1w (1 week)
+
+Example:
+
+Register the STAX service and set the caching algorithm to LFU
+and set the maximum age for cached files to 1 day.
+
+service STAX library JSTAF \
+        execute {STAF/Config/STAFRoot}/services/stax/STAX.jar \
+        PARMS "FILECACHEALGORITHM LFU MAXFILECACHEAGE 1d"
+
+b) Change the SET request for the STAX service by adding two
+  new optional options:  FILECACHEALGORITHM and MAXFILECACHEAGE.
+
+Syntax:
+
+SET [FILECACHEALGORITHM <LRU | LFU>]
+    [MAXFILECACHEAGE <Number>[s|m|h|d|w]]
+
+These options are described above.
+
+Example:
+
+Set the caching algorithm to LFU and set the maximum age for
+cached files to 12 hours.
+
+C:\>STAF local STAX SET FILECACHEALGORITHM LFU MAXFILECACHEAGE 12h
+Response
+--------
+
+c) Change the output for the LIST SETTINGS request for the
+   STAX service to show the settings for FileCacheAlgorithm and
+   MaxFileCacheAge.
+
+Result:
+
+Add the following keys to the definition of map class
+STAF/Service/STAX/Settings:
+
+Key Name           Display Name         Type     Format / Value
+------------------ -------------------- -------- -------------------
+fileCacheAlgorithm File Cache Algorithm <String> LRU | LFU
+maxFileCacheAge    Max File Cache Age   <String> <Number>[s|m|h|d|w]
+
+Example:
+
+C:\>STAF local STAX LIST SETTINGS
+Response
+--------
+{
+  Event Machine         : local
+  Event Service Name    : Event
+  Number of Threads     : 5
+  Process Timeout       : 60000
+  File Caching          : Enabled
+  Max File Cache Size   : 20
+  File Cache Algorithm  : LFU
+  Max File Cache Age    : 12h
+  Max Machine Cache Size: 20
+  Max Return File Size  : 0
+  Max Get Queue Messages: 25
+  Max STAX-Threads      : 0
+  Clear Logs            : Disabled
+  Log TC Elapsed Time   : Enabled
+  Log TC Num Starts     : Enabled
+  Log TC Start/Stop     : Disabled
+  Python Output         : JobUserLog
+  Python Log Level      : Info
+  Extensions            : []
+  Extension File        : C:/staf/services/extensions.xml
+}
+
+d) Add three new optional options to the LIST FILECACHE request
+   for the STAX service:  SORTBYLRU SORTBYLFU SUMMARY
+
+The results will be sorted in the order determined by the cache
+algorithm by default.  Or, you can override the sort order
+by specifying the SORTBYLRU or the SORTBYLFU option.
+
+Syntax:
+
+LIST FILECACHE [SORTBYLRU | SORTBYLFU | SUMMARY]
+
+SORTBYLRU specifies to list the current contents of the file
+cache in the order determined by the LRU (Least Recently Used)
+algorithm.  This means the files will be listed in descending
+order by last hit date.
+
+SORTBYLFU specifies to list the current contents of the file
+cache in the order determined by the LFU (Least Frequently
+Used) algorithm.  All non-stale files will be listed before
+any stale files.  The non-stale files will be sorted by hit
+count in descending order, and then by last hit date in
+descending order (for those files with the same hit count).
+The stale files will be sorted by last hit date in descending
+order.
+
+SUMMARY specifies to show summary information about the file
+cache, including its hit ratio.
+
+Results:
+
+- If the SUMMARY option is not specified, the result buffer
+will contain a marshalled <Map:STAF/Service/STAX/FileCache>
+representing the file cache for the STAX service. The
+results will be sorted in the order determined by the cache
+algorithm by default.  Or, if the SORTBYLRU option is
+specified, the results will be listed in descending order
+by last hit date.  Or, if the SORTBYLFU option is specified,
+all non-stale files will be listed before any stale files.
+The non-stale files will be sorted by hit count in
+descending order, and then by last hit date in descending
+order (for those files with the same hit count).  The stale
+files will be sorted by last hit date in descending order.
+
+- If the SUMMARY option is specified, the result buffer will
+contain a marshalled <Map:STAF/Service/STAX/FileCacheSummary>
+representing summary information about the file cache for the
+STAX service.  The map is defined as follows:
+
+Definition of map class STAF/Service/STAX/FileCacheSummary:
+
+Key Name      Display Name         Type     Format / Value
+------------- -------------------- -------- -------------------
+hitRatio      Hit Ratio            <String> <Number>%
+hitCount      Hit Count            <String> 
+missCount     Miss Count           <String>
+requestCount  Request Count        <String>
+lastPurgeDate Last Purge Date-Time <String> <YYYYMMDD-HH:MM:SS>
+
+Notes:
+1) The "Hit Ratio" value shows how often a searched for file
+   is actually found in the cache.
+2) The "Hit Count" value is the total number of times that a
+   file with the same Last Modification Date was found in
+   the cache.
+3) The "Miss Count" value is the total number of times that
+   a file with the same Last Modification Date was not found
+   in the cache.
+4) The "Request Count" value is the total number of times
+   that a file was searched for in the cache.
+5) The "Last Purge Date-Time" value is the date that the
+   cache was last purged (or the date the file cache was
+   created if the cache has never been purged).
+
+Examples:
+
+1) Goal: List the contents of the file cache in the order
+         determined by the LFU (Least Frequently Used).
+
+C:\>STAF local STAX LIST FILECACHE SORTBYLFU
+Response
+--------
+Machine File                 Hits Last Hit          Added Date-Time
+------- -------------------- ---- ----------------- --------------------
+client1 /stax/myfile.xml     6    20100603-14:15:34 20100603-14:01:21
+local   c:\stax\STAXUtil.xml 2    20100603-14:14:55 20100603-13:51:50
+local   c:\stax\myJob.xml    2    20100603-14:14:52 20100603-13:51:42
+client1 /stax/STAFTest.xml   1    20100603-14:15:33 20100603-13:49:27
+client1 /stax/STAXUtil.xml   1    20100603-14:15:00 20100603-14:12:21
+server1 /tmp/MainJob.xml     0    20100603-14:15:40 20100603-14:15:00
+
+2) Goal: List summary information for the file cache.
+
+C:\>STAF local STAX LIST FILECACHE SUMMARY
+Response
+--------
+Hit Ratio      : 75%
+Hit Count      : 15
+Miss Count     : 5
+Request Count  : 20
+Last Purge Date: 20100603-16:53:21
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+services/stax/service/STAX.java
+services/stax/service/STAXImportAction.java
+services/stax/service/STAXFileCache.java
+services/stax/docs/userguide/staxug.html
+test/STAFTest.xml
+
+1) Changes to services/stax/service/STAX.java:
+
+   a) Changes to the init() method:
+   
+      - Added the FILECACHEALGORITHM and MAXFILECACHEAGE options
+        to the fParmsParser.
+      - Added the SORTBYLRU, SORTBYLFU, and SUMMARY options to
+        the fListParser.
+      - Added the FILECACHEALGORITHM and MAXFILECACHEAGE options
+        to the fSetParser.
+      - Constructed a map-class for the file cache summary.
+      - Added keys for fileCacheAlgorithm and maxFileCacheAge
+        to the fSettingsMapClass.
+      - Updated the STAX Help text to include the new options
+        for the LIST FILECACHE request and the SET request.
+
+   b) Changes to the execute() method:
+
+      - Added a check to make sure that the STAXDocument returned
+        by the STAXFileCache.get().getDocument() method is not null.
+   
+   c) Changes to the handleList() method:
+
+      - Updated how handle a "LIST SETTINGS" request by adding the
+        fileCacheAlgorithm and maxFileCacheAge to the settingsMap:
+
+      settingsMap.put("fileCacheAlgorithm",
+                       STAXFileCache.get().getAlgorithmString());
+      settingsMap.put("maxFileCacheAge", String.valueOf(
+                      STAXFileCache.get().getMaxAge()));
+
+      - Updated how handle a "LIST FILECACHE" request by adding
+        support for the new SORTBYLRU and SORTBYLFU options.
+
+      if (parseResult.optionTimes("SUMMARY") == 0)
+      {
+          // By default, sort based on the cache alorithm
+          int sortBy = STAXFileCache.get().getAlgorithm();
+
+          if (parseResult.optionTimes("SORTBYLRU") != 0)
+              sortBy = STAXFileCache.LRU;
+          else if (parseResult.optionTimes("SORTBYLFU") != 0)
+              sortBy = STAXFileCache.LFU;
+
+          List cacheContents = STAXFileCache.get().getCacheContents(
+              sortBy);
+
+          ... <Same code as before>
+      }
+
+      - Updated how handle a "LIST FILECACHE" request by adding
+        support for the new SUMMARY option.
+
+      // Provide summary information for the File Cache
+
+      STAXFileCache fileCache = STAXFileCache.get();
+      long hitCount = fileCache.getCacheHitCount();
+      long missCount = fileCache.getCacheMissCount();
+
+      Map summaryMap = fFileCacheSummaryMapClass.createInstance();
+
+      float hitRatio = 0;
+      long requestCount = hitCount + missCount;
+
+      if (requestCount > 0)
+          hitRatio = (float)hitCount / requestCount;
+
+      java.text.NumberFormat nf =
+          java.text.NumberFormat.getPercentInstance();
+
+      summaryMap.put("hitRatio", nf.format(hitRatio));
+      summaryMap.put("hitCount", String.valueOf(hitCount));
+      summaryMap.put("missCount", String.valueOf(missCount));
+      summaryMap.put("requestCount", String.valueOf(requestCount));
+      summaryMap.put("lastPurgeDate", DATE_FORMAT.format(
+          fileCache.getLastPurgeDate()));
+
+      mc.setMapClassDefinition(fFileCacheSummaryMapClass);
+      mc.setRootObject(summaryMap);
+
+   d) Changes to the handleSet() method:
+
+      - Added support for the FILECACHEALGORITHM and MAXFILECACHEAGE
+      settings:
+
+      // Handle FILECACHEALGORITHM setting
+
+      if (parseResult.optionTimes("FILECACHEALGORITHM") > 0)
+      {
+          // Resolve the value specified for FILECACHEALORITHM"
+          resolvedValue = STAFUtil.resolveRequestVar(
+              parseResult.optionValue("FILECACHEALGORITHM"),
+              fHandle, info.requestNumber);
+
+          if (resolvedValue.rc != 0)
+              return resolvedValue;
+
+          STAFResult result = STAXFileCache.get().setAlgorithm(
+              resolvedValue.result);
+
+          if (result.rc != 0)
+              return result;
+      }
+
+      // Handle MAXFILECACHEAGE setting
+
+      if (parseResult.optionTimes("MAXFILECACHEAGE") > 0)
+      {
+          // Resolve the value specified for MAXFILECACHEAGE and verify
+          // that it is a valid max age value, and convert it to seconds
+          // if needed
+
+          resolvedValue = STAFUtil.resolveRequestVar(
+              parseResult.optionValue("MAXFILECACHEAGE"),
+              fHandle, info.requestNumber);
+
+          if (resolvedValue.rc != 0)
+              return resolvedValue;
+
+          STAFResult result = STAXFileCache.get().setMaxAge(
+              resolvedValue.result);
+
+          if (result.rc != 0)
+          {
+              return new STAFResult(
+                  STAFResult.InvalidValue,
+                  "Invalid value for MAXFILECACHEAGE: " +
+                  resolvedValue.result + "\n\n" + result.result);
+          }
+      }
+
+   e) Changes to the handleParms() method:
+
+      - Added support for the FILECACHEALGORITHM and MAXFILECACHEAGE
+      settings:
+
+      if (parseResult.optionTimes("FILECACHEALGORITHM") > 0)
+      {
+          STAFResult resolvedResult = STAFUtil.resolveInitVar(
+              parseResult.optionValue("FILECACHEALGORITHM"), fHandle);
+
+          if (resolvedResult.rc != STAFResult.Ok)
+          {
+              resolvedResult.result = "Error resolving FILECACHEALGORITHM." +
+                  "\n\n" + resolvedResult.result;
+
+              System.out.println(
+                  errmsg + "RC=" + resolvedResult.rc +
+                  " Result=" + resolvedResult.result);
+
+              return resolvedResult;
+          }
+
+          STAFResult result = STAXFileCache.get().setAlgorithm(
+              resolvedResult.result);
+
+          if (result.rc != STAFResult.Ok)
+          {
+              System.out.println(errmsg + result.result);
+
+              return result;
+          }
+      }
+
+      if (parseResult.optionTimes("MAXFILECACHEAGE") > 0)
+      {
+          if (STAXFileCache.get().getAlgorithm() != STAXFileCache.LFU)
+          {
+              return new STAFResult(
+                  STAFResult.InvalidRequestString,
+                  "The MAXFILECACHEAGE parameter can only be set if " +
+                  "the FILECACHEALGORITHM parameter's value is LFU.");
+          }
+
+          // Resolve the value specified for MAXFILECACHEAGE and verify
+          // that it is a valid max age value, and convert it to seconds
+          // if needed
+
+          STAFResult resolvedResult = STAFUtil.resolveInitVar(
+              parseResult.optionValue("MAXFILECACHEAGE"), fHandle);
+
+          if (resolvedResult.rc != STAFResult.Ok)
+          {
+              resolvedResult.result = "Error resolving MAXFILECACHEAGE." +
+                  "\n\n" + resolvedResult.result;
+
+              System.out.println(
+                  errmsg + "RC=" + resolvedResult.rc +
+                  " Result=" + resolvedResult.result);
+
+              return resolvedResult;
+          }
+
+          STAFResult result = STAXFileCache.get().setMaxAge(
+              resolvedResult.result);
+
+          if (result.rc != 0)
+          {
+              result.result = "Invalid value for MAXFILECACHEAGE: " +
+                  resolvedResult.result + "\n\n" + result.result;
+
+              System.out.println(errmsg + result.result);
+
+              return result;
+          }
+      }
+
+2) Changes to services/stax/service/STAXImportAction.java:
+
+   a) Changes to the execute() method:
+
+      - Added a check to make sure that the STAXDocument returned
+        by the STAXFileCache.get().getDocument() method is not null.
+
+3) Changes to services/stax/service/STAXFileCache.java:
+
+   a) Defined the following new private member variables:
+
+      private int algorithm;
+      private MaxAge maxAge;
+      private long cacheHitCount = 0;
+      private long cacheMissCount = 0;
+      private Date lastPurgeDate;
+
+   b) Updated the STAXFileCache constructor to initialize the
+      algorithm, maxAge, and lastPurgeDate member variables when
+      first creating the cache.
+
+      algorithm = LRU;  // Default cache algorithm
+      maxAge = new MaxAge(); // The default is 0 = No maximum age
+      lastPurgeDate = new Date();
+
+   c) Updated the getDocument() method to increment the
+      cacheHitCount field when the hit() method is called to keep
+      track of the total number of times have a hit in the cache.
+
+      cacheHitCount++;
+
+   d) Updated the getCacheContents() method to add a sortBy argument
+      to specify how to sort the cache contents.  If the sortBy
+      argument is STAXFileCache.LRU, it sorts the contents by the
+      last hit date in descending order.  If the sortBy argument is
+      STAXFileCache.LFU, it sorts first by whether the document is
+      stale or not.  All non-stale documents are listed before any
+      stale documents.  The non-stale documents are sorted by the
+      greatest number of hits, and if have the same number of hits,
+      then by recent hit date first.  The stale documents are sorted
+      by the most recent hit date first.
+
+    public List getCacheContents(int sortBy)
+    {
+        List cacheContents = null;
+    	
+        synchronized(cache)
+        {
+            cacheContents = new LinkedList(cache.values());
+        }
+
+        if (sortBy == STAXFileCache.LRU)
+        {
+            // Sort the contents by the last hit date in reverse order
+
+            Collections.sort(cacheContents, new Comparator() {
+                public int compare(Object o1, Object o2)
+                {
+                    // Sort by most recent hit date first
+                    return ((STAXFileCache.FileCacheEntry)o1).
+                        getLastHitDate().compareTo(
+                            ((STAXFileCache.FileCacheEntry)o2).
+                            getLastHitDate()) * -1;
+                }
+            });
+        }
+        else if (sortBy == STAXFileCache.LFU)
+        {
+            // Sort the contents as follows:
+            // - Sort first by whether stale or not.  Put the non-stale
+            //   documents before all stale documents.  Sort the non-stale
+            //   documents by the greatest number of hits, and if the same
+            //   number of hits, then by recent hit date first.
+            // - Sort the stale documents by the most recent hit date first.
+
+            Collections.sort(cacheContents, new Comparator() {
+                public int compare(Object o1, Object o2)
+                {
+                    STAXFileCache.FileCacheEntry e1 =
+                        (STAXFileCache.FileCacheEntry)o1;
+                    STAXFileCache.FileCacheEntry e2 =
+                        (STAXFileCache.FileCacheEntry)o2;
+
+                    boolean e1_isStale = isStale(e1.getLastHitDate());
+                    boolean e2_isStale = isStale(e2.getLastHitDate());
+                    
+                    if (e1_isStale == false && e2_isStale == false)
+                    {
+                        // Both entries are not stale.
+                        // Sort by greatest number of hits first
+
+                        int compareResult = (new Long(e1.getHits())).
+                            compareTo(new Long(e2.getHits()));
+
+                        if (compareResult == 0)
+                        {
+                            // Same number of hits
+
+                            return e1.getLastHitDate().compareTo(
+                                e2.getLastHitDate()) * -1;
+                        }
+                        else
+                        {
+                            return compareResult * -1;
+                        }
+                    }
+                    else if (e1_isStale == true && e2_isStale == true)
+                    {
+                        // Both entries are stale.
+                        // Sort by recent hit date first.
+
+                        return e1.getLastHitDate().compareTo(
+                            e2.getLastHitDate()) * -1;
+                    }
+                    else if (e1_isStale == false)
+                    {
+                        // e1_isStale == false && e2_isStale == true
+                        return -1;
+                    }
+                    else
+                    {
+                        // e1_isStale == true && e2_isStale == false
+                        return 1;
+                    }
+                }
+            });
+        }
+    	
+    	return cacheContents;
+    }
+
+   e) Updated the purge() method to reset the lastPurgeDate to the
+      current date/time and to clear the overall cache statistics.
+
+      lastPurgeDate = new Date();
+
+      // Clear the cache statistics
+      cacheHitCount = 0;
+      cacheMissCount = 0;
+
+   f) Updated the addDocument() method as follows:
+
+      - Increment the cacheMissCount variable.
+
+      cacheMissCount++;
+
+      - If the cache size isn't unlimited and the cache is full,
+        changed to call the appropriate method based on the caching
+        algorithm to remove an entry from the cache to make room
+        for a new entry.
+
+      if (algorithm == LRU)
+          removeOldest();
+      else
+          removeLfu();
+
+   g) Updated the cleanup() method to call the appropriate method
+      based on the caching algorihtm to remove an entry from the
+      cache.
+
+      if (algorithm == LRU)
+          removeOldest();
+      else
+          removeLfu();
+
+   h) Added the removeLfu() method to be used when the caching
+      algorithm is LFU (Least Frequently Used).  It removes the
+      entry with the least number of hits (the Least Frequently
+      Used entry) unless there is a "stale" entry in the cache
+      (one that hasn't been accessed within the maxAge time
+      period, assumming maxAge is not 0 which means that no
+      documents will be considered to be stale).  Then, the most
+      "stale" document in the cache will be removed instead.
+
+    private void removeLfu()
+    {
+        // Find the entry with the least number of hits and remove it
+
+        Iterator iter = cache.values().iterator();
+
+        if (!iter.hasNext())
+        {
+            // No items in the cache
+            return;
+        }
+                
+        FileCacheEntry lowest = (FileCacheEntry)iter.next();
+        FileCacheEntry oldest = lowest;
+            
+        while(iter.hasNext())
+        {
+            FileCacheEntry cached = (FileCacheEntry)iter.next();
+
+            if (maxAge.getAmount() != 0)
+            {
+                // A maximum age has been specified so determine the
+                // oldest entry in the cache
+
+                if (cached.getLastHitDate().before(oldest.getLastHitDate()))
+                {
+                    oldest = cached;
+                }
+            }
+
+            // Determine the entry with the lowest number of hits and
+            // the least recent hit date
+
+            if (cached.getHits() < lowest.getHits())
+            {
+                lowest = cached;
+            }
+            else if (cached.getHits() == lowest.getHits())
+            {
+                // Set to the entry that is oldest
+
+                if (cached.getLastHitDate().before(lowest.getLastHitDate()))
+                {
+                    lowest = cached;
+                }
+            }
+        }
+
+        // If a maximum age has been configured (e.g. != 0), check if the
+        // document with the oldest last hit date is stale and if so,
+        // remove it and return
+
+        if (isStale(oldest.getLastHitDate()))
+        {
+            cache.remove(oldest.getKey());
+
+            return;
+        }
+
+        // Otherwise, remove the document with the least number of hits
+        // (the Least Frequently Used entry)
+
+        cache.remove(lowest.getKey());
+    }
+
+   i) Added the isStale() method to check if a document is stale by
+      checking if its last hit timestamp plus the maxAge is earlier
+      than the current timestamp.
+
+    private boolean isStale(Date lastHitDate)
+    {
+        // A maxAge amount of 0 means no maximum age, so no document will
+        // be considered to be stale
+
+        if (maxAge.getAmount() == 0)
+            return false;
+
+        Calendar calendar = new GregorianCalendar();
+
+        // Tell the calendar to the last hit date/time passed in
+        calendar.setTime(lastHitDate);
+
+        // Add the time it takes before a document is considered stale to the
+        // last hit date
+
+        calendar.add(maxAge.getTimeField(), maxAge.getAmount());
+
+        // Check if the last hit timestamp + maxAge is earlier than the
+        // current date/time
+
+        return calendar.before(Calendar.getInstance());
+    }
+
+   j) Added the setAlgorithm() method to set the cache algorithm
+      used to determine the entry to be removed when the cache
+      is full.
+
+    public STAFResult setAlgorithm(String algorithm)
+    {
+        if (algorithm.equalsIgnoreCase(LRU_STRING))
+        {
+            this.algorithm = LRU;
+        }
+        else if (algorithm.equalsIgnoreCase(LFU_STRING))
+        {
+            this.algorithm = LFU;
+        }
+        else
+        {
+            return new STAFResult(
+                STAFResult.InvalidValue,
+                "FILECACHEALGORITHM must be set to LRU or LFU.  " +
+                "Invalid value: " + algorithm);
+        }
+
+        return new STAFResult(STAFResult.Ok);
+    }
+
+   k) Added the getAlgorithm() method to get the cache algorithm.
+
+    public int getAlgorithm()
+    {
+        return this.algorithm;
+    }
+
+   l) Added the getAlgorithmString() method to get the cache
+      algorithm in its String form.
+
+    public String getAlgorithmString()
+    {
+        if (this.algorithm == LRU)
+            return LRU_STRING;
+        else
+            return LFU_STRING;
+    }
+
+    m) Added the setMaxAge() method to set the maximum age for
+       cached STAX documents.  This is only used when the cache
+       algorithm is LFU to determine if a document is stale.
+
+    public STAFResult setMaxAge(String maxAge)
+    {
+        try
+        {
+            this.maxAge = new MaxAge(maxAge);
+        }
+        catch (Exception e)
+        {
+            return new STAFResult(STAFResult.InvalidValue, e.getMessage());
+        }
+
+        return new STAFResult(STAFResult.Ok);
+    }
+
+    n) Added the getMaxAge() method to get the maximum age for
+       cached STAX documents.
+
+    public MaxAge getMaxAge()
+    {
+        return this.maxAge;
+    }
+
+    o) Added get methods to get the overall cache hit count, miss
+       count and the last purge date.
+
+    public long getCacheHitCount()
+    {
+        return this.cacheHitCount;
+    }
+
+    public long getCacheMissCount()
+    {
+        return this.cacheMissCount;
+    }
+
+    public Date getLastPurgeDate()
+    {
+        return this.lastPurgeDate;
+    }     
+
+    p) Added the MaxAge class which is used when determining if a
+       document in the cache is stale (if using the LFU algorithm).
+
+    /**
+     * This class's constructor sets its time field and amount field
+     * based on the maxAge string that is passed in the format of
+     * <Number>[s|m|h|d|w] so that it can be used to "add" the time
+     * to the last hit date to determine if a document is stale.
+     */ 
+    private static class MaxAge
+    {
+        private static String sMAX_AGE_ERROR_MSG =
+            "The MAXFILECACHEAGE value may be expressed in seconds, " +
+            "minutes, hours, days, or weeks.  Its format is " +
+            "<Number>[s|m|h|d|w] where <Number> must be an integer from 0 " +
+            "to 2147483647 and indicates seconds unless one of the " +
+            "following case-insensitive suffixes is specified:  " +
+            "s (for seconds), m (for minutes), h (for hours), " +
+            "d (for days), or w (for weeks).  If &lt;Number> is 0, this " +
+            "means that there is no maximum age.\n\nExamples: \n" +
+            "  0 specifies no maximum age, \n" +
+            "  30 specifies 30 seconds, \n" +
+            "  30s specifies 30 seconds, \n" +
+            "  5m specifies 5 minutes, \n" +
+            "  2h specifies 2 hours, \n" +
+            "  1d specifies 1 day, \n" +
+            "  1w specifies 1 week.";
+
+        /**
+         * The value represented as a string (e.g. "30", "30s", "1m", "2h",
+         * "1d", "1w")
+         */
+        private String displayString = "0";
+
+        /**
+         * The time field (e.g. Calendar.SECOND, Calendar.MINUTE,
+         * Calendar.HOUR_OF_DAY, Calendar.Date, or Calendar.WEEK_OF_YEAR
+         */
+        private int timeField = Calendar.SECOND;
+
+        /**
+         *  The amount of date or time to be added
+         */ 
+        private int amount = 0;
+
+        private MaxAge()
+        {
+            // Do nothing.  Sets to 0 which means No maximum age
+        }
+
+        public MaxAge(String maxAge) throws Exception
+        {
+            maxAge = maxAge.trim();
+
+            if ((maxAge == null) || (maxAge.length() == 0))
+                throw new Exception(sMAX_AGE_ERROR_MSG);
+
+            displayString = maxAge;
+
+            // Check if the max age string is not all digits
+
+            try
+            {
+                amount = (new Integer(maxAge)).intValue();
+            }
+            catch (NumberFormatException e)
+            {
+                // Get max age type (last character of max age string)
+
+                String maxAgeType = maxAge.substring(
+                    maxAge.length() - 1).toLowerCase();
+
+                if (maxAgeType.equals("s"))
+                    timeField = Calendar.SECOND;
+                else if (maxAgeType.equals("m"))
+                    timeField = Calendar.MINUTE;
+                else if (maxAgeType.equals("h"))
+                    timeField = Calendar.HOUR_OF_DAY;
+                else if (maxAgeType.equals("d"))
+                    timeField = Calendar.DATE;
+                else if (maxAgeType.equals("w"))
+                    timeField = Calendar.WEEK_OF_YEAR;
+                else
+                    throw new Exception(sMAX_AGE_ERROR_MSG);
+
+                // Assign numeric max age (all characters except the last one)
+
+                try
+                {
+                    amount = (new Integer(
+                        maxAge.substring(0, maxAge.length() - 1))).intValue();
+                }
+                catch (NumberFormatException e2)
+                {
+                    throw new Exception(sMAX_AGE_ERROR_MSG);
+                }
+            }
+
+            if (amount < 0)
+                throw new Exception(sMAX_AGE_ERROR_MSG);
+        }
+
+        public String toString()
+        {
+            return displayString;
+        }
+
+        public int getTimeField()
+        {
+            return timeField;
+        }
+        
+        public int getAmount()
+        {
+            return amount;
+        }
+    }
+
+    q) Changed the FileCacheEntry class to have its hits member
+       variable be a long instead of an int and to change its
+       getHits() method to return a long instead of an int.
+       This way it can keep track of entries with more than
+       2147483647 hits (which is the maximum size of an int).
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

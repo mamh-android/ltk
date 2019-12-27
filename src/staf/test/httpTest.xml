@@ -1,0 +1,2953 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<!-- Description
+       This is a test for the HTTP service
+       
+        assumes that no other http sessions are active during the test.
+        This is due to session management test verification testing list and 
+         open and https test verifying acess to the secured site by the use of 
+         list
+
+		need to test PUT, DELETE, POST files
+		
+
+ -->
+<stax>
+
+  <defaultcall function="Main"/>
+
+  <script>
+
+    # TestMachines should be set to a list of machines to test
+    
+    TestMachine = 'local'
+    
+    # Test SSL by logging into SourceForge so assign your SourceForge User ID and password
+    sourceforge_ID = 'stafautobuild'
+    sourceforge_Pwd = 'XXXXXXX'
+    
+    # service params
+    serviceName = 'HTTP'
+    
+    # location testHTTP.html
+    testHTTPhost = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test'
+    
+    ImportMachine = TestMachine
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax/libraries'
+    
+  </script>
+  
+  <!-- Import necessary utilities -->
+
+  <script>
+    import re
+    import string
+
+    from com.ibm.staf import STAFUtil
+    from com.ibm.staf import STAFResult as STAFRetCode
+  </script>    
+    
+
+  <!-- Start function definitions --> 
+  
+<!-- ================================================================= -->
+
+  <function name="compareHeaders">
+
+    <!--  0 indicates header1 == header2
+          -1 indicates that header1 contains elements not in header 2
+             header 2 may contain elements not in header1
+          1 indicates that header2 contains elements not in header1
+          -->
+
+    <function-map-args>
+      <function-required-arg name="header1">
+        A map of headers to be compared with header2
+      </function-required-arg>
+      <function-required-arg name="header2">
+        A map of headers to be compared with header1
+      </function-required-arg>
+    </function-map-args>
+    
+    <sequence>
+       <script>
+        # remove 'Date:' Header
+        if header1 != None:
+          for key in header1.keys():
+            if key == 'Date':
+              del header1[key]
+
+        if header2 != None:
+          for key in header2:
+            if key == 'Date':
+              del header2[key]
+      </script>
+      
+      <script>      
+      	# intersection
+      	intersection = []
+        if header1 != None and header2 != None:
+      	  for key in header1.keys():
+            if header2.has_key(key):
+              if header1[key] == header2[key]:
+                intersection.append(key)
+      	
+      	il = len(intersection)
+      </script>
+
+      <if expr="header1 == None and header2 == None">
+       <return>0</return>
+       <elseif expr="header1 == None">
+         <return>1</return>
+       </elseif>
+       <elseif expr="header2 == None">
+         <return>-1</return>
+       </elseif>
+      </if>
+      
+      <if expr="il != len(header1.keys())">
+        <return>-1</return> 
+      </if>
+      <if expr="il != len(header2.keys())">
+        <return>1</return>
+      </if>
+      <return>0</return> 
+      
+    </sequence>    
+    
+  </function>  
+  
+<!-- ================================================================= -->
+
+  <function name="SetVar">
+
+    <function-single-arg>
+      <function-required-arg name="varValueList">
+          List of STAF variables and their values (name=value) to be set
+          For example:
+             ['myVar=myValue']
+             ['var1=myValue1', 'var2=myValue2']
+      </function-required-arg>
+    </function-single-arg>
+
+    <iterate var="varValue" in="varValueList">
+      <sequence>
+
+        <!-- Set a STAF variable for session ID-->
+        <script>
+          setVarRequest = 'SET VAR "%s"' % (varValue)
+        </script>
+    
+ 	    <stafcmd>
+          <location>TestMachine</location>
+          <service>'VAR'</service>
+          <request>setVarRequest</request>
+        </stafcmd>
+ 	  
+ 	    <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0 , 'failMsg': 'STAF %s VAR %s failed with RC=%s Result=%s' % \
+            (TestMachine, setVarRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+        </call>
+
+      </sequence>
+    </iterate>
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="DeleteVar">
+
+    <function-single-arg>
+      <function-required-arg name="varList">
+          List of STAF variables to be deleted
+
+          For example:
+             ['myVar']
+             ['var1', 'var2']
+      </function-required-arg>
+    </function-single-arg>
+
+    <iterate var="var" in="varList">
+      <sequence>
+
+        <script>
+          deleteVarRequest = 'DELETE VAR "%s"' % (var)
+        </script>
+    
+ 	    <stafcmd>
+          <location>TestMachine</location>
+          <service>'VAR'</service>
+          <request>deleteVarRequest</request>
+        </stafcmd>
+ 	  
+ 	    <call function="'STAXUtilCheckSuccess'">
+          { 'result': RC == 0 , 'failMsg': 'STAF %s VAR %s failed with RC=%s Result=%s' % \
+            (TestMachine, deleteVarRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+        </call>
+
+      </sequence>
+    </iterate>
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="DeleteFile">
+
+    <function-list-args>
+      <function-required-arg name="fileName">
+        Name of a file to be deleted
+      </function-required-arg>
+      <function-required-arg name="machine">
+        Name of the machine where the file to be deleted resides
+      </function-required-arg>
+    </function-list-args>
+
+    <sequence>
+
+      <script>
+        deleteFileRequest = 'DELETE ENTRY %s CONFIRM' % (fileName)
+      </script>
+    
+      <stafcmd>
+        <location>machine</location>
+        <service>'FS'</service>
+        <request>deleteFileRequest</request>
+      </stafcmd>
+	  
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0 , 'failMsg': 'STAF %s FS %s failed with RC=%s Result=%s' % \
+          (machine, deleteFileRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+
+    </sequence>
+  </function>
+
+<!-- ================================================================= -->
+
+  <function name="GetNewSession">
+    <sequence>
+      
+      <script> 
+        request = 'OPEN SESSION'
+        failMsg = 'Failure opening new session'
+      </script>
+    
+      <stafcmd>
+        <location>TestMachine</location>
+        <service>serviceName</service>
+        <request>request</request>
+      </stafcmd>
+      
+      <script>
+      	id = STAFResult
+      </script>
+      
+      <if expr="RC != 0">
+        <sequence>
+        
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': 0, 'failMsg': '%s RC %d %s' %(failMsg, RC, id),
+              'sendToMonitor': 1, 'recordStatus': 1  }
+          </call>
+          
+          <return>-1</return>
+          
+        </sequence>
+      </if>
+      
+      <return>id</return>
+      
+    </sequence>
+  </function>  
+  
+<!-- ================================================================= -->
+
+  <function name="Test">
+
+    <function-map-args>
+      <function-required-arg name="request">
+        The actual request string that you wish to submit to the STAF service 
+      </function-required-arg>
+      <function-required-arg name="rc">
+        The expected STAF RC
+      </function-required-arg>
+      <function-optional-arg name="result" default="None">
+        The expected STAF Result (to be matched via re) 
+      </function-optional-arg>
+      <function-optional-arg name="result2" default="None">
+        The expected STAF Result (for marshalled results)
+      </function-optional-arg>
+    </function-map-args>
+    
+    <sequence>
+      <script> 
+        fail = 0 
+        failMsg = ''
+      </script>
+    
+      <message>
+        'Testing machine: %s service: %s request: %s' % (
+          TestMachine, serviceName, request)
+      </message>
+
+      <stafcmd>
+        <location>TestMachine</location>
+        <service>serviceName</service>
+        <request>request</request>
+      </stafcmd>
+      
+      
+      <if expr="RC not in rc">
+        <script>
+          failMsg = 'Service: %s, Request: %s - RC (%d) not in %s\nSTAFResult=%s' % \
+                    (serviceName, request, RC, rc, STAFResult)
+          fail = 1
+        </script>
+        <elseif expr="result and not (result == STAFResult) and not re.match(result, STAFResult)">
+          <script>
+            failMsg = 'Service: %s Request: %s ' % (serviceName, request) +\
+                      '- Grep error\nmatching:\n%s\nwith:\n%s' \
+                      %(result, STAFResult)
+            fail = 1
+          </script>
+        </elseif>
+        <elseif expr="not result and result2 != None and not eval(result2)">
+          <script>
+            failMsg = 'Service: %s, Request: %s - Unexpected STAFResult\nThe following expression evaluated to false:\n%s\nSTAFResult:\n%s' % \
+                      (serviceName, request, result2, STAFResult)
+            fail = 1
+          </script>
+       </elseif>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': fail == 0, 'failMsg': failMsg,
+          'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+            
+    </sequence>
+ 
+  </function> 
+
+<!-- ================================================================= -->
+
+  <function name="TestX">
+
+    <function-map-args>
+      <function-required-arg name="request">
+        The actual request string that you wish to submit to the STAF service 
+      </function-required-arg>
+      <function-required-arg name="rc">
+        The expected STAF RC
+      </function-required-arg>
+      <function-required-arg name="result">
+        The expected STAF Result 
+      </function-required-arg>
+    </function-map-args>
+    
+    <sequence>
+      <script> 
+        fail = 0 
+        failMsg = ''
+      </script>
+    
+      <stafcmd>
+        <location>TestMachine</location>
+        <service>serviceName</service>
+        <request>request</request>
+      </stafcmd>
+      
+      
+      <if expr="RC not in rc">
+        <script>
+          failMsg = 'Service: %s, Request: %s - RC (%d) not in %s\nSTAFResult=%s' % \
+                    (serviceName, request, RC, rc, STAFResult)
+          fail = 1
+        </script>
+        <elseif expr="result and not (result == STAFResult) and not re.match(result, STAFResult)">
+          <script>
+            failMsg = 'Service: %s Request: %s ' % (serviceName, request) +\
+                      '- Grep error\nmatching:\n%s\nwith:\n%s' \
+                      %(result, STAFResult)
+            fail = 1
+          </script>
+        </elseif>
+      </if>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': fail == 0, 'failMsg': failMsg,
+          'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+            
+    </sequence>
+ 
+  </function> 
+<!-- ================================================================= -->  
+  
+  <function name="TestParser"> 
+  
+    <sequence>
+      <script>
+        h1 = ''
+        h2 = ''
+      </script>
+      <call function="'compareHeaders'">
+      {'header1':h1,
+       'header2':h2
+      }
+      </call>
+      <message>STAXResult</message>
+      
+      <script>
+        h1 = 'foo bar\npoo bear'
+        h2 = 'foo bar\npoo bear'
+      </script>
+      <call function="'compareHeaders'">
+      {'header1':h1,
+       'header2':h2
+      }
+      </call>
+      <message>STAXResult</message>
+      
+      <script>
+        h1 = 'foo bar\npoo bear'
+        h2 = 'poo bear\nfoo bar'
+      </script>
+      <call function="'compareHeaders'">
+      {'header1':h1,
+       'header2':h2
+      }
+      </call>
+      <message>STAXResult</message>
+      
+      <script>
+        h1 = 'foo bar'
+        h2 = 'poo bear\nfoo bar'
+      </script>
+      <call function="'compareHeaders'">
+      {'header1':h1,
+       'header2':h2
+      }
+      </call>
+      <message>STAXResult</message>
+      
+      <script>
+        h1 = 'foo bar\npoo bear'
+        h2 = 'poo bear'
+      </script>
+      <call function="'compareHeaders'">
+      {'header1':h1,
+       'header2':h2
+      }
+      </call>
+      <message>STAXResult</message>
+      
+      <script>
+        h1 = 'foo bar\npoobear'
+        h2 = 'poo bear\nfoo bar'
+      </script>
+      <call function="'compareHeaders'">
+      {'header1':h1,
+       'header2':h2
+      }
+      </call>
+      <message>STAXResult</message>
+    </sequence>
+ 
+  </function> 
+<!-- ================================================================= -->  
+  
+  <function name="TestMethod">
+    <function-map-args>
+      <function-required-arg name="request">
+        The actual request string that you wish to submit to the STAF service 
+      </function-required-arg>
+      <function-required-arg name="sessionID">
+        The session id of a valid session 
+      </function-required-arg>
+    </function-map-args>
+    
+    <sequence> 
+      <stafcmd>
+	    <location>TestMachine</location>
+	    <service>serviceName</service>
+	    <request>theRequest</request>
+	  </stafcmd>
+	  
+	  <script>
+	    expectedRc = RC
+	    expectedResult = STAFResult
+	  </script>
+	  
+	  <if expr="RC != 0">
+	    <sequence>
+          <script>
+            failMsg = 'Service: %s, Request: %s - RC (%d)' % \
+                      (serviceName, request, RC)
+          </script>
+	    
+          <call function="'STAXUtilCheckSuccess'">
+            { 'result': 1, 'failMsg': failMsg,
+              'sendToMonitor': 1, 'recordStatus': 1  }
+          </call>
+          <return/>
+        </sequence>
+	  </if>
+	  		  	
+ 	  <call function="'Test'">
+	   {'request':'%s SESSION %s' %(theRequest, sessionID),
+	    'result':expectedResult,
+	    'rc':[ expectedRc ]
+	   }
+	  </call>
+               
+    </sequence>
+ 
+  </function>  
+<!-- ================================================================= -->
+
+<!-- open, close, list, query, get content 
+     using staf.sourceforge.net  
+-->
+  <function name="TestSessionManagement">
+  	<sequence>
+  	
+  	  <script>
+  	    title='Software Testing Automation Framework (STAF)'	      
+  	  </script>
+  	
+   	  <call function="'Test'">
+	   {'request':'OPEN SESSION',
+	    'result':'1',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'OPEN SESSION',
+	    'result':'2',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'OPEN SESSION',
+	    'result':'3',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+      <call function="'Test'">
+	   {'request':'OPEN SESSION 1',
+	    'result':'',
+	    'rc':[ 7 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'OPEN',
+	    'result':'',
+	    'rc':[ 7 ]
+	   }
+      </call>
+
+      <call function="'Test'">
+	   {'request':'LIST',
+	    'result':'',
+	    'rc':[ 7 ]
+	   }
+      </call>
+
+   	  <call function="'Test'">
+	   {'request':'LIST SESSIONS',
+        'result2': "len(STAFResult) == 3 and " +
+                   "STAFResult[0]['sessionID'] == '1' and " +
+                   "STAFResult[1]['sessionID'] == '2' and " +
+                   "STAFResult[2]['sessionID'] == '3'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION 1',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 
+   	  <call function="'Test'">
+	   {'request':'LIST SESSIONS',
+        'result2': "len(STAFResult) == 2 and " +
+                   "STAFResult[0]['sessionID'] == '2' and " +
+                   "STAFResult[1]['sessionID'] == '3'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  	  	
+      <call function="'SetVar'">['httpTest/SessionID=2']</call>
+
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://staf.sourceforge.net SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'QUERY SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['url'] == 'http://staf.sourceforge.net/' and " +
+                     "STAFResult['title'] == '%s' and " % (title) +
+                     "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+	   {'request':'GET CONTENT SESSION {httpTest/SessionID}',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <script>fileName = '{STAF/DataDir}/tmp/service/%s/content.txt' % (serviceName)</script>
+
+      <call function="'Test'">
+	   {'request':'GET CONTENT SESSION {httpTest/SessionID} FILE %s' % (fileName),
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'SetVar'">['httpTest/toMachine=%s' % (TestMachine)]</call>
+
+      <call function="'Test'">
+	   {'request':'GET CONTENT SESSION {httpTest/SessionID} FILE %s TOMACHINE {httpTest/toMachine}' % (fileName),
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'DeleteFile'">[fileName, TestMachine]</call>
+
+      <call function="'DeleteVar'">['httpTest/toMachine']</call>
+
+      <call function="'Test'">
+	   {'request':'QUERY SESSION DoesNotExist',
+	    'result':'',
+	    'rc':[ 47 ]
+	   }
+	  </call>	  
+
+      <call function="'Test'">
+	   {'request':'QUERY SESSION 999999',
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>	  
+      
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION {httpTest/SessionID}',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  	  
+      <call function="'DeleteVar'">['httpTest/SessionID']</call>
+
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION DoesNotExist',
+	    'result':'',
+	    'rc':[ 47 ]
+	   }
+	  </call>	  
+
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION 999999',
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>	  
+
+      <call function="'Test'">
+	   {'request':'CLOSE SESSION',
+	    'result':'',
+	    'rc':[ 7 ]
+	   }
+	  </call>	  
+
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION 3',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+ 	</sequence>
+  </function>  
+  
+  
+  
+<!-- ================================================================= -->
+
+  <function name="TestHTTPS">
+    
+    <function-map-args>
+      <function-required-arg name="sourceforgeID">
+        Valid sourceforge Login ID
+      </function-required-arg>
+      <function-required-arg name="sourceforgePwd">
+        Valid sourceforge Login password corresponding to the ID
+      </function-required-arg>
+    </function-map-args>
+    
+ 	<sequence>
+
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://sourceforge.net SESSION %s' %(sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] != None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+	  
+	  <script>
+	    url = 'http://sourceforge.net/account/login.php'
+	    params = 'PARAMETER form_loginname=%s PARAMETER form_pw=%s'\
+	              %(sourceforgeID, sourceforgePwd)\
+	              +' PARAMETER login=Login+With+SSL'
+	  </script>
+	  
+ 	  <call function="'Test'">
+	   {'request':'REQUEST METHOD POST URL %s %s RETURNNOCONTENT SESSION %s'\
+	     %(url, params, sessionID),
+        'result2': "STAFResult['statusCode'] == '302' and " +
+                     "STAFResult['statusMessage'] == 'Found' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+	  	
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL https://sourceforge.net/my SESSION %s FOLLOWREDIRECT'\
+	      %(sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] != None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+     
+	  <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['url'] == 'http://sourceforge.net/my/' and " +
+                     "STAFResult['title'] == 'SourceForge.net: Personal Page for STAF Automated Build' and " +
+                     "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+     
+	  <call function="'Test'">
+	   {'request':'LIST LINKS SESSION %s' %(sessionID),
+        'result2': "len(STAFResult) > 0",
+        'rc':[ 0 ]
+	   }
+	  </call>
+	  	  
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	   	   	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+
+      <call function="'SetVar'">
+        ['httpTest/SessionID=%s' % (sessionID), 'httpTest/authHost=bob.net', 
+         'httpTest/authUser=admin', 'httpTest/authPw=adminPw']
+      </call>
+ 	   	  
+   	  <call function="'Test'">
+	   {'request':'SET AUTHENTICATIONHOST {httpTest/authHost} AUTHENTICATIONUSER {httpTest/authUser} SESSION {httpTest/SessionID}',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'SET AUTHENTICATIONHOST sam.net AUTHENTICATIONUSER admin AUTHENTICATIONPASSWORD {httpTest/authUser} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'SET AUTHENTICATIONHOST sally.net AUTHENTICATIONUSER admin AUTHENTICATIONPASSWORD adminPw AUTHENTICATIONDOMAIN MSWORK SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  
+   	  <call function="'Test'">
+	   {'request':'LIST AUTHENTICATIONHOSTS SESSION {httpTest/SessionID}',
+        'result2': "len(STAFResult) == 3 and " +
+                     "((STAFResult[0] == 'bob.net' and STAFResult[1] == 'sally.net' and STAFResult[2] == 'sam.net') or " +
+                     " (STAFResult[0] == 'bob.net' and STAFResult[1] == 'sam.net' and STAFResult[2] == 'sally.net') or " +
+                     " (STAFResult[0] == 'sally.net' and STAFResult[1] == 'bob.net' and STAFResult[2] == 'sam.net') or " +
+                     " (STAFResult[0] == 'sally.net' and STAFResult[1] == 'sam.net' and STAFResult[2] == 'bob.net') or " +
+                     " (STAFResult[0] == 'sam.net' and STAFResult[1] == 'bob.net' and STAFResult[2] == 'sally.net') or " +
+                     " (STAFResult[0] == 'sam.net' and STAFResult[1] == 'sally.net' and STAFResult[2] == 'bob.net'))",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'QUERY AUTHENTICATIONHOST sally.net SESSION %s' %sessionID,
+         'result2': "STAFResult['user'] == 'admin' and " +
+                     "STAFResult['password'] == '*******' and " +
+                     "STAFResult['domain'] == 'MSWORK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+	  
+   	  <call function="'Test'">
+	   {'request':'QUERY AUTHENTICATIONHOST {httpTest/authHost} SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['user'] == 'admin' and " +
+                     "STAFResult['password'] == None and " +
+                     "STAFResult['domain'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'QUERY AUTHENTICATIONHOST sam.net SESSION %s' %sessionID,
+        'result2': "STAFResult['user'] == 'admin' and " +
+                     "STAFResult['password'] == '*******' and " +
+                     "STAFResult['domain'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'DELETE AUTHENTICATIONHOST sam.net SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'LIST AUTHENTICATIONHOSTS SESSION {httpTest/SessionID}',
+        'result2': "len(STAFResult) == 2 and " +
+                     "((STAFResult[0] == 'bob.net' and STAFResult[1] == 'sally.net') or " +
+                     " (STAFResult[0] == 'sally.net' and STAFResult[1] == 'bob.net'))",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+	  
+	  <!-- test authentication XXX 
+	       need to determine a location to test if authentication is
+	       really working
+	       test bad rc
+	       -->
+	  
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  	  
+      <call function="'DeleteVar'">
+        ['httpTest/SessionID', 'httpTest/authHost', 'httpTest/authUser', 'httpTest/authPw']
+      </call>
+
+ 	</sequence> 
+  </function>  
+  
+  
+<!-- ================================================================= -->
+
+  <function name="TestMETHODs">
+ 	<sequence>
+      <!-- Assumes the session and non session methods should result in the 
+ 	      same output. 
+ 	     XXX should verify results vs gold files also
+ 	     XXX Add PUT, DELETE, POST Files tests -->
+ 	   	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	  
+	  <!-- test get -->
+	  <script>
+        url = 'http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl'
+      </script>
+
+      <call function="'SetVar'">['httpTest/url=%s' % (url), 'httpTest/method=GET']</call>
+
+      <script>
+  	    theRequest = 'REQUEST METHOD {httpTest/method} URL {httpTest/url}'
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	  
+      <script>
+  	    theRequest = 'DOGET URL {httpTest/url}'
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	  
+      <call function="'DeleteVar'">['httpTest/url', 'httpTest/method']</call>
+
+	  <!-- test get with parameters-->
+	  
+	  <script>
+        url = 'http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl'
+      </script>
+      
+	  <script>
+        params = 'PARAMETER town=Austin'
+      </script>
+      
+      <script>
+  	    theRequest = 'REQUEST METHOD GET URL %s %s' %(url, params)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	        
+      <script>
+  	    theRequest = 'DOGET URL %s %s' %(url, params)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	  
+	  <script>
+        content = 'CONTENT town=Austin'
+      </script>
+      
+      <script>
+  	    theRequest = 'REQUEST METHOD GET URL %s %s' %(url, content)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	        
+      <script>
+  	    theRequest = 'DOGET URL %s %s' %(url, content)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+
+	  <!-- test post -->
+
+      <script>
+  	    theRequest = 'REQUEST METHOD POST URL %s' %(url)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	  	  
+	  <!-- test post content -->
+	  <script>
+        content = 'CONTENT john=doe&amp;robert=bob&amp;foo=bar'
+      </script>
+      <script>
+  	    theRequest = 'REQUEST METHOD POST URL %s %s' %(url, content)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+
+	  <!-- test post param -->
+
+	  <script>
+        params = 'PARAMETER john=doe PARAMETER robert=bob PARAMETER foo=bar'
+      </script>
+      
+      <stafcmd>
+	    <location>TestMachine</location>
+	    <service>serviceName</service>
+	    <request>theRequest</request>
+	  </stafcmd>
+
+	  <script>
+	    expectedRc = RC
+	    expectedResult = STAFResult
+	    failMsg = 'Service: %s, Request: %s - RC (%d)' % \
+                      (serviceName, request, RC)
+      </script>
+	    
+      <call function="'STAXUtilCheckSuccess'">
+         { 'result': RC == 0, 'failMsg': failMsg,
+           'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+      
+      <script>
+  	    theRequest = 'REQUEST METHOD POST URL %s %s' %(url, params)
+	  </script>
+	  		  	
+ 	  <call function="'Test'">
+	   {'request':'%s SESSION %s' %(theRequest, sessionID),
+	    'result':expectedResult,
+	    'rc':[ expectedRc ]
+	   }
+	  </call>
+	        
+      <script>
+  	    theRequest = 'DOPOST URL %s %s' %(url, params)
+	  </script>
+	  
+      <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	  
+      <script>
+  	    theRequest = 'DOPOST URL %s %s' %(url, content)
+	  </script>
+	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	  
+	  <!-- test options -->
+	  
+      <script>
+        url = 'http://www.htmlcodetutorial.com'
+        theRequest = 'REQUEST METHOD OPTIONS URL %s RETURNHEADERS RETURNNOCONTENT' % (url)
+	  </script>
+	  
+      <message>'Testing machine: %s service: %s request: %s' % (TestMachine, serviceName, theRequest)</message>
+      <stafcmd>
+	    <location>TestMachine</location>
+	    <service>serviceName</service>
+	    <request>theRequest</request>
+	  </stafcmd>
+	  
+	  <script>
+	  	header1 = STAFResult['headers']
+	  </script>
+	  
+	  <call function="'STAXUtilCheckSuccess'">
+         { 'result': RC == 0, 'failMsg': 'RC %d != 0'%RC,
+           'sendToMonitor': RC != 0, 'recordStatus': RC != 0  }
+      </call>
+      
+      <message>'Testing machine: %s service: %s request: %s SESSION %s' % (TestMachine, serviceName, theRequest, sessionID)</message>
+
+      <stafcmd>
+	    <location>TestMachine</location>
+	    <service>serviceName</service>
+	    <request>'%s SESSION %s' %(theRequest, sessionID)</request>
+	  </stafcmd>
+	  
+	  <script>
+        header2 = STAFResult['headers']
+	  </script>
+	  
+	  <call function="'STAXUtilCheckSuccess'">
+         { 'result': RC == 0, 'failMsg': 'RC %d != 0'%RC,
+           'sendToMonitor': RC != 0, 'recordStatus': RC != 0  }
+      </call>
+
+      <message>'Comparing headers...\nheader1: %s\nheader2: %s' % (header1, header2)</message>
+
+	  <call function="'compareHeaders'">
+         { 'header1':header1,
+           'header2':header2  }
+      </call>
+	  
+	  <call function="'STAXUtilCheckSuccess'">
+         { 'result': STAXResult == 0, 'failMsg': 'Headers not equal %s' \
+            %theRequest,
+           'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+	  
+	  <!-- test trace -->
+	       
+      <script>
+        url = 'http://www.htmlcodetutorial.com'
+        theRequest = 'REQUEST METHOD TRACE URL %s HEADER foo=bar' %(url)
+	  </script>
+	  	  
+	  <call function="'TestMethod'">
+	    {'request':theRequest,
+	     'sessionID':sessionID}
+	  </call>
+	        
+      <!-- Test GET of a small text file ( < 50k)
+           Verify the following after the DOGET of the medium file
+             - The content has been saved (check via GET CONTENT)
+             - The content has been parsed (check via LIST LINKS)
+         -->
+      <script>
+        # This could be any small text file (less than 50k)
+        url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/testHTTP.txt'
+        
+        urlContentSize = '289'
+        urlContentContains = 'Test Page'
+	  </script>
+   	  
+      <call function="'Test'">
+	    {'request':'DOGET URL %s SESSION %s' % (url, sessionID),
+         'result2': "len(STAFResult['content']) == int(urlContentSize) and STAFResult['content'].find('Test Page') > 0",
+	     'rc':[ 0 ]
+	    }
+	  </call>
+
+      <call function="'Test'">
+        {'request': 'GET CONTENT SESSION %s' % (sessionID),
+         'result2':  "len(STAFResult) == int(urlContentSize) and STAFResult.find('Test Page') > 0",
+         'rc': [ 0 ]
+        }
+      </call>
+
+      <!-- This file is a html file and contains a link so if its content is parsed there should be a link.
+            However, since the session's PARSECONTENT is AutoDetect and the URL's extension
+            is .txt (instead of .htm or .html), this web service sets "Content Type" to text/plain instead
+            of test/html, so the content won't be parsed so that won't be any links -->
+      <call function="'Test'">
+        {'request': 'LIST LINKS SESSION %s' % (sessionID),
+         'result2':  "len(STAFResult) == 0",
+         'rc': [ 0 ]
+        }
+      </call>
+      
+      <!-- Set the session's PARSECONTENT is Enabled and then verify the content is parsed as HTML
+            by checking that there's a link -->
+	        
+      <call function="'Test'">
+	    {'request': 'SET PARSECONTENT ENABLED SESSION %s' % (sessionID),
+         'result2': "STAFResult == ''",
+	     'rc':[ 0 ]
+	    }
+	  </call>
+      <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['parseContent'] == 'Enabled'",
+        'rc':[ 0 ]
+	   }
+	  </call>
+      <call function="'Test'">
+	    {'request':'DOGET URL %s SESSION %s' % (url, sessionID),
+         'result2': "len(STAFResult['content']) == int(urlContentSize) and STAFResult['content'].find('Test Page') > 0",
+	     'rc':[ 0 ]
+	    }
+	  </call>
+
+      <!-- Verify get an InvalidValue error if try to set PARSECONTENT to a value other than Enabled, Disabled, or AutoDetect (case-insensitive) -->
+      <call function="'Test'">
+	    {'request': 'SET PARSECONTENT Invalid SESSION %s' % (sessionID),
+         'result2': "len(STAFResult) > 0",
+	     'rc':[ STAFRC.InvalidValue ]
+	    }
+	  </call>
+
+      <!-- Set the PARSECONTENT value back to the default, AutoDetect, specifying it as a STAF variable
+            to verify its being resolved -->
+      <call function="'SetVar'">['httpTest/parseContent=AutoDetect']</call>
+      <call function="'Test'">
+	    {'request': 'SET PARSECONTENT {httpTest/parseContent} SESSION %s' % (sessionID),
+         'result2': "STAFResult == ''",
+	     'rc':[ 0 ]
+	    }
+	  </call>
+      <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['parseContent'] == 'AutoDetect'",
+        'rc':[ 0 ]
+	   }
+	  </call>
+      <call function="'DeleteVar'">['httpTest/parseContent']</call>
+
+      <!-- Test GET of a medium size html text file (500K)
+           Verify the following after the DOGET of the medium file
+             - RC == 0 and STAFResult['content'] == None (e.g. no content is returned in the result)
+             - The FILE specified exists on the local machine and is of the correct size
+             - The content has been saved (check via GET CONTENT)
+             - The content has been parsed (check via LIST LINKS)
+         -->
+      <script>
+        # This could be any medium html file (> 50K)
+        url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/testHTTP2.html'
+        urlContentSize = '494697'
+        fileName = '{STAF/DataDir}/tmp/service/%s/medFile.out' % (serviceName)
+        fileName2 = '{STAF/DataDir}/tmp/service/%s/medFile2.out' % (serviceName)
+	  </script>
+   	  
+      <call function="'Test'">
+	    {'request':'DOGET URL %s SESSION %s FILE %s' % (url, sessionID, fileName),
+         'result2': "STAFResult['content'] == None",
+	     'rc':[ 0 ]
+	    }
+	  </call>
+
+      <script>
+        machine = 'local'
+        getEntryRequest = 'GET ENTRY %s SIZE' % (fileName)
+      </script>
+
+      <stafcmd>
+        <location>machine</location>
+        <service>'FS'</service>
+        <request>getEntryRequest</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0 and STAFResult['lowerSize'] == urlContentSize,
+          'failMsg': 'STAF %s FS %s failed with RC=%s Result=%s' % \
+          (machine, getEntryRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+
+      <call function="'Test'">
+        {'request': 'GET CONTENT FILE %s SESSION %s' % (fileName2, sessionID),
+         'result2':  "STAFResult == ''",
+         'rc': [ 0 ]
+        }
+      </call>
+
+      <script>
+        machine = 'local'
+        getEntryRequest = 'GET ENTRY %s SIZE' % (fileName2)
+      </script>
+
+      <stafcmd>
+        <location>machine</location>
+        <service>'FS'</service>
+        <request>getEntryRequest</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0 and STAFResult['lowerSize'] == urlContentSize,
+          'failMsg': 'STAF %s FS %s failed with RC=%s Result=%s' % \
+          (machine, getEntryRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+
+      <!-- This file is a html file and contains links -->
+      <call function="'Test'">
+        {'request': 'LIST LINKS SESSION %s' % (sessionID),
+         'result2':  "len(STAFResult) > 0",
+         'rc': [ 0 ]
+        }
+      </call>
+       
+      <!-- Delete the two files that were created above -->
+      <call function="'DeleteFile'">[fileName, 'local']</call>
+      <call function="'DeleteFile'">[fileName2, 'local']</call>
+
+      <!-- Should be able to get it's content without using the FILE option -->
+
+      <call function="'Test'">
+        {'request': 'GET CONTENT SESSION %s' % (sessionID),
+         'result2': "len(STAFResult) == int(urlContentSize)",
+         'rc': [ 0 ]
+        }
+      </call>
+
+      <call function="'Test'">
+        {'request':'DOGET URL %s SESSION %s' % (url, sessionID),
+         'result2': "len(STAFResult['content']) == int(urlContentSize)",
+         'rc':[ 0 ]
+        }
+      </call>
+
+      <!-- Test GET of a large binary file (e.g. > 20M) 
+           Verify the following after the DOGET FILE of the large file
+             - RC == 0 and STAFResult['content'] == None (e.g. no content is returned in the result)
+             - The FILE specified exists on the local machine and is of the correct size
+             - The content has been saved (check via GET CONTENT)
+             - The content has been parsed (check via LIST LINKS)
+         -->
+      <script>
+        # This could be any large binary file (e.g. > 20M)
+        url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/testHTTP.zip'
+        urlContentSize = '67398656'  # '22075406'
+        fileName = '{STAF/DataDir}/tmp/service/%s/bigFile.out' % (serviceName)
+        fileName2 = '{STAF/DataDir}/tmp/service/%s/bigFile2.out' % (serviceName)
+	  </script>
+   	  
+      <call function="'Test'">
+	    {'request':'DOGET URL %s FILE %s SESSION %s' % (url, fileName, sessionID),
+         'result2': "STAFResult['content'] == None",
+	     'rc':[ 0 ]
+	    }
+	  </call>
+
+      <script>
+        machine = 'local'
+        getEntryRequest = 'GET ENTRY %s SIZE' % (fileName)
+      </script>
+
+      <stafcmd>
+        <location>machine</location>
+        <service>'FS'</service>
+        <request>getEntryRequest</request>
+      </stafcmd>
+
+      <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0 and STAFResult['lowerSize'] == urlContentSize,
+          'failMsg': 'STAF %s FS %s failed with RC=%s Result=%s' % \
+          (machine, getEntryRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+       </call>
+
+       <call function="'Test'">
+         {'request': 'GET CONTENT FILE %s SESSION %s' % (fileName2, sessionID),
+          'result2':  "STAFResult == ''",
+          'rc': [ 0 ]
+         }
+       </call>
+
+       <script>
+         machine = 'local'
+         getEntryRequest = 'GET ENTRY %s SIZE' % (fileName2)
+       </script>
+
+       <stafcmd>
+         <location>machine</location>
+         <service>'FS'</service>
+         <request>getEntryRequest</request>
+       </stafcmd>
+
+       <call function="'STAXUtilCheckSuccess'">
+         { 'result': RC == 0 and STAFResult['lowerSize'] == urlContentSize,
+           'failMsg': 'STAF %s FS %s failed with RC=%s Result=%s' % \
+           (machine, getEntryRequest, RC, STAFResult), 'sendToMonitor': 1, 'recordStatus': 1  }
+       </call>
+
+       <!-- Because the file is a binary, it's content should not have been parsed as HTML,
+             so there should be no links -->
+       <call function="'Test'">
+         {'request': 'LIST LINKS SESSION %s' % (sessionID),
+          'result2':  "len(STAFResult) == 0",
+          'rc': [ 0 ]
+         }
+       </call>
+       
+       <!-- Delete the two files that were created above -->
+       <call function="'DeleteFile'">[fileName, 'local']</call>
+       <call function="'DeleteFile'">[fileName2, 'local']</call>
+
+       <!-- Verify get ContentTooLarge error if try to return contents in the result instead of specifying FILE option -->
+       <!-- Note: I guess the following two tests could return 0 if the JVM for the HTTP service is large enough -->
+       <call function="'Test'">
+         {'request': 'GET CONTENT SESSION %s' % (sessionID),
+          'rc': [ 4005 ]
+         }
+       </call>
+       <call function="'Test'">
+         {'request':'DOGET URL %s SESSION %s' % (url, sessionID),
+          'rc':[ 4005 ]
+         }
+       </call>
+       
+       <!-- Test whether it determines correctly whether the URL is already escaped or not -->
+
+       <script>
+         # This URL is escaped-encoded (e.g. it uses %20 to represent a space within the URL), so use ENCODED option in GET request
+         url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%20HTTP.txt'
+       </script>
+
+       <call function="'Test'">
+         {'request':'DOGET URL %s ENCODED RETURNNOCONTENT SESSION %s' % (url, sessionID),
+          'rc':[ 0 ]
+         }
+       </call>
+
+       <call function="'Test'">
+        {'request':'QUERY SESSION %s' %(sessionID),
+         'result2': "STAFResult['url'] == 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test HTTP.txt'",
+         'rc':[ 0 ]
+        }
+       </call>
+
+       <script>
+         # This URL is not already escaped-encoded (e.g. it really contains %) so don't specify ENCODED option in the GET request
+         url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%HTTP.txt'
+       </script>
+
+       <call function="'Test'">
+         {'request':'DOGET URL %s RETURNNOCONTENT SESSION %s' % (url, sessionID),
+          'rc':[ 0 ]
+         }
+       </call>
+ 
+       <call function="'Test'">
+        {'request':'QUERY SESSION %s' %(sessionID),
+         'result2': "STAFResult['url'] == 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%HTTP.txt'",
+         'rc':[ 0 ]
+        }
+        </call>
+      
+       <script>
+         # This URL is not already escaped-encoded (e.g. it really contains %2F) so don't specify ENCODED option in the GET request
+         url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%2FHTTP.txt'
+       </script>
+
+       <call function="'Test'">
+         {'request':'DOGET URL %s RETURNNOCONTENT SESSION %s' % (url, sessionID),
+          'rc':[ 0 ]
+         }
+       </call>
+
+       <call function="'Test'">
+        {'request':'QUERY SESSION %s' %(sessionID),
+         'result2': "STAFResult['url'] == 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%2FHTTP.txt'",
+         'rc':[ 0 ]
+        }
+        </call>
+
+       <script>
+         # This URL is already escaped-encoded (e.g. uses %25 instead of a %, so use ENCODED in the GET request
+         url = 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%25HTTP.txt'
+       </script>
+
+       <call function="'Test'">
+         {'request':'REQUEST METHOD GET URL %s ENCODED RETURNNOCONTENT SESSION %s' % (url, sessionID),
+          'rc':[ 0 ]
+         }
+       </call>
+
+       <call function="'Test'">
+        {'request':'QUERY SESSION %s' %(sessionID),
+         'result2': "STAFResult['url'] == 'http://ausgsa.ibm.com/projects/a/ais/xwiki/public/Offerings/HTTP/test/test%HTTP.txt'",
+         'rc':[ 0 ]
+        }
+        </call>
+
+	   <!-- test put XXX -->
+	   <!-- test delete XXX -->
+ 	
+   	   <call function="'Test'">
+	    {'request':'CLOSE SESSION %s' %sessionID,
+	     'result':'',
+	     'rc':[ 0 ]
+	    }
+	   </call>
+	  
+ 	 </sequence> 
+  </function>  
+  
+<!-- ================================================================= -->
+
+  <function name="TestDefaultHeaders">
+ 	<sequence>
+ 	<!-- It may be necessary to pass these through the header comparator
+ 	     if the order becomes an issue making the tests pass -->
+ 	 	 	   	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+        url = 'www.htmlcodetutorial.com'
+ 	  </script>
+ 	  
+ 	  <!-- The skipped line in the trace return is for the potential presence of a 
+ 	       Connection: Keep-Alive header, that seems to sometimes be sent -->
+ 	  
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL %s SESSION %s NOSTATUS' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0",
+        'rc':[ 0 ]
+	   }
+	  </call>
+	  	
+      <call function="'SetVar'">['httpTest/Header=foo', 'httpTest/Value=bar']</call>
+
+   	  <call function="'Test'">
+	   {'request':'SET DEFAULTHEADER {httpTest/Header} VALUE {httpTest/Value} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL http://%s SESSION %s NOSTATUS' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('foo: bar') > 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	   	
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL http://%s SESSION %s NOSTATUS HEADER {httpTest/Header}=who' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('foo: who') > 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL http://%s SESSION %s NOSTATUS HEADER who=me' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('foo: bar') > 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0 and " +
+                     "STAFResult['content'].find('who: me') > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'SET DEFAULTHEADER foo VALUE who SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call> 
+	  	  	
+      <call function="'Test'">
+	   {'request':'LIST DEFAULTHEADERS SESSION %s' %sessionID,
+        'result2': "STAFResult['foo'] == 'who'",
+        'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'QUERY DEFAULTHEADER {httpTest/Header} SESSION %s' %sessionID,
+        'result': 'who',
+        'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL http://%s SESSION %s NOSTATUS' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('foo: who') > 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	   	
+   	  <call function="'Test'">
+	   {'request':'SET DEFAULTHEADER who VALUE me SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call> 
+	  	  	
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL http://%s SESSION %s NOSTATUS' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('foo: who') > 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0 and " +
+                     "STAFResult['content'].find('who: me') > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	   	
+      <call function="'SetVar'">['httpTest/Header=who']</call>
+
+   	  <call function="'Test'">
+	   {'request':'DELETE DEFAULTHEADER {httpTest/Header} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call> 
+	  	  	
+      <call function="'Test'">
+	   {'request':'REQUEST METHOD TRACE URL http://%s SESSION %s NOSTATUS' % (url, sessionID),
+        'result2': "STAFResult['statusCode'] == None and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'].find('TRACE / HTTP/1.1') == 0 and " +
+                     "STAFResult['content'].find('foo: who') > 0 and " +
+                     "STAFResult['content'].find('Host: www.htmlcodetutorial.com') > 0 and " +
+                     "STAFResult['content'].find('User-Agent:') > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>	   	
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call> 	
+ 	
+      <script>
+        url = 'www.amazon.com'
+ 	  </script>
+      <call function="'DeleteVar'">['httpTest/Header', 'httpTest/Value']</call>
+ 	
+ 	</sequence>
+  </function>  
+  
+<!-- ================================================================= -->
+
+  <function name="TestAutoRedirect">
+ 	<sequence>
+ 	 	 	   	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	  	  
+      <call function="'SetVar'">['httpTest/SessionID=%s' % (sessionID)]</call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['url'] == None and " +
+                     "STAFResult['title'] == None and " +
+                     "STAFResult['statusCode'] == '-1' and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+	   	   	
+   	  <call function="'Test'">
+	   {'request':'SET FOLLOWREDIRECT SESSION {httpTest/SessionID}',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  	  
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['url'] == None and " +
+                     "STAFResult['title'] == None and " +
+                     "STAFResult['statusCode'] == '-1' and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Enabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+         'SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+       
+      <!-- Coment out since now works
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+	     ' DONOTFOLLOWREDIRECT SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['statusCode'] == '301' and " +
+                     "STAFResult['statusMessage'] == 'Moved Permanently' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+        'rc':[ 0 ]
+	   }
+	  </call>
+      -->
+ 	
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION {httpTest/SessionID}',
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+      <call function="'DeleteVar'">['httpTest/SessionID']</call>
+
+	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+	   	   	
+   	  <call function="'Test'">
+	   {'request':'SET FOLLOWREDIRECT SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>	   	   	
+   	  <call function="'Test'">
+	   {'request':'SET DONOTFOLLOWREDIRECT SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  	  
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['url'] == None and " +
+                     "STAFResult['title'] == None and " +
+                     "STAFResult['statusCode'] == '-1' and " +
+                     "STAFResult['statusMessage'] == None and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  	   	  
+      <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+	     ' FOLLOWREDIRECT SESSION %s' %sessionID,
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+	  <!-- Comment out since no longer have to following redirects to access amazon.com
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+	     ' SESSION %s' %sessionID,
+        'result2': "STAFResult['statusCode'] == '301' and " +
+                     "STAFResult['statusMessage'] == 'Moved Permanently' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  -->
+
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	   	  
+ 	</sequence>
+  </function>    
+  
+<!-- ================================================================= -->
+
+  <function name="TestCookies">
+ 	<sequence>
+ 	<!-- Amazon's cookies may change.  If the test fails verify that the 
+ 	     cookies being sent have not
+ 	     XXX Need to update to parse value out of query result
+ 	     -->
+ 	 	   	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	  
+      <call function="'SetVar'">['httpTest/SessionID=%s' % (sessionID)]</call>
+
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+	     ' FOLLOWREDIRECT SESSION %s' %sessionID,
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'LIST COOKIES SESSION {httpTest/SessionID}',
+        'result2': "len(STAFResult) > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+	  	  	  	  
+	  <!-- test remove cookie -->
+	  	  	  	  
+      <call function="'SetVar'">['httpTest/CookieName=session-id']</call>
+
+   	  <call function="'Test'">
+	   {'request':'DELETE COOKIE NAME {httpTest/CookieName} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+
+   	  <call function="'Test'">
+	   {'request':'QUERY COOKIE NAME {httpTest/CookieName} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>	  
+	  	  
+	  <!-- test add cookie -->	  
+	  	  
+      <call function="'SetVar'">['httpTest/CookieName=skin', 'httpTest/CookieValue=foo']</call>
+
+   	  <call function="'Test'">
+	   {'request':'SET COOKIE VALUE {httpTest/CookieValue} NAME {httpTest/CookieName} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+	  
+   	  <call function="'Test'">
+	   {'request':'QUERY COOKIE NAME skin SESSION %s' %sessionID,
+        'result2': "STAFResult['value'] == 'foo' and " +
+                     "(STAFResult['domain'] != None or STAFResult['domain'] == None) and " +
+                     "(STAFResult['path'] != None or STAFResult['path'] == None) and " +
+                     "(STAFResult['expirationDate'] != None or STAFResult['expirationDate'] == None)",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+	  <!-- test change cookie -->
+	  
+   	  <call function="'Test'">
+	   {'request':'SET COOKIE VALUE 123456 NAME session-id-time SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+	  
+   	  <call function="'Test'">
+	   {'request':'QUERY COOKIE NAME session-id-time SESSION %s' %sessionID,
+        'result2': "STAFResult['value'] == '123456' and " +
+                     "STAFResult['domain'] != None and " +
+                     "STAFResult['path'] != None and " +
+                     "STAFResult['expirationDate'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+	  
+      <call function="'DeleteVar'">['httpTest/CookieName', 'httpTest/CookieValue']</call>
+
+	  <!-- test cookie policy-->
+	  	   	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	  
+      <call function="'SetVar'">['httpTest/Policy=compatibility']</call>
+
+   	  <call function="'Test'">
+	   {'request':'SET COOKIE POLICY {httpTest/Policy} SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+	     ' FOLLOWREDIRECT SESSION %s' %sessionID,
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+       {'request':'LIST COOKIES SESSION %s' %sessionID,
+        'result2': "len(STAFResult) > 0",
+        'rc':[ 0 ]
+       }
+      </call>	  
+   	  
+      <call function="'Test'">
+	   {'request':'QUERY COOKIE NAME session-id SESSION %s' %sessionID,
+        'result2': "STAFResult['value'] != None and " +
+                     "STAFResult['domain'] == '.amazon.com' and " +
+                     "STAFResult['path'] == '/' and " +
+                     "STAFResult['expirationDate'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+ 	  
+   	  <call function="'Test'">
+	   {'request':'SET COOKIE POLICY rfc2109 SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL http://www.amazon.com RETURNNOCONTENT '+\
+	     ' FOLLOWREDIRECT SESSION %s' %sessionID,
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['headers'] == None and " +
+                     "STAFResult['content'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+   	  <call function="'Test'">
+	   {'request':'LIST COOKIES SESSION %s' %sessionID,
+        'result2': "len(STAFResult) > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+
+   	  <call function="'Test'">
+	   {'request':'QUERY COOKIE NAME session-id SESSION %s' %sessionID,
+        'result2': "STAFResult['value'] != None and " +
+                     "STAFResult['domain'] == '.amazon.com' and " +
+                     "STAFResult['path'] == '/' and " +
+                     "STAFResult['expirationDate'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>	  
+	  	  
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'DeleteVar'">['httpTest/Policy']</call>
+
+ 	</sequence> 
+  </function>  
+
+  
+<!-- ================================================================= -->
+
+  <function name="TestLink">
+    
+    <!-- does not test invalid syntax 
+         -->
+    
+    <function-map-args>
+      <function-required-arg name="host">
+        Location of testHTTP.html
+      </function-required-arg>
+    </function-map-args>
+    
+ 	<sequence>
+
+  	  <script>
+  	    url = '%s/testHTTP.html' %(host)
+  	  </script>
+ 	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	  
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  
+ 	  <call function="'Test'">
+	   {'request':'LIST LINKS SESSION %s' % (sessionID),
+        'result2': "len(STAFResult) >= 3 and STAFResult[0]['linkIndex'] == '1' and " +
+                     "STAFResult[0]['linkID'] == 'tamu' and " +
+                     "STAFResult[0]['linkName'] == None and " +
+                     "STAFResult[1]['linkIndex'] == '2' and " +
+                     "STAFResult[1]['linkID'] == 'chi' and " +
+                     "STAFResult[1]['linkName'] == 'CHI' and " +
+                     "STAFResult[2]['linkIndex'] == '3' and " +
+                     "STAFResult[2]['linkID'] == 'csdl' and " +
+                     "STAFResult[2]['linkName'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'SetVar'">['httpTest/LinkID=tamu', 'httpTest/LinkIndex=2']</call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY LINK ID {httpTest/LinkID} SESSION %s' % (sessionID),
+        'result2': "STAFResult['linkIndex'] == '1' and " +
+                     "STAFResult['linkID'] == 'tamu' and " +
+                     "STAFResult['linkName'] == None and " +
+                     "STAFResult['href'] == 'http://www.tamu.edu/'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+       {'request':'QUERY LINK INDEX {httpTest/LinkIndex} SESSION %s' % (sessionID),
+        'result2': "STAFResult['linkIndex'] == '2' and " +
+                     "STAFResult['linkID'] == 'chi' and " +
+                     "STAFResult['linkName'] == 'CHI' and " +
+                     "STAFResult['href'] == './testHTTPrelative.html'",
+        'rc':[ 0 ]
+       }
+      </call>
+
+      <call function="'Test'">
+       {'request':'QUERY LINK NAME InvalidName SESSION %s' %sessionID,
+        'result':'',
+        'rc':[ 48 ]
+       }
+      </call>
+      
+ 	  <call function="'Test'">
+	   {'request':'FOLLOW LINK ID {httpTest/LinkID} SESSION %s' %(sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+      <call function="'Test'">
+	   {'request':'LIST LINKS SESSION %s' % (sessionID),
+        'result2': "len(STAFResult) > 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+         'result2': "STAFResult['url'] == 'http://www.tamu.edu/' and " +
+                     "STAFResult['title'] == 'Texas A&amp;M University' and " +
+                     "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  
+      <script>fileName = '{STAF/DataDir}/tmp/service/%s/followLink.html' % (serviceName)</script>
+
+ 	  <call function="'Test'">
+	   {'request':'FOLLOW LINK INDEX 1 SESSION %s FILE %s TOMACHINE %s' %(sessionID, fileName, TestMachine),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+      <call function="'DeleteFile'">[fileName, TestMachine]</call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['url'] == 'http://www.tamu.edu/' and " +
+                     "STAFResult['title'] == 'Texas A&amp;M University' and " +
+                     "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <!-- test relative link and NAME-->
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+ 	  
+ 	  <call function="'Test'">
+	   {'request':'FOLLOW LINK NAME CHI SESSION %s' %(sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+	  <script>
+        url='%s/testHTTPrelative.html' % (testHTTPhost)
+	  </script>
+	  
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['url'] == '%s' and " % (url) +
+                     "STAFResult['title'] == 'Http Test Page 2' and " +
+                     "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+      <call function="'DeleteVar'">['httpTest/LinkID', 'httpTest/LinkIndex']</call>
+
+	</sequence>
+  </function>
+  
+  
+<!-- ================================================================= -->
+
+  <function name="TestForm">
+    
+    <!-- does not test invalid syntax 
+         does not test FILE parameters
+         -->
+    
+    <function-map-args>
+      <function-required-arg name="host">
+        Location of testHTTP.html
+      </function-required-arg>
+    </function-map-args>
+    
+ 	<sequence>
+
+  	  <script>
+  	    url = '%s/testHTTP.html' %(host)
+  	  </script>
+ 	
+ 	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    sessionID = STAXResult
+ 	  </script>
+ 	  
+      <call function="'SetVar'">['httpTest/SessionID=%s' % sessionID]</call>
+
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <!-- test get form by invalid name-->
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM NAME NO_SUCH_FORM SESSION %s' % sessionID,
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>
+      
+ 	  <!-- test get form by invalid id-->
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID NO_SUCH_FORM SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>
+ 	  
+      <!-- test get form by invalid index-->
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 99 SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>
+
+      <!-- test get form by invalid non-numeric index-->
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX InvalidIndex SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>
+
+      <!-- test list forms -->
+
+ 	  <call function="'Test'">
+	   {'request':'LIST FORMS SESSION {httpTest/SessionID}',
+        'result2': "len(STAFResult) == 3 and " +
+                     "STAFResult[0]['formIndex'] == '1' and " +
+                     "STAFResult[0]['formID'] == 'GET_FORM' and " +
+                     "STAFResult[0]['formName'] == 'The Get Form' and " +
+                     "STAFResult[1]['formIndex'] == '2' and " +
+                     "STAFResult[1]['formID'] == 'POST_FORM' and " +
+                     "STAFResult[1]['formName'] == 'The Post Form' and " +
+                     "STAFResult[2]['formIndex'] == '3' and " +
+                     "STAFResult[2]['formID'] == 'POST_FORM_2' and " +
+                     "STAFResult[2]['formName'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'SetVar'">
+        ['httpTest/FormID=GET_FORM', 'httpTest/FormName=The Get Form',
+         'httpTest/FormIndex=1' ]
+      </call>
+
+ 	  <!-- test list controls-->
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID {httpTest/FormID} SESSION {httpTest/SessionID}',
+        'result2': "STAFResult['formIndex'] == '1' and " +
+                     "STAFResult['formName'] == 'The Get Form' and " +
+                     "STAFResult['formID'] == 'GET_FORM' and " +
+                     "STAFResult['method'] == 'Get' and " +
+                     "STAFResult['targetUrl'] == 'http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl' and " +
+                     "STAFResult['headerMap'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM NAME "{httpTest/FormName}" SESSION %s' %sessionID,
+        'result2': "STAFResult['formIndex'] == '1' and " +
+                     "STAFResult['formName'] == 'The Get Form' and " +
+                     "STAFResult['formID'] == 'GET_FORM' and " +
+                     "STAFResult['method'] == 'Get' and " +
+                     "STAFResult['targetUrl'] == 'http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl' and " +
+                     "STAFResult['headerMap'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'QUERY FORM INDEX {httpTest/FormIndex} SESSION %s' %sessionID,
+        'result2': "STAFResult['formIndex'] == '1' and " +
+                     "STAFResult['formName'] == 'The Get Form' and " +
+                     "STAFResult['formID'] == 'GET_FORM' and " +
+                     "STAFResult['method'] == 'Get' and " +
+                     "STAFResult['targetUrl'] == 'http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl' and "
+                     "STAFResult['headerMap'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'SetVar'">['httpTest/FormID=POST_FORM_2']</call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID {httpTest/FormID} SESSION %s' %sessionID,
+        'result2': "STAFResult['formIndex'] == '3' and " +
+                     "STAFResult['formName'] == None and " +
+                     "STAFResult['formID'] == 'POST_FORM_2' and " +
+                     "STAFResult['method'] == 'Post' and " +
+                     "STAFResult['targetUrl'] == 'http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl' and "
+                     "STAFResult['headerMap'] == None",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+ 	  
+ 	  <!-- bad value -->
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 1 SESSION %s CONTROLNAME doesNotExist' % sessionID,
+	    'result':'',
+	    'rc':[ 48 ]
+	   }
+	  </call>  
+	  
+      <!-- List form control names -->
+
+ 	  <call function="'Test'">
+	   {'request':'LIST FORM CONTROLNAMES SESSION {httpTest/SessionID}',
+        'result2': "len(STAFResult) == 2 and " +
+                     "STAFResult[0] == 'submit' and " +
+                     "STAFResult[1] == 'town'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+	  <!-- radio -->
+
+      <call function="'SetVar'">['httpTest/FormControlName=animal']</call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 3 SESSION %s CONTROLNAME {httpTest/FormControlName}' % sessionID,
+        'result2': "STAFResult['type'] == 'input type=radio' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'dog' and " +
+                     "STAFResult['possibleValueList'][0] == 'cat' and " +
+                     "STAFResult['possibleValueList'][1] == 'bird'",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+	  
+      <!-- checkbox -->
+
+      <call function="'Test'">
+       {'request':'QUERY FORM INDEX 2 SESSION %s CONTROLNAME iguanas=' % sessionID,
+        'result2': "STAFResult['type'] == 'input type=checkbox' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'CHECKED' and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+       }
+      </call>  
+
+ 	  <!-- submit -->
+ 
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 3 SESSION %s CONTROLNAME submit' % sessionID,
+        'result2': "STAFResult['type'] == 'Submit group' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'GO=go' and " +
+                     "STAFResult['possibleValueList'][0] == 'GO=go' and " +
+                     "STAFResult['possibleValueList'][1] == 'Stay=stay' and " +
+                     "STAFResult['possibleValueList'][2] == 'roll over=Roll Over' and " +
+                     "STAFResult['possibleValueList'][3] == 'pic=,&lt;valueX>,&lt;valueY>'",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+
+ 	  <!-- hidden -->
+
+      <call function="'Test'">
+       {'request':'QUERY FORM INDEX 3 SESSION %s CONTROLNAME invis2' % sessionID,
+        'result2': "STAFResult['type'] == 'input type=hidden' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'phantom' and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+       }
+      </call>  
+ 	  
+      <!-- null -->
+
+      <call function="'Test'">
+       {'request':'QUERY FORM INDEX 3 SESSION %s CONTROLNAME null' % sessionID,
+        'result2': "STAFResult['type'] == 'null type' and " +
+                     "STAFResult['disabled'] == None and " +
+                     "STAFResult['readOnly'] == None and " +
+                     "STAFResult['value'] == None and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+       }
+      </call>  
+
+      <!-- select -->
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 3 SESSION %s CONTROLNAME who' % sessionID,
+        'result2': "STAFResult['type'] == 'select' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == None and " +
+                     "STAFResult['possibleValueList'][0] == 'foo' and " +
+                     "STAFResult['possibleValueList'][1] == 'sam'",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+
+ 	  <!-- textarea -->
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 2 SESSION %s CONTROLNAME myself' % sessionID,
+        'result2': "STAFResult['type'] == 'textarea' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'].find('I was born in the house my father built.') == 0 and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+	   }
+	  </call>  
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY SESSION %s' %(sessionID),
+        'result2': "STAFResult['url'] == '%s' and " % (url) +
+                     "STAFResult['title'] == 'HTTP Service Test' and " +
+                     "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK' and " +
+                     "STAFResult['cookiePolicy'] in ['default', 'rfc2109'] and " +
+                     "STAFResult['followsRedirects'] == 'Disabled' and " +
+                     "STAFResult['parseContent'] == 'AutoDetect' and " +
+                     "STAFResult['owner'] != None",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <!-- test set control value and verify values-->
+ 	  
+ 	  <!-- radio -->
+
+      <call function="'SetVar'">['httpTest/FormControlValue=bird']</call>
+
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME {httpTest/FormControlName} VALUE {httpTest/FormControlValue} SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME animal' % sessionID,
+        'result2': "STAFResult['type'] == 'input type=radio' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'bird' and " +
+                     "len(STAFResult['possibleValueList']) == 2 and " +
+                     "STAFResult['possibleValueList'][0] == 'cat' and " +
+                     "STAFResult['possibleValueList'][1] == 'dog'",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+ 
+ 	  <!-- select -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME who VALUE foo SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME who' % sessionID,
+        'result2': "STAFResult['type'] == 'select' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'foo' and " +
+                     "len(STAFResult['possibleValueList']) == 1 and " +
+                     "STAFResult['possibleValueList'][0] == 'sam'",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+
+ 	  <call function="'Test'">
+	   {'request':'SET FORM INDEX 3 CONTROLNAME who VALUE foo SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME who' % sessionID,
+        'result2': "STAFResult['type'] == 'select' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == None and " +
+                     "len(STAFResult['possibleValueList']) == 2 and " +
+                     "STAFResult['possibleValueList'][0] == 'foo' and "
+                     "STAFResult['possibleValueList'][1] == 'sam'",
+	    'rc':[ 0 ]
+	   }
+	  </call>  
+
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME who VALUE sam SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME who' % sessionID,
+        'result2': "STAFResult['type'] == 'select' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'sam' and " +
+                     "len(STAFResult['possibleValueList']) == 1 and " +
+                     "STAFResult['possibleValueList'][0] == 'foo'",
+	    'rc':[ 0 ]
+	   }
+      </call>  
+
+      <call function="'Test'">
+	   {'request':'SET FORM INDEX 3 CONTROLNAME who1 VALUE foo SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'QUERY FORM INDEX 3 SESSION %s CONTROLNAME who1' % sessionID,
+        'result2': "STAFResult['type'] == 'select multiple' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'foo' and " +
+                     "len(STAFResult['possibleValueList']) == 1 and " +
+                     "STAFResult['possibleValueList'][0] == 'sam'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME who1 VALUE sam SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME who1' % sessionID,
+        'result2': "STAFResult['type'] == 'select multiple' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'].find('foo') == 0 and STAFResult['value'].find('sam') > 0 and " +
+                     "len(STAFResult['possibleValueList']) == 0",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <!-- submit -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME submit VALUE Stay=stay'\
+	     +' SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME submit' % sessionID,
+        'result2': "STAFResult['type'] == 'Submit group' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'Stay=stay' and " +
+                     "len(STAFResult['possibleValueList']) == 4 and " +
+                     "STAFResult['possibleValueList'][0] == 'GO=go' and " +
+                     "STAFResult['possibleValueList'][1] == 'Stay=stay' and " +
+                     "STAFResult['possibleValueList'][2] == 'roll over=Roll Over' and " +
+                     "STAFResult['possibleValueList'][3] == 'pic=,&lt;valueX>,&lt;valueY>'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <!-- img -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME submit VALUE pic=,2,3 '\
+	     +'SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM_2 SESSION %s CONTROLNAME submit' % sessionID,
+        'result2': "STAFResult['type'] == 'Submit group' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'pic=,2,3' and " +
+                     "len(STAFResult['possibleValueList']) == 4 and " +
+                     "STAFResult['possibleValueList'][0] == 'GO=go' and " +
+                     "STAFResult['possibleValueList'][1] == 'Stay=stay' and " +
+                     "STAFResult['possibleValueList'][2] == 'roll over=Roll Over' and " +
+                     "STAFResult['possibleValueList'][3] == 'pic=,&lt;valueX>,&lt;valueY>'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <!-- text -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID GET_FORM CONTROLNAME town VALUE Austin SESSION %s'\
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+	  
+ 	  <!-- textarea -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM CONTROLNAME myself VALUE &quot;I am a test.&quot; SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+ 	  <call function="'Test'">
+	   {'request':'QUERY FORM ID POST_FORM SESSION %s CONTROLNAME myself' % sessionID,
+        'result2': "STAFResult['type'] == 'textarea' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'I am a test.' and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+	   }
+	  </call>  
+	  	  
+ 	  <!-- checkbox -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM CONTROLNAME nosmoke= VALUE UNCHECKED SESSION %s' \
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+       {'request':'QUERY FORM ID POST_FORM SESSION %s CONTROLNAME nosmoke=' % sessionID,
+        'result2': "STAFResult['type'] == 'input type=checkbox' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'UNCHECKED' and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+       }
+      </call>  
+
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM CONTROLNAME hatesanchovies= VALUE checked'\
+	     +' SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'Test'">
+       {'request':'QUERY FORM ID POST_FORM SESSION %s CONTROLNAME hatesanchovies=' % sessionID,
+        'result2': "STAFResult['type'] == 'input type=checkbox' and " +
+                     "STAFResult['disabled'] == 'No' and " +
+                     "STAFResult['readOnly'] == 'No' and " +
+                     "STAFResult['value'] == 'CHECKED' and " +
+                     "STAFResult['possibleValueList'] == None",
+        'rc':[ 0 ]
+       }
+      </call>  
+	  
+	  <!-- bad values test -->
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME submit VALUE Invalid SESSION %s'\
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 47 ]
+	   }
+	  </call>
+	  
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME submit VALUE pic=foo SESSION %s'\
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 47 ]
+	   }
+	  </call>
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM_2 CONTROLNAME animal VALUE dolphin SESSION %s'\
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 47 ]
+	   }
+	  </call>
+	  
+ 	  <call function="'Test'">
+	   {'request':'SET FORM ID POST_FORM CONTROLNAME nosmoke= VALUE Invalid SESSION %s'\
+	     %sessionID,
+	    'result':'',
+	    'rc':[ 47 ]
+	   }
+	  </call>	  
+	  
+	  <call function="'GetNewSession'"/>
+ 	  
+ 	  <script>
+ 	    url2='http://www.htmlcodetutorial.com/cgi-bin/mycgi.pl'
+ 	    goldSessionID = STAXResult
+ 	    request1 = 'REQUEST METHOD GET URL %s  PARAMETER ="Submit Query" PARAMETER town=Austin SESSION %s' \
+ 	               %(url2, goldSessionID)
+ 	    request2 = 'REQUEST METHOD POST URL %s PARAMETER animal=dog '%(url2)\
+ 	               +'PARAMETER GO=go PARAMETER invis1=zoro '\
+ 	               +'PARAMETER invis2=phantom SESSION %s' \
+ 	                 %(goldSessionID)
+ 	  </script>
+ 	  
+ 	  <!-- test get method submit-->
+ 	  
+ 	  <stafcmd>
+        <location>TestMachine</location>
+        <service>serviceName</service>
+        <request>request1</request>
+      </stafcmd>
+ 	  
+ 	  <script>
+ 	  	result=STAFResult
+ 	  </script>
+ 	  
+ 	  <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0 , 'failMsg': 'Gold Get Error %s:  STAF %s %s %s' % (RC, TestMachine, serviceName, request1),
+          'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+          
+ 	  <call function="'Test'">
+	   {'request':'SUBMIT FORM ID GET_FORM SESSION %s' %sessionID,
+	    'result':result,
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+ 	  <!-- test postmethod submit-->
+ 	  
+ 	  <stafcmd>
+        <location>TestMachine</location>
+        <service>serviceName</service>
+        <request>request2</request>
+      </stafcmd>
+ 	  
+ 	  <script>
+ 	  	result=STAFResult
+ 	  </script>
+ 	  
+ 	  <call function="'STAXUtilCheckSuccess'">
+        { 'result': RC == 0 , 'failMsg': 'Gold Post Error %s:  STAF %s %s %s' % (RC, TestMachine, serviceName, request2),
+          'sendToMonitor': 1, 'recordStatus': 1  }
+      </call>
+          
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  
+      <call function="'SetVar'">['httpTest/FormIndex=3']</call>
+
+ 	  <call function="'Test'">
+	   {'request':'SUBMIT FORM INDEX {httpTest/FormIndex} SESSION %s' %sessionID,
+	    'result':result,
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <script>fileName = '{STAF/DataDir}/tmp/service/%s/submitForm.html' % (serviceName)</script>
+      
+      <call function="'SetVar'">['httpTest/toMachine=%s' % (TestMachine)]</call>
+
+      <call function="'Test'">
+	   {'request':'SUBMIT FORM ID POST_FORM_2 SESSION %s FILE %s TOMACHINE {httpTest/toMachine}' % (sessionID, fileName),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+      
+      <call function="'DeleteFile'">[fileName, TestMachine]</call>
+      
+ 	  <call function="'Test'">
+	   {'request':'SUBMIT FORM NAME InvalidFormName SESSION %s' %sessionID,
+	    'result': '',
+	    'rc':[ 48 ]
+	   }
+	  </call>
+	  
+      <!-- Test Reset Form -->
+
+ 	  <call function="'Test'">
+	   {'request':'DOGET URL %s SESSION %s' %(url, sessionID),
+        'result2': "STAFResult['statusCode'] == '200' and " +
+                     "STAFResult['statusMessage'] == 'OK'",
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'RESET FORM INDEX {httpTest/FormIndex} SESSION %s' %sessionID,
+	    'result':result,
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'Test'">
+	   {'request':'RESET FORM ID {httpTest/FormID} SESSION %s' %sessionID,
+	    'result':result,
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %sessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+	  	  
+   	  <call function="'Test'">
+	   {'request':'CLOSE SESSION %s' %goldSessionID,
+	    'result':'',
+	    'rc':[ 0 ]
+	   }
+	  </call>
+
+      <call function="'DeleteVar'">
+        ['httpTest/SessionID', 'httpTest/FormID', 'httpTest/FormName',
+         'httpTest/FormIndex', 'httpTest/FormControlName', 'httpTest/FormControlValue',
+         'httpTest/toMachine']
+      </call>
+	  
+ 	</sequence>
+  </function>  
+  
+<!-- ================================================================= -->
+
+  <function name="Main">
+    <sequence>
+    
+      <message>'ImportMachine=%s' % ImportMachine</message>
+      <message>'ImportDirectory=%s' % ImportDirectory</message>
+
+      <import machine="ImportMachine" 
+        file="'%s/STAXUtil.xml' % ImportDirectory"/>
+
+      <call function="'STAXUtilLogAndMsg'">
+        'machName = %s' % TestMachine
+      </call>
+    
+      <testcase name="'HTTP'">
+      <sequence>
+      
+	      <testcase name="'Session Management'">
+	        <call function="'TestSessionManagement'"/>
+	 	  </testcase>
+	 	  
+	 	  	 	   	  
+	      <testcase name="'Follow Redirect'">
+	        <call function="'TestAutoRedirect'">
+	          {'host':testHTTPhost}
+	        </call>
+	 	  </testcase>
+	      
+	        
+	      <testcase name="'Default Headers'">
+	        <call function="'TestDefaultHeaders'">
+	          {'host':testHTTPhost}
+	        </call>
+	 	  </testcase>
+	        
+	      <testcase name="'HTTPS'">
+	        <call function="'TestHTTPS'">
+	        {'sourceforgeID' : sourceforge_ID,
+	         'sourceforgePwd' : sourceforge_Pwd
+	        }
+	        </call>
+	 	  </testcase> 
+	 	  	  
+	      <testcase name="'Cookies'">
+	        <call function="'TestCookies'"/>
+	 	  </testcase>
+	 	   	  
+	      <testcase name="'Methods'">
+	        <call function="'TestMETHODs'"/>
+	 	  </testcase>
+	 	   	  
+	      <testcase name="'Link'">
+	        <call function="'TestLink'">
+	          {'host':testHTTPhost}
+	        </call>
+	 	  </testcase>
+	 	   	  
+	      <testcase name="'Forms'">
+	        <call function="'TestForm'">
+	          {'host':testHTTPhost}
+	        </call>
+	 	  </testcase>
+	 	  
+ 	  </sequence>
+ 	  </testcase>
+
+ 	  <message>'All Done'</message>
+ 
+    </sequence>
+  </function>
+
+</stax> 
+  

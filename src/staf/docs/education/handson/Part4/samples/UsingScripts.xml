@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <script>
+    jstafJar = '{STAF/Config/STAFRoot}/bin/JSTAF.jar'
+    staxmonJar = '{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'
+    machine = 'local'
+    java_command = 'java'
+    java_class = 'com.ibm.staf.service.stax.TestProcess'
+    loopCount = '10'
+    incSeconds = '3'
+    returnCode = '50'
+    parms = '%s %s %s' % (loopCount, incSeconds, returnCode)
+    cp = 'CLASSPATH=%s;%s' % (jstafJar, staxmonJar)
+  </script>
+
+  <defaultcall function="main"/>
+
+  <function name="main">
+
+    <sequence>
+
+      <process name="'My Test Process'">
+        <location>machine</location>
+        <command>java_command</command>
+        <parms>'%s %s' % (java_class, parms)</parms>
+        <env>cp</env>
+        <stderr mode="'stdout'"/>
+        <returnstdout/>
+      </process>
+
+      <if expr="RC != 0">
+        <message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)</message>
+        <else>
+          <message>'Process RC was 0.  STAXResult=%s' % STAXResult</message>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+</stax>

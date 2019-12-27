@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+  <defaultcall function="Main"/>
+
+  <script>subjobdir = 'C:/STAF/xml' # directory where subret.xml is located</script>
+  <script>subjobIDs = STAXGlobal([]) # empty list, must be STAXGlobal so that all parallel threads can access the same variable</script>
+  <script>expectedSubjobTotal = 5 # attempting to start 5 subjobs</script>
+
+  <function name="Main" scope="global">
+    <sequence>
+      <testcase name="'Subjob Tests'">
+        <parallel>        
+
+          <block name="'A'">
+            <sequence>
+          
+              <job name="'Regression tests'">
+                <job-file>'%s/subret.xml' % subjobdir</job-file>
+                <job-function-args>{'returnvalue': 'c:/temp/tcoutput.txt', 'delay': '10000'}</job-function-args>
+              </job>
+            
+              <call function="'CheckSubJob'"/>
+              
+            </sequence>
+          </block>
+      
+          <block name="'B'">
+            <sequence>
+          
+              <job>
+                <job-file>'%s/subret.xml' % subjobdir</job-file>
+                <job-function-args>{'returnvalue': '[10, 0]', 'delay': '20000'}</job-function-args>
+              </job>
+            
+              <call function="'CheckSubJob'"/>
+            
+            </sequence>
+          </block>
+
+          <block name="'C'">
+            <sequence>
+          
+              <job name="'Stress Test'">
+                <job-file>'%s/subret.xml' % subjobdir</job-file>
+                <job-function-args>{'delay': '60000'}</job-function-args>
+              </job>
+            
+              <call function="'CheckSubJob'"/>
+            
+            </sequence>
+          </block>
+
+          <block name="'D'">
+            <sequence>
+          
+              <job name="'FVT'">
+                <job-file>'%s/subret.xml' % subjobdir</job-file>
+                <job-function-args>{'delay': '60000'}</job-function-args>
+              </job>
+            
+              <call function="'CheckSubJob'"/>
+            
+            </sequence>
+          </block>
+        
+          <block name="'E'">
+            <sequence>
+          
+              <job name="'FVT2'">
+                <job-file>'%s/subret.xml' % subjobdir</job-file>
+                <job-function-args>{'delay': '60000'}</job-function-args>
+              </job>
+            
+              <call function="'CheckSubJob'"/>
+            
+            </sequence>
+          </block>
+
+        </parallel>
+      </testcase>
+      
+      <script>successfulSubjobIDs = subjobIDs.get()</script>
+      <message>'Successful Subjob IDs: %s' % successfulSubjobIDs</message>
+      <log>'Successful Subjob IDs: %s' % successfulSubjobIDs</log>
+      
+      <if expr="len(successfulSubjobIDs) == expectedSubjobTotal">
+        <return>[0]</return>
+        <else>
+          <return>[1, successfulSubjobIDs]</return>
+        </else>
+      </if>
+       
+    </sequence>   
+  </function>         
+  
+  <function name="CheckSubJob" scope="local">
+    <sequence>
+
+      <if expr="RC != 0">
+        <sequence>
+          <log>'Subjob failed to start with RC=%s, STAFResult=%s' % (RC, STAFResult)</log>
+          <message>'Subjob failed to start with RC=%s, STAFResult=%s' % (RC, STAFResult)</message>
+          <tcstatus result="'fail'"/>
+        </sequence>            
+        <else>
+          <sequence>
+            <log>'Subjob %s completed - returned %s' % (STAXSubJobID, STAXResult)</log>
+            <message>'Subjob %s completed - returned %s' % (STAXSubJobID, STAXResult)</message>
+            <script>subjobIDs.append(STAXSubJobID)</script>
+            <tcstatus result="'pass'"/>
+          </sequence>
+        </else>
+      </if>
+
+    </sequence>
+  </function>
+
+</stax>

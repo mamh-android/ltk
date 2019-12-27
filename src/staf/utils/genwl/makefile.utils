@@ -1,0 +1,28 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+genwl_targets += $(REL)/bin/GenWL.cmd\
+                 $(REL)/samples/genwl/Sample.gwl
+Targets += $(genwl_targets)
+CleanupTargets += cleanup_genwl
+
+$(genwl_targets): SUBSYS_REL := utils/genwl
+SUBSYS_REL := utils/genwl
+
+$(genwl_targets): RXPP_PATH += $(OS_SRC)/utils/genwl $(OS_SRC)/lang/rexx
+
+# GenWL targets
+
+$(REL)/bin/GenWL.cmd: $(SRC)/utils/genwl/GenWL.rxp $(MAKEFILE_NAME)
+	$(RXPP_IT)
+
+$(REL)/samples/genwl/Sample.gwl: $(SRC)/utils/genwl/Sample.gwl $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_genwl:
+	-@$(DEL) $(REL)/bin/GenWL.cmd $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/samples/genwl/Samples.gwl $(OUT_ERR_TO_DEV_NULL)

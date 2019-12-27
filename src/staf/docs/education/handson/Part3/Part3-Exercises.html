@@ -1,0 +1,388 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="David Bender">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (WinNT; U) [Netscape]">
+   <title>Hands-On Automation with STAF/STAX 3 - Part 3</title>
+</head>
+<body>
+
+<h1>
+<font face="Arial,Helvetica">Hands-On Automation with STAF/STAX 3 - Part 3</font></h1>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 3.1 - Using the FSExt, Zip, Monitor, Respool, 
+Sem. Trust, Service, Delay, Misc, and LifeCycle services</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to use the FSExt, Zip, Monitor, Respool, 
+Sem. Trust, Service, Delay, Misc, and LifeCycle services</font></h4>
+<ol>
+<li><font face="Arial,Helvetica">From the STAF CD, unzip file 
+Part3\install\FSExtV302.zip to C:\STAF\services.</font>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit the C:\STAF\bin\STAF.cfg file and add
+the lines</font>
+<pre><font face="Fixed width">service fsext library JSTAF execute C:/STAF/services/fsext/STAFFSExt.jar</font></pre>
+<font face="Arial,Helvetica">Save the changes to the STAF.cfg file and restart STAF.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local fsext filecontains file C:/STAF/bin/STAF.cfg string email</font></pre>
+<font face="Arial,Helvetica">you should get back an empty result buffer, since
+the STAF.cfg does contain the string "email".</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local fsext filecontains file C:/STAF/bin/STAF.cfg string emailXTZ</font></pre>
+<font face="Arial,Helvetica">you should an RC 4006.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local help service fsext error 4006</font></pre>
+<font face="Arial,Helvetica">you should help for this return code.  Note that
+service-specific return codes are in the 4000+ range.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type (substituting the
+correct location for &lt;STAFCD>)</font>
+<pre><font face="Fixed width">staf local zip list zipfile &lt;STAFCD>/Part2/install/STAXV345.zip</font></pre>
+<font face="Arial,Helvetica">you should see the contents of the zip file.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">We will need a static handle for the next several
+services.  From a command prompt, type </font>
+<pre><font face="Fixed width">staf local handle create handle name MyHandle</font></pre>
+<font face="Arial,Helvetica">you should get back a handle number (for our 
+examples we will use "33", but you should use the handle number you just
+received)</font>
+<pre><font face="Fixed width">set STAF_STATIC_HANDLE=33</font></pre></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type</font>
+<pre><font face="Fixed width">staf local monitor log message "We are doing Exercise 3.1"</font></pre>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type (substitute your
+handle for "33") </font>
+<pre><font face="Fixed width">staf local monitor query machine {STAF/Config/MachineNickname} handle 33</font></pre>
+<font face="Arial,Helvetica">you should get the status returned.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local respool create pool exercise3.1 description "Respool for exercise 3.1"</font></pre>
+<font face="Arial,Helvetica">this will create the resource pool.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local respool add pool exercise3.1 entry abc1 entry abc2</font></pre>
+<font face="Arial,Helvetica">this will add 2 entries to the resource pool.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local respool request pool exercise3.1
+staf local respool request pool exercise3.1</font></pre>
+<font face="Arial,Helvetica">this will acquire the 2 entries in the resource pool.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local respool request pool exercise3.1 timeout 10000</font></pre>
+<font face="Arial,Helvetica">this will another entry from the resource pool, and
+wait for a maximum of 10 seconds.  You should see the request wait for 10 seconds
+and then return an RC 37.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local help error 37</font></pre>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local respool query pool exercise3.1</font></pre>
+<font face="Arial,Helvetica">this will display information about the resource
+pool.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local respool delete pool exercise3.1 confirm force</font></pre>
+<font face="Arial,Helvetica">this will delete the resource pool.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local sem request mutex myMutex</font></pre>
+<font face="Arial,Helvetica">this will acquire the "myMutex" mutex semaphore.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a new command prompt, type </font>
+<pre><font face="Fixed width">staf local sem request mutex myMutex</font></pre>
+<font face="Arial,Helvetica">notice that this hangs because the semaphore
+is in use.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Back in the original command prompt, type </font>
+<pre><font face="Fixed width">staf local sem release mutex myMutex</font></pre>
+<font face="Arial,Helvetica">notice that this handle has released the semaphore
+and the request in the new command prompt window should have returned since
+the semaphore was available.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local trust list</font></pre>
+<font face="Arial,Helvetica">this will list all of the trust settings
+on the machine.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local service list</font></pre>
+<font face="Arial,Helvetica">this will list all of the registered services
+on the machine.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local delay delay 10000</font></pre>
+<font face="Arial,Helvetica">this will delay for 10 seconds.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local misc whoami</font></pre>
+<font face="Arial,Helvetica">this will delay information about who the machine
+thinks you are.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local lifecycle register phase Startup
+    machine local service process request "start command notepad"</font></pre>
+<font face="Arial,Helvetica">This will register a request with the LifeCycle
+service so that the Notepad process is started when STAFProc starts.  Note
+that the registration ID (1) is returned.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local lifecycle list</font></pre>
+<font face="Arial,Helvetica">This will list all of the requests currently
+registered with the LifeCycle service.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local lifecycle query id 1</font></pre>
+<font face="Arial,Helvetica">This will query the information about the
+request you previously registered.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Shutdown STAFProc and restart it.  Verify that
+during the startup the Notepad process is started.</font>
+</li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local lifecycle unregister id 1</font></pre>
+<font face="Arial,Helvetica">This will unregister the request.</font></li>
+<br>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 3.2 - Using the Namespace, Email, Event, EventManager, 
+Cron, HTTP, and FTP services</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how to use the Namespace, Email, Event, EventManager, 
+Cron, HTTP, and FTP services</font></h4>
+<ol>
+<li><font face="Arial,Helvetica">From the STAF CD, unzip file 
+Part3\install\NamespaceV102.zip to C:\STAF\services.</font>
+<br><br>
+<li><font face="Arial,Helvetica">From the STAF CD, unzip file 
+Part3\install\CronV338.zip to C:\STAF\services.</font>
+<br><br>
+<li><font face="Arial,Helvetica">From the STAF CD, unzip file 
+Part3\install\EventManagerV338.zip to C:\STAF\services.</font>
+<br><br>
+<li><font face="Arial,Helvetica">From the STAF CD, unzip file 
+Part3\install\HTTPV302.zip to C:\STAF\services.</font>
+<br><br>
+<li><font face="Arial,Helvetica">From the STAF CD, unzip file 
+Part3\install\FTPV103.zip to C:\STAF\services.</font>
+<br><br>
+<li>
+<font face="Arial,Helvetica">Edit the C:\STAF\bin\STAF.cfg file and add
+the lines</font>
+<pre><font face="Fixed width">service cron library JSTAF execute C:/STAF/services/cron/STAFCron.jar
+service eventmanager library JSTAF \
+    execute C:/STAF/services/eventmanager/STAFEventManager.jar
+service namespace library JSTAF execute C:/STAF/services/namespace/Namespace.jar
+service http library JSTAF execute C:/STAF/services/http/STAFHTTP.jar
+service ftp library JSTAF execute C:/STAF/services/ftp/STAFFTP.jar</font></pre>
+<font face="Arial,Helvetica">Save the changes to the STAF.cfg file and restart STAF.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type</font>
+<pre><font face="Fixed width">staf local namespace create namespace Part3Exercises description "Exercises for Part 3"
+staf local namespace set var Exercise=3.2 namespace Part3Exercises
+staf local namespace query namespace Part3Exercises
+staf local namespace list namespace Part3Exercises</font></pre>
+</li>
+<li>
+<font face="Arial,Helvetica">Now shutdown STAF and restart it.  Run the
+following commands and verify you get the same output as the previous step:</font>
+<pre><font face="Fixed width">staf local namespace query namespace Part3Exercises
+staf local namespace list namespace Part3Exercises
+</font></pre>
+</li>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type (substituting your
+email address for &lt;user>)</font>
+<pre><font face="Fixed width">staf local email send to &lt;user>@us.ibm.com subject "Test Message"
+    message "Hello and Welcome to STAF/STAX"</font></pre>
+<font face="Arial,Helvetica">go to your Inbox and you should see the email.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local eventmanager register machine local service process
+    request "start command notepad" type abc subtype xyz
+</font></pre>
+<font face="Arial,Helvetica">this will register with the EventManager service so
+that it will call the Process service to execute "Notepad" whenever an event
+of type "abc" and subtype "xyz" is generated.  Note that the registration ID
+is returned.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local event generate type abc subtype xyz
+</font></pre>
+<font face="Arial,Helvetica">this will generate an event with type "abc" and
+subtype "xyz".  This should cause the notepad process to start on your machine.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type (substituting the
+correct registration ID, if it is not 1)</font>
+<pre><font face="Fixed width">staf local eventmanager unregister id 1
+</font></pre>
+</li>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local cron register machine local service process
+    request "start command notepad" minute any
+</font></pre>
+<font face="Arial,Helvetica">this will register with the Cron service so
+that it will call the Process service to execute "Notepad" every minute. 
+Note that the registration ID is returned.  Let several minutes pass by, and
+you should see the notepad process started every time the minute changes.</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type (substituting the
+correct registration ID, if it is not 1)</font>
+<pre><font face="Fixed width">staf local cron unregister id 1
+</font></pre>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local http open session
+</font></pre>
+<font face="Arial,Helvetica">this will open a new session.  Notice that the
+session ID is returned in the result buffer.
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local HTTP DOGET URL http://money.cnn.com/quote/quote.html/?symb=IBM RETURNNOCONTENT SESSION 1
+</font></pre>
+<font face="Arial,Helvetica">this will get the current IBM stock quote.
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local HTTP GET SESSION 1 CONTENT FILE c:/temp/ibmquote.html
+</font></pre>
+<font face="Arial,Helvetica">this will store the current contents of a session
+(1) in a file (c:/temp/ibmquote.html). The c:/temp/ibmquote.html file should be
+an html file equivalent to acquiring the page in a browser.
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Open a browser and navigate to the
+c:/temp/ibmquote.html file, which should contain the current IBM stock
+quote.</font>
+</li>
+<br>
+<li>
+<font face="Arial,Helvetica">From a command prompt, type </font>
+<pre><font face="Fixed width">staf local FTP HELP</font></pre>
+<font face="Arial,Helvetica">this will display the help for the FTP service.
+If you have access to an FTP site, try submitting some commands to the FTP
+site via the STAF FTP service.
+</font></li>
+<br>
+</ol>
+
+<hr>
+<h2>
+<font face="Arial,Helvetica">Exercise 3.3 - Using STAF marshalled data</font></h2>
+<h4><font face="Arial,Helvetica">Objective - Learn how  to use STAF marshalled data</font></h4>
+<ol>
+<br>
+<li>
+<font face="Arial,Helvetica">When structured data is returned in the result
+strings above, the STAF command will automatically unmarshall the data and
+print it in the most appropriate format</font>
+<br><br>
+<li>
+<font face="Arial,Helvetica">For example, run the following command:</font>
+<pre><font face="Fixed width">staf local fs list directory c:/
+</font></pre>
+<font face="Arial,Helvetica">Since the data is a &lt;List> of &lt;String>, then
+each entry in the list will be printed on its own line.
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Next, run the following command:</font>
+<pre><font face="Fixed width">staf local log list settings
+</font></pre>
+<font face="Arial,Helvetica">Since the data is a &lt;Map> which has values
+which are all of type &lt;String>, then each key/value pair will be printed on
+its own line.  These last 2 examples of formatted output are frequently referred
+to as "default format".
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Next, run the following command:</font>
+<pre><font face="Fixed width">staf local handle list handles
+</font></pre>
+<font face="Arial,Helvetica">Since  the data is a &lt;List> where every item
+in the list is an instance of the same map class, then the data will be printed
+out in a tabular format, called "table format".
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Next, run the following command:</font>
+<pre><font face="Fixed width">staf -verbose local handle list handles
+</font></pre>
+<font face="Arial,Helvetica">You can use the -verbose option to disable the
+table format.  Instead, the output will be printed in a hierarchical nested
+format, called "verbose format".  You can force the exclusive use of the verbose
+mode by setting the environment variable STAF_PRINT_MODE to "verbose".
+</font></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Next, run the following commands:</font>
+<pre><font face="Fixed width">staf local sem reset event Test
+staf local sem wait event Test
+</font></pre></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From another command prompt, run the following command:</font>
+<pre><font face="Fixed width">staf local sem wait event Test
+</font></pre></li>
+<br>
+<li>
+<font face="Arial,Helvetica">From another command prompt, run the following command:</font>
+<pre><font face="Fixed width">staf local sem wait event Test
+</font></pre></li>
+<br>
+<li>
+<font face="Arial,Helvetica">Now, from another command prompt, run the following command:</font>
+<pre><font face="Fixed width">staf local sem query event Test
+</font></pre><font face="Arial,Helvetica">Notice that since the data is more
+complex, the output will be printed in a hierarchical nested format.
+</font></li></li>
+</ol>
+
+</body>
+</html>

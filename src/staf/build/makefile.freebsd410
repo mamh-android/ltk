@@ -1,0 +1,59 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2007                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_LIBS = crypt c_r
+
+OS_DL_LIB =
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := gcc
+endif
+
+OS_COMMONFLAGS := -D_XOPEN_SOURCE -D_BSD_SOURCE -DSTAF_OS_NAME_FREEBSD \
+                  -DSTAF_NO_GETHOSTBYNAME_R -DSTAF_NO_GETHOSTBYADDR_R \
+                  -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
+
+# Java support is not being built as no Java binaries for FreeBSD 4.10
+# were available via the web.
+
+# Provide the default location for Java files on this system
+
+JAVA_DEFAULT_VERSION ?= V12
+JAVA_BUILD_V11 ?= 0
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /usr/local/IBMJava2-13
+
+# Provide the default location for Python files on this system
+
+PYTHON_V23_ROOT ?= /usr/dev/autobuild/tools/Python-2.3.3
+PYTHON_V23_INCLUDEDIRS ?= /usr/local/include/python2.3
+PYTHON_V23_LIBDIRS ?= $(PYTHON_V23_ROOT)
+PYTHON_V23_LIBS ?= python2.3
+PYTHON_BUILD_V23 ?= 1
+
+# Provide the default location for zlib files on this system
+
+ZLIB_SOURCEDIR ?= /usr/dev/autobuild/tools/zlib-1.2.3
+
+# Provide the default location for openssl files on this system
+
+OPENSSL_ROOT ?= /usr/dev/autobuild/tools/openssl-0.9.8e-root
+
+# Provide the default location for Ant files on this system
+
+ANT_ROOT ?= /usr/dev/autobuild/tools/apache-ant-1.6.2

@@ -1,0 +1,19 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stafpythondocs_targets += $(REL)/docs/staf/STAFPython.htm
+Targets += $(stafpythondocs_targets)
+CleanupTargets += cleanup_stafpythondocs
+
+$(stafpythondocs_targets): SUBSYS_REL := docs
+SUBSYS_REL := docs
+
+$(REL)/docs/staf/STAFPython.htm: $(SR_SRC)/STAFPython.htm
+	$(COPY_FILE)
+
+cleanup_stafpythondocs:
+	-@$(DEL) $(REL)/docs/staf/STAFPython.htm $(OUT_ERR_TO_DEV_NULL)

@@ -1,0 +1,2757 @@
+<html>
+<head>
+   <title>STAF V3 Migration Guide</title>
+</head>
+<body bgcolor=white>
+
+<h1>STAF V3 Migration Guide</h1>
+<P>
+<B>Software Testing Automation Framework (STAF) V3 Migration Guide</B><BR>
+<P>April 23, 2005
+<p>
+<hr>
+<font color=blue><h1><a NAME="ToC"></a>Contents</h1></font>
+<p>
+<ul>
+<li><A NAME="ToC_Intro" HREF="#Header_Intro">1.0 Introduction</a></li>
+<p>
+<li><A NAME="ToC_Why" HREF="#Header_Why">2.0 Why Migrate?</a></li>
+<p>
+<li><a NAME="ToC_Preparation" HREF="#Header_Preparation">3.0 Migration Preparation</a></li>
+<p>
+<li><a name="ToC_Checklist" href="#Header_Checklist">4.0 Migration Checklist</a></li>
+<p>
+<li><a name="ToC_NewFeatures" HREF="#Header_NewFeatures">5.0 New Features in STAF V3</a></li>
+  <menu>
+  <li><a name="ToC_CommInterface" HREF="#Header_CommInterface">5.1 Communication Interface Enhancements</a></li>
+  <li><a name="ToC_ipv6" HREF="#Header_ipv6">5.2 IPv6 Support</a></li>
+  <li><a name="ToC_Security" HREF="#Header_Security">5.3 Enhanced Security</a></li>
+  <!-- <li><a name="ToC_SecureTCP" HREF="#Header_SecureTCP">5.4 Secure TCP/IP Connection Provider</a></li> -->
+  <li><a name="ToC_MultiValueResult" HREF="#Header_MultiValueResult">5.5 New Format for Multi-Valued Results</a></li>
+  <li><a name="ToC_GCHandles" HREF="#Header_GCHandles">5.6 Inform on Garbage Collected Handles</a></li>
+  <li><a name="ToC_SendVars" HREF="#Header_SendVars">5.7 Send Variables Across the Network</a></li>
+  <li><a name="ToC_StdRequests" HREF="#Header_StdRequests">5.8 Standardize Request Strings for Services</a></li>
+  <li><a name="ToC_DataDir" HREF="#Header_DataDir">5.9 Provide/Use Data Directory for STAF and its Services</a></li>
+  <li><a name="ToC_InstallEnh" HREF="#Header_InstallEnh">5.10 Installation Enhancements</a></li>
+  <!-- <li><a name="ToC_PerlServices" HREF="#Header_PerlServices">5.11 Support for Perl Services</a></li> -->
+  </menu>
+<p>
+<li><a NAME="ToC_Changes" HREF="#Header_Changes">6.0 STAF V3 Changes</a></li>
+  <menu>
+  <li><a name="ToC_Install" href="#Header_Install">6.1 Installation Changes</a></li>
+  <li><a NAME="ToC_CfgFile" HREF="#Header_CfgFile">6.2 STAF Configuration File Changes</a></li>
+  <li><a NAME="ToC_Variables" HREF="#Header_Variables">6.3 Pre-defined STAF Variable Changes</a></li>
+  <li><a name="ToC_Deprecated" href="#Header_Deprecated">6.4 Removed Deprecated Functions</a>
+  <li><a name="ToC_Marshalling" HREF="#Header_Marshalling">6.5 Marshalling Structured Data</a></li>
+  <li><a name="ToC_UnMarshalling" HREF="#Header_UnMarshalling">6.6 Handling Marshalled Structured Data (Unmarshalling)</a></li>
+  <li><a name="ToC_Services" href="#Header_Services">6.7 STAF Custom Service Changes</a></li>
+      <menu>
+      <li><a name="ToC_JavaServices" HREF="#Header_JavaServices">6.7.1 STAF Java Service Changes</a></li>
+      <li><a name="ToC_C++Services" HREF="#Header_C++Services">6.7.2 STAF C++ Service Changes</a></li>
+      </menu>
+  </menu>
+<p>
+<li><a name="ToC_AppendixA" href="#Header_AppendixA">Appendix A:  STAF V3 Migration Diagnostic Triggers in STAF V2.6.x</a></li>
+<p>
+<li><a name="ToC_AppendixB" href="#Header_AppendixB">Appendix B:  Queued Message Format Changes in STAF V3</a></li>
+</ul>
+<p>
+<!---------------------------------------------------------------------------->
+<hr>
+<a name="Header_Intro" HREF="#ToC_Intro">
+<font color=blue><h1>1.0 Introduction</h1></font></a>
+<p>
+The intended reader for this document is anyone who is currently using STAF V2 and who will be
+migrating to STAF V3. 
+<p>
+<!---------------------------------------------------------------------------->
+<hr>
+<a name="Header_Why" HREF="#ToC_Why">
+<font color=blue><h1>2.0 Why Migrate?</h1></font></a>
+<p>
+STAF has remained basically backward compatible for 7 years and over 25 releases
+(since STAF V1.0 was first made available in April 1998).
+To further advance STAF and to accomplish some features requested by our customers,
+STAF V3 will not be fully backward compatible with STAF V2 / V1.
+Our intention is to make all the backward incompatible changes in STAF V3.0
+so that future versions of STAF will be backwards compatible with STAF V3.0 and later.
+<p>
+End of service for all STAF V2 releases is planned for April 21, 2006.
+As of April 21, 2006, we will no longer fix bugs in STAF V2 and will not release
+any new versions of STAF V2 (though we will continue to try to answer STAF V2
+questions).  Note that since STAF is open source, you can fix a problem in
+STAF V2 yourself.  But, to have complete support from the STAF Development team,
+move to STAF V3.
+<p>
+New STAF clients should start with the latest STAF V3 release.
+Existing STAF V2 clients should wait for a break in 
+their test cycles to migrate to STAF V3, but we encourage our clients to
+migrate as soon as realistically possible to take advantage of the many new
+features and capabilities in STAF V3.
+<p>
+Upgrading from STAF V2 to STAF V3 is supported (instead of having to uninstall
+STAF V2 before installing STAF V3).  It is recommended, if possible, that
+when upgrading to STAF V3, you upgrade all of your STAF machines to V3 at
+the same time.
+<p>
+If you register any external STAF services with STAF V3, you will have to
+install a version of the external STAF service that supports STAF V3.
+Note that STAF services that support V2 don't work with STAF V3 and vice versa
+because of different service interface levels.
+For example, to run the STAX service on a STAF V3 machine, you must have
+STAX V3 installed as an earlier version of STAX such as V1.5.5 will not work
+with STAF V3. 
+<p>
+<!---------------------------------------------------------------------------->
+<hr>
+<a name="Header_Preparation" HREF="#ToC_Preparation">
+<font color=blue><h1>3.0 Migration Preparation</h1></font></a>
+<p>
+To help current STAF V2 customers prepare for migrating from STAF V2 to V3,
+we provided a new DIAG (Diagnostics) internal service in STAF V2.6 and instrumented
+all requests whose syntax and/or results will be changing in STAF V3 so that
+clients can identify which test cases, STAX jobs, applications, and services
+that they have written will need to be updated to work with STAF V3.
+<p>
+Use the migration data provided by enabling the DIAG service on your STAF V2
+machines to gauge how much migration work will be required.  You will need
+to enable diagnostics on all machines involved in running a test, STAX job,
+etc., and then collect the diagnostics information from all machines after
+running the test. 
+See <a href="#Header_AppendixA">"Appendix A:  STAF V3 Migration Diagnostic 
+Triggers in STAF V2.6.x"</a> for more information.
+<p>
+You will probably need to make updates to existing STAF-enabled testcases,
+STAX jobs, custom services, etc., due to changes in the syntax and results
+for some STAF requests, service interface changes, etc.
+<p>
+For example, if you wanted to gather STAF V3 migration diagnostics 
+data for a particular STAX job, you would enable diagnostics on the
+STAX service machine (and possibly on other STAF machines as well if
+you are running STAF-enabled testcases on other machines in the STAX job)
+and then run the job.  When the job is complete, you can then disable
+diagnostics.
+<p>
+For example, you can list the sources for the diagnostics information.
+If you run a STAX job, you could see information like the following. 
+<pre>
+STAF stax1 DIAG LIST SOURCES
+Response
+--------
+From Date/Time    : 20041108-13:15:27
+To Date/Time      : 20041108-13:20:39
+Elapsed Time      : 00:05:12
+Number of Sources : 4
+
+2807;STAX/JobMonitor/lucas/2;lucas.austin.ibm.com;28
+658;STAX/Job/2;lucas.austin.ibm.com;27
+460;STAX/JobMonitor/Extension/STAFCmdTable;lucas.austin.ibm.com;30
+44;STAX/JobMonitor/Extension/ProcessTable;lucas.austin.ibm.com;29
+</pre>
+You can ignore STAF V3 migration diagnostics from sources
+like STAX/JobMonitor/... because STAF Development is responsible for
+updating the STAX Monitor to work with STAF V3.
+You'll want to look at the triggers generated by the source of your STAX job,
+which in this case, is STAX/Job/2;lucas.austin.ibm.com;27 which
+represents the handle name, the machine, and the handle number.
+For example, you can list all diagnostics for this source and
+sort by trigger (or count).
+<pre>
+STAF stax1 DIAG LIST SOURCE STAX/Job/2;lucas.austin.ibm.com;27 SORTBYTRIGGER
+Response
+--------
+From Date/Time    : 20041108-13:15:27
+To Date/Time      : 20041108-13:21:19
+Elapsed Time      : 00:05:52
+Source            : STAX/Job/2;lucas.austin.ibm.com;27
+Number of Triggers: 37
+
+19;STAF/V3.0-Mig/FS DELETE (No IGNOREERRORS)
+4;STAF/V3.0-Mig/FS LIST
+8;STAF/V3.0-Mig/HANDLE QUERY
+1;STAF/V3.0-Mig/MISC MACHINE
+4;STAF/V3.0-Mig/MISC TRACE LIST
+15;STAF/V3.0-Mig/MISC TRACE
+4;STAF/V3.0-Mig/MONITOR LIST
+3;STAF/V3.0-Mig/MONITOR QUERY
+10;STAF/V3.0-Mig/MONITOR SET
+2;STAF/V3.0-Mig/PROCESS FREE ALL|WORKLOAD
+1;STAF/V3.0-Mig/PROCESS NOTIFY LIST
+4;STAF/V3.0-Mig/PROCESS QUERY
+15;STAF/V3.0-Mig/PROCESS START WAIT
+1;STAF/V3.0-Mig/PROCESS STOP ALL|WORKLOAD
+545;STAF/V3.0-Mig/QUEUE GET|PEEK
+1;STAF/V3.0-Mig/RESPOOL LIST
+1;STAF/V3.0-Mig/RESPOOL QUERY
+1;STAF/V3.0-Mig/SEM EVENT DELETE
+2;STAF/V3.0-Mig/SEM EVENT POST|PULSE
+1;STAF/V3.0-Mig/SEM EVENT QUERY
+1;STAF/V3.0-Mig/SEM EVENT RESET
+1;STAF/V3.0-Mig/SEM EVENT WAIT
+2;STAF/V3.0-Mig/SEM LIST
+25;STAF/V3.0-Mig/SEM MUTEX DELETE
+2;STAF/V3.0-Mig/SEM MUTEX QUERY
+14;STAF/V3.0-Mig/SEM MUTEX RELEASE
+13;STAF/V3.0-Mig/SEM MUTEX REQUEST
+2;STAF/V3.0-Mig/SHUTDOWN NOTIFY LIST
+1;STAF/V3.0-Mig/STAX LIST
+1;STAF/V3.0-Mig/STAX QUERY
+26;STAF/V3.0-Mig/VAR DELETE
+6;STAF/V3.0-Mig/VAR GET
+5;STAF/V3.0-Mig/VAR LIST
+4;STAF/V3.0-Mig/VAR RESOLVE (Multiple)
+25;STAF/V3.0-Mig/VAR RESOLVE
+34;STAF/V3.0-Mig/VAR SET
+10;STAF/V3.0-Mig/ZIP LIST
+</pre>
+<p>
+You'll probably want to redirect the diagnostics information from each
+machine to a file:
+<pre>
+STAF stax1 DIAG LIST SOURCE STAX/Job/2;lucas.austin.ibm.com;27 SORTBYTRIGGER > C:\client1DiagForSTAXJob1.txt
+</pre>
+<p>
+<!---------------------------------------------------------------------------->
+<hr>
+<a name="Header_Checklist" HREF="#ToC_Checklist">
+<font color=blue><h1>4.0 Migration Checklist</h1></font></a>
+<p>
+<ol>
+<li>Run your STAF-enabled testcases/applications, STAX jobs, custom STAF services, etc.
+    on STAF V2.6.x machines with diagnostics enabled and colllect the diagnostics.
+    Note that you need to enable and collect diagnostics on all of the machines involved.
+<p>
+<li>Analyze the migration diagnostics data.
+<p>
+<li>Update your testcases, STAX jobs, and custom services to work with STAF V3 based
+    on the analysis of the migration diagnostics data.
+<p>
+<li>Test that the changes work with STAF V3.
+<p>
+<li>Determine which STAF-enabled testcases/applications, STAX jobs, custom STAF services, etc.
+    should be changed to leverage new features in STAF V3 such as marshalling multi-valued
+    results from LIST/QUERY requests, etc. or marshalling multi-valued information in
+    a queued message.  For example,
+    <p>
+    <ul>
+    <li>The multi-value result change is applicable to any command that can
+    logically return multiple values.  Essentially any command where the user
+    would take the result buffer and parse it into multiple values instead of
+    just using the whole thing as a string.  The most common examples of these
+    are LIST and QUERY commands which almost always return multiple values. 
+    But, that doesn't mean there might not be other commands that return
+    multiple values.  For example doing a PROCESS FREE ALL will return two
+    values (the total number of processes and the total that were freed).
+    In some cases, the multiple values are only returned as part of an error.
+    For example, an FS DELETE request of a directory without IGNOREERRORS
+    will return a list of the files/directories that couldn't be deleted.
+    You need to check for commands other than LIST and QUERY commands that
+    might return multiple results.
+    <p>
+    <li>You may have commands that want to store/display some new fields
+        such as the user and/or endpoint that originated the request.
+    </ul>
+<p>
+<li>Complete the changes.
+<p>
+<li>Test that the changes work with STAF V3.
+</ol>
+<p>
+<!---------------------------------------------------------------------------->
+<hr>
+<a name="Header_NewFeatures" HREF="#ToC_NewFeatures">
+<font color=blue><h1>5.0 New Features in STAF V3</h1></font></a>
+<p>
+Here is a list of some of the major enhancements in STAF V3:
+<ul>
+<li>Communication Interface Enhancements
+<li>IPV6 Support
+<li>Enhanced Security
+<!-- <li>Provide a Secure TCP/IP Connection Provider -->
+<li>New Format for Multi-Valued Results
+<li>Inform on Garbage Collected Handles
+<li>Send Variables Across the Network
+<li>Standardize Request Strings for Services
+<li>Provide/Use Data Directory for STAF and its Services
+<li>Installation Enhancments
+<!-- <li>Provide Support for Perl Services -->
+</ul>
+<p>
+The following sections provide a more in-depth description for each enhancement.
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_CommInterface" HREF="#ToC_CommInterface">
+<font color=blue><h2>5.1 Communication Interface Enhancements</h2></font></a>
+<p>
+Many communication interface enhancements have been included in STAF V3.
+Some of the major enhancements include:
+<p>
+<ul>
+<li>Removes the constraints on network name specification
+<p>
+<li>Supports mixed long and short names for machine names on requests
+<p>
+<li>Supports IP addresses for machine names on requests
+<p>
+<li>Allows trust specifications to contain wildcards and IP addresses
+<p>
+<li>Allows multiple pluggable network communication interfaces
+    <ul compact>
+    <li>Provides a Connection Provider that is equivalent to STAF V2 TCP/IP support,
+    i.e. unencrypted TCP/IP socket traffic
+    <!-- <li>Provides a Connection Provider for secure TCP/IP support using OpenSSL -->
+    <li>Custom connection providers can be implemented
+    </ul>
+<p>
+<li>Allows multiple instances of STAF to run on a single system
+<p>
+<li>Provides the ability to specify a port when submitting a STAF service
+    request.  This is the "endpoint" part (formerly known as "where") of every
+    STAF command. The format for an endpoint is:
+    <tt>[&lt;Interface>://]&lt;System Identifier>[@&lt;Port>]</tt>.
+    For example:
+    <pre>
+    client1@6500
+    tcp://client1.austin.ibm.com@6501
+    9.3.182.20@6500</pre>
+    One of the things this allows you to do is communicate with a STAF V2
+    system that is using a different TCP/IP port.
+</ul>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_ipv6" HREF="#ToC_ipv6">
+<font color=blue><h2>5.2 IPv6 Support</h2></font></a>
+<p>
+<ul>
+<li>Updates the TCP/IP connection provider
+    <!-- (both for non-secure and secure TCP/IP support) -->
+    to support Internet Protocol Version 6,
+    commonly known as IPv6, in addition to IPv4.
+    The operating system must support IPv6 to use the STAF IPv6 support
+<p>
+<li>The TCP/IP connection provider supports the following options:
+    <ul>
+    <li><tt>Port</tt>:  Each TCP/IP connection provider must use a unique port
+    <li><tt>Protocol</tt>:  Possible values are ipv4, ipv6, ipv4_ipv6
+    <li><tt>ConnectTimeout:</tt>  Specifies the maximum time in milliseconds
+        to wait for a connection attempt to a remote system to succeed.
+        The default is 5000 (5 seconds).
+    </ul>
+    <p>    
+    For example, to configure two tcp interfaces, one for IPv6 and one
+    for IPv4, you could specify the following in the STAF configuration file:
+<pre>
+# Enable TCP/IP connections
+INTERFACE tcp  LIBRARY STAFTCP OPTION Port=6500 Protocol=ipv4
+INTERFACE tcp6 LIBRARY STAFTCP OPTION Port=6600 Protocol=ipv6
+</pre>
+</ul>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_Security" HREF="#ToC_Security">
+<font color=blue><h2>5.3 Enhanced Security</h2></font></a>
+<p>
+<ul>
+<li>Allows user level security (trust), in addition to the existing machine level security currently provided
+<li>Allows trust specifications to contain userIDs and wildcards
+<li>Allows pluggable security mechanisms (Authenticators)
+<li>Provides a sample Authenticator that allows customers experiment with user level security
+<!-- <li>Provides an authenticator that uses the IBM Intranet Password API (to IBM
+internal customers via http://ais.austin.ibm.com) -->
+</ul>
+<p>
+For example, here's an example of configuring an authenticator in the
+STAF configuration file and using it in trust specifications:
+<pre>
+AUTHENTICATOR AuthSample LIBRARY JSTAF \
+              EXECUTE C:\STAF\services\AuthSample.jar
+              PARMS "USERPROPERTIESFILE C:\STAF\services/auth.prp"
+
+TRUST LEVEL 5 USER AuthSample://JohnDoe@us.ibm.com
+TRUST LEVEL 4 USER AuthSample://*@us.ibm.com
+</pre>
+<p>
+<!----------------------------------------------------------------------------
+<a name="Header_SecureTCP" HREF="#ToC_SecureTCP">
+<font color=blue><h2>5.4 Secure TCP/IP Connection Provider</h2></font></a>
+<p>
+<ul>
+<li>Provides a Connection Provider for secure TCP/IP support which helps with
+    some security issues, such as passing passwords over the network, as needed
+    for the Enhanced User Security feature
+<li>This connection provider uses Secure Sockets Layer (SSL) via the OpenSSL library
+<li>The SSL TCP/IP connection provider is going to be the default
+    connection provider (instead of the non-secure TCP/IP connection
+    provider) and use port 6501 by default (instead of port 6500).
+</ul>
+<p>
+For example, here's an example of configuring the secure TCP/IP interface
+in the STAF configuration file:
+<pre>
+INTERFACE ssl LIBRARY STAFTCPSSL \
+              OPTION serverCertificate={STAF/Config/STAFRoot}/bin/server.crt \
+              OPTION serverKey={STAF/Config/STAFRoot}/bin/server.key \
+              OPTION CACertificate={STAF/Config/STAFRoot}/bin/CA.crt
+</pre>
+<p>
+-->
+<!---------------------------------------------------------------------------->
+<a name="Header_MultiValueResult" HREF="#ToC_MultiValueResult">
+<font color=blue><h2>5.5 New Format for Multi-Valued Results</h2></font></a>
+<p>
+<ul>
+<li>Prior to STAF V3, we rarely altered the result data that a user gets
+    back from a service because it is very difficult to remain backwards
+    compatible.  We've wanted to change more things in the result, but
+    haven't done so mainly due to backward compatibility issues.
+<li>For STAF V3, we find ourselves in the situation where we almost have to
+    change the information returned from requests to accommodate the new user
+    information and the additional machine information, etc. 
+<li>Any request that returns a result that "logically" contains more than one
+    value has been changed to use this new format.
+<li>The new format consists of a well-structured approach for handling lists
+    and maps embedded in a single string.  Now this string will actually be
+    the marshalled form of a data structure (e.g. list of strings, list of maps,
+    a map, etc.)
+<li>Provided some support routines for the various languages we support to
+    handle this new structured data format.
+<li>Enhanced the STAF command line executable to be smart enough to detect
+    these multi-valued results and display them "nicely" by default (with
+    the ability to change the display mode or to turn off "nice mode").
+<li>The upshot is that it is a relatively easy long-term solution for being
+    able to add more information to the result without causing backward
+    compatibility issues (after STAF V3.0), as users not interested in
+    the new data can simply ignore the "fields" in the maps.
+<li>The downside is that it is not backwards compatible with STAF V2.
+    However, this solution should allow any future versions of STAF to
+    retain backward compatibility. 
+</ul>
+<p>
+<h3>How the STAF Command Handles a Multi-Valued Result</h3>
+<p>
+The STAF command automatically unmarshalls the result and prints it in
+the most appropriate format:  simple (or default), table, or verbose.
+<p>
+<ul>
+<li><b>Examples of formatted output in the "default format" (or simple format)</b>
+<p>   
+If the result is a &lt;List> of &lt;String>, then each entry in the list will
+be printed on its own line. For example, 
+<pre>
+C:\>STAF client2 FS LIST DIRECTORY C:\
+Response
+--------
+AUTOEXEC.BAT
+CONFIG.SYS
+Documents and Settings
+</pre>
+If the result is a <tt>&lt;Map> (or &lt;Map:&lt;Class>></tt>) which has
+values that are all of type &lt;String> or &lt;None>, then each key/value
+pair will be printed on its own line. For example, 
+<pre>
+C:\>STAF server1 MONITOR LIST SETTINGS
+Response
+--------
+Max Record Size    : 1024
+Resolve Message    : Disabled
+Resolve Message Var: Disabled
+</pre>
+<p>
+<li><b>Example of formatted output in a "table format"</b>
+<p>
+If the result is a <tt>&lt;List></tt> of <tt>&lt;Map:&lt;Class>></tt> where
+every item in the list is an instance of the same map class and all the
+values in all the maps are of type &lt;String> or &lt;None>,
+the data will be printed out in a tabular format, called "table format". 
+Otherwise, the data will be displayed in a verbose format.
+For example, 
+<pre>
+C:>STAF local HANDLE LIST HANDLES
+Response
+--------
+Handle Handle Name                     State      Last Used Date-Time
+------ ------------------------------- ---------- -------------------
+1      STAF_Process                    InProcess  20040929-13:57:40
+2      STAF/Service/STAFServiceLoader1 InProcess  20040929-16:06:47
+5      STAF/Service/LOG                InProcess  20040929-13:57:52
+7      STAF/Service/RESPOOL            InProcess  20040929-13:58:04
+51     STAF/Service/MONITOR            InProcess  20040929-16:06:47
+57     STAF/Client                     Registered 20040929-16:09:35
+</pre>
+<p>
+You can disable the output of tables by setting the environment variable
+<tt>STAF_PRINT_NO_TABLES</tt> to any value. If you disable the output of
+tables, their data will show up in the more verbose mode.
+<p>
+You can force the table mode when a key has a "structured value"
+by setting <tt>STAF_NO_STRICT_TABLES</tt> to any value.
+<p>
+You can force the exclusive use of the verbose mode by setting the
+environment variable <tt>STAF_PRINT_MODE</tt> to "verbose". 
+<p>
+<li><b>Example of formatted output in a "verbose format"</b>
+<p>
+If the result is more complex than the previous examples (or tables
+have been turned off), the output will be printed in a hierarchical
+nested format, called "verbose format". For example, here's a result that
+is a <tt>&lt;Map:&lt;Class>></tt> that contains <tt>&lt;String></tt> entries
+as well as a <tt>&lt;Map:&lt;Class>></tt> entry and a &lt;List> entry: 
+<pre>
+C:>STAF local SEM QUERY MUTEX DataSource1 
+Response
+--------
+{
+  State           : Owned
+  Owner           : {
+    Machine            : machine1
+    Handle Name        : STAX/Job/1
+    Handle             : 17
+    User               : none://anonymous
+    Date-Time Requested: 20040926-23:54:41
+    Date-Time Acquired : 20040926-23:54:41
+  }
+  Pending Requests: []
+}
+</pre>
+<p>
+You can change the amount of indentation used by setting the environment variable STAF_INDENT_DELTA
+to any non-negative integer.
+</ul>
+<p>
+<h3>Handling Multi-Valued Results</h3>
+<p>
+See section <a href="#Header_Marshalling">6.5 Marshalling Structured Data</a> for
+more information on how to handle multi-value results (marshalled structured data)
+and examples on how to do this via different programming languages or via a STAX job.
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_GCHandles" HREF="#ToC_GCHandles">
+<font color=blue><h2>5.6 Inform on Garbage Collected Handles</h2></font></a>
+<p>
+<ul>
+<li>If STAFProc is shutdown on a machine (or the machine is rebooted),
+STAF handles for that machine are deleted.  We've added a way for any service
+to ask to be notified about this so that they can perform garbage collection
+of these handles.
+<li>Implemented garbage collection for the SEM and RESPOOL services so that
+if a handle that owns a mutex semaphore or an entry for a pool (or has a 
+pending request for an entry in a pool), if the handle is deleted, the handle
+will be garbage collected.  This means  the handle will release any mutex
+semaphores or pool entries it owns and remove any of its pending requests.
+</ul>
+<pre>
+C:\>STAF local SEM REQUEST MUTEX myMutex
+Response
+--------
+
+C:\>STAF local SEM QUERY MUTEX myMutex
+Response
+--------
+{
+  State           : Unowned
+  Owner           : <None>
+  Pending Requests: []
+}
+</pre>
+Note that you are not the mutex owner because the STAF command executable
+deleted the handle and it was garbage collected.
+<pre>
+C:\>STAF local HANDLE CREATE HANDLE NAME MyHandle
+Response
+--------
+33
+
+C:\>set STAF_STATIC_HANDLE=33
+
+C:\>STAF local SEM REQUEST MUTEX myMutex
+Response
+--------
+
+C:\>STAF local SEM QUERY MUTEX myMutex
+Response
+--------
+{
+  State           : Owned
+  Owner           : {
+    Machine            : client1.ibm.com
+    Handle Name        : MyHandle
+    Handle             : 33
+    User               : none://anonymous
+    Endpoint           : tcp://client1.ibm.com@6500
+    Date-Time Requested: 20041012-10:16:20
+    Date-Time Acquired : 20041012-10:16:20
+  }
+  Pending Requests: []
+}
+</pre>
+Note that you are the mutex owner since the handle is a static one
+and, thus, still exists.
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_SendVars" HREF="#ToC_SendVars">
+<font color=blue><h2>5.7 Send Variables Across the Network</h2></font></a>
+<p>
+In STAF V2, a STAF handle's variable pool is only used in variable resolution
+if the request is processed locally.  If a request is made to a remote machine,
+the STAF handle's variable pool is not delivered to the remote machine so it is
+not used in variable resolution.  On remote machines, only the remote system's
+global variable pool is used.  This leads to issues where variables such as
+a handle's log mask are not propagated to remote machines.  However, of
+possibly larger consequence is that this flaw limits the ability of services
+to provide configurability on a per-handle basis.  For example, the
+Log service could potentially allow for a default logging level to be
+specified in a STAF variable.  But, in STAF V2, this would only work for
+systems doing local logging.  With the addition of the following 
+enhancements in STAF V3, STAF services will be able to start leveraging
+STAF variables for defining configurable behavior.
+<p>
+A new <tt>SHARED</tt> option has been added to the VAR service <tt>SET,
+GET, DELETE, LIST, and RESOLVE</tt> requests.  On <tt>SET, GET,</tt> and
+<tt>DELETE</tt> requests, this option will direct the request to the
+system's shared variable pool.  On a <tt>RESOLVE</tt> request, the
+<tt>SHARED</tt> option will resolve variables in the context of the
+system's shared variable pool.  On a <tt>LIST</tt> request, this option
+will list the contents of the system's shared variable pool.
+For more information on the changes made in STAF V3 for this
+enhancement, please see sections "2.4, Variables" and "8.19, Variable (VAR)
+Service" in the STAF V3 User's Guide.
+<p>
+Here's a summary of the new variable enhancements:
+<p>
+<ul>
+<li>Sends a STAF handle's variable pool across the network for use in
+    variable resolution on remote systems
+<li>Splits the STAF V2 <tt>GLOBAL</tt> variable pool into a global (system-specific)
+    variable pool which is now called <tt>SYSTEM</tt> and a <tt>SHARED</tt>
+    variable pool which is system-wide, but which will be sent across the network
+    and used in a variable resolution on remote systems
+<li>Updated the VAR service syntax to follow standard guidelines for STAF
+    services (as part of a larger initiative to update all of STAF's services)
+<li>Updated the STAF services we provide to use the new VAR service syntax
+<li>This feature will allow a lot of flexibility in the future, by allowing
+    services to customize their behavior based on a handle's variables
+</ul>
+<p>
+Here is the updated syntax for the <tt>VAR</tt> service:
+<pre>
+C:\>STAF local VAR HELP
+Response
+--------
+VAR Service Help
+
+SET [SYSTEM | SHARED | HANDLE &lt;Handle>] VAR &lt;Name=Value> [VAR &lt;Name=Value>]...
+
+GET [SYSTEM | SHARED | HANDLE &lt;Handle>] VAR &lt;Name>
+
+DELETE [SYSTEM | SHARED | HANDLE &lt;Handle>] VAR &lt;Name> [VAR &lt;Name>]...
+
+LIST [SYSTEM | SHARED | HANDLE &lt;Handle> | ASHANDLE &lt;Handle> |
+      REQUEST [&lt;Request Number>] ]
+
+RESOLVE [SYSTEM | SHARED | HANDLE &lt;Handle> | ASHANDLE &lt;Handle> |
+         REQUEST [&lt;Request Number>] ]
+        STRING &lt;String> [STRING &lt;String>]...
+
+HELP
+</pre>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_StdRequests" HREF="#ToC_StdRequests">
+<font color=blue><h2>5.8 Standardize Request Strings for Services</h2></font></a>
+<p>
+<ul>
+<li>Standardize the request strings to use for all internal and external
+    STAF services
+<li>For example, the <tt>HANDLE</tt> and <tt>PROCESS</tt> services in STAF V2 allow a
+    <tt>QUERY ALL</tt> request.  Instead, a <tt>LIST</tt> request will be
+    added that can list all handles/processes, as is the standard for other
+    STAF services
+<li>As part of the "Send Variables across the network" feature, changed the
+    <tt>VAR</tt> service's syntax to follow our standardization rules for
+    request strings (including changing the request syntax for <tt>RESOLVE</tt>)
+<li>The customer impact is that any existing services, testcases, applications, etc.
+    will need to be updated to use the new syntax in order to work with STAF V3.
+    Hence the importance of using the <tt>DIAG</tt> service to record migration triggers
+    for STAF requests with a new syntax and/or new results.
+</ul>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_DataDir" HREF="#ToC_DataDir">
+<font color=blue><h2>5.9 Provide/Use Data Directory for STAF and its Services</h2></font></a>
+<p>
+<ul>
+<li>Provide a new STAF system variable, STAF/DataDir, that will be set to the STAF
+    write location.  By default it will be set to:
+    <tt>{STAF/Config/STAFRoot}/data/{STAF/Config/InstanceName}</tt>
+    <p>For example:  <tt>C:\STAF\data\STAF</tt>
+<li>Provide a <tt>DATADIR</tt> operational parameter in the STAF configuration
+    file to override the STAF write location
+<li>STAF and its services will use the specified write location whenever they
+    need to write data
+<li>Also, provided a temporary directory, tmp, that is located in the STAF
+    data directory.  You can use this directory as a place to put
+    temporary files that will get deleted whenever STAF is restarted.  The
+    entire contents of {STAF/DataDir}/tmp will be deleted (including sub-directories)
+    whenever STAFProc is started.
+<li>This allows STAF to be installed in a location that is read-only when STAFProc
+    is running (e.g. in a place that is accessible via a mounted drive or in a
+    directory that STAFProc will not have write permissions)
+<li>Needed to allow multiple instances of STAFProc to run on the same machine
+    (part of the Communication Interface enhancements) so that a different data
+    directory will be used for each instance of STAFProc
+</ul>
+<p>
+<h4>Java Service's init() Example Using info.writeLocation</h4>
+<p>
+We have standardized where data within the "STAF data directory" should be stored.
+For example, a service should write its data to a directory named
+<tt>&lt;STAF Write Location>/service/&lt;Service Name (lower-case)></tt>.
+<pre>
+    // Assign the location that the service can write data to, 
+    // &lt;STAF Write Location>/service/&lt;service name (lower-case)>
+    // and create the directory if it doesn't exist.
+
+    fDataDir = info.writeLocation + fileSep + "service" + fileSep +
+        fServiceName.toLowerCase();
+
+    File dir = new File(fDataDir);
+
+    if (!dir.exists())
+    {
+        dir.mkdirs();
+    }</pre>
+<p>
+
+<p>
+Here's a table showing the location that STAF V3 services write data
+compared to the location that STAF V2 services write data.
+If you want to use existing data for a STAF V2 service, then you will
+have to copy the directory or files from the old STAF V2 location to
+the new STAF V3 location.
+<p>
+<table id="DataLocationTable" border=1 width=page>
+<thead>
+<tr>
+<th COLSPAN="4">Comparison of Write Locations for STAF V3 and STAF V2</th>
+</tr>
+<tr>
+<td><b>Service</b></td>
+<td><b>Directory or Files to Copy</b></td>
+<td><b>STAF V3 Location</b></td>
+<td><b>STAF V2 Location</b></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log Service</td>
+<td>Directory</td>
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)></td>
+<td>{STAF/Config/STAFRoot}/data/log</td>
+</tr>
+<tr>
+<td>ResPool Service
+<td>Directory
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<td>{STAF/Config/STAFRoot}/data/&lt;Service name (lower-case)>
+</tr>
+<tr>
+<td>EventManager Service
+<td>Directory
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<td>{STAF/Config/STAFRoot}/data/eventmanagerdata
+</tr>
+<tr>
+<td>Cron Service
+<td>Directory
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>
+<td>&lt;System.getProperty(user.home)>/crondata
+</tr>
+<tr>
+<td>Event Service
+<td>Files
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>/GenManager.out and
+RegManager.out
+<td>&lt;Directory where STAFProc was started>/GenManager.out and RegManager.out
+</tr>
+<tr>
+<td>NamedCounter Service
+<td>File
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>/namedCounter.ser
+<td>&lt;Directory where STAFProc was started>/<Service name>.ser
+</tr>
+<tr>
+<td>Timer Service
+<td>Files
+<td>{STAF/DataDir}/service/&lt;Service name (lower-case)>/tlist.ser and wlist.ser
+<td>{STAF/Config/STAFRoot}/bin/tlist.ser and wlist.ser
+</tr>
+</tbody>
+</table>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_InstallEnh" HREF="#ToC_InstallEnh">
+<font color=blue><h2>5.10 Installation Enhancements</h2></font></a>
+<p>
+<ul>
+<li>Allow installation upgrades
+  <p>
+  <ul>
+  <li>Currently, when customers upgrade from one release of STAF to another,
+      they must do a full uninstall/reinstall
+  <li>You will be able to upgrade from STAF V2 to STAF V3. 
+  <p>
+  Note:  Since there are changes in the location of the STAF data directory 
+  and the STAF V3 configuration file, you'll need to customize the STAF
+  configuration file and, if desired, move log files, etc. to the new STAF V3
+  locations manually.
+  <li>You will be able  to upgrade from STAF V3.0 to STAF V3.x, preserving
+      your existing STAF configuration file
+  </ul>
+<p>
+<li>Allow install of multiple versions of STAF
+<p>
+<li>Provide IPv4/IPv6 support in single build
+</ul>
+<p>
+<!---------------------------------------------------------------------------->
+<!--
+<a name="Header_PerlServices" HREF="#ToC_PerlServices">
+<font color=blue><h2>5.11 Support for Perl Services</h2></font></a>
+<p>
+<ul>
+<li>Provide a Perl wrapper to the C interface for writing services
+<li>Allows STAF services to be written in Perl, instead of just Java, C, C++, or Rexx
+<li>Perl is still an extremely popular language.   This has been a very popular
+    feature request over the last few years.
+<li>Perl STAF services will only work with Perl 5.8 or later.
+<li>When registering a Perl service, you will need to specify <tt>PLSTAF</tt> for the
+    <tt>LIBRARY</tt> option and for the <tt>EXECUTE</tt> option, you will need to specify the
+    fully-qualified name of the .pl file that implements the service. For example:
+</ul>
+<p>
+Here's an example of registering a Perl service in the STAF configuration file:
+<pre>
+SERVICE MyService LIBRARY PLSTAF EXECUTE C:\STAF\services\MyService.pl
+</pre>
+-->
+<p>
+</ul>
+<p>
+<!---------------------------------------------------------------------------->
+<hr>
+<a name="Header_Changes" HREF="#ToC_Changes">
+<font color=blue><h1>6.0 STAF V3 Changes</h1></font></a>
+<p>
+Many enhancements have been added in STAF V3.  Some of these enhancements 
+resulted in changes that are not backward compatible with STAF V2.
+Some of the changes that you may encounter are described in this section.
+<p>
+<a name="Header_Install" HREF="#ToC_Install">
+<font color=blue><h2>6.1 Installation Changes</h2></font></a>
+<p>
+Some of the installation improvements in STAF V3 are:
+<ol>
+<li>STAF V3 supports installation upgrades.  When you want to upgrade from a
+previous version of STAF (e.g. STAF V2 or STAF V3.0.0 Beta 5) to STAF V3,
+you no longer have to first uninstall STAF before installing STAF V3.
+<p>
+If you migrated from STAF V2 to STAF V3, there are a couple of things
+you'll need to consider:
+<ul compact>
+<li>You will need to update your STAF configuration file as there are
+differences in STAF V3.
+See section <a href="#Header_CfgFile">5.2 STAF Configuration File Changes</a>
+for more information on changes to the STAF configuration file.
+<li>STAF V3 and its services store persistent data in different locations
+than STAF V2.  See table <a href="#DataLocationTable">Comparison of Write
+Locations for STAF V3 and STAF V2</a> for more information.
+</ul>                
+<p>
+<li>STAF V3 allows installation of multiple different versions of STAF
+on a single machine.  For example, if you already have STAF V2 installed,
+and you want to try out STAF V3, the installation allows you to
+install STAF V3 in a different directory without overriding the STAF V2
+installation.  To run multiple versions of STAF at the same time, you will
+need to set environment variable STAF_INSTANCE_NAME to differentiate between
+multiple instances of STAF and you must specify different ports for the tcp
+interface in the STAF configuration file.
+<p>In addition, now that you can have more than one version of STAF installed
+on a machine, we are providing script files in STAF V3 that you can run
+to set up your STAF environment.  These are located in the root STAF directory
+(STAFEnv.bat on Windows, STAFEnv.sh on Unix). 
+In STAF V3 (GA release and later) we will also be creating a similar file
+for any STAF 2.x version installed on the machine.  Here's a sample one for
+Windows you can use for STAF V2 if you are running STAF V2 and
+STAF V3 on the same system. 
+<pre>
+@echo off 
+REM STAF environment variables 
+set PATH=C:\STAF\bin;%PATH% 
+set CLASSPATH=C:\STAF\bin\JSTAF.jar;C:\STAF\samples\demo\STAFDemo.jar;%CLASSPATH% 
+set STAFCONVDIR=C:\STAF\codepage 
+</pre>
+Of course, if you have STAF V2 installed in a location other than C:\STAF,
+you would need to change this sample script.  The sample scripts that are created
+automatically by STAF V3 will use the actual install directories in the files. 
+<p>
+<b>Note:</b> When you install STAF V3 on a Windows system that already has
+STAF 2.6.5 or earlier installed (at a different location), only the STAF V3
+uninstall is available in Add/Remove Programs. To uninstall STAF V2,
+you will need to open a command prompt, go to the _uninst directory in the
+root STAF V2 installation directory, and run "uninstaller.exe". 
+To uninstall STAF 2.6.6 or later, instead of running the uninstaller.exe from
+a command prompt, there is a "Uninstall STAF" icon in the
+"STAF - Software Testing Automation Framework" folder that can be
+used to uninstall STAF 2.6.6 or later.
+<p>
+<li>STAF V3 tar and zip files, as well as all of the service V3 tar and zip files,
+have been changed so that they unpack into a single directory.
+So, for example, when you unzip the STAXV3xx.zip file, it will now create
+a directory named stax. 
+<p>
+<li>STAF V3 now uses InstallShieldX instead of InstallShield Multi-Platform.
+</ol>
+<p>
+<a name="Header_CfgFile" HREF="#ToC_CfgFile">
+<font color=blue><h2>6.2 STAF Configuration File Changes</h2></font></a>
+<p>
+The STAF configuration file that you used from STAF V2 will not work with
+STAF V3.  Here is a list of the changes that you may need to make:
+<p>
+<ol>
+<li><b>Changed Syntax of Trace Statements</b>
+<p>
+You may enable or disable STAF trace points and STAF services for tracing
+using the <tt>TRACEM</tt> configuration statement. In addition, you can set the trace 
+output destination and set the default tracing state for newly registered 
+services. By default, all STAF services are enabled for tracing.
+Also, if you are using the default STAF configuration file provided,
+only the <tt>ERROR</tt> and <tt>DEPRECATED</tt> trace points are enabled by default. 
+<p>
+<b>Note:</b> The <tt>TRACE ENABLE/DISABLE SERVICE(S)</tt> statements affect the
+current list of services. So, if you add line <tt>TRACE DISABLE ALL SERVICES</tt>
+to the configuration file and then register any external services later in
+the configuration file, those services will not necessarily be disabled.
+To ensure that all registered services are disabled, either set the default
+service state to disabled, or add the <tt>TRACE</tt> statements after the
+<tt>SERVICE</tt> configuration statements in the configuration file. 
+Here's the new syntax for <tt>TRACE</tt> statements in the STAF configuration file:
+<pre>
+TRACE ENABLE ALL  [ TRACEPOINTS | SERVICES ]
+TRACE ENABLE TRACEPOINTS &lt;Trace point list> | SERVICES &lt;Service list>
+TRACE ENABLE TRACEPOINT &lt;Trace point> [TRACEPOINT &lt;Trace point>]...
+TRACE ENABLE SERVICE &lt;Service> [SERVICE &lt;Service>]...
+ 
+TRACE DISABLE ALL  [ TRACEPOINTS | SERVICES ]
+TRACE DISABLE TRACEPOINTS &lt;Trace point list> | SERVICES &lt;Service list>
+TRACE DISABLE TRACEPOINT &lt;Trace point> [TRACEPOINT &lt;Trace point>]...
+TRACE DISABLE SERVICE &lt;Service> [SERVICE &lt;Service>]...
+ 
+TRACE SET DESTINATION TO &lt; STDOUT | STDERR | FILE &lt;File name> >
+TRACE SET DEFAULTSERVICESTATE &lt;Enabled | Disabled>
+</pre>
+<p>
+<li><b>Removed/Added Operational Parameters</b>
+  <p>
+  <ul compact>
+  <li>Removed the <tt>USELONGNAMES</tt> operational parameter as it is no longer
+      needed.  
+  <li>Removed the <tt>CONNECTTIMEOUT</tt> operational parameter and added an option named
+      <tt>CONNECTTIMEOUT</tt> that can be specified when configuring a TCP interface.
+  <li>Added a new operational parameter named <tt>DATADIR</tt> which specifies the
+      directory that STAF and its services will use to write data.
+      The default is <tt>{STAF/Config/STAFRoot}/data/{STAF/Config/InstanceName}</tt>.
+      Note that this directory name must be unique per instance of STAFProc running
+      on a single machine. Also, make sure to include the <tt>SET DATADIR</tt> line in the
+      STAF configuration file at the beginning of the file, before any services are
+      registered, since the data directory can be used during service registration. 
+  <li>Added a new operational parameter named <tt>DEFAULTINTERFACE</tt> which specifies
+      the name of the network interface (aka connection provider) to use, by default.
+      If not specified, the first interface registered is the default. 
+  <li>Added a new operational parameter named <tt>DEFAULTAUTHENTICATOR</tt> which
+      specifies the name of the Authenticator to use, by default. If not specified,
+      the first Authenticator registered is the default, or <tt>none</tt> if no
+      authenticators are registered. 
+  </ul>
+<p>
+<li><b>Removed the <tt>MACHINE</tt> Configuration Statement</b>
+<p>It is no longer needed.
+<p>
+<li><b>Added the <tt>MACHINENICKNAME</tt> Configuration Statement</b>
+<p>The <tt>MACHINENICKNAME</tt> configuration statement is used to specify a
+nickname for your machine. 
+This overrides the value of the STAF/Config/MachineNickname system variable which
+defaults to the value of the STAF/Config/Machine system variable (e.g. the long host name).
+This primarily effects the data stored by services such as the Log and Monitor services,
+which store data based on the machine from which it came by using the STAF/Config/MachineNickname
+system variable as part of the directory path when creating logs and monitor data.
+By allowing the STAF/Config/MachineNickname system variable to be overridden,
+it allows you to better manage your data. 
+<p>
+<b>Note:</b> The machine nickname is not used to communicate with other systems
+and does not have any effect on trust. 
+<p>
+<li><b>Network Interfaces</b>
+<p>You indicate that you wish to send and accept requests on a network interface
+using the <tt>INTERFACE</tt> configuration statement. The <tt>INTERFACE</tt>
+configuration statement registers connection providers (also called network
+interfaces, or interfaces for short).  In STAF V3, you can register
+multiple, pluggable interfaces.
+<p>
+The syntax for the default tcp interface changed in STAF V3:
+<ul compact>
+<li>The old syntax was:  <tt>INTERFACE TCPIP [Port]</tt>
+<li>The new syntax is:  <tt>INTERFACE &lt;Name> LIBRARY &lt;Implementation Library> [OPTION &lt;Name[=value]>]...</tt>
+</ul>
+<p>
+<b>Notes:</b>
+<ol compact>
+<li>The only network interface which comes with STAF is TCP/IP (uses implementation library STAFTCP).
+     However, STAF allows you to plug in network interfaces
+     (aka connection providers) so that you can create your own connection provider
+     which can communicate via any mechanism you choose (e.g. SSL, a Serial Line,
+     NetBIOS, or SNA).
+<li>An interface named local is also provided with STAF. Requests coming from 
+    the local system will appear as though they came from an interface named
+    "local" and a system identifier of "local". 
+</ol>
+<p>
+Here's an example of configuring two TCP interfaces, one using the
+default port, 6500, and a second one using port 6600 for IPv6 traffic with a longer connect timeout.
+<pre>
+INTERFACE tcp LIBRARY STAFTCP</tt>
+INTERFACE tcp2 LIBRARY STAFTCP OPTION Port=6600 OPTION PROTOCOL=IPv6 \
+                               OPTION ConnectTimeout=15000
+</pre>
+<p>
+<li><b>Authenticators</b>
+<p>Added the ability to specify multiple, pluggable Authenticator services via the new
+<tt>AUTHENTICATOR</tt> configuration statement.
+The first Authenticator registered is the default, unless overridden by using the new
+<tt>DEFAULTAUTHENTICATOR</tt> operational parameter. 
+<p>Here's an example of registering the sample authenticator:
+<pre>
+AUTHENTICATOR AuthSample LIBRARY JSTAF \
+  EXECUTE {STAF/Config/STAFRoot}\services\auth\AuthSample.jar \
+  PARMS "USERPROPERTIESFILE {STAF/Config/STAFRoot}/services/auth/authsample.prp"
+</pre>
+<p>
+<li><b>Changed Syntax for Setting STAF Variables</b>
+<p>You may set STAF variables in the system or shared variable pool at startup
+   by using the SET VAR configuration statement. SET VAR will set a variable
+   to a certain value. The variable is created if it does not exist. 
+   Note that you may SET multiple variables with a single request. 
+<p>The new syntax is:  <tt>SET [SYSTEM | SHARED] VAR &lt;Name=Value> [VAR &lt;Name=Value>] ...</tt>
+<p><tt>SYSTEM</tt> means the variable is to be set in system variable pool. This is the default. 
+<br><tt>SHARED</tt> means the variable is to be set in shared variable pool. 
+<br><tt>VAR</tt> means the variable to be set.
+   <tt>Name</tt> is the name of the variable and <tt>Value</tt> is the value of the variable. 
+<p>
+Here are some examples of setting some STAF variables in the system and shared variable pools:
+<pre>
+SET SYSTEM VAR STAFDemo/JavaAppClassPath={STAF/Env/CLASSPATH};C:\STAF\samples\demo\STAFDemo.jar;
+SET VAR STAFDemo/JavaAppCommand=java.exe VAR STAFDemo/Dummy=dummy
+SET SHARED VAR STAFDemo/JavaAppParms=STAFProcess
+</pre>
+<p>
+<li><b>Changed Trust Statements:</b>
+<p>You may grant access to machines or users by using the TRUST configuration statement. 
+Trust configuration statements for machines are based on the network identification of
+the system. In particular, different trust levels can be given to the same system coming
+in through different networking interfaces. Both logical (e.g. hostnames) and
+physical identifiers (e.g. IP addresses) may be used in trust configuration statements
+for machines.  Trust configuration statements for users require that you have an
+authenticator registered. 
+<p>The syntax for a trust statement is:
+<pre>
+TRUST LEVEL &lt;Level> &lt; DEFAULT | MACHINE &lt;Machine> [MACHINE &lt;Machine>]... |
+                      USER &lt;User> [USER &lt;User>]... >
+</pre>
+<p><b>Notes:</b>
+  <ul compact>
+    <li>Trust specifications are now of the form <tt>[&lt;Interface>://]&lt;Machine Identifier></tt>
+        for machine trust specifications and <tt>[&lt;Authenticator>://]&lt;User></tt> for
+        user trust specifications.
+    <li>Allows trust specifications for machines and users to contain wildcards.
+        The match patterns recognized are two special characters, '*' and '?',
+        where '*' matches a string of characters (including an empty string)
+        and '?' matches any single character (the empty string does not match). 
+    <li>The trust for "local" requests can now be specified, though we recommend
+        trust level 5 for machine local://local.
+  </ul>
+<p>
+To determine effective trust for a User:
+<p>
+If multiple trust specifications would match the same user, STAF will
+rank the matching specifications as follows and use the match with the
+highest (i.e. lowest numbered) rank: 
+  <ol compact>
+  <li>Exact match of authenticator and user identifier 
+  <li>Exact match of authenticator, wildcard match of user identifier 
+  <li>Wildcard authenticator match, exact match of user identifier 
+  <li>Wildcard authenticator match, wildcard match of user identifier 
+  <li>If multiple trust specifications match within the same rank, the lowest matching trust level will be used. 
+  </ol>
+<p>
+To determine effective Trust for a Machine:
+<p>
+If multiple trust specifications would match the same system, STAF will
+rank the matching specifications as follows and use the match with the
+highest (i.e. lowest numbered) rank: 
+  <ol compact>
+  <li>Exact match of interface and physical network identifier 
+  <li>Exact match of interface and logical network identifier 
+  <li>Exact match of interface, wildcard match of physical network identifier 
+  <li>Exact match of interface, wildcard match of logical network identifier 
+  <li>Wildcard interface match, exact match of physical network identifier 
+  <li>Wildcard interface match, exact match of logical network identifier 
+  <li>Wildcard interface match, wildcard match of physical network identifier 
+  <li>Wildcard interface match, wildcard match of logical network identifier 
+  <li>If multiple trust specifications match within the same rank, the lowest matching trust level will be used. 
+</ol>
+<p>
+<b>Note:</b> The user authentication overrides the machine authentication.
+For example, if the machine trust level is 3 and the authenticated user has
+a trust level of 4, then the handle will have a trust level of 4.
+If the user has been authenticated, but there are no user authentication
+trust matches, the machine trust level is used. If there is no machine
+trust level specified, then the default trust level is used. 
+</ol>
+<p>
+<h4>Default STAF V3 Configuration File</h4>
+<p>
+Here's the default STAF configuration file of STAF V3:
+<pre>
+# Turn on tracing of internal errors and deprecated options
+trace enable tracepoints "error deprecated"
+
+# Enable TCP/IP connections
+interface tcp library STAFTCP
+
+# Set default local trust
+trust machine local://local level 5
+
+# Add default service loader
+serviceloader library STAFDSLS
+</pre>
+<p>
+<h4>Example of a Customized STAF V3 Configuration File</h4>
+<p>
+Here's an example of a customized STAF configuration file for STAF V3:
+<pre>
+# Enable TCP/IP connections
+interface tcp LIBRARY STAFTCP
+interface tcp2 LIBRARY STAFTCP OPTION Port=6600 OPTION ConnectTimeout=15000
+
+# Turn on tracing of internal errors
+trace enable tracepoints "deprecated error"
+
+# Add default service loader
+SERVICELOADER LIBRARY STAFDSLS
+
+# Authenticator registration
+AUTHENTICATOR AuthSample LIBRARY JSTAF \
+  EXECUTE {STAF/Config/STAFRoot}\services\auth\AuthSample.jar \
+  PARMS "USERPROPERTIESFILE {STAF/Config/STAFRoot}/services/auth/authsample.prp"
+
+# Set default local trust
+TRUST LEVEL 5 MACHINE local://local
+
+# Set trusts
+TRUST LEVEL 2 DEFAULT
+TRUST LEVEL 3 MACHINE *.austin.ibm.com
+TRUST LEVEL 4 MACHINE 9.41.53.*
+TRUST LEVEL 5 MACHINE tcp://9.41.53.147
+TRUST LEVEL 5 MACHINE tcp://client1.austin.ibm.com
+TRUST LEVEL 5 USER AuthSample://*
+TRUST LEVEL 0 USER AuthSample://User5
+
+# Register services
+SERVICE STAX  LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}\services\stax\STAX.jar \
+              OPTION JVMName=STAX OPTION JVM=C:\j2sdk1.4.2_03\bin\java \
+              OPTION J2=-Xmx384m \
+              PARMS "EXTENSIONXMLFILE C:/staf/services/extensions.xml"
+
+SERVICE Event LIBRARY JSTAF \
+              EXECUTE {STAF/Config/STAFRoot}\services\stax\STAFEvent.jar \
+              OPTION JVMName=STAX
+
+SERVICE Cron  LIBRARY JSTAF \
+              EXECUTE {STAF/Config/STAFRoot}\services\cron\STAFCron.jar
+
+# Set up some STAF variables
+SET SYSTEM VAR STAFDemo/JavaAppClassPath=C:\STAF\lib\JSTAF.jar;C:\STAF\samples\demo\STAFDemo.jar;
+SET VAR STAFDemo/JavaAppCommand=java.exe VAR STAFDemo/Dummy=dummy
+SET SHARED VAR STAFDemo/JavaAppParms=STAFProcess
+</pre>
+<p>
+<a name="Header_Variables" HREF="#ToC_Variables">
+<font color=blue><h2>6.3 Pre-defined STAF Variable Changes</h2></font></a>
+<p>
+STAF maintains a "system" variable pool that is common to all the processes
+on a given STAF Client.  STAF predefines a set of system variables.
+Some of these system variables (formerly known as "global" variables in STAF V2)
+have been removed in STAF V3 and some variables have been added in STAF V3.
+<p>
+The following variable was removed from the set of system variables that STAF pre-defines:
+<ul>
+<li>Removed the <b><tt>STAF/Config/EffectiveMachine</tt></b> system variable since you no
+    longer configure long versus short TCP hostnames -- everything uses long host names now.
+</ul>
+<p>
+The following variables were added to the set of system variables that STAF pre-defines:
+<p>
+<ul>
+<li>Added the <b><tt>STAF/Config/MachineNickname</tt></b> system variable which is 
+    the nickname for this machine. This defaults to the same value as
+    STAF/Config/Machine unless overridden using the <tt>MACHINE</tt>
+    configuration setting. 
+<p>
+<li>Added the <b><tt>STAF/Config/DefaultAuthenticator</tt></b> system variable
+    which defines the default authenticator. If no authenticators are
+    registered, its value is <tt>none</tt>. 
+<p>
+<li>Added the <b><tt>STAF/Config/DefaultInterface</tt></b> system variable
+    which defines the default interface.
+    If no network interfaces are registered, its value is "local" to show that
+    the local interface is the only interface available. 
+<p>
+<li>Added the <b><tt>STAF/Config/InstanceName</tt></b> system variable which
+    defines the name of this STAF instance. The default is STAF if the 
+    <tt>STAF_Instance_Name</tt> environment variable is not specified. 
+<p>
+<li>Added the <b><tt>STAF/DataDir</tt></b> system variable which defines the
+    directory that STAF and its services use to write data (based on the
+    DATADIR operational parameter). 
+</ul>
+<p>
+<a name="Header_Deprecated" HREF="#ToC_Deprecated">
+<font color=blue><h2>6.4 Removed Deprecated Functions</h2></font></a>
+<p>
+<ul>
+<li>Removed deprecated messages in STAF and the Log, Respool, and Monitor
+    services and removed settings for old/new return codes
+    <ul>
+    <li>LOG Service:  Removed error codes 4001, 4002, 4003, 4005, 4006, and 4009
+        and removed the <tt>OLDRETURNCODES</tt> and <tt>NEWRETURNCODES</tt> settings
+    <li>RESPOOL Service:  Removed error codes 4001, 4002, 4003, and 4004
+    <li>MONITOR Service:  Removed error codes 4005, 4006, and 4007 and
+        removed the <tt>OLDRETURNCODES</tt> and <tt>NEWRETURNCODES</tt> settings
+    </ul>
+<li>Removed the following deprecated utilities and executables:
+    GenWl, STAF.cmd and CSTAF
+</ul>
+<p>
+<a name="Header_Marshalling" HREF="#ToC_Marshalling">
+<font color=blue><h2>6.5 Marshalling Structured Data</h2></font></a>
+<p>
+If you're the owner of a custom STAF service and you want to leverage
+the multi-value result change in your service or if your testcase
+or application is providing a multi-value queued message, read this
+section to learn more about providing the result or message in a
+marshalled data structure.
+<p>
+The multi-value result change is applicable to any command that can
+logically return multiple values.  Essentially any command where the user
+would take the result buffer and parse it into multiple values instead of
+just using the whole thing as a string.  The most common examples of these
+are LIST and QUERY commands which almost always return multiple values. 
+But, that doesn't mean there might not be other commands that return
+multiple values.  For example doing a PROCESS FREE ALL will return two
+values (the total number of processes and the total that were freed).
+In some cases, the multiple values are only returned as part of an error
+(for example an FS DELETE, generally of a directory, without IGNOREERRORS
+will return a list of the files/directories that couldn't be deleted).
+<p>
+For example, in STAF V2, a LIST MUTEX request to the SEM service
+could result in the following output:
+<pre>
+DataSource1: Unowned
+Printers/Printer1: Owned - 2 pending request(s)
+</pre>
+You had to parse this information in order to get the name of each mutex,
+to determine if a mutex is owned or unowned and if there are any
+pending requests.
+<p>
+In STAF V3, multi-valued results are now returned as marshalled
+data structures.  In STAF V3, a LIST MUTEX request to the SEM service
+results in a marshalled &lt;List> of &lt;Map:STAF/Service/Sem/MutexInfo>
+representing the mutex semaphores. This map class is defined with keys:
+name, state, pendingRequests.  In STAF V3, a LIST MUTEX request to the SEM
+service issued from the command line, could look like the following in
+table format: 
+<pre>
+Name              State   Pending Requests
+----------------- ------- ----------------
+DataSource1       Unowned 0
+Printers/Printer1 Owned   2
+</pre>
+But, more importantly, when accessed via a testcase (e.g. a Java program)
+or a STAX job, you do not have to parse the result to obtain the
+name of each mutex, or its state, or the number of pending requests.
+So, after the result is unmarshalled, you can iterate through the list
+accessing the name, state, and pending requests via the map keys for
+each entry in the list.
+<p>
+Read section "6.1 Marshalling Structured Data" in the STAF V3 User's
+Guide for more information about how STAF supports the automatic
+marshalling and unmarshalling of structured data.
+The act of marshalling takes a data structure and converts it into a
+string-based representation. The act of unmarshalling reverses this and
+converts the string-based representation back into a data structure. 
+<p>
+Also, see the STAF V3 Service Developer's Guide for more information
+on how to convert a multi-valued result into a marshalled data structure.
+<p>
+Once the data structure is generated, the data structure needs to be set
+as the root of a marshalling context.  Then you can marshall the
+marshalling context itself to create a string which can then be returned
+in the result buffer.
+<p>
+When structured data is returned in the result string, the STAF command
+will automatically unmarshall the data and print it in the most appropriate format. 
+See section "5.2 STAF" in the STAF V3 User's Guide for more information
+on this.
+<p>
+If a request returns a multi-valued result, such as a <tt>LIST</tt> or <tt>QUERY</tt>
+request, you should create a marshalled data structure to be returned in the result buffer. 
+<p>
+Here are some examples of marshalling structured data in Java and C++.
+These are examples from the sample Device service described in the
+STAF V3 Service Developer's Guide that shows how to generate marshalled
+structured data for a LIST request.  See the STAF V3 Service Developer's
+Guide for the complete code.
+<p>
+<ul>
+<li><b>Marshalling Structured Data using Java</b>
+<p>
+Here's the definition of the map class definition variables used in this example.
+<pre>
+    // Map Class Definitions used to create marshalled results
+    public static STAFMapClassDefinition fListDeviceMapClass;
+    public static STAFMapClassDefinition fQueryDeviceMapClass;
+</pre>
+Here's a code snippet from the init method for the service to
+generate the map class definitions used by the LIST and QUERY requests. 
+<pre>
+    // Construct map class for the result from a LIST request.
+
+    fListDeviceMapClass = new STAFMapClassDefinition(
+        "STAF/Service/Device/ListDevice");
+    fListDeviceMapClass.addKey("name",    "Name");
+    fListDeviceMapClass.addKey("type",    "Type");
+    fListDeviceMapClass.addKey("model",   "Model");
+    fListDeviceMapClass.addKey("serial#", "Serial #");
+
+    // If you wanted a "short" display heading that could be used by the
+    // STAF command line executable when displaying results in table 
+    // format if the length of the display heading exceeded the longest
+    // length of any data for that field and when data for other fields
+    // could use more space
+
+    fListDeviceMapClass.setKeyProperty(
+        "serial#", "display-short-name", "Ser#");
+
+    // Construct map class for the result from a QUERY request.
+
+    fQueryDeviceMapClass = new STAFMapClassDefinition(
+        "STAF/Service/Device/QueryDevice");
+    fQueryDeviceMapClass.addKey("model",   "Model");
+    fQueryDeviceMapClass.addKey("serial#", "Serial #");
+</pre>
+Here's the code snippet from the handleList method that generates a
+<tt>&lt;List></tt> of a map class, <tt>&lt;Map:STAF/Service/Device/ListDevice></tt>,
+to represent a list of printers and returns the marshalled result:
+<pre>
+    // Create a marshalling context and set any map classes (if any).
+
+    STAFMarshallingContext mc = new STAFMarshallingContext();
+    mc.setMapClassDefinition(fListDeviceMapClass);
+
+    // Create an empty result list to contain the result
+
+    List resultList = new ArrayList();
+
+    // Add printer entries to the result list
+
+    if (defaultList || printersOption > 0)
+    {
+        Iterator iter = fPrinterMap.keySet().iterator();
+
+        while (iter.hasNext())
+        {
+            String key = (String)iter.next();
+            DeviceData data = (DeviceData)fPrinterMap.get(key);
+
+            Map resultMap = fListDeviceMapClass.createInstance();
+            resultMap.put("name", key);
+            resultMap.put("type", "Printer");
+            resultMap.put("model", data.model);
+            resultMap.put("serial#", data.sn);
+
+            resultList.add(resultMap);
+        }
+    }
+
+    // Set the result list as the root object for the marshalling context
+    // and return the marshalled result
+
+    mc.setRootObject(resultList);
+
+    return new STAFResult(STAFResult.Ok, mc.marshall());
+</pre>
+Here's a code snippet from the handleQuery method that generates a
+map class, <tt>&lt;Map:STAF/Service/Device/QueryDevice</tt>,
+to represent detailed information about a printer and returns the
+marshalled result: 
+<pre>
+    // Create a marshalling context and set any map classes (if any).
+
+    STAFMarshallingContext mc = new STAFMarshallingContext();
+    mc.setMapClassDefinition(fQueryDeviceMapClass);
+
+    // Create an empty result map to contain the result
+        
+    Map resultMap = fQueryDeviceMapClass.createInstance();
+
+    // Find the specified printer and add its info to the result map
+
+    if (fPrinterMap.containsKey(printer))
+    {
+        DeviceData data = (DeviceData)fPrinterMap.get(printer);
+               
+        resultMap.put("model", data.model);
+        resultMap.put("serial#", data.sn);
+    }
+    else
+    {
+        return new STAFResult(STAFResult.DoesNotExist, printer);
+    }
+        
+    // Set the result map as the root object for the marshalling context
+    // and return the marshalled result
+
+    mc.setRootObject(resultMap);
+
+    return new STAFResult(STAFResult.Ok, mc.marshall());
+</pre>
+<p>
+<li><b>Marshalling Structured Data using C++</b>
+<p>
+Here's the definition of the map class definition variables used in this example
+shown in bold.
+<pre>
+    // DEVICE Service Data
+
+    struct DeviceServiceData
+    {
+        unsigned int  fDebugMode;              // Debug Mode flag
+        STAFString    fShortName;              // Short service name
+        STAFString    fName;                   // Registered service name    
+        STAFHandlePtr fHandlePtr;              // Device service's STAF handle
+        STAFCommandParserPtr fAddParser;       // DEVICE ADD command parser
+        STAFCommandParserPtr fDeleteParser;    // DEVICE DELETE command parser
+        STAFCommandParserPtr fQueryParser;     // DEVICE QUERY command parser
+        STAFCommandParserPtr fListParser;      // DEVICE LIST command parser
+        STAFCommandParserPtr fHelpParser;      // DEVICE HELP command parser
+        STAFCommandParserPtr fVersionParser;   // DEVICE VERSION command parser
+        STAFCommandParserPtr fParmsParser;     // DEVIC PARMS command parser
+
+        <b>// Map Class Definitions for marshalled results
+        STAFMapClassDefinitionPtr fListDeviceMapClass; 
+        STAFMapClassDefinitionPtr fQueryDeviceMapClass;</b>
+
+        STAFMutexSemPtr      fPrinterMapSem;   // Semaphore to control 
+                                               //   access to the PrinterMap
+        STAFMutexSemPtr      fModemMapSem;     // Semaphore to control 
+                                               //   access to the ModemMap
+        DeviceMap            fPrinterMap;      // Map of all printers
+        DeviceMap            fModemMap;        // Map of all modems
+    };
+</pre>
+Here's a code snippet from the init method for the service to
+generate the map class definitions used by the LIST and QUERY requests. 
+<pre>
+   // Construct map class for the result from a LIST request.
+
+    pData->fListDeviceMapClass = STAFMapClassDefinition::create(
+        "STAF/Service/Device/ListDevice");
+
+    pData->fListDeviceMapClass->addKey("name",    "Name");
+    pData->fListDeviceMapClass->addKey("type",    "Type");
+    pData->fListDeviceMapClass->addKey("model",   "Model");
+    pData->fListDeviceMapClass->addKey("serial#", "Serial #");
+
+    // If you wanted a "short" display heading that could be used by the
+    // STAF command line executable when displaying results in table 
+    // format if the length of the display heading exceeded the longest
+    // length of any data for that field and when data for other fields
+    // could use more space
+
+    pData->fListDeviceMapClass->setKeyProperty(
+        "serial#", "display-short-name", "Ser#");
+
+    // Construct map class for the result from a QUERY request.
+
+    pData->fQueryDeviceMapClass = STAFMapClassDefinition::create(
+        "STAF/Service/Device/QueryDevice");
+
+    pData->fQueryDeviceMapClass->addKey("model",   "Model");
+    pData->fQueryDeviceMapClass->addKey("serial#", "Serial #");
+</pre>
+Here's the code snippet from the handleList method that generates a
+<tt>&lt;List></tt> of a map class, <tt>&lt;Map:STAF/Service/Device/ListDevice></tt>,
+to represent a list of printers and returns the marshalled result:
+<pre>
+    // Create a marshalling context and set any map classes (if any).
+
+    STAFObjectPtr mc = STAFObject::createMarshallingContext();
+    mc->setMapClassDefinition(pData->fListDeviceMapClass->reference());
+
+    // Create an empty result list to contain the result
+
+    STAFObjectPtr resultList = STAFObject::createList();
+
+    // Add printer entries to the result list
+
+    if (printers || all)
+    {
+        STAFMutexSemLock lock(*pData->fPrinterMapSem);
+        
+        DeviceMap::iterator iter;
+
+        for (iter = pData->fPrinterMap.begin(); 
+             iter != pData->fPrinterMap.end(); ++iter)
+        {
+            STAFObjectPtr resultMap = pData->fListDeviceMapClass->createInstance();
+            resultMap->put("name",    iter->second->name);
+            resultMap->put("type",    "Printer");
+            resultMap->put("model",   iter->second->model);
+            resultMap->put("serial#", iter->second->serialNumber);
+
+            resultList->append(resultMap);
+        }
+    }
+
+    // Set the result list as the root object for the marshalling context
+    // and return the marshalled result
+
+    mc->setRootObject(resultList);
+
+    return STAFResultPtr(new STAFResult(kSTAFOk, mc->marshall()),
+                         STAFResultPtr::INIT);
+</pre>
+Here's a code snippet from the handleQuery method that generates a
+map class, <tt>&lt;Map:STAF/Service/Device/QueryDevice</tt>,
+to represent detailed information about a printer and returns the
+marshalled result: 
+<pre>
+    // Create a marshalling context and set any map classes (if any).
+
+    STAFObjectPtr mc = STAFObject::createMarshallingContext();
+    mc->setMapClassDefinition(pData->fQueryDeviceMapClass->reference());
+
+    // Create an empty result map to contain the result
+
+    STAFObjectPtr resultMap = pData->fQueryDeviceMapClass->createInstance();
+
+    // Find the specified printer/modem and add its info to the result map
+
+    STAFMutexSemLock lock(*pData->fPrinterMapSem);
+        
+    DeviceMap::iterator iter = pData->fPrinterMap.find(printer); 
+        
+    if (iter == pData->fPrinterMap.end())
+    {
+        return STAFResultPtr(new STAFResult(kSTAFDoesNotExist, printer),
+                             STAFResultPtr::INIT);
+    }
+        
+    resultMap->put("model",   iter->second->model);
+    resultMap->put("serial#", iter->second->serialNumber);
+    
+    // Set the result map as the root object for the marshalling context
+    // and return the marshalled result
+
+    mc->setRootObject(resultMap);
+
+    return STAFResultPtr(new STAFResult(kSTAFOk, mc->marshall()), 
+                         STAFResultPtr::INIT);
+    // Create a marshalling context and set any map classes (if any).
+
+    STAFObjectPtr mc = STAFObject::createMarshallingContext();
+    mc->setMapClassDefinition(pData->fQueryDeviceMapClass->reference());
+
+    // Create an empty result map to contain the result
+
+    STAFObjectPtr resultMap = pData->fQueryDeviceMapClass->createInstance();
+
+    // Find the specified printer/modem and add its info to the result map
+
+    STAFMutexSemLock lock(*pData->fPrinterMapSem);
+        
+    DeviceMap::iterator iter = pData->fPrinterMap.find(printer); 
+        
+    if (iter == pData->fPrinterMap.end())
+    {
+        return STAFResultPtr(new STAFResult(kSTAFDoesNotExist, printer),
+                             STAFResultPtr::INIT);
+    }
+        
+    resultMap->put("model",   iter->second->model);
+    resultMap->put("serial#", iter->second->serialNumber);
+    
+    // Set the result map as the root object for the marshalling context
+    // and return the marshalled result
+
+    mc->setRootObject(resultMap);
+
+    return STAFResultPtr(new STAFResult(kSTAFOk, mc->marshall()), 
+                         STAFResultPtr::INIT);
+</pre>
+</ul>
+<p>
+<p>
+<a name="Header_UnMarshalling" HREF="#ToC_UnMarshalling">
+<font color=blue><h2>6.6 Handling Marshalled Structured Data (Unmarshalling)</h2></font></a>
+<p>
+This section shows you examples of handling marshalled data structures,
+in this case, the result from a <tt>LIST</tt> request, via a Java program,
+a C++ program, and a STAX job.
+<p>
+When you submit a <tt>LIST POOLS</tt> request to the <tt>RESPOOL</tt> service
+in STAF V3, the result is a data structure consisting of a list of maps,
+one for each pool. 
+<pre>
+C:\>STAF local RESPOOL LIST POOLS
+Response
+--------
+Pool Name Description
+--------- -----------------------
+pool1     Pool 1
+STAFDemo  STAF Demo Resource Pool
+</pre>
+Here are some examples of how you can access values in the multi-valued result:
+<p>
+<ul>
+<li><b>How to Handle a Multi-Valued Result in a Java Program</b>
+<p>
+Here's a snippet of Java code that submits a <tt>LIST POOLS</tt> request
+to the <tt>RESPOOL</tt> service, unmarshalls the result, and iterates 
+through the unmarshalled result (a List containing a Map for each resource pool)
+and prints the pool name and description for each entry in the list: 
+<pre>
+STAFResult res = handle.submit2("local", "RESPOOL", "LIST POOLS");
+if (res.rc != 0) return res;
+
+STAFMarshallingContext mc = STAFMarshallingContext.unmarshall(res.result);
+List poolList = (List)mc.getRootObject();
+Iterator iter = poolList.iterator();
+
+while (iter.hasNext())
+{
+    Map poolMap = (HashMap)iter.next();
+    System.out.println("Name: " + poolMap.get("poolName") +
+                       ", Description: " + poolMap.get("description"));
+}
+</pre>
+Here's the output from running this sample Java program: 
+<pre>
+Name: pool1, Description: Pool 1
+Name: STAFDemo, Description: STAF Demo Resource Pool
+</pre>
+<li><b>How to Handle a Multi-Valued Result in a C++ Program</b>
+<p>
+Here's a snippet of C++ code that submits a <tt>LIST POOLS</tt> request
+to the <tt>RESPOOL</tt> service, unmarshalls the result, and iterates
+through the unmarshalled result (a List containing a Map for each resource pool)
+and prints the pool name and description for each entry in the list: 
+<pre>
+STAFResultPtr res = pData->fHandlePtr->submit("local", "RESPOOL", "LIST POOLS");
+if (res->rc != 0) return res;
+
+STAFObjectPtr mc = STAFObject::unmarshall(res->result);
+STAFObjectPtr outputList = mc->getRootObject();
+STAFObjectIteratorPtr iter = outputList->iterate();
+
+while (iter->hasNext())
+{
+    STAFObjectPtr poolMap = iter->next();
+
+    cout << "Name: " << poolMap->get("poolName")->asString()
+         << ", Description: " << poolMap->get("description")->asString() << endl;
+}
+</pre>
+Here's the output from running this sample C++ program: 
+<pre>
+Name: pool1, Description: Pool 1
+Name: STAFDemo, Description: STAF Demo Resource Pool
+</pre>
+<li><b>How to Handle a Multi-Valued Result in a STAX Job</b>
+<p>
+The STAFResult from a &lt;stafcmd> element is unmarshalled by the STAX service
+so that you don't have to do any unmarshalling in a STAX job.
+<p>
+Here's a snippet from a STAX xml file that submits a <tt>LIST POOLS</tt>
+request to the <tt>RESPOOL</tt> service, and iterates through the result
+(a List containing a Map for each resource pool) and displays the
+pool name and description for each entry in the list in the STAX Monitor
+messages panel:
+<pre>
+&lt;stafcmd>
+  &lt;location>'local'&lt;/location>
+  &lt;service>'RESPOOL'&lt;/service>
+  &lt;request>'LIST POOLS'&lt;/request>
+&lt;/stafcmd>
+
+&lt;if expr="RC == 0">
+  &lt;iterate var="poolMap" in="STAFResult">
+    &lt;message>
+      'Name: %s, Description: %s' % (poolMap['poolName'], poolMap['description'])
+    &lt;/message>
+  &lt;/iterate>
+&lt;/if>
+</pre>
+This results in a message sent to the STAX Monitor for each entry in the pool:
+<pre>
+20041007-18:10:06	Name: pool1, Description: Pool 1
+20041007-18:10:06	Name: STAFDemo, Description: STAF Demo Resource Pool
+</pre>
+</ul>
+<p>
+<a name="Header_Services" HREF="#ToC_Services">
+<font color=blue><h2>6.7 STAF Custom Service Changes</h2></font></a>
+<p>
+If you have written any custom STAF services, you will need to make changes
+to them in order for them to work with STAF V3.  This section talks about
+changes that are specific to custom services.  Other changes described elsewhere
+in this migration guide may also apply to your service.
+For example, if your service submits any requests to STAF services,
+you'll want to gather the STAF V3 migration diagnostics to see if the syntax and/or
+results for the request have changed.  Also, if your services resolves any
+STAF variables, you'll want to make sure that those variables still exist.
+If your service submits requests to STAF services on remote machines, you'll
+need to consider whether your service should support remote machines that
+are running STAF V2 or just STAF V3.
+<p>
+<a name="Header_JavaServices" HREF="#ToC_JavaServices">
+<font color=blue><h3>6.7.1 STAF Java Service Changes</h3></font></a>
+<p>
+If you wrote a custom STAF service in Java, you must make the following changes
+to enable your service to work with STAF V3:
+<p>
+<ol>
+<li>Change the service interface level as follows:
+    <p>
+    <ol type="a">
+    <li>Change the STAFServiceInterfaceLevel class that the service implements
+        to be STAFServiceInterfaceLevel30
+    <pre>public class MyService implements STAFServiceInterfaceLevel30</pre>
+    <li>Change the service's init method to pass in
+        STAFServiceInterfaceLevel30.InitInfo
+    <pre>public STAFResult init(STAFServiceInterfaceLevel30.InitInfo info)</pre>
+    <li>Change the service's acceptResult method (and any handleXXX methods)
+        to pass in STAFServiceInterfaceLevel30.RequestInfo
+    <pre>
+    public STAFResult acceptRequest(STAFServiceInterfaceLevel30.RequestInfo info)
+    private STAFResult handleXXX(STAFServiceInterfaceLevel30.RequestInfo info)</pre>
+    </ol>
+<li>You may want to change your service to take advantage of two new fields
+    that were added to the <tt>STAFServiceInterfaceLevel30.InitInfo</tt> class.
+    shown in bold:
+    <pre>
+    public InitInfo(String name, String parms, JarFile serviceJar,
+                    int serviceType, String writeLocation)
+    {
+        this.name = name;
+        this.parms = parms;
+        this.serviceJar = serviceJar;
+        <b>this.serviceType = serviceType;</b>
+        <b>this.writeLocation = writeLocation;</b>
+    }</pre>
+    In STAF V3, we have standardized where data within the directory specified
+    by the <tt>writeLocation</tt> field should be stored.  A service should write
+    its data to a directory named <tt>info.writeLocation + "/service/" +
+    info.name.toLowerCase()</tt>.
+    <p>
+    Here's a snippet of code that could be used in the init() method, to assign
+    the location that the service should write its data.
+    <pre>
+    // Assign the location that the service can write data to and create the
+    // directory if it doesn't exist.
+
+    fDataDir = info.writeLocation + fileSep + "service" + fileSep +
+        info.name.toLowerCase();
+
+    File dir = new File(fDataDir);
+
+    if (!dir.exists())
+    {
+        dir.mkdirs();
+    }</pre>
+<p>
+<li>Change the init and term methods for Java services to return a STAFResult instead
+    of an int return code.
+    <pre>
+    <b>STAFResult</b> init(InitInfo initInfo)
+    <b>STAFResult</b> term()</pre>
+    The STAFResult class consists of an int rc (return code)
+    and a String result so that your service can now return not only a return code,
+    but also more information about the error.
+    <p>
+    Both the RC and Result will be provided in the STAFProc window
+    if an error occurs registering or unregistering a service when starting
+    STAF, or if dynamically registering/unregistering a service via a <tt>SERVICE
+    ADD/REMOVE</tt> request, the result buffer will contain the additional information
+    about the error.
+    <p>
+    For example, if in the init() method, your Java service submitted a request to
+    resolve a STAF variable, you should change the service to return the STAFResult
+    object from the resolve request, instead of just a return code.
+    <pre>
+    // Get the file separator
+
+    String fileSep;
+            
+    STAFResult res = fHandle.submit2(
+        "local", "VAR", "RESOLVE STRING {STAF/Config/Sep/File}");
+
+    if (res.rc != 0)
+        <b>return res;</b>
+    else
+        fileSep = res.result;</pre>
+<li>Change your service if it uses any fields that were removed or whose name
+    changed in the STAFServiceInterfaceLevel30.RequestInfo class.
+    Here's the new definition for STAF V3.0.0 with the new and changed fields shown
+    in bold:
+    <pre>
+    static public class RequestInfo
+    {
+        <b>public String  stafInstanceUUID;</b>
+        public String  machine;
+        <b>public String  machineNickname;</b>
+        <b>public String  handleName;</b>
+        public int     handle;
+        public int     trustLevel;
+        <b>public boolean isLocalRequest;</b>
+        <b>public int     diagEnabled;</b>
+        public String  request;
+        <b>public int     requestNumber;</b>
+        <b>public String  user;</b>
+        <b>public String  endpoint;</b>
+        <b>public String  physicalInterfaceID;</b>
+    ...
+    }</pre>
+    <p>
+    Change your service to not use the following fields which were removed from the
+    <tt>STAFServiceInterfaceLevel30.RequestInfo</tt> class:
+    <p>
+    <ul>
+    <li><tt>localMachine</tt> - If the service really needs the long host name for
+        the local Machine, then you can submit a request to the VAR service to
+        resolve the <tt>{STAF/Config/Machine}</tt> variable on the "local" machine.
+        Otherwise, if the service only uses this value to determine if the
+        request originated from the local machine, then you can use the new
+        <tt>isLocalRequest</tt> field instead.
+        Or, if the service uses this value to to determine if it is resolving a
+        variable on a local or remote system, note that this distinction no longer
+        needs to be made. Instead, in most case, you'll want to change the
+        <tt>VAR RESOLVE</tt> request to specify the <tt>REQUEST &lt;Request Number></tt>
+        option, using the new <tt>requestNumber</tt> field for the request number.
+    <p>
+    <li><tt>effectiveMachine</tt> - If the service is using this value in a
+        <tt>LOG QUERY</tt> request to query a machine log on the requesting machine
+        or in a <tt>MONITOR QUERY</tt> request to query a monitor message,
+        then you should change the service to use the new <tt>machineNickname</tt> 
+        field instead.
+        However, if the service is using this value to communicate to the
+        requesting machine, then you should change the service to use the
+        <tt>endpoint</tt> field instead.
+    <p>
+    <li><tt>processName</tt> - The name of field <tt>processName</tt> was changed to
+        <tt>handleName</tt>.  You need to change any references to <tt>processName</tt>
+        to use <tt>handleName</tt> instead.
+    </ul>
+    <p>
+    The following fields were added to the <tt>STAFServiceInterfaceLevel30.RequestInfo</tt> class:
+    <p>
+    <ul>
+    <li><tt>stafInstanceUUID</tt> - The STAF Universally Unique ID that uniquely identifies the STAF instance
+        from which the request originated 
+    <li><tt>machineNickname</tt> -  The machine nickname of the machine from which the request originated 
+    <li><tt>isLocalRequest</tt> - Is the request from the local system? (true/false)
+    <li><tt>diagEnabled</tt> - Indicates if diagnostics are enabled or not:  1=Enabled, 0=Disabled
+    <li><tt>user</tt> - The user (authenticator://userIdentifier) for the handle from which the request originated
+    <li><tt>endpoint</tt> - The endpoint from which the request originated in the following format: 
+        <tt>theInterface://logicalInterfaceID[@port]</tt>
+    <li><tt>physicalInterfaceID</tt> - The physical interface identifier for the machine from which
+        the request originated.  If tcp interface, it is the IP address.
+    </ul>
+</ol>
+
+<p>
+<a name="Header_C++Services" HREF="#ToC_C++Services">
+<font color=blue><h3>6.7.2 STAF C++ Service Changes</h3></font></a>
+<p>
+If you wrote a STAF service in C++, you must make the following changes:
+<p>
+<ol>
+<li>Change the service interface level to be 30 for all service interface methods.
+For example, change the STAFServiceConstruct, STAFServiceInit, and
+STAFServiceAcceptRequest methods to check if the level is 30 and if not,
+return kSTAFInvalidAPILevel.  Also, change to cast the pServiceInfo,
+pInitInfo, and pRequestInfo to level 30 of <tt>STAFServiceInfoLevel30,
+STAFServiceInitLvel30</tt> and <tt>STAFServiceRequestLevel30</tt> respectively.
+Also, change any handleXXX methods to specify <tt>STAFServiceRequestLevel30</tt>.
+<pre>
+STAFRC_t STAFServiceConstruct(STAFServiceHandle_t *pServiceHandle,
+                              void *pServiceInfo, unsigned int infoLevel,
+                              STAFString_t *pErrorBuffer)
+{
+    <b>if (infoLevel != 30) return kSTAFInvalidAPILevel;</b>
+
+    try
+    {
+        <b>STAFServiceInfoLevel30 *pInfo =
+            reinterpret_cast&lt;STAFServiceInfoLevel30 *>(pServiceInfo);</b>
+        ...
+
+STAFRC_t STAFServiceInit(STAFServiceHandle_t serviceHandle,
+                         void *pInitInfo, unsigned int initLevel,
+                         STAFString_t *pErrorBuffer)
+{
+    <b>if (initLevel != 30) return kSTAFInvalidAPILevel;</b>
+
+    try
+    {
+        <b>STAFServiceInitLevel30 *pInfo =
+            reinterpret_cast&lt;STAFServiceInitLevel30 *>(pInitInfo);</b>
+        ...
+
+STAFRC_t STAFServiceAcceptRequest(STAFServiceHandle_t serviceHandle,
+                                  void *pRequestInfo, unsigned int reqLevel,
+                                  STAFString_t *pResultBuffer)
+{
+    <b>if (reqLevel != 30) return kSTAFInvalidAPILevel;</b>
+
+    try
+    {
+        <b>STAFServiceRequestLevel30 *pInfo =
+            reinterpret_cast&lt;STAFServiceRequestLevel30 *>(pRequestInfo);</b>
+        ...
+</pre>
+<p>
+<li>Change the min/max interface levels for ServiceInfo, ServiceInit, and ServiceAcceptRequest to be 30.
+<pre>
+STAFRC_t STAFServiceGetLevelBounds(unsigned int levelID,
+                                   unsigned int *minimum,
+                                   unsigned int *maximum)
+{
+    switch (levelID)
+    {
+        case kServiceInfo:
+        {
+            <b>*minimum = 30;
+            *maximum = 30;</b>
+            break;
+        }
+        case kServiceInit:
+        {
+            <b>*minimum = 30;
+            *maximum = 30;</b>
+            break;
+        }
+        case kServiceAcceptRequest:
+        {
+            <b>*minimum = 30;
+            *maximum = 30;</b>
+            break;
+        }
+        case kServiceTerm:
+        case kServiceDestruct:
+        {
+            *minimum = 0;
+            *maximum = 0;
+            break;
+        }
+        default:
+        {
+            return kSTAFInvalidAPILevel;
+        }
+    }
+
+    return kSTAFOk;
+}</pre>
+<li>A new field was added to the <tt>STAFServiceInfoLevel30</tt> structure
+    shown in bold:
+    <pre>
+    struct STAFServiceInfoLevel30
+    {
+        STAFString_t name;
+        STAFString_t exec;
+        STAFString_t writeLocation;
+        <b>STAFServiceType_t serviceType;</b>
+        unsigned int numOptions;
+        STAFString_t *pOptionName;
+        STAFString_t *pOptionValue;
+    };</pre>
+    <p>
+    The <tt>serviceType</tt> field specifies the type of service (e.g. regular service,
+    service loader service, or authenticator service).
+    <p>
+    No changes are required to be made to your service for this change.
+<p>
+<li>Change your service if it uses any fields that were removed or whose name
+    changed in the STAFServiceRequestLevel30 structure.
+    Here's the new definition for STAF V3.0.0 with the new and changed fields shown
+    in bold:
+    <pre>
+    struct STAFServiceRequestLevel30
+    {
+        <b>STAFString_t        stafInstanceUUID;</b>
+        STAFString_t        machine;
+        <b>STAFString_t        machineNickname;
+        STAFString_t        handleName;</b>
+        STAFHandle_t        handle;
+        unsigned int        trustLevel;
+        <b>unsigned int        isLocalRequest;</b>
+        unsigned int        diagEnabled;
+        STAFString_t        request;
+        <b>STAFRequestNumber_t requestNumber;
+        STAFString_t        user;
+        STAFString_t        endpoint;
+        STAFString_t        physicalInterfaceID;</b>
+    };</pre>
+    <p>
+    Change your service to not use the following fields which were removed from the
+    <tt>STAFServiceInterfaceLevel30.RequestInfo</tt> class:
+    <p>
+    <ul>
+    <li><tt>localMachine</tt> - If the service really needs the long host name for
+        the local Machine, then you can submit a request to the VAR service to
+        resolve the <tt>{STAF/Config/Machine}</tt> variable on the "local" machine.
+        Otherwise, if the service only uses this value to determine if the
+        request originated from the local machine, then you can use the new
+        <tt>isLocalRequest</tt> field instead.
+        Or, if the service uses this value to determine if it is resolving a variable
+        on a local or remote system, note that this distinction no longer needs to be made.
+        Instead, in most cases, change the <tt>VAR RESOLVE</tt> request to specify the
+        <tt>REQUEST &lt;Request Number></tt> option, using the new
+        <tt>requestNumber</tt> field for the request number.
+    <p>
+    <li><tt>effectiveMachine</tt> - If the service is using this value in a
+        <tt>LOG QUERY</tt> request to query a machine log on the requesting machine
+        or in a <tt>MONITOR QUERY</tt> request to query a monitor message,
+        then you should change the service to use the new <tt>machineNickname</tt> 
+        field instead.
+        However, if the service is using this value to communicate to the
+        requesting machine, then you should change the service to use the
+        <tt>endpoint</tt> field instead.
+    <p>
+    <li><tt>processName</tt> - The name of field <tt>processName</tt> was changed to
+        <tt>handleName</tt>.  You need to change any references to <tt>processName</tt>
+        to use <tt>handleName</tt> instead.
+    </ul>
+    <p>
+    The following fields were added to the <tt>STAFServiceInterfaceLevel30.RequestInfo</tt> class:
+    <p>
+    <ul>
+    <li><tt>stafInstanceUUID</tt> - The STAF Universally Unique ID that uniquely identifies the STAF instance
+        from which the request originated 
+    <li><tt>machineNickname</tt> -  The machine nickname of the machine from which the request originated 
+    <li><tt>isLocalRequest</tt> - Is the request from the local system? (true/false)
+    <li><tt>diagEnabled</tt> - Indicates if diagnostics are enabled or not:  1=Enabled, 0=Disabled
+    <li><tt>user</tt> - The user (authenticator://userIdentifier) for the handle from which the request originated
+    <li><tt>endpoint</tt> - The endpoint from which the request originated in the following format: 
+        <tt>interface://logicalInterfaceID[@port]</tt>
+    <li><tt>physicalInterfaceID</tt> - The physical interface identifier for the machine from which
+        the request originated.  If tcp interface, it is the IP address.
+    </ul>
+</ol>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_AppendixA" HREF="#ToC_AppendixA">
+<font color=blue><h1>Appendix A:  STAF V3 Migration Diagnostic Triggers in STAF V2.6.x</h1></font></a>
+<p>
+This section contains a list of the triggers for all STAF
+commands owned by the STAF Development team that will be changing
+in STAF V3 due to one or both of the following reasons:
+<p>
+<ol>
+<li>The result can "logically" return more than one value so the
+format of the result will be changing to allow for easier parsing
+of the result.
+<p>Note that many results vary depending on the request options
+specified, with results for some requests sometimes containing
+multiple values and at other times only containing one value.
+<p>
+<li>The syntax of the STAF command is changing in STAF V3.
+For example, we're going to create a new <tt>TRACE</tt> service in STAF
+V3 and move the <tt>TRACE</tt> commands from the <tt>MISC</tt>
+service to a new <tt>TRACE</tt> service so the syntax for all 
+:xph.TRACE:exph. commands will be changing.
+As another example, we're standardizing the syntax for requests
+in STAF V3.  As a result of this, the syntax for all requests to
+the VAR service are changing.
+</ol>
+<p>
+<h4>Trigger Syntax</h4>
+<p>
+The format of the trigger recorded by STAF services for STAF V2 to aid
+in migrating to STAF V3 is:
+<pre>
+STAF/V3.0-Mig/&lt;Service> &lt;Request>
+</pre>
+where:
+<ul compact>
+<li><tt>&lt;Service></tt> is the name of the STAF service
+<li><tt>&lt;Request></tt> identifies the option(s) identifying the
+service request that is changing in STAF V3.
+</ul>
+<p>
+<h4>Source Syntax</h4>
+<p>
+The format of the source recorded by STAF services to aid
+in migrating to STAF V3 is:
+<pre>
+&lt;Handle Name>;&lt;Machine Name>;&lt;Handle#>
+</pre>
+where:
+<ul compact>
+<li><tt>&lt;Handle Name></tt> is the name of the handle originating
+the request.
+<li><tt>&lt;Machine Name></tt> is the name of the machine originating
+the request.
+<li><tt>&lt;Handle#></tt> is the number of the handle originating
+the request.
+</ul>
+<p>
+<table id=migrateTriggersTable border=1 width=page>
+<thead>
+<tr>
+<th COLSPAN="2">STAF V3 Migration Diagnostics Triggers</th>
+</tr>
+<tr>
+<td><b>Trigger</b></td>
+<td><b>Meaning</b></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>STAF/V3.0-Mig/CRON LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>CRON</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/EVENT LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>EVENT</tt> service.
+The result and syntax for the request will change in STAF V3.
+<p>
+The syntax changes include:
+<ul compact>
+<li>LIST REGCLIENTS -> LIST REGISTRATIONS
+<li>LIST EVENTIDS -> LIST EVENTIDS LONG
+<li>LIST TYPES -> LIST TYPES LONG
+<li>LIST TYPE -> LIST TYPES
+<li>LIST TYPE <Type> -> LIST SUBTYPES TYPE <Type>
+<li>LIST EVENTID <EventID> -> QUERY EVENTID <EventID> LONG
+<li>LIST EVENTIDS -> LIST EVENTIDS LONG
+</ul>
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/EVENT QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>EVENT</tt> service.
+The result and syntax for the request will change in STAF V3.
+<p>
+The syntax changes include:
+<ul compact>
+<li><tt>QUERY TYPE &lt;Type> -> LIST REGISTRATIONS LONG TYPE &lt;Type></tt>
+<li><tt>QUERY LONG TYPE &lt;Type> [SUBTYPE &lt;Subtype>] -> LIST REGISTRATIONS LONG TYPE &lt;Type> [SUBTYPE &lt;SubType>]</tt>
+</ul>
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/EVENTMANAGER LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>EVENTMANAGER</tt>
+service.  The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FS COPY DIRECTORY (no IGNOREERRORS)</tt>
+<td>This indicates a <tt>COPY DIRECTORY</tt> request to the <tt>FS</tt>
+service, without the <tt>IGNOREERRORS</tt> option.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FS DELETE (no IGNOREERRORS)</tt>
+<td>This indicates a <tt>DELETE</tt> request to the <tt>FS</tt> service,
+without the <tt>IGNOREERRORS</tt> option.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FS GET ENTRY SIZE</tt>
+<td>This indicates a <tt>GET ENTRY</tt> request to the <tt>FS</tt> service,
+with the <tt>SIZE</tt> option specified.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FS LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>FS</tt> service.
+The result for the request will change in STAF V3.
+Also, changed the request syntax:  the <tt>FORMAT</tt> option will change to the
+<tt>DETAILS</tt> option in STAF V3.  Also, note that the default format
+when using the <tt>LONG</tt> option is different in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FS QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>FS</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FSEXT QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>FSEXT</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FSEXT COMPAREDIR (No EXISTS)</tt>
+<td>This indicates a <tt>COMPARDIR</tt> request to the <tt>FSEXT</tt>
+service that does not specify the <tt>EXISTS</tt> option.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FSEXT FILECONTAINS NOT</tt>
+<td>This indicates a <tt>FILECONTAINS</tt> request to the <tt>FSEXT</tt>
+service with the <tt>NOT</tt> option specified.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/FSEXT LINECONTAINS</tt>
+<td>This indicates a <tt>LINECONTAINS</tt> request to the <tt>FSEXT</tt>
+service.  The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HANDLE QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>HANDLE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HELP ERROR</tt>
+<td>This indicates a <tt>ERROR</tt> request to the <tt>HELP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HELP LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>HELP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HTTP FOLLOW LINK</tt>
+<td>This indicates a <tt>FOLLOW LINK</tt> request to the <tt>HTTP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HTTP LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>HTTP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HTTP REQUEST|POST|DOGET</tt>
+<td>This indicates a <tt>REQUEST</tt>, <tt>POST</tt>,
+or <tt>DOGET</tt> request to the <tt>HTTP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HTTP QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>HTTP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/HTTP SUBMIT FORM</tt>
+<td>This indicates a <tt>SUBMIT FORM</tt> request to the <tt>HTTP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/LOG LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>LOG</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/LOG PURGE</tt>
+<td>This indicates a <tt>PURGE</tt> request to the <tt>LOG</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/LOG QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>LOG</tt> service.
+The result for the request will change in STAF V3.
+:p.
+In addition, there are some changes to the request syntax in STAF V3:
+:ul.
+:li.The <tt>FIELDSEP</tt> option has been removed since it is no longer needed
+with the way multi-valued results are handled in STAF V3.
+:li.There is now a DefaultMaximumQueryRecords parameter/setting in STAF V3
+that is set by default to 100.
+You may need to add the <tt>ALL</tt> option to your <tt>QUERY</tt> request
+in STAF V3 if you really want all of the records even if the number of records
+matching the query criteria exceeds the default maximum query records.
+:eul.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/LOG SET</tt>
+<td>This indicates a <tt>SET</tt> request to the <tt>LOG</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/MISC MACHINE</tt>
+<td>This indicates a <tt>MACHINE</tt> request to the <tt>MISC</tt> service.
+This request does not exist in STAF V3 as it is no longer needed since
+there a USELONGNAMES operational setting no longer exists (e.g. the
+effective machine name and machine name are now the same).
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/MISC TRACE</tt>
+<td>This indicates any <tt>TRACE</tt> request to the <tt>MISC</tt> service,
+other than a <tt>TRACE LIST</tt> request.
+The syntax for the request will change in STAF V3 due to moving
+the <tt>TRACE</tt> requests from the <tt>MISC</tt> service to
+a new <tt>TRACE</tt> service.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/MISC TRACE LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>MISC</tt> service.
+The result for the request will change in STAF V3, as well as
+the syntax.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/MONITOR LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>MONITOR</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/MONITOR QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>MONITOR</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/MONITOR SET</tt>
+<td>This indicates a <tt>SET</tt> request to the <tt>MONITOR</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/NAMEDCOUNTER LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>NAMEDCOUNTER</tt>
+service.  The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/PROCESS FREE ALL|WORKLOAD</tt>
+<td>This indicates a <tt>FREE ALL</tt> or <tt>FREE WORKLOAD</tt>
+request to the <tt>PROCESS</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/PROCESS NOTIFY LIST</tt>
+<td>This indicates a <tt>NOTIFY LIST</tt> request to the <tt>PROCESS</tt>
+service.  The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/PROCESS QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>PROCESS</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/PROCESS START WAIT</tt>
+<td>This indicates a <tt>START</tt> request to the <tt>PROCESS</tt> service
+with the option <tt>WAIT</tt> specified.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/PROCESS STOP ALL|WORKLOAD</tt>
+<td>This indicates a <tt>STOP ALL</tt> or <tt>STOP WORKLOAD</tt>
+request to the <tt>PROCESS</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/QUEUE GET|PEEK</tt>
+<td>This indicates a <tt>GET</tt> or <tt>PEEK</tt> request to
+the <tt>QUEUE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/QUEUE LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>QUEUE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/RESPOOL LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>RESPOOL</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/RESPOOL QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>RESPOOL</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM EVENT DELETE</tt>
+<td>This indicates an <tt>EVENT DELETE</tt> request to
+the <tt>SEM</tt> service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM EVENT POST|PULSE</tt>
+<td>This indicates an <tt>EVENT POST</tt> or <tt>PULSE</tt> request to
+the <tt>SEM</tt> service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM EVENT QUERY</tt>
+<td>This indicates an <tt>EVENT QUERY</tt> request to the <tt>SEM</tt>
+service.  The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM EVENT RESET</tt>
+<td>This indicates an <tt>EVENT RESET</tt> request to
+the <tt>SEM</tt> service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM EVENT WAIT</tt>
+<td>This indicates an <tt>EVENT WAIT</tt> request to
+the <tt>SEM</tt> service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>SEM</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM MUTEX DELETE</tt>
+<td>This indicates a <tt>MUTEX DELETE</tt> request to the <tt>SEM</tt>
+service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM MUTEX QUERY</tt>
+<td>This indicates a <tt>MUTEX QUERY</tt> request to the <tt>SEM</tt>
+service.  The syntax and the result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM MUTEX RELEASE</tt>
+<td>This indicates a <tt>MUTEX RELEASE</tt> request to the <tt>SEM</tt>
+service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SEM MUTEX REQUEST</tt>
+<td>This indicates a <tt>MUTEX REQUEST</tt> request to the <tt>SEM</tt>
+service.  The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SERVICE FREE</tt>
+<td>This indicates a <tt>FREE</tt> request to the <tt>SERVICE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SERVICE LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>SERVICE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SERVICE QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>SERVICE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SHUTDOWN NOTIFY LIST</tt>
+<td>This indicates a <tt>NOTIFY LIST</tt> request to the <tt>SHUTDOWN</tt>
+service.  The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/STAX EXECUTE TEST RETURNDETAILS</tt>
+<td>This indicates a <tt>TEST</tt> request to the <tt>STAX</tt> service
+specifying option <tt>RETURNDETAILS</tt>.
+The result for the request will change in STAF V3.
+Note that <tt>RETURNDETAILS</tt> is an undocumented option and
+is for use by STAF developers only.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/STAX EXECUTE WAIT RETURNRESULT</tt>
+<td>This indicates an <tt>EXECUTE</tt> request to the <tt>STAX</tt> service
+specifying options <tt>WAIT</tt> and <tt>RETURNRESULT</tt>.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/STAX LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>STAX</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/STAX QUERY</tt>
+<td>This indicates a <tt>QUERY</tt> request to the <tt>STAX</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/STAX SET</tt>
+<td>This indicates a <tt>SET</tt> request to the <tt>STAX</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/SXE EXECUTE</tt>
+<td>This indicates an <tt>EXECUTE</tt> request to the <tt>SXE</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/TIMER LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>TIMER</tt> service.
+The result for the request and the syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/TRUST LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>TRUST</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/VAR DELETE</tt>
+<td>This indicates a <tt>DELETE</tt> request to the <tt>VAR</tt> service.
+The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/VAR GET</tt>
+<td>This indicates a <tt>GET</tt> request to the <tt>VAR</tt> service.
+The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/VAR LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>TRUST</tt> service.
+The syntax and result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/VAR RESOLVE</tt>
+<td>This indicates a <tt>RESOLVE</tt> request to the <tt>VAR</tt> service,
+specifying one <tt>RESOLVE</tt> option.  The syntax for the request will
+change in STAF V3.  Not only has the syntax been restructured, but the
+DELIMIT option for resolving multiple variables will be removed in STAF V3
+as it is no longer needed due to the new format for multi-valued results.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/VAR RESOLVE (Multiple)</tt>
+<td>This indicates a <tt>RESOLVE</tt> request to the <tt>VAR</tt> service,
+specifying more than one <tt>RESOLVE</tt> option such that
+the result returns the resolved value for more than one STAF
+variable.  The syntax and result for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/VAR SET</tt>
+<td>This indicates a <tt>SET</tt> request to the <tt>VAR</tt> service.
+The syntax for the request will change in STAF V3.
+</tr>
+<tr>
+<td><tt>STAF/V3.0-Mig/ZIP LIST</tt>
+<td>This indicates a <tt>LIST</tt> request to the <tt>ZIP</tt> service.
+The result for the request will change in STAF V3.
+</tr>
+</tbody>
+</table>
+<p>
+<h2>Viewing STAF V3.0 Migration Diagnostics</h2>
+<p>
+To view the diagnostics data that has been recorded, use
+the <tt>LIST</tt> request for the <tt>DIAG</tt> service.
+See :hdref refid=diagList. for more information.
+<p>
+<h4>Notes</h4>
+<p>
+<ol>
+<li>STAF-enabled applications provided by the STAF Development team
+may also record STAF V3 migration diagnostics data.  For example,
+the STAX Monitor will record STAF V3 migration diagnostics data
+because it submits <tt>QUERY</tt> requests to the <tt>STAX</tt>
+service and <tt>GET/PEEK</tt> requests to the <tt>QUEUE</tt> service.
+Diagnostics data recorded by the STAX Monitor have a source that starts
+with <tt>STAX/JobMonitor/</tt> or <tt>STAX/Job/</tt>.
+The STAF development team will be updating the STAX Monitor for STAF V3.
+<p>
+<li>If a STAF request that is changing in STAF V3 originates from the
+STAF executable, its source recorded in the diagnostics map will start with
+<tt>STAF/Client</tt> since that's the handle name for any STAF command
+submitted at the command line. 
+</ol>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_AppendixB" href="#ToC_AppendixB">
+<font color=blue><h1>Appendix B:  Queued Message Format Changes in STAF V3</h1></font></a>
+<p>
+Messages queued by STAF V3 and it's services have a different format than in
+STAF V2.  A new <tt>TYPE</tt> option was added in STAF V3 to identify the type of
+message being queued.  STAF V3 and it's services specify a type for all the
+message that they generate because queued messages can contain various marshalled
+data structures, such as a map, so the type let's you know the structure of the
+message.
+<p>
+Here's a table showing the new format of the messages queued by STAF V3
+and it's services, as well as showing the format of these messages queued by
+STAF V2 clients to a STAF V3 machine.
+<p>
+<table id=queuedMessagesTable border=1 width=page>
+<thead>
+<tr>
+<th COLSPAN="2">STAF V3 Queued Messages</th>
+</tr>
+<tr>
+<td><b>Queued Messages from STAF V3</b>
+<td><b>Queued Messages from STAF V2</b>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><tt>TYPE: STAF/RequestComplete</tt>
+<br>
+<tt>MESSAGE:</tt> A map containing the request completion information as follows:
+<pre>
+{
+  requestNumber: &lt;Request #>
+  rc           : &lt;Request return code>
+  result       : &lt;Request result buffer>
+}</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing request completion information as follows:
+<p><tt>STAF/RequestComplete &lt;Request #>;&lt;Request return code>;&lt;Request result buffer></tt>
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Process/End</tt>
+<br>
+<tt>MESSAGE:</tt> A map containing the process completion information as follows:
+<pre>
+{
+  handle      : &lt;Handle #>
+  endTimestamp: &lt;YYYMMDD-HH&colon.MM&colon.SS>
+  rc          : &lt;Process Return Code>
+  key         : &lt;Key> | &lt;None>
+  fileList    : [
+    {
+      rc  : &lt;Returned File #1 RC>
+      data: &lt;Returned File #1 Data>
+    }
+  ]
+}
+</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing process completion information as follows:
+<p><tt>STAF/PROCESS/END <Handle>;&lt;Timestamp>;&lt;Return Code>[;&lt;Returned file data>]</tt>
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Start</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAF/START</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Shutdown</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAF/SHUTDOWN</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/Event</tt>
+<br>
+<tt>MESSAGE:</tt> A map containing the event information as follows:
+<pre>
+{
+  eventID         : &lt;Event ID>
+  eventServiceName: &lt;Event Service Name>
+  handle          : &lt;Handle #>
+  handleName      : &lt;Handle Name>
+  machine         : &lt;Machine>
+  propertyMap     : {
+    &lt;Name>: &lt;Value>
+    ...
+  }
+  subtype         : &lt;Subtype>
+  timestamp       : &lt;YYYYDDMM-HH:MM:SS>
+  type            : &lt;Type>
+}
+</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing the event information as follows:
+<p><tt>STAF/SERVICE/&lt;Event Service Name>/;&lt;Event ID>;&lt;Generating Machine>;&lt;Generating Process>;&lt;Generating Handle>;&lt;TimeStamp>;&lt;Type>;&lt;Subtype>;
+[&lt;Name>=&lt;Value>;]...</tt>
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/EventManager/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>EventManager/End</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/Cron/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>Cron/End</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/STAX/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAX/End</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/STAX/JobWaitComplete/<JobID></tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAX/Job/Wait/Complete/<JobID></tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/STAXMonitor/End</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAXMonitorJob/End</tt> or <tt>STAXJobMonitor/End</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/Timer</tt>
+<br>
+<tt>MESSAGE:</tt> A map containing the timer information as follows:
+<pre>
+{
+  timerServiceName: &lt;Timer Service Name>
+  type            : &lt;Timer Type>
+  timestamp       : &lt;YYYYDDMM-HH&colon.MM&colon.SS>
+  key             : &lt;Key (blank if no KEY specified)>
+}
+</pre>
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing the timer information as follows:
+<p><tt>STAF/SERVICE/&lt;Timer Service Name>;&lt;Type>;&lt;Timestamp>;</tt>
+</tr>
+<tr>
+<td><tt>TYPE: STAF/Service/Timer/End</tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>QUIT</tt>.
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>QUIT</tt>.
+</tr>
+<tr>
+<td><tt>TYPE: STAF/STAFDemo/Stop</tt>
+<br>
+<tt>MESSAGE:</tt> Blank
+<td><tt>TYPE: &lt;None></tt>
+<br>
+<tt>MESSAGE:</tt> A string containing <tt>STAFDemo/End</tt>.
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>
+

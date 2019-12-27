@@ -1,0 +1,355 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+/******************************************************************************/
+/* Common functions for the STAF Log, Remote Log, and Monitor programs        */
+/* Version: 1.00                                                              */
+/******************************************************************************/
+
+#Function All
+#From LogMon Import ManageDir FileStatus STAFAbort STAFExit
+#From LogMon Import LogMonErrorText ConvertSeconds ExpandLevel ResolveLevel
+#From LogMon Import ResolveVariable InitializeLogOption DisplayOldVarErrorMessage
+#End
+
+/******************************************************************************/
+/* ManageDir - If directory does not exist, then create it, one level at a    */
+/*   time.  If e:\a\b\c\d is passed, creates e:\a, e:\a\b, e:\a\b\c, and      */
+/*   finally e:\a\b\c\d                                                       */
+/* Arguments: directory delimiter                                             */
+/* Returns  : status                                                          */
+*******************************************************************************/
+#Function ManageDir
+ManageDir:
+  parse arg MD_dir, MD_delimit
+
+  MD_partdir = ''
+  MD_sep = ''
+  MD_totlen = dbwidth(MD_dir)
+  MD_rc = 0
+
+  if pos(":",MD_dir) = 0 then               /* Make sure a drive is specified */
+  do
+    MD_rc = errorDrive
+    errorBuffer = errorDrive.!text
+  end
+  else
+  do while MD_dir > ''
+    MD_endloc = pos(MD_delimit,MD_dir)
+    if MD_endloc > 0 then MD_endloc = MD_endloc -1
+    else MD_endloc = MD_totlen
+    MD_partdir = MD_partdir || MD_sep || substr(MD_dir,1,MD_endloc)
+    MD_rc = SysFileTree(MD_partdir,MD_stem,D)
+    if pos(MD_delimit,MD_partdir) > 0 then do
+      if MD_stem.0 = 0 then MD_rc = SysMkDir(MD_partdir)        /* Create dir */
+      if MD_rc > 0 then do
+        MD_rc = errorMakeDir
+        errorBuffer = errorMakeDir.!text || MD_partdir
+        leave
+      end
+    end
+    MD_dir = substr(MD_dir,MD_endloc + 2)
+    MD_sep = MD_delimit
+  end
+
+RETURN MD_rc
+#End
+
+/******************************************************************************/
+/* FileStatus - Check the status of a file (complete path)                    */
+/* Arguments: file    - name of file to open                                  */
+/*            maxwait - retry count, < 1 or > 30 defaults to 5                */
+/*            openfor - read, write, null/anything else is read/write         */
+/* Returns  : 0 if file exists and is READY                                   */
+/*            1 if file does not exist                                        */
+/*            2 if file exists but is not READY                               */
+*******************************************************************************/
+#Function FileStatus
+FileStatus:
+  parse arg FS_file, FS_maxwait, FS_openfor
+
+  FS_status = ''
+  FS_rc = 0
+
+  FS_openfor = translate(FS_openfor)
+  if FS_openfor = "READ" then FS_openfor = "open read"
+  else
+    if FS_openfor = "WRITE" then FS_openfor = "open write"
+    else FS_openfor = "open"
+
+  call SysFileTree FS_file, FS_stem, 'F'              /* Check if file exists */
+  if FS_stem.0 = 0 then do                                  /* File not found */
+    FS_rc = 1
+    errorBuffer = STAFError.!FileOpenError.!text || lineSep || FS_file
+  end
+  else                                     /* File exists, see if it is READY */
+  do
+    do FS_maxwait                       /* Repeat maxwait times or file READY */
+      FS_status = stream(FS_file, "c", FS_openfor)
+      if FS_status = "READY:" then leave                        /* File READY */
+      call SysSleep 1
+    end
+    if FS_status \= "READY:" then
+    do
+      FS_rc = 2
+      errorBuffer = "File not READY: " || lineSep || FS_file
+    end
+  end
+
+RETURN FS_rc
+#End
+
+/******************************************************************************/
+/* STAFEXIT - Exit from program.                                              */
+/* Arguments: exit string                                                     */
+/* Returns  : none                                                            */
+/******************************************************************************/
+#Function STAFExit
+STAFExit:
+
+  parse arg SE_return_string
+
+  if infile > '' then call stream infile, "c", "close"
+  if logcopied = 1 then call SysFileDelete copyfile
+  call STAFUnRegister
+
+EXIT SE_return_string
+#End
+
+/******************************************************************************/
+/* STAFABORT - Abort from program.                                            */
+/* Arguments: none                                                            */
+/* Returns  : none                                                            */
+/******************************************************************************/
+#Function STAFAbort
+STAFAbort:
+
+  if infile > '' then call stream infile, "c", "close"
+  if logcopied = 1 then call SysFileDelete copyfile
+  call STAFUnRegister
+
+EXIT
+#End
+
+/******************************************************************************/
+/* LogMonErrorText - Log and Monitor error codes/text                         */
+/* Arguments: none                                                            */
+/* Returns  : none                                                            */
+/******************************************************************************/
+#Function LogMonErrorText
+LogMonErrorText:
+
+  errorBadNum           = 4001
+  errorBadNUm.!text     = "Invalid number: "
+  errorDate             = 4002
+  errorDate.!text       = "Invalid date: "
+  errorTime             = 4003
+  errorTime.!text       = "Invalid time: "
+  errorLevel            = 4004
+  errorLevel.!text      = "Invalid error level"
+  errorDrive            = 4005
+  errorDrive.!text      = "Unknown/Invalid drive specified"
+  errorMakeDir          = 4006
+  errorMakeDir.!text    = "Error creating directory: "
+  errorBadLog           = 4007
+  errorBadLog.!text     = "Invalid file format"
+  errorPurge            = 4008
+  errorPurge.!text      = "Failed attempting to purge all records, use DELETE"
+  errorNoRemote         = 4009
+  errorNoRemote.!text   = "No remote log server defined"
+
+RETURN
+#End
+
+/******************************************************************************/
+/* ResolveLevel - Returns an english definition for the 32 bit level mask.    */
+/* Arguments: level                                                           */
+/* Returns  : definition                                                      */
+/******************************************************************************/
+#Function ResolveLevel
+ResolveLevel: procedure
+
+  parse arg RL_lvl
+
+  select
+    when RL_lvl = "00000000000000000000000000000001" then RL_type = "Fatal"
+    when RL_lvl = "00000000000000000000000000000010" then RL_type = "Error"
+    when RL_lvl = "00000000000000000000000000000100" then RL_type = "Warning"
+    when RL_lvl = "00000000000000000000000000001000" then RL_type = "Info"
+    when RL_lvl = "00000000000000000000000000010000" then RL_type = "Trace"
+    when RL_lvl = "00000000000000000000000000100000" then RL_type = "Trace2"
+    when RL_lvl = "00000000000000000000000001000000" then RL_type = "Trace3"
+    when RL_lvl = "00000000000000000000000010000000" then RL_type = "Debug"
+    when RL_lvl = "00000000000000000000000100000000" then RL_type = "Debug2"
+    when RL_lvl = "00000000000000000000001000000000" then RL_type = "Debug3"
+    when RL_lvl = "00000000000000000000010000000000" then RL_type = "Start"
+    when RL_lvl = "00000000000000000000100000000000" then RL_type = "Stop"
+    when RL_lvl = "00000000000000000001000000000000" then RL_type = "Pass"
+    when RL_lvl = "00000000000000000010000000000000" then RL_type = "Fail"
+    when RL_lvl = "00000000000000000100000000000000" then RL_type = "Status"
+    when RL_lvl = "00000000000000001000000000000000" then RL_type = "Reserved1"
+    when RL_lvl = "00000000000000010000000000000000" then RL_type = "Reserved2"
+    when RL_lvl = "00000000000000100000000000000000" then RL_type = "Reserved3"
+    when RL_lvl = "00000000000001000000000000000000" then RL_type = "Reserved4"
+    when RL_lvl = "00000000000010000000000000000000" then RL_type = "Reserved5"
+    when RL_lvl = "00000000000100000000000000000000" then RL_type = "Reserved6"
+    when RL_lvl = "00000000001000000000000000000000" then RL_type = "Reserved7"
+    when RL_lvl = "00000000010000000000000000000000" then RL_type = "Reserved8"
+    when RL_lvl = "00000000100000000000000000000000" then RL_type = "Reserved9"
+    when RL_lvl = "00000001000000000000000000000000" then RL_type = "User1"
+    when RL_lvl = "00000010000000000000000000000000" then RL_type = "User2"
+    when RL_lvl = "00000100000000000000000000000000" then RL_type = "User3"
+    when RL_lvl = "00001000000000000000000000000000" then RL_type = "User4"
+    when RL_lvl = "00010000000000000000000000000000" then RL_type = "User5"
+    when RL_lvl = "00100000000000000000000000000000" then RL_type = "User6"
+    when RL_lvl = "01000000000000000000000000000000" then RL_type = "User7"
+    when RL_lvl = "10000000000000000000000000000000" then RL_type = "User8"
+    otherwise RL_type = "Unknown"
+ end
+
+RETURN RL_type
+#End
+
+/******************************************************************************/
+/* ResolveVariable - Resolve a variable via STAFProc.                         */
+/* Arguments: variable to resolve                                             */
+/* Returns  : resolved or original variable                                   */
+/******************************************************************************/
+#Function ResolveVariable
+ResolveVariable: PROCEDURE EXPOSE STAFHandle thisMachine ,
+                 clientMachine origHandle
+
+  parse arg var
+
+  /* Determine if resolution is required if a "{" is found */
+  if POS("{", var) > 0 then
+  do
+    type = "RESOLVE STRING"
+    STAFRC = STAFSubmit("LOCAL", "VAR", type STAFWrapData(var))
+    if STAFRC = 0 then var = STAFResult
+  end
+
+RETURN var
+#End
+
+/******************************************************************************/
+/* ExpandLevel - Returns a 32 bit string of data that represents the level.   */
+/* Arguments: desc                                                            */
+/* Returns  : level                                                           */
+/******************************************************************************/
+#Function ExpandLevel
+ExpandLevel: procedure
+
+  parse upper arg EL_desc
+
+  select
+    when EL_desc = "FATAL"   then EL_level = "00000000000000000000000000000001"
+    when EL_desc = "ERROR"   then EL_level = "00000000000000000000000000000010"
+    when EL_desc = "WARNING" then EL_level = "00000000000000000000000000000100"
+    when EL_desc = "INFO"    then EL_level = "00000000000000000000000000001000"
+    when EL_desc = "TRACE"   then EL_level = "00000000000000000000000000010000"
+    when EL_desc = "TRACE2"  then EL_level = "00000000000000000000000000100000"
+    when EL_desc = "TRACE3"  then EL_level = "00000000000000000000000001000000"
+    when EL_desc = "DEBUG"   then EL_level = "00000000000000000000000010000000"
+    when EL_desc = "DEBUG2"  then EL_level = "00000000000000000000000100000000"
+    when EL_desc = "DEBUG3"  then EL_level = "00000000000000000000001000000000"
+    when EL_desc = "START"   then EL_level = "00000000000000000000010000000000"
+    when EL_desc = "STOP"    then EL_level = "00000000000000000000100000000000"
+    when EL_desc = "PASS"    then EL_level = "00000000000000000001000000000000"
+    when EL_desc = "FAIL"    then EL_level = "00000000000000000010000000000000"
+    when EL_desc = "STATUS"  then EL_level = "00000000000000000100000000000000"
+    /* Reserved Range - 9 total */
+    /* --- add new levels here  */
+    /* User Range - 8 total     */
+    when EL_desc = "USER1"   then EL_level = "00000001000000000000000000000000"
+    when EL_desc = "USER2"   then EL_level = "00000010000000000000000000000000"
+    when EL_desc = "USER3"   then EL_level = "00000100000000000000000000000000"
+    when EL_desc = "USER4"   then EL_level = "00001000000000000000000000000000"
+    when EL_desc = "USER5"   then EL_level = "00010000000000000000000000000000"
+    when EL_desc = "USER6"   then EL_level = "00100000000000000000000000000000"
+    when EL_desc = "USER7"   then EL_level = "01000000000000000000000000000000"
+    when EL_desc = "USER8"   then EL_level = "10000000000000000000000000000000"
+    otherwise EL_level = EL_desc
+ end
+
+RETURN EL_level
+#End
+
+/******************************************************************************/
+/* ConvertSeconds - Convert seconds past midmight to HH:MM:SS format.         */
+/* Arguments: seconds                                                         */
+/* Returns  : HH:MM:SS                                                        */
+/******************************************************************************/
+#Function ConvertSeconds
+ConvertSeconds:
+
+  parse arg CS_ltime
+
+  if CS_ltime >= 3600 then
+  do
+    CS_hour = trunc(CS_ltime / 3600)
+    CS_ltime = CS_ltime - (CS_hour * 3600)
+  end
+  else CS_hour = 0
+
+  if CS_ltime >= 60 then
+  do
+    CS_minute = trunc(CS_ltime / 60)
+    CS_ltime = CS_ltime - (CS_minute * 60)
+  end
+  else CS_minute = 0
+
+  CS_second = CS_ltime
+
+RETURN right(CS_hour,2,0)":"right(CS_minute,2,0)":"right(CS_second,2,0)
+#End
+
+/******************************************************************************/
+/* InitializeLogOption - Setup the parser for the log message option.         */
+/* Arguments: none                                                            */
+/* Returns  : none                                                            */
+/******************************************************************************/
+#Function InitializeLogOption
+InitializeLogOption:
+
+  call AddOption "LOG", 1, "NO"
+  call AddOption "GLOBAL", 1, "NO"
+  call AddOption "MACHINE", 1, "NO"
+  call AddOption "HANDLE", 1, "NO"
+  call AddOption "RESOLVEMESSAGE", 1, "NO"
+  call AddOption "NORESOLVEMESSAGE", 1, "NO"
+  call AddOptionGroup "RESOLVEMESSAGE NORESOLVEMESSAGE", 0, 1
+  call AddOptionGroup "GLOBAL MACHINE HANDLE", 1, 1
+  call AddOption "LOGNAME", 1, "YES"
+  call AddOptionNeed "LOG", "LOGNAME"
+  call AddOption "LEVEL", 1, "YES"
+  call AddOptionNeed "LOG", "LEVEL"
+  call AddOption "MESSAGE", 1, "YES"
+  call AddOptionNeed "LOG", "MESSAGE"
+
+RETURN
+#End
+
+
+/****************************************************************************/
+/* DisplayOldVarErrorMessage - Displays an error message concerning the use */
+/*                             of old-style variables                       */
+/*                                                                          */
+/* Accepts: The short name of the variable                                  */
+/*          The default value of the variable                               */
+/* Returns: 0                                                               */
+/****************************************************************************/
+#Function DisplayOldVarErrorMessage
+DisplayOldVarErrorMessage: PROCEDURE EXPOSE me oldme serviceName
+
+  parse arg varName, default
+
+  say serviceName "Warning: Variable" oldMe || varName "no longer supported,",
+      "defaulted to" default || ".  Use variable" me || varName"."
+
+RETURN 0
+#End

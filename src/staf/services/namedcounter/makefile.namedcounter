@@ -1,0 +1,47 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+namedcounter_class_targets =\
+  $(O)/services/namedcounter/STAF-INF/classes/com/ibm/staf/service/namedcounter/NamedCounterService.class \
+  $(O)/services/namedcounter/MANIFEST.MF
+  
+namedcounter_targets += $(namedcounter_class_targets)\
+                $(REL)/lib/STAFNamedCounter.jar
+                
+Targets += $(namedcounter_targets)
+CleanupTargets += cleanup_namedcounter
+
+$(namedcounter_targets): SUBSYS_REL := services/namedcounter
+SUBSYS_REL := services/namedcounter
+
+# Include inference rules
+include $(InferenceRules)
+
+$(namedcounter_targets): $(REL)/lib/JSTAF.zip
+
+NAMEDCOUNTER_CLASSPATH = $(OS_O)/services/namedcounter$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define NAMEDCOUNTER_JAVA_COMPILE_IT
+   @echo "*** Compiling NamedCounter Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/namedcounter/STAF-INF/classes -classpath '$(NAMEDCOUNTER_CLASSPATH)' $(OS_SRC)/services/namedcounter/*.java
+endef
+
+$(O)/services/namedcounter/STAF-INF/classes/com/ibm/staf/service/namedcounter/%.class: $(SRC)/services/namedcounter/%.java
+	$(NAMEDCOUNTER_JAVA_COMPILE_IT)
+
+# NAMEDCOUNTER Java targets
+
+$(O)/services/namedcounter/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(REL)/lib/STAFNamedCounter.jar: $(namedcounter_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/namedcounter; $(JAR) cfm '$(OS_@)' MANIFEST.MF `find . -name "*.class" -print`
+
+cleanup_namedcounter:
+	-@$(DEL) $(O)/services/namedcounter/* $(OUT_ERR_TO_DEV_NULL)

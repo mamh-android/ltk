@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="begin_tests"/>
+
+  <script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  </script>
+
+  <function name="begin_tests">
+
+    <sequence>
+
+      <import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      <call function="'main'">{ 'parms' : '9 2 7' }</call>
+
+      <call function="'main'">{ 'parms' : '2 9 15' }</call>
+
+    </sequence>
+
+  </function>
+
+</stax>

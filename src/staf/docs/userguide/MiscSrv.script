@@ -1,0 +1,946 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : MiscSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Misc Service
+.*
+.*  Detail:
+.*
+.*     This file describes the STAF Misc Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.misc service
+:ih1.services
+:i2.misc service
+:h2 id=miscsrv.Misc Service
+:h3.Description
+:p.The MISC service is one of the internal STAF services.  It provides a
+home for miscellaneous commands.
+:ul compact.
+:li.VERSION - Displays the STAF version that is currently running
+:li.WHOAMI - Displays information about who a system thinks you are
+:li.WHOAREYOU  - Displays information about a system
+:li.LIST - Displays a list of interfaces (aka connection providers) that
+are enabled or lists the current operational settings for STAF or lists
+the cached endpoints used by automatic interface cycling or lists the
+STAF install properties
+:li.QUERY - Displays information about a specify interface (aka
+connection provider)
+:li.SET - Set STAF operational characteristics 
+:li.PURGE - Purges one or more (or all) of the endpoints from the
+cache used for automatic interface cycling.
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.VERSION
+:i3.misc service
+:h3.VERSION
+:p.VERSION will display the STAF version number that is currently running.
+:h4.Syntax
+:xmp.
+VERSION
+:exmp.
+:h4.Security
+:p.&seclvl. 1.
+:h4.Return Codes
+:p.All return codes from VERSION are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer will contain the version number.
+:h4.Examples
+:p.
+:ul compact.
+:li.:hp2.Goal::ehp2. Display the version of STAF running.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.VERSION:exph.
+:p.:hp2.Results::ehp2.
+:xmp.
+3.4.6
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.WHOAMI
+:i3.misc service
+:h3.WHOAMI
+:p.WHOAMI will display information about who a system thinks you are.
+This can be useful in debugging trust issues and other problems.
+:h4.Syntax
+:xmp.
+WHOAMI
+:exmp.
+:h4.Security
+:p.&seclvl. 1.
+:h4.Return Codes
+:p.All return codes from WHOAMI are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer for a :xph.WHOAMI:exph. request
+will contain a marshalled :xph.<Map&colon.STAF/Service/Misc/Whoami>:exph.
+representing information about who a system thinks you are.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/Whoami
+:tnote text='Description'.This map class represents information about
+who a system thinks you are.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.instanceName
+:c.Instance Name
+:c.&stringObj.
+:c.
+:row.
+:c.instanceUUID
+:c.Instance UUID
+:c.&stringObj.
+:c.
+:row.
+:c.requestNumber
+:c.Request Number
+:c.&stringObj.
+:c.
+:row.
+:c.interface
+:c.Interface
+:c.&stringObj.
+:c.
+:row.
+:c.logicalID
+:c.Logical ID
+:c.&stringObj.
+:c.
+:row.
+:c.physicalID
+:c.Physical ID
+:c.&stringObj.
+:c.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.
+:row.
+:c.machine
+:c.Macine
+:c.&stringObj.
+:c.
+:row.
+:c.machineNickname
+:c.Machine Nickname
+:c.&stringObj.
+:c.
+:row.
+:c.isLocalRequest
+:c.Local Request
+:c.&stringObj.
+:c.:xph.'Yes' | 'No':exph.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.
+:row.
+:c.trustLevel
+:c.Trust Level
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Instance Name" value contains the STAF instance name that identifies
+the instance of STAF to which the request is communicating (in case
+multiple instances of STAF are running.  The default STAF instance
+name is "STAF".
+:li.The "Instance UUID" value contains the STAF Universally Unique ID
+that uniquely identifies a STAF instance.
+:li.The format for the "Endpoint" value is <Interface>://<Logical ID>[@<Port>].
+:li.The format for the "User" value is <Authenticator>://<User ID>.
+:eol.
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Display information about who the remote system thinks you are,
+:p.:hp2.Syntax::ehp2.
+:p.:xph.WHOAMI:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Instance Name   : STAF
+Instance UUID   : 648C8241CC0B00000929359375636173
+Request Number  : 1812
+Interface       : tcp
+Logical ID      : server1.austin.ibm.com
+Physical ID     : 9.41.53.147
+Endpoint        : tcp://server1.austin.ibm.com@6500
+Machine         : server1.austin.ibm.com
+Machine Nickname: Server1
+Local Request   : No
+Handle          : 33
+Handle Name     : myHandle
+User            : authSample://User1
+Trust Level     : 5
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Display information about who you think you are (e.g. run locally).
+:p.:hp2.Syntax::ehp2.
+:p.:xph.WHOAMI:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Instance Name   : STAF
+Instance UUID   : 711E9E411B0A00000929359245636173
+Request Number  : 92
+Interface       : local
+Logical ID      : local
+Physical ID     : local
+Endpoint        : local://local
+Machine         : server1.austin.ibm.com
+Machine Nickname: Server1
+Local Request   : Yes
+Handle          : 29
+Handle Name     : STAF/Client
+User            : none://anonymous
+Trust Level     : 5
+:exmp.
+:eul.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.WHOAREYOU
+:i3.misc service
+:h3.WHOAREYOU
+:p.WHOAREYOU will display information about a system, such as the STAF instance
+name, instance UUID, machine name (the value of the STAF/Config/Machine 
+system variable for the machine), machine nickname, (the value of
+the STAF/Config/MachineNickname variable for the machine) and if it's the
+same system as the machine who submitted the request.
+:h4.Syntax
+:xmp.
+WHOAREYOU
+:exmp.
+:h4.Security
+:p.&seclvl. 1.
+:h4.Return Codes
+:p.All return codes from WHOAREYOU are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return, the result buffer for a :xph.WHOAREYOU:exph. request
+will contain a marshalled :xph.<Map&colon.STAF/Service/Misc/WhoAreYou>:exph.
+representing information about a system.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/WhoAreYou
+:tnote text='Description'.This map class represents information about
+a system.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.instanceName
+:c.Instance Name
+:c.&stringObj.
+:c.
+:row.
+:c.instanceUUID
+:c.Instance UUID
+:c.&stringObj.
+:c.
+:row.
+:c.machine
+:c.Macine
+:c.&stringObj.
+:c.
+:row.
+:c.machineNickname
+:c.Machine Nickname
+:c.&stringObj.
+:c.
+:row.
+:c.isLocalRequest
+:c.Local Request
+:c.&stringObj.
+:c.:xph.'Yes' | 'No':exph.
+:row.
+:c.currentTimestamp
+:c.Current Date-Time
+:c.&stringObj.
+:c.<YYYYMMDD-HH&colon.MM&colon.SS>
+:tnote text='Notes'.
+:ol compact.
+:li.The "Instance Name" value contains the STAF instance name that identifies
+the instance of STAF to which the request is communicating (in case
+multiple instances of STAF are running.  The default STAF instance
+name is "STAF".
+:li.The "Instance UUID" value contains the STAF Universally Unique ID
+that uniquely identifies a STAF instance.
+:eol.
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Display information about a remote system,
+:p.:hp2.Syntax::ehp2.
+:p.:xph.WHOAREYOU:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Instance Name    : STAF
+Instance UUID    : 648C8241CC0B00000929359375636173
+Machine          : server1.austin.ibm.com
+Machine Nickname : Server1
+Local Request    : No
+Current Date-Time: 20100615-14:46:30
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Display information about yourself (e.g. run locally).
+:p.:hp2.Syntax::ehp2.
+:p.:xph.WHOAREYOU:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Instance Name    : STAF
+Instance UUID    : 711E9E411B0A00000929359245636173
+Machine          : client2.austin.ibm.com
+Machine Nickname : client2.austin.ibm.com
+Local Request    : Yes
+Current Date-Time: 20100615-15:35:11
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.misc service
+:h3.LIST
+:p.LIST allows you to obtain information about the interfaces (aka connection
+providers) that are enabled for a system, or you can list the current
+operational settings for STAF, or you can show the cached endpoints
+used by automatic interface cycling or, or you can list the STAF install
+properties.
+
+:h4.Syntax
+:xmp.
+LIST INTERFACES | SETTINGS | ENDPOINTCACHE | PROPERTIES
+:exmp.
+:p.:xph.INTERFACES:exph. specifies that you want information for interfaces.
+:p.:xph.SETTINGS:exph. specifies that you want to list the current operational
+settings for STAF.
+:p.:xph.ENDPOINTCACHE:exph. specifies that you want to show the cached
+endpoints used by automatic interface cycling.
+:p.:xph.PROPERTIES:exph. specifies that you want to list the install
+properties for STAF.
+
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+:ul.
+:li.On successful return from a :xph.LIST INTERFACES:exph. request, the
+result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Misc/Interface>:exph.
+representing the enabled interfaces (aka connection providers).
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/Interface
+:tnote text='Description'.This map class represents an interface.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Interface Name
+:c.&stringObj.
+:c.
+:row.
+:c.library
+:c.Library
+:c.&stringObj.
+:c.
+:row.
+:c.optionMap
+:c.Options
+:c.:xph.<Map>:exph. of &stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The option names are the keys in the option map.
+:li.Valid option names for TCP interfaces are:  :xph.Port:exph.,
+:xph.Protocol:exph., :xph.ConnectTimeout:exph., :xph.Secure:exph..
+If :xph.Secure=Yes:exph., the following options will also exist:
+:xph.SSL/CACertificate:exph., :xph.SSL/ServerCertificate:exph., and
+:xph.SSL/ServerKey:exph..
+:li.Valid option names for the local interface are:  :xph.IPCName:exph.
+and :xph.IPCMethod:exph.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.On successful return from a :xph.LIST SETTINGS:exph. request, the result
+buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Misc/Settings>:exph.
+representing the current operational settings for STAF.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/Settings
+:tnote text='Description'.This map class represents the operational
+settings for STAF.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.connectAttempts
+:c.Connection Attempts
+:c.&stringObj.
+:c.
+:row.
+:c.connectRetryDelay
+:c.Connect Retry Delay
+:c.&stringObj.
+:c.
+:row.
+:c.interfaceCycling
+:c.Interface Cycling
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.maxQueueSize
+:c.Maximum Queue Size
+:c.&stringObj.
+:c.
+:row.
+:c.maxReturnFileSize
+:c.Maximum Return File Size
+:c.&stringObj.
+:c.
+:row.
+:c.handleGCInterval
+:c.Handle GC Interval
+:c.&stringObj.
+:c.:xph.'5000' - '86400000':exph.
+:row.
+:c.initialThreads
+:c.Initial Threads
+:c.&stringObj.
+:c.
+:row.
+:c.threadGrowthDelta
+:c.Thread Growth Delta
+:c.&stringObj.
+:c.
+:row.
+:c.dataDir
+:c.Data Directory
+:c.&stringObj.
+:c.
+:row.
+:c.defaultInterface
+:c.Default Interface
+:c.&stringObj.
+:c.
+:row.
+:c.defaultAuthenticator
+:c.Default Authenticator
+:c.&stringObj.
+:c.
+:row.
+:c.resultCompatibilityMode
+:c.Result Compatibility Mode
+:c.&stringObj.
+:c.:xph.'Verbose' | 'None':exph.
+:etable.
+:p.
+:li.On successful return from a :xph.LIST ENDPOINTCACHE:exph. request, the
+result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Misc/EndpointCache>:exph.
+representing the contents of the endpoint cache used by automatic
+interface cycling.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/EndpointCache
+:tnote text='Description'.This map class represents an cached endpoint.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.
+:row.
+:c.interface
+:c.Interface
+:c.&stringObj.
+:c.
+:row.
+:c.createdTimestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Date-Time" value contains the timestamp for when the
+entry was added to the endpoint cache.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.On successful return from a :xph.LIST PROPERTIES:exph. request, the result
+buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Misc/Properties>:exph.
+representing the install properties for STAF.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/Properties
+:tnote text='Description'.This map class represents the install properties
+for STAF.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.version
+:c.version
+:c.&stringObj.
+:c.
+:row.
+:c.platform
+:c.platform
+:c.&stringObj.
+:c.
+:row.
+:c.architecture
+:c.architecture
+:c.&stringObj.
+:c.:xph.'32-bit' | '64-bit':exph.
+:row.
+:c.installer
+:c.installer
+:c.&stringObj.
+:c.:xph.'IA' | 'IA_NoJVM' | 'STAFInst':exph.
+:row.
+:c.file
+:c.file
+:c.&stringObj.
+:c.
+:row.
+:c.osname
+:c.osname
+:c.&stringObj.
+:c.
+:row.
+:c.osversion
+:c.osversion
+:c.&stringObj.
+:c."*" indicates the build is supported on any version of the OS; a version
+number followed by a "+" indicates the build supports that version or later
+:row.
+:c.osarch
+:c.osarch
+:c.&stringObj.
+:c.
+:etable.
+:eul.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List all enabled interfaces.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.LIST INTERFACES:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in verbose format, could look like:
+:xmp.
+[
+  {
+    Interface Name: local
+    Library       : STAFLIPC
+    Options       : {
+      IPCMethod: Shared memory
+      IPCName  : STAF
+    }
+  }
+  {
+    Interface Name: ssl
+    Library       : STAFTCP
+    Options       : {
+      ConnectTimeout       : 5000
+      Port                 : 6550
+      Protocol             : IPv4
+      SSL/CACertificate    : C:\STAF\bin\CAList.crt
+      SSL/ServerCertificate: C:\STAF\bin\STAFDefault.crt
+      SSL/ServerKey        : C:\STAF\bin\STAFDefault.key
+      Secure               : Yes
+    }
+  }
+  {
+    Interface Name: tcp
+    Library       : STAFTCP
+    Options       : {
+      ConnectTimeout: 5000
+      Port          : 6500
+      Protocol      : IPv4
+      Secure        : No
+    }
+  }
+  {
+    Interface Name: alt-tcp
+    Library       : STAFTCP
+    Options       : {
+      ConnectTimeout: 30000
+      Port          : 6502
+      Protocol      : IPv6
+      Secure        : No
+    }
+  }
+]
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show the operational settings for STAF.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Connection Attempts      : 2
+Connect Retry Delay      : 1000
+Interface Cycling        : Enabled
+Maximum Queue Size       : 10000
+Maximum Return File Size : 0
+Handle GC Interval       : 60000
+Initial Threads          : 10
+Thread Growth Delta      : 1
+Data Directory           : c:\STAF\data\STAF
+Default Interface        : tcp
+Default Authenticator    : none
+Result Compatibility Mode: Verbose
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show the cached endpoints used by automatic
+interface cycling, if it is enabled.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.LIST ENDPOINTCACHE:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in tabular format, could look like:
+:xmp.
+Endpoint             Interface Date-Time
+-------------------- --------- -----------------
+machine1             tcp2      20051101-16:42:41
+machine1.company.com tcp2      20051102-11:11:37
+machine2.company.com tcp3      20051101-15:23:59
+machine3             tcp2      20051102-09:05:34
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show the install properties for STAF.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.LIST PROPERTIES:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+version     : 3.4.6
+platform    : win32
+architecture: 32-bit
+installer   : IA
+file        : STAF346-setup-win32.exe
+osname      : Windows
+osversion   : *
+osarch      : x86
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.misc service
+:h3.QUERY
+:p.QUERY allows you to obtain detailed information about an enabled interface
+(aka connection provider).
+
+:h4.Syntax
+:xmp.
+QUERY INTERFACE <Name>
+:exmp.
+:p.:xph.INTERFACE:exph. specifies the name of the interface you want
+information on.  &varres.
+
+:h4.Security
+:p.&seclvl. 2.
+
+:h4.Return Codes
+:p.All return codes from QUERY are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+On successful return, the result buffer for a :xph.QUERY INTERFACE:exph.
+request will contain a marshalled
+:xph.<Map&colon.STAF/Service/Misc/Interface>:exph.
+representing the specified interface (aka connection provider).
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/Interface
+:tnote text='Description'.This map class represents an interface.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.name
+:c.Interface Name
+:c.&stringObj.
+:c.
+:row.
+:c.library
+:c.Library
+:c.&stringObj.
+:c.
+:row.
+:c.optionMap
+:c.Options
+:c.:xph.<Map>:exph. of &stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The option names are the keys in the option map.
+:li.Valid option names for TCP interfaces are:  :xph.Port:exph.,
+:xph.Protocol:exph., :xph.Secure:exph., and :xph.ConnectTimeout:exph.
+:li.Valid option names for the local interface are:  :xph.IPCName:exph.
+and :xph.IPCMethod:exph.
+:eol.
+:etnote.
+:etable.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Query the ssl interface.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.QUERY INTERFACE ssl:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Interface Name: ssl
+  Library       : STAFTCP
+  Options       : {
+    ConnectTimeout       : 5000
+    Port                 : 6550
+    Protocol             : IPv4
+    SSL/CACertificate    : C:\STAF\bin\CAList.crt
+    SSL/ServerCertificate: C:\STAF\bin\STAFDefault.crt
+    SSL/ServerKey        : C:\STAF\bin\STAFDefault.key
+    Secure               : Yes
+  }
+}:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query the tcp interface.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.QUERY INTERFACE tcp:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Interface Name: tcp
+  Library       : STAFTCP
+  Options       : {
+    ConnectTimeout: 5000
+    Port          : 6500
+    Protocol      : IPv4
+    Secure        : No
+  }
+}  
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query the local interface.
+:p.:hp2.Syntax::ehp2.
+:p.:xph.QUERY INTERFACE local:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+{
+  Interface Name: local
+  Library       : STAFLIPC
+  Options       : {
+    IPCMethod: Shared memory 
+    IPCName  : STAF
+  }
+}
+:exmp.
+:eul.
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.misc service
+:h3 id=miscset.SET
+The SET command allows you to change the operational parameters for STAF
+dynamically (without stopping/restarting STAF) which is important for
+STAF machines that must be continuously available.
+:p.
+Note that to make these settings permanent (e.g. if you want these changes
+to apply once STAF is stopped and restarted), you'll need to update the
+STAF configuration file with these new settings.
+
+:h4.Syntax
+:xmp.
+SET  &lbrk.CONNECTATTEMPTS <Number>&rbrk. &lbrk.CONNECTRETRYDELAY <Number>&rbrk.
+     &lbrk.MAXQUEUESIZE <Number>&rbrk. &lbrk.HANDLEGCINTERVAL <Number>&lbrk.s|m|h|d&rbrk.&rbrk.
+     &lbrk.INTERFACECYCLING <Enabled | Disabled>&rbrk.
+     &lbrk.DEFAULTINTERFACE <Name>&rbrk.  &lbrk.DEFAULTAUTHENTICATOR <Name>&rbrk.
+     &lbrk.RESULTCOMPATIBILITYMODE <Verbose | None>&rbrk.
+:exmp.
+:p.See section :hdref refid=opparms. for a description of these options.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from :xph.SET:exph. are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a successful SET command.
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Change the maximum queue size to 10000.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MAXQUEUESIZE 50:exph.
+:p.
+:li.:hp2.Goal::ehp2. Change two operational parameters for STAF.  Change the 
+maximum number of times to attempt to connect to a remote system to 5 and
+change the maximum time in milliseconds to wait after a failed connection
+attempt to a remote system before trying to connect again to 2 seconds.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET CONNECTATTEMPTS 5 CONNECTRETRYDELAY 2s:exph.
+:p.
+:li.:hp2.Goal::ehp2. Disabled automatic interface cycling.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET INTERFACECYCLING Disabled:exph.
+:p.
+:li.:hp2.Goal::ehp2.  Set the default interface to be 'tcp'.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET DEFAULTINTERFACE tcp:exph.
+:p.
+:li.:hp2.Goal::ehp2. Change the garbage collection interval for handles
+to 50 seconds.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET HANDLEGCINTERVAL 50s:exph.
+:eul.
+
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.PURGE
+:i3.misc service
+:h3 id=miscpurge.PURGE
+The PURGE command allows you to purge one or more (or all) of the endpoints
+from the endpoint cache used by automatic interface cycling.
+
+:h4.Syntax
+:xmp.
+PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>
+:exmp.
+:p.:xph.ENDPOINTCACHE:exph. indicates that you want to purge one or
+more endpoints from the endpoint cache.
+:p.:xph.ENDPOINT:exph. specifies the endpoint that you want to purge.
+&varres.
+:p.:xph.CONFIRM:exph. indicates that you really want to purge the entire
+contents of the endpoint cache.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes from :xph.PURGE:exph. are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+If successful, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Misc/PurgeStats>:exph., representing the number
+of endpoints that were purged and the number of endpoints remaining in the
+endpoint cache. The map is defined as follows: 
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Misc/PurgeStats
+:tnote text='Description'.This map class represents the purge statistics
+for the endpoint cache.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.numPurged
+:c.Purged Endpoints
+:c.&stringObj.
+:c.
+:row.
+:c.numRemaining
+:c.Remaining Endpoints
+:c.&stringObj.
+:c.
+:etable.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Remove endpoints 'client1' and 'client1.company.com' from
+the endpoint cache..
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE ENDPOINTCACHE ENDPOINT client1 ENDPOINT client1.company.com:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in tabular format, could look like:
+:xmp.
+Purged Endpoints   : 2
+Remaining Endpoints: 8
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Purge all entries from the endpoint cache.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE ENDPOINTCACHE CONFIRM:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in tabular format, could look like:
+:xmp.
+Purged Endpoints   : 8
+Remaining Endpoints: 0
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*

@@ -1,0 +1,37 @@
+<project name="TestSTAFAntExtension" default="main" basedir=".">
+
+    <description>
+        Build file to test the STAF Ant Extension
+    </description>
+
+    <taskdef name="staf"
+              classname="com.ibm.staf.ant.taskdef.STAF"/>
+
+    <target name="main">
+      <staf location="local"
+             service="ping"
+             request="ping"
+             throwBuildException="1"/>
+      <staf location="local"
+             service="misc"
+             request="version"
+             resultPrefix="version"/>
+      <echo>RC: ${version.rc}, Result: ${version.result}</echo>
+      <staf location="local"
+             service="misc"
+             request="whoami"
+             resultPrefix="whoami"/>
+      <echo>RC: ${whoami.rc}, Result: ${whoami.result}</echo>
+      <staf location="local"
+             service="test"
+             request="help"
+             resultPrefix="testhelp"/>
+      <echo>RC: ${testhelp.rc}, Result: ${testhelp.result}</echo>
+      <staf location="local"
+             service="trust"
+             request="list"
+             resultPrefix="trustlist"/>
+      <echo>RC: ${trustlist.rc}, Result: ${trustlist.result}</echo>
+    </target>
+
+</project>

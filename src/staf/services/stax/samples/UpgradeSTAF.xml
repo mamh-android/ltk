@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<!--
+  File name:    UpgradeSTAF.xml
+  
+  This job upgrades STAF to a new version on one or more remote machines
+  
+-->
+
+<stax>
+
+  <defaultcall function="Main"/>
+  
+  <script>
+    # ImportMachine MUST be set to the machine where STAFUpgradeUtil.xml
+    # resides (e.g. 'local' if the file resides on the STAX service machine).
+    importMachine = 'local'
+
+    # ImportDirectory MUST be set to the directory which contains the
+    # STAFUpgradeUtil.xml file as well as the STAXUtil.xml file..
+    importDirectory = '{STAF/Config/STAFRoot}/services/stax/libraries'
+
+    # Machine and directory containing the STAF install files for the version
+    # of STAF that you want to upgrade to.
+    # These values are used for all target machines unless overridden
+    # You MUST set the installerMachine and installerDirectory to the
+    # machine and directory where you downloaded the STAF install files.
+    installerMachine = 'XXXX.company.com'
+    installerDirectory = 'C:/STAFBuilds/3.3.0'
+  
+    # Turn on the flags to also send a message to the STAX Monitor whenever
+    # a message is logged via a log element and to log a message whenever it
+    # is sent to the STAX Monitor..
+    STAXMessageLog = 1
+    STAXLogMessage = 1
+</script>
+
+  <function name="Main">
+
+    <function-prolog>
+      <![CDATA[
+        <p>
+        Upgrades the version of STAF running on one or more remote target machines.
+        The target machine where STAF will be upgraded to a new version must
+        already have STAF running.</p>
+        <p>
+        The minimum version of STAF that must be running on the target 
+        machine(s) is:</p>
+        <ul compact>
+        <li>3.0.0 if the target machine is a Windows machine
+        <li>3.1.3 if the target machine is a Unix machine
+        </ul>
+        <p>
+        The STAX machine must be running STAF V3.1.0 or later.</p>
+        <p>The target machine(s) must give the STAX machine trust level 5
+        and must give the installer machine trust level 4 or higher.</p>
+        <p>The installer machine must give the STAX machine trust level
+        4 or higher.</p>
+      ]]>
+    </function-prolog>
+
+    <function-epilog>
+      <![CDATA[
+      <h4>Returns:</h4>
+      <p>Returns a list containing the return code, and a list of the target
+        machines that were successfully upgraded, and a list of the target
+        machines that were not sucessfully upgraded.
+        The return code will be 0 if all of the target machines were
+        successfully upgraded.
+        Otherwise, the return code will contain the number of target machines
+        that were not successfully upgraded.
+      ]]>
+    </function-epilog>
+
+    <function-map-args>
+      <function-arg-def name="targetMachineList" type="required">
+        <function-arg-description>
+        Specify a list of the target machines that you want to upgrade.
+        If you want to use the STAF installation defaults for all the machines
+        that you want to upgrade, specify a list of the machine hostnames/IPaddresses.
+        For example: 
+          [ 'machine1', 'machine2', 'machine3', 'machine4' ]
+
+        If you want to override some of the STAF installation defaults for the
+        machines you want to upgrade, specify a list of maps, where each map
+        contains the following required key:
+          'targetmachine'  -  The target machine's hostname or IP address.  Required.
+        Optionally, you can specify additional keys in the map using the names of
+        the STAFUpgrade function's argument names to override a default value.
+        For example:
+        [ { 'targetMachine': 'machine1', 'preferredProcessorType': '32-bit' },
+          { 'targetMachine': 'machine2', 'installShieldTempDir': '/home/tmp', 'preferredProcessorType': '32-bit' },
+          { 'targetMachine': 'machine3' },
+          { 'targetMachine': 'machine4', 'preferredFileType': 2} ]
+        </function-arg-description>
+      </function-arg-def>
+      <function-arg-def name="verifyOnly" type="optional" default="0">
+        <function-arg-description>
+        A flag that indicates whether you just want to verify if the target
+        machine(s) meet the pre-requisites checks to be able to have STAF
+        upgraded (but not actually perform the STAF upgrade).
+        A value that evaluates via Python to true (e.g. 1) indicates to only
+        perform a pre-req check and not to perform the upgrade.
+        A value that evaluates via Python to false (e.g. 0) indicates to
+        perform the STAF upgrade (assuming it passes pre-req checking).
+        </function-arg-description>
+      </function-arg-def>   
+
+    </function-map-args>
+
+    <sequence>
+       
+      <testcase name="'importXMLFile'">
+        <sequence>
+          <call function="'importXMLFile'">
+            [ importMachine, importDirectory ]
+          </call>
+          <script>[rc, result] = STAXResult</script>
+          <if expr="rc != 0">
+            <sequence>
+              <log level="'error'">result</log>
+              <tcstatus result="'fail'">result</tcstatus>
+              <terminate/>
+            </sequence>
+          </if>
+        </sequence>
+      </testcase>
+
+      <script>
+        installedMachineList = STAXGlobal([])
+        failedMachineList = STAXGlobal([])
+      </script>
+
+      <script>
+        # Verify the value specified for targetMachineList is valid:
+
+        errMsg = ''
+
+        for machineInfo in targetMachineList:
+          if (type(machineInfo) == types.DictType and
+              not machineInfo.has_key('targetMachine')):
+            errMsg = "Invalid entry in the list for argument 'targetMachineList'." + \
+              "\nThe following entry is a dictionary, but it does not" + \
+              " contain required key 'targetMachine': %s" % (machineInfo)
+            break
+      </script>
+
+      <if expr = "errMsg != ''">
+        <sequence>
+          <log level="'fail'">errMsg</log>
+          <return>[1, installedMachineList, failedMachineList]</return>
+        </sequence>
+      </if>
+
+      <paralleliterate var="machineInfo" in="targetMachineList">
+        <sequence>
+
+          <script>
+            if type(machineInfo) != types.DictType:
+              # Convert machine information (which should be a string
+              # containing the machine name) to a dictionary with key
+              # 'targetMachine'.
+              saveMachineInfo = str(machineInfo)
+              machineInfo = {}
+              machineInfo['targetMachine'] = saveMachineInfo
+
+            # Replace any '.'s in test machine name with '-'s so that this
+            # modified machine name can be used in block and testcase names
+            # without creating a hierarchy of blocks and testcases.
+            machine_noDots = machineInfo['targetMachine'].replace('.', '-')
+          </script>
+
+          <testcase name="machine_noDots" mode="'strict'">
+            <block name="machine_noDots">
+              <sequence>
+
+                <script>
+                  # Use these same values for all target machines unless overridden
+
+                  if not machineInfo.has_key('installerMachine'):
+                    machineInfo['installerMachine'] = installerMachine
+
+                  if not machineInfo.has_key('installerDirectory'):
+                    machineInfo['installerDirectory'] = installerDirectory
+
+                  if not machineInfo.has_key('verifyOnly'):
+                    machineInfo['verifyOnly'] = verifyOnly
+                </script>
+
+                <call function="'STAFUpgrade'">machineInfo</call>
+ 
+                <script>
+                  [rc, result] = STAXResult
+
+                  if verifyOnly:
+                    msg = 'Pre-req Verify for STAF Upgrade'
+                  else:
+                    msg = 'STAF Upgrade'
+                </script>
+
+                <if expr="rc == 0">
+                  <sequence>
+                    <log level="'pass'">
+                      '[%s] %s completed successfully on machine %s\n%s' % \
+                        (machineInfo['targetMachine'], msg, machineInfo['targetMachine'], result)
+                    </log>
+                    <tcstatus result="'pass'">result</tcstatus>
+                    <script>installedMachineList.append(machineInfo['targetMachine'])</script>
+                  </sequence>
+                  <else>
+                    <sequence>
+                      <log level="'fail'">
+                        '[%s] %s failed for machine %s\n%s' % \
+                          (machineInfo['targetMachine'], msg, machineInfo['targetMachine'], result)
+                      </log>
+                      <tcstatus result="'fail'">result</tcstatus>
+                      <script>failedMachineList.append(machineInfo['targetMachine'])</script>
+                    </sequence>
+                  </else>
+                </if>
+
+              </sequence>
+            </block>
+          </testcase>
+
+        </sequence>
+      </paralleliterate>
+       
+      <if expr="len(installedMachineList) == len(targetMachineList)">
+        <return>[0, installedMachineList, failedMachineList]</return>     
+        <else>
+          <return>[len(failedMachineList), installedMachineList, failedMachineList]</return>
+        </else>
+      </if>
+
+    </sequence>
+  </function>
+
+
+  <!-- ================================================================= 
+        importXMLFile - This function imports the STAFUpgradeUtil.xml file.                                  
+        ================================================================= -->
+  <function name="importXMLFile">
+    <function-list-args>
+      <function-required-arg name="importMachine"/>
+      <function-required-arg name="importDirectory"/>
+    </function-list-args>
+
+    <sequence>
+        
+      <!-- Resolve any STAF variables in ImportDirectory -->
+
+      <script>request = 'RESOLVE STRING %s' % (importDirectory)</script>
+
+      <stafcmd name="'STAF %s VAR %s' % (importMachine, request)">
+        <location>importMachine</location>
+        <service>'VAR'</service>
+        <request>request</request>
+      </stafcmd>
+
+      <if expr="RC != STAFRC.Ok">
+        <sequence>
+          <script>
+            errMsg = 'STAF %s VAR %s failed.  ' % (importMachine, request) + \
+              'RC=%s Result=%s' % (RC, STAFResult)
+          </script>
+          <return>[1, errMsg]</return>
+        </sequence>
+      </if>
+
+      <script>
+        importDirectory = STAFResult
+        importFile = '%s/STAFUpgradeUtil.xml' % (importDirectory)
+      </script>
+
+      <log>
+        'Importing file %s from machine %s...' % (importFile, importMachine) 
+      </log>
+
+      <import machine="importMachine" file="importFile"/>
+
+      <return>[0, '']</return>
+
+    </sequence>
+  </function>
+
+</stax>

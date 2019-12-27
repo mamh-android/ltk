@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+    Function Library
+-->
+
+<stax>
+
+  <defaultcall function="FunctionA24"/>
+  
+  <function name="FunctionA24" requires="FunctionB24">
+  
+    <sequence>
+        
+      <message>"FunctionA24 is executing from file library24.xml"</message>
+      
+      <message>"FunctionA24 requires FunctionB24"</message>
+      
+      <call function="'FunctionB24'"/>
+      
+    </sequence>
+  
+  </function>
+  
+  <function name="FunctionB24" requires="FunctionC24 FunctionD24">
+  
+    <sequence>
+        
+      <message>"FunctionB24 is executing from file library24.xml"</message>
+      
+      <message>"FunctionB24 requires FunctionC24 FunctionD24"</message>
+
+      <script>currentFunction = "FunctionB24"</script>
+      
+      <call function="'FunctionC24'"/>
+      
+      <call function="'FunctionD24'"/>
+     
+    </sequence>
+  
+  </function>
+
+  <function name="FunctionC24">
+  
+    <sequence>
+        
+      <message>"FunctionC24 is executing from file library24.xml"</message>
+      
+      <script>currentFunction = "FunctionC24"</script>
+     
+    </sequence>
+  
+  </function>
+  
+  <function name="FunctionD24">
+  
+    <sequence>
+        
+      <message>"FunctionD24 is executing from file library24.xml"</message>    
+      
+      <script>currentFunction = "FunctionD24"</script>
+     
+    </sequence>
+  
+  </function>
+  
+</stax>

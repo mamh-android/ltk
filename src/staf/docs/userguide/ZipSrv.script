@@ -1,0 +1,390 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name       : ZipSrv SCRIPT
+.*  Descriptive Name: Software Test Automation Framework
+.*  Detail          : This file describes the STAF Zip Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.zip service
+:ih1.services
+:i2.zip service
+:h2 id=zipsrv.Zip Service
+:h3.Description
+The Zip service is an external STAF service that provides the following
+functions:
+:ul compact.
+:li.UNZIP - Extract files/directories from a Zip archive
+:li.ADD (aka ZIP) - Add a file or directory into a Zip archive
+:li.DELETE - Delete files from Zip archive
+:li.LIST - List content of Zip archive
+:li.&help.
+:eul.
+:p.The purpose of the Zip service is to allow a test case to easily work with Zip archives.
+:p.By using of Zlib compression library, the Zip service can create, extract, delete and 
+manage PKZip, WinZip and Jar compatible archives.
+:p.The Zip service supports the following features: create / extract PKZip,
+WinZip, and Jar compatible archives; save / restore owner, group and permission information
+on files and directories; delete file(s) from a Zip archive; list content of a
+Zip archive, append file / directory to an existing Zip archive, etc.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.zip service
+:h3.Registration
+The Zip service is an external service and must be registered with the SERVICE
+configuration statement. The syntax is:
+:xmp.
+SERVICE :xph.<Name>:exph. LIBRARY STAFZip
+:exmp.
+:p.:xph.<Name>:exph. is the name by which the Zip service will be known on this
+machine.  The recommended name of the Zip service is "ZIP".
+:h4.Example
+:xmp.
+service ZIP library STAFZip
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.UNZIP
+:i3.zip service
+:h3 id=unzip.UNZIP
+:p.Extract all entries (or specified files and/or directories) from a Zip
+archive to a specified directory.
+:h4.Syntax
+:xmp.
+UNZIP  ZIPFILE <Name> TODIRECTORY <Name>
+       &lbrk.FILE <Name>&rbrk.... &lbrk.DIRECTORY <Name>&rbrk....
+       &lbrk.RESTOREPERMISSION&rbrk. &lbrk.REPLACE&rbrk.
+:exmp.
+:p.:xph.ZIPFILE:exph. contains the fully qualified ZIP archive name.
+:p.:xph.TODIRECTORY:exph. contains the fully qualified output directory name.
+:p.:xph.FILE:exph. contains the fully qualified file name in the ZIP archive to be unzipped.
+:p.:xph.DIRECTORY:exph. contains the fully qualified directory name in the ZIP archive to be unzipped.
+Subdirectories in the directory are recursively unzipped.
+:p.:xph.RESTOREPERMISSION:exph. indicates that the owner, group and permission
+attributes of the file will be restored.
+:p.:xph.REPLACE:exph. indicates that the files/directories will be over written
+they already exist in the specified output directory.
+:p.
+:note.If you specify multiple :xph.FILE:exph. and/or :xph.DIRECTORY:exph. options,
+the files specified will be unzipped, followed by the directories specified.
+If an error occurs while unzipping a file or directory, the unzip request will
+not continue unzipping any remaining files/directories and will return an error.
+
+:h4.Security
+:p.&seclvl. 4.
+
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+UNZIP also returns codes documented in :hdref refid=ziperr..
+
+:h4.Results
+:p.On a successful return, the result buffer will contain no data on return from a UNZIP command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Unzip all entries in archive myzip.zip to directory D:/mydata
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.UNZIP ZIPFILE /opt/myzip.zip TODIRECTORY D:/mydata/:exph.
+:p.
+:li.:hp2.Goal::ehp2. Unzip file myjava/Hello.java from myzip.zip to
+directory /usr/lpp/mydata, restoring permissions and replacing any existing file:
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.UNZIP ZIPFILE /opt/myzip.zip TODIRECTORY /usr/lpp/mydata/ FILE myjava/Hello.java RESTOREPERMISSION REPLACE:exph.
+:p.
+:li.:hp2.Goal::ehp2. Unzip directory stax/docs from archive C:\temp\STAXV302.zip to
+directory {STAF/Config/STAFRoot}/services:
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.UNZIP ZIPFILE C:/temp/STAXV302.zip TODIRECTORY {STAF/Config/STAFRoot}/services DIRECTORY stax/docs:exph.
+:p.
+:li.:hp2.Goal::ehp2. Unzip two files (stax/STAX.jar and stax/STAFEvent.jar) and
+two directories (stax/libraries and stax/samples) from archive C:\temp\STAXV302.zip to
+directory C:\STAF\services and replace any existing files/directories:
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.UNZIP ZIPFILE C:/temp/STAXV302.zip TODIRECTORY C:/STAF/services FILE stax/STAX.jar FILE stax/STAFEvent.jar DIRECTORY stax/libraries DIRECTORY stax/samples REPLACE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.ADD (aka ZIP)
+:i3.zip service
+:h3.ADD (aka ZIP)
+Adds a file or directory into a Zip archive file. If the Zip archive file does
+not exist, it will be created and the file or directory will be added to it.
+If the Zip archive file already exists, the file or directory will be added to it.
+:h4.Syntax
+:xmp.
+ADD ZIPFILE <Name> < FILE <Name> | DIRECTORY <Name> &lbrk.RECURSE&rbrk. >
+    &lbrk.RELATIVETO <Directory>&rbrk.
+:exmp.    
+or
+:xmp.
+ZIP ADD ZIPFILE <Name> < FILE <Name> | DIRECTORY <Name> &lbrk.RECURSE&rbrk. >
+    &lbrk.RELATIVETO <Directory>&rbrk.
+:exmp.
+
+An :xph.ADD:exph. request performs the same function as a :xph.ZIP:exph. request.
+An :xph.ADD:exph. request is preferred.  The :xph.ZIP:exph. request is deprecated
+and will generate a trace message with a Deprecated tracepoint.
+:p.:xph.ZIPFILE:exph. contains the fully qualified name of a Zip archive file.
+If the Zip archive file does not exist, it will be created, but the directory
+path specified for it must already exist.
+:p.:xph.FILE:exph. contains the fully qualified file name you want to add into
+the ZIP archive.
+:p.:xph.DIRECTORY:exph. contains the fully qualified directory name you want to
+add info the ZIP archive.
+:p.:xph.RELATIVETO:exph. contains the prefix to be excluded from the fully
+qualified file name or directory name that is to be added into the ZIP archive.
+:p.:xph.RECURSE:exph. indicates that the all the files and subdirectories in the
+given directory will be added recursively.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+Zip also returns codes documented in :hdref refid=ziperr..
+:h4.Results
+:p.On a successful return, the result buffer will contain no data on return from 
+a ZIP command.
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Add file C:/file.txt to Zip archive D:/myzip.zip.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD ZIPFILE D:/myzip.zip FILE C:/file.txt:exph.
+:p.
+:li.:hp2.Goal::ehp2. Add directory /opt/mydir to Zip archive, relative to directory /opt.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD ZIPFILE /myzip.zip DIRECTORY /opt/mydir RELATIVETO /opt:exph.
+:p.
+:li.:hp2.Goal::ehp2. Add directory /opt/mydir and all its subdirectories and files to Zip archive, 
+relative to directory /opt.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.ADD ZIPFILE /myzip.zip DIRECTORY /opt/mydir RECURSE RELATIVETO /opt:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.zip service
+:h3.DELETE
+Delete one or more files from ZIP archive.
+:h4.Syntax
+:xmp.
+DELETE ZIPFILE <Name> FILE <Name> &lbrk.FILE <Name>&rbrk.... CONFIRM
+:exmp.
+:p.:xph.ZIPFILE:exph. contains the fully qualified ZIP archive name.
+:p.:xph.FILE:exph. contains the fully qualified file name to be deleted from the zip archive.
+:p.:xph.CONFIRM:exph. confirms you really want to delete the file from zip
+archive.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+Delete also returns codes documented in :hdref refid=ziperr..
+:h4.Results
+:p.On a successful return, the result buffer will contain no data on return from a DELETE command.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Delete file myjava/Hello.java from Zip archive D:/myzip.zip.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE ZIPFILE D:/myzip.zip FILE myjava/Hello.java CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Delete file myjava/Hello.java and bin/run from Zip archive /opt/myzip.zip.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.DELETE ZIPFILE /opt/myzip.zip FILE myjava/Hello.java FILE bin/run CONFIRM:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.zip service
+:h3.LIST
+List the content of a ZIP archive.
+:h4.Syntax
+:xmp.
+LIST ZIPFILE <Name>
+:exmp.
+:p.:xph.ZIPFILE:exph. contains the fully qualified ZIP archive name.
+:h4.Security
+:p.&seclvl. 3.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+LIST also returns codes documented in :hdref refid=ziperr.
+:h4.Results
+:p.On successful return, the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Zip/ZipInfo>:exph. representing
+content of the Zip archive. The map is defined as follows: 
+:table cols='* * * 3*'.
+:tcap.Definition of map class STAF/Service/Zip/ZipInfo
+:tnote text='Description'.This map class represents an entry in Zip archive.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.length
+:c.Length
+:c.&stringObj.
+:c.
+:row.
+:c.method
+:c.Method
+:c.&stringObj.
+:c.
+:row.
+:c.size
+:c.Size
+:c.&stringObj.
+:c.
+:row.
+:c.ratio
+:c.Ratio
+:c.&stringObj.
+:c.
+:row.
+:c.date
+:c.Date
+:c.&stringObj.
+:c.
+:row.
+:c.time
+:c.Time
+:c.&stringObj.
+:c.
+:row.
+:c.crc-32
+:c.CRC-32
+:c.&stringObj.
+:c.
+:row.
+:c.name
+:c.Name
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "Length" value is the uncompressed size of the file.
+:li.The "Method" value is compression method, often in the
+format of :xph.<Compression Method>&colon.<Compression level>:exph.
+used to compress the file. For example "Defl&colon.X", "Defl" stands for "Deflated", 
+"X" stands for "Maximum compression". Compression level can also contain the following
+values: "N" stands for "Normal compression", "F" stands for "Fast and Super fast 
+compression". Compression method can also contain the following values: "Stored" stands
+for "No compression", "Unkn." stands for "Unknown compression method".
+:li.The "Size" value is the compressed size of the file.
+:li.The "Ratio" value is the compression ratio of the file.
+:li.The "Date" value is the date stamp of the original file.
+:li.The "Time" value is the time stamp of the original file.
+:li.The "CRC-32" value is the CRC-32 value of the file.
+:li.The "Name" value is the relative name of the file.
+:eol.
+:etnote.
+:etable.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Show me the content of a ZIP archive.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST ZIPFILE /usr/local/staf/services/STAXV301.zip:exph.
+:p.:hp2.Results::ehp2. If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Length  Method Size    Ratio Date     Time  CRC-32   Name
+------- ------ ------- ----- -------- ----- -------- --------------------------
+      0 Stored       0   0%  07-28-05 03:44 00000000 stax/
+      0 Stored       0   0%  07-28-05 03:44 00000000 stax/docs/
+  42748 Defl&colon.N   13022  30%  07-28-05 03:44 f72affac stax/docs/History
+  86379 Defl&colon.N   58971  68%  07-28-05 03:44 aeb290ca stax/docs/STAXDoc.pdf
+ 926998 Defl&colon.N  711411  76%  07-28-05 03:44 92496663 stax/docs/staxgs.pdf
+ 921917 Defl&colon.N  653042  70%  07-28-05 03:44 e4e64a11 stax/docs/staxug.pdf
+      0 Stored       0   0%  07-28-05 03:44 00000000 stax/ext/
+   2029 Defl&colon.N     572  28%  07-28-05 03:44 b9c0e581 stax/ext/stax-extensions.d
+                                                     td
+      0 Stored       0   0%  07-28-05 03:44 00000000 stax/libraries/
+  57120 Defl&colon.N   10726  18%  07-28-05 03:44 03e1c2d9 stax/libraries/STAXUtil.ht
+                                                     ml
+  77766 Defl&colon.N   14909  19%  07-28-05 03:44 2cfa2ce7 stax/libraries/STAXUtil.xm
+                                                     l
+   2118 Defl&colon.N     938  44%  07-28-05 03:44 f15cb878 stax/readme.1st
+      0 Stored       0   0%  07-28-05 03:44 00000000 stax/samples/
+   5274 Defl&colon.N     826  15%  07-28-05 03:44 277d4fb7 stax/samples/FunctionList.
+                                                     xsl
+  10528 Defl&colon.N    2830  26%  07-28-05 03:44 b6dfa3ee stax/samples/sample1.xml
+  30281 Defl&colon.N   27699  91%  07-28-05 03:44 837e1ab4 stax/STAFEvent.jar
+2607441 Defl&colon.N 2541497  97%  07-28-05 03:44 0b9b43aa stax/STAX.jar
+  25619 Defl&colon.N   22208  86%  07-28-05 03:44 8104f5b9 stax/STAXDoc.jar
+ 189539 Defl&colon.N  177191  93%  07-28-05 03:44 bd0c4288 stax/STAXMon.jar
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.error codes
+:i2.zip service
+:h3 id=ziperr.Zip Error Code Reference
+:p.In addition to the common STAF return codes (see :hdref refid=retcode. for
+additional information), the following Zip return codes are defined:
+:table id     = ziperr
+       headhi = 3
+       frame  = box
+       cols   = '* 2* 4*'
+       align  = 'c l l'.
+:tcap.Zip Service Return Codes
+:thd.
+:c.Error Code
+:c.Meaning
+:c.Comment
+:ethd.
+:row.
+:c.:hp2.4001:ehp2.
+:c.General zip error
+:c.A general error occurred, additional error message can be found in result
+buffer.
+:row.
+:c.:hp2.4002:ehp2.
+:c.Not enough memory
+:c.There is not enough memory in the system.
+:row.
+:c.:hp2.4003:ehp2.
+:c.Change file size error: <file>
+:c.Error changing the file size.
+:row.
+:c.:hp2.4004:ehp2.
+:c.Error creating directory: <dir>
+:c.Error creating directory in the file system.
+:row.
+:c.:hp2.4005:ehp2.
+:c.Invalid zip file: <file>
+:c.Invalid zip file format.
+:row.
+:c.:hp2.4006:ehp2.
+:c.Bad CRC
+:c.Bad CRC in the zip archive.
+:row.
+:c.:hp2.4007:ehp2.
+:c.Invalid owner group
+:c.Invalid owner / group on the system when restore permission.
+:row.
+:c.:hp2.4008:ehp2.
+:c.Invalid file mode
+:c.Invalid file mode.
+:etable.
+
+
+
+
+
+
+
+
+
+
+
+
+

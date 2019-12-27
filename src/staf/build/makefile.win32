@@ -1,0 +1,245 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+OS_FS := $(EMPTY)\$(EMPTY)
+OS_PS := ;
+OS_TYPE := win32
+OS_SHARED_LIB_PREFIX := # Nothing
+OS_SHARED_LIB_SUFFIX := .dll
+OS_LIBS := advapi32 user32
+OS_PTHREAD_LIB := # Nothing
+OS_DL_LIB := # Nothing
+OS_SOCKET_LIB := WSOCK32
+OS_LD_PATH_NAME := PATH
+OS_OE := .obj
+OS_EE := .exe
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+CC_NAME ?= mvc
+CC_TYPE ?= MVC6
+
+BUILD_ARCH := X86
+
+OS_COMMONFLAGS := -DSTAF_OS_NAME_WIN32
+
+# Figure out what drive letter the source tree is on
+
+DRIVE := $(word 2,$(subst /,$(SPACE),$(MAKEDIR)))
+
+#Win@    = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$@)
+#Win<    = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$<)
+#WinOBJS = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(OBJS))
+#WinO    = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(O))
+#WinREL  = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(REL))
+#WinSRC  = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(SRC))
+
+# XXX: Might need to add the subst /,\  in things other then @ and <
+
+OS_@    = $(subst /,\,$(subst /cygdrive/$(DRIVE),$(DRIVE):,$@))
+OS_<    = $(subst /,\,$(subst /cygdrive/$(DRIVE),$(DRIVE):,$<))
+OS_OBJS = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(OBJS))
+OS_O    = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(O))
+OS_REL  = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(REL))
+OS_SRC  = $(subst /cygdrive/$(DRIVE),$(DRIVE):,$(SRC))
+
+# Provide the default location for REXX files on this system
+
+REXX_ROOT ?= /cygdrive/d/ObjRexx
+REXX_BIN_DIR ?= $(REXX_ROOT)
+REXX_LIBDIRS ?= d:\ObjRexx\API
+REXX_INCLUDEDIRS ?= $(REXX_LIBDIRS)
+
+RXPP_ROOT ?= d:/Tools/RxPP
+RXPP ?= $(REXX) $(RXPP_ROOT)/bin/RxPP
+RXPP_PATH ?= $(RXPP_ROOT)/lib;$(OS_REL)/lib
+
+B2H_ROOT ?= d:/Tools/b2h
+
+# Provide the default location for Java files on this system
+
+JAVA_DEFAULT_VERSION ?= V12
+
+JAVA_BUILD_V11 ?= 0
+JAVA_V11_ROOT ?= /cygdrive/d/Java/jdk1.1.8
+JAVA_V11_LIBS ?= javai
+JAVA_V11_LIBDIRS ?= $(JAVA_V11_ROOT)/lib
+
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /cygdrive/d/Java/jdk1.3.0_02
+JAVA_V12_LIBDIRS ?= $(JAVA_V12_ROOT)/lib
+
+# Provide the default location for Perl files on this system
+
+ifeq ($(CC_TYPE),MVC8-X64)
+PERL_V58_ROOT ?= C:\Perl64
+PERL_V510_ROOT ?= C:\Perl64-5.10
+PERL_V512_ROOT ?= C:\Perl64-5.12
+PERL_V514_ROOT ?= C:\Perl64-5.14
+PERL_BUILD_V56 ?= 0
+endif
+
+PERL_V514_ROOT ?= C:/ActivePerl-5.14
+PERL_V514_INCLUDEDIRS ?= $(PERL_V514_ROOT)/lib/CORE
+PERL_V514_LIBDIRS ?= $(PERL_V514_ROOT)/lib/CORE
+PERL_V514_LIBS ?= perl514
+PERL_BUILD_V514 ?= 1
+
+PERL_V512_ROOT ?= C:/ActivePerl-5.12
+PERL_V512_INCLUDEDIRS ?= $(PERL_V512_ROOT)/lib/CORE
+PERL_V512_LIBDIRS ?= $(PERL_V512_ROOT)/lib/CORE
+PERL_V512_LIBS ?= perl512
+PERL_BUILD_V512 ?= 1
+
+PERL_V510_ROOT ?= C:/ActivePerl-5.10
+PERL_V510_INCLUDEDIRS ?= $(PERL_V510_ROOT)/lib/CORE
+PERL_V510_LIBDIRS ?= $(PERL_V510_ROOT)/lib/CORE
+PERL_V510_LIBS ?= perl510
+PERL_BUILD_V510 ?= 1
+
+PERL_V58_ROOT ?= c:/perl583
+PERL_V58_INCLUDEDIRS ?= $(PERL_V58_ROOT)/lib/CORE
+PERL_V58_LIBDIRS ?= $(PERL_V58_ROOT)/lib/CORE
+PERL_V58_LIBS ?= perl58
+PERL_BUILD_V58 ?= 1
+
+PERL_V56_ROOT ?= c:/perl
+PERL_V56_INCLUDEDIRS ?= $(PERL_V56_ROOT)/lib/CORE
+PERL_V56_LIBDIRS ?= $(PERL_V56_ROOT)/lib/CORE
+PERL_V56_LIBS ?= perl56
+PERL_BUILD_V56 ?= 1
+
+PERL_BUILD_V50 ?= 0
+
+# Provide the default location for Python files on this system
+
+ifeq ($(CC_TYPE),MVC-SDK-IA64)
+PYTHON_V24_ROOT ?= c:/python24-ia64
+PYTHON_V25_ROOT ?= c:/python25-ia64
+PYTHON_BUILD_V22 ?= 0
+PYTHON_BUILD_V23 ?= 0
+PYTHON_BUILD_V26 ?= 0
+PYTHON_BUILD_V27 ?= 0
+PYTHON_BUILD_V30 ?= 0
+PYTHON_BUILD_V31 ?= 0
+TCL_BUILD_V83 ?= 0
+TCL_BUILD_V84 ?= 0
+TCL_BUILD_V85 ?= 0
+TCL_BUILD_V86 ?= 0
+endif
+
+ifeq ($(CC_TYPE),MVC8-X64)
+PYTHON_V25_ROOT ?= c:/python25-amd64
+PYTHON_V26_ROOT ?= c:/python26-amd64
+PYTHON_V27_ROOT ?= c:/python27-amd64
+PYTHON_V26_ROOT ?= c:/python26-amd64
+PYTHON_V30_ROOT ?= c:/python30-amd64
+PYTHON_V31_ROOT ?= c:/python31-amd64
+PYTHON_BUILD_V22 ?= 0
+PYTHON_BUILD_V23 ?= 0
+PYTHON_BUILD_V24 ?= 0
+TCL_BUILD_V83 ?= 0
+TCL_BUILD_V84 ?= 0
+TCL_V85_ROOT ?= c:/ActiveTcl8.5-amd64
+TCL_V86_ROOT ?= c:/ActiveTcl8.6-amd64
+endif
+
+PYTHON_V22_ROOT ?= c:/python22
+PYTHON_V22_INCLUDEDIRS ?= $(PYTHON_V22_ROOT)/include
+PYTHON_V22_LIBDIRS ?= $(PYTHON_V22_ROOT)/Libs
+PYTHON_V22_LIBS ?= python22
+PYTHON_BUILD_V22 ?= 1
+
+PYTHON_V23_ROOT ?= c:/python23
+PYTHON_V23_INCLUDEDIRS ?= $(PYTHON_V23_ROOT)/include
+PYTHON_V23_LIBDIRS ?= $(PYTHON_V23_ROOT)/Libs
+PYTHON_V23_LIBS ?= python23
+PYTHON_BUILD_V23 ?= 1
+
+PYTHON_V24_ROOT ?= c:/python24
+PYTHON_V24_INCLUDEDIRS ?= $(PYTHON_V24_ROOT)/include
+PYTHON_V24_LIBDIRS ?= $(PYTHON_V24_ROOT)/Libs
+PYTHON_V24_LIBS ?= python24
+PYTHON_BUILD_V24 ?= 1
+
+PYTHON_V25_ROOT ?= c:/python25
+PYTHON_V25_INCLUDEDIRS ?= $(PYTHON_V25_ROOT)/include
+PYTHON_V25_LIBDIRS ?= $(PYTHON_V25_ROOT)/Libs
+PYTHON_V25_LIBS ?= python25
+PYTHON_BUILD_V25 ?= 1
+
+PYTHON_V26_ROOT ?= c:/python26
+PYTHON_V26_INCLUDEDIRS ?= $(PYTHON_V26_ROOT)/include
+PYTHON_V26_LIBDIRS ?= $(PYTHON_V26_ROOT)/Libs
+PYTHON_V26_LIBS ?= python26
+PYTHON_BUILD_V26 ?= 1
+
+PYTHON_V27_ROOT ?= c:/python27
+PYTHON_V27_INCLUDEDIRS ?= $(PYTHON_V27_ROOT)/include
+PYTHON_V27_LIBDIRS ?= $(PYTHON_V27_ROOT)/Libs
+PYTHON_V27_LIBS ?= python27
+PYTHON_BUILD_V27 ?= 1
+
+PYTHON_V30_ROOT ?= c:/python30
+PYTHON_V30_INCLUDEDIRS ?= $(PYTHON_V30_ROOT)/include
+PYTHON_V30_LIBDIRS ?= $(PYTHON_V30_ROOT)/Libs
+PYTHON_V30_LIBS ?= python30
+PYTHON_BUILD_V30 ?= 1
+
+PYTHON_V31_ROOT ?= c:/python31
+PYTHON_V31_INCLUDEDIRS ?= $(PYTHON_V31_ROOT)/include
+PYTHON_V31_LIBDIRS ?= $(PYTHON_V31_ROOT)/Libs
+PYTHON_V31_LIBS ?= python31
+PYTHON_BUILD_V31 ?= 1
+
+# Provide the default location for TCL files on this system
+
+TCL_V83_ROOT ?= c:/Tcl
+TCL_V83_INCLUDEDIRS ?= $(TCL_V83_ROOT)/include
+TCL_V83_LIBS ?= $(TCL_V83_ROOT)/lib/tcl83
+TCL_BUILD_V83 ?= 1
+
+TCL_V84_ROOT ?= c:/ActiveTcl8.4
+TCL_V84_INCLUDEDIRS ?= $(TCL_V84_ROOT)/include
+TCL_V84_LIBS ?= $(TCL_V84_ROOT)/lib/tcl84
+TCL_BUILD_V84 ?= 1
+
+TCL_V85_ROOT ?= c:/ActiveTcl8.5
+TCL_V85_INCLUDEDIRS ?= $(TCL_V85_ROOT)/include
+TCL_V85_LIBS ?= $(TCL_V85_ROOT)/lib/tcl85
+TCL_BUILD_V85 ?= 1
+
+TCL_V86_ROOT ?= c:/ActiveTcl8.6
+TCL_V86_INCLUDEDIRS ?= $(TCL_V86_ROOT)/include
+TCL_V86_LIBS ?= $(TCL_V86_ROOT)/lib/tcl86
+TCL_BUILD_V86 ?= 1
+
+# Provide the default location for HTTP service files on this system
+
+APACHE_XERCES_ROOT ?= c:/tools/xerces-2_6_2
+COMMONS_LOGGING_ROOT ?= c:/tools/commons-logging-1.1
+COMMONS_CODEC_ROOT ?= c:/tools/commons-codec-1.3
+COMMONS_HTTPCLIENT_ROOT ?= c:/tools/commons-httpclient-3.1
+NEKOHTML_ROOT ?= c:/tools/nekohtml-0.9.5
+
+# Provide the default location for zlib files on this system
+
+ZLIB_SOURCEDIR ?= c:/tools/zlib-1.2.5
+
+# Provide the default location for openssl files on this system
+
+OPENSSL_ROOT ?= c:/tools/openssl-0.9.8e-root
+
+# Provide the default location for Ant on this system
+
+ANT_ROOT ?= c:/tools/apache-ant-1.6.2

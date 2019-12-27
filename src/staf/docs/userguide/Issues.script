@@ -1,0 +1,28 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Issues SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Issues
+.*  Detail:
+.*
+.*     This file contains a list of outstanding issues
+.*
+.**************************-END-OF-PROLOG-*****************************
+:h1.Issues
+:h2.NLS and platform interop issues
+:p.What, if anything, do we do about passing strings of data between different
+platforms, and probably between different NLV versions of the same and
+different platforms?  For instance, what does it mean for us to allow a
+Japanese NT client to send messages to a US OS/2 client?
+:p.Is this potentially up to the various services?  Maybe most services only
+accept ASCII7 data.
+:p.Also, what about Java?  Since it uses Unicode, what do we convert this
+stuff to?
+:p.Maybe we use Unicode everywhere, and statically bind some unicode support
+into the STAFProc?

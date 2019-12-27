@@ -1,0 +1,380 @@
+Feature ID  : 2983345
+Title       : Provide an atomic set-get function for the VAR service
+
+Description
+-----------
+
+Provide the ability to set a variable only if the variable does
+not currently exist and to return its value if the variable
+already exists.  
+
+Problem(s) Solved
+-----------------
+
+Here's a description of what one STAF user wanted to do:
+
+We have multiple processes asking for the value of a variable,
+where each process wants to set it to a different value only
+if the variable does not exist.  The first set request for a
+variable that does not exist should succeed, and the other
+set requests should fail and get the variable's value returned.
+To avoid race conditions, this needs to be a single operation
+so they cannot submit a VAR GET request to check if the variable
+exists and then if it doesn't, submit a VAR SET request.
+
+Related Features/Patches
+------------------------
+
+Patch #2987248 was submitted for this feature, but it implemented
+it by adding a DEFAULT option to the VAR service's GET request.
+However, we did not want to provide the ability to set a variable
+via the GET request (which requires trust level 2) as we thought
+this would be counter-intuitive.  So, we implemented it by adding
+a FAILIFEXISTS option to the SET request (which requires trust
+level 3) so that a set request will fail if the FAILIFEXISTS
+option is specified and the variable already exists and its value
+will be returned.
+
+External Changes
+----------------
+
+a) Add a FAILIFEXISTS option to the VAR service's SET request:
+
+Syntax:
+
+SET [SYSTEM | SHARED | HANDLE <Handle>] [FAILIFEXISTS]
+    VAR <Name=Value> [VAR <Name=Value>]...
+
+FAILIFEXISTS specifies that the set request should fail with
+return code 49 (Already Exists) if the variable already exists
+in the specified variable pool and its current value will be
+returned in the result.  If this option is not specified and
+the variable already exists, the variable's value will be
+updated.
+
+Return Codes:
+
+If multiple variables are set via a single SET request and all
+variables were set successfully, the return code will be 0. If
+one or more variables were not set successfully, the return code
+will be set to the return code of the first variable that could
+not be set successfully. Note that all variables specified will
+be attempted to be set.
+
+Results:
+
+If successful, the result buffer will contain no data.
+
+If the request failed, the result buffer's contents are based
+on whether the VAR option was specified once or multiple times
+as follows:
+
+* If only one variable is specified to be set:
+  - If the request failed because the FAILIFEXISTS option was
+    specified and the variable already exists, the return code
+    will be 49 (Already Exists) and the result buffer will
+    contain the variable's value.
+  - If the request failed for another reason, the result buffer
+     may contain additional information about the error. 
+
+* If multiple variables are specified to be set:
+  - If the request failed before it was able to set any
+    variables (e.g. due to a request syntax error, insufficient
+    trust, etc, the result buffer may contain additional
+    information about the error.
+  - If the request failed when setting one or more variables,
+    the result buffer will contain a marshalled <List> of
+    <Map:STAF/Service/Var/SetVar> representing a list of the
+    variable names and whether they were successfully set or
+    not. The entries in the list will be in the same order that
+    the variables to be set are specified. The map is defined
+    as follows: 
+
+    Definition of map class STAF/Service/Var/SetVar:
+
+    Key Name Display Name Type
+    -------- ------------ --------
+    name     Name         <String>
+    rc       RC           <String>
+    result   Result       <String>
+
+Examples:
+
+  1) Goal: Set system variable foo to "bar" only if the
+     variable does not already exist.
+
+     C:\>STAF local VAR SET SYSTEM FAILIFEXISTS VAR foo=bar
+     Response
+     --------
+
+     Above would be the result if system variable foo did
+     not exist.  Then if someone tried to set this variable
+     again, here's the result:
+
+     C:\>STAF local VAR SET SYSTEM FAILIFEXISTS VAR foo=zzz
+     Error submitting request, RC: 49
+     Additional info
+     ---------------
+     bar
+
+  2) Goal: Set multiple system variables only if the
+     variables do not already exist.
+
+     C:\>STAF local VAR SET SYSTEM FAILIFEXISTS VAR x=1 VAR y=2
+     Response
+     --------
+
+     Above would be the result if system variables x and y
+     did not exist.  If someone tried to set multiple
+     variables and at least one error occurred when setting
+     the variable, the following could be the result:
+
+     C:\>STAF local VAR SET SYSTEM FAILIFEXISTS VAR a=1 VAR foo=zzz VAR b=2 VAR bad
+     Error submitting request, RC: 49
+     Additional info
+     ---------------
+     Name RC Result
+     ---- -- ------------------------------------------------------
+     a    0
+     foo  49 zzz
+     b    0
+     bad  47 The VAR option's value does not have format Name=Value
+
+Internal Changes
+----------------
+
+Files changed:
+
+stafproc/STAFVariablePool.cpp
+stafproc/STAFVariablePool.h
+stafproc/STAFVariableService.cpp
+stafproc/STAFVariableService.h
+docs/userguide/CmdRef.script
+docs/userguide/VarSrv.script
+test/STAFTest.xml
+
+1) Changes to stafproc/STAFVariablePool.h:
+
+   a) Added a new set() method with a errorBuffer (to return the
+      result from setting the variable) and a flag indicating
+      whether the set request should fail if the variable already
+      exists (with it defaulting to false):
+
+   STAFRC_t set(const STAFString &name, const STAFString &value,
+                STAFString &errorBuffer, bool failIfExists = false);
+
+2) Changes to stafproc/STAFVariablePool.cpp:
+
+  a) Changed the set() method so that if the variable already
+     exists, it checks if the failIfExists flag is false and
+     if so, it updates the variable's value.  If it is true,
+     it returns a kSTAFAlreadyExists error and returns the
+     variable's value in the errorBuffer.  Kept the set method
+     that has just two arguments, name and value, and had it
+     call the new set method passing in a empty errorBuffer
+     and a false failIfExists flag.     
+
+  STAFRC_t STAFVariablePool::set(const STAFString &name,
+                                 const STAFString &value)
+  {
+      STAFString errorBuffer = "";
+      return STAFVariablePool::set(name, value, errorBuffer, false);
+  }
+
+  STAFRC_t STAFVariablePool::set(const STAFString &name,
+                                 const STAFString &value,
+                                 STAFString &errorBuffer,
+                                 bool failIfExists)
+  {
+      STAFString lowerCaseName(name.toLowerCase());
+
+      STAFMutexSemLock varMapLock(fVarMapSem);
+
+      if (fVarMap.find(lowerCaseName) == fVarMap.end())
+      {
+          // Variable does not exist so add the variable to the variable map
+
+          Variable theVar(name, value);
+          fVarMap[lowerCaseName] = theVar;
+      }
+      else
+      {
+          // Variable already exists
+
+          if (!failIfExists)
+          {
+              // Update the variable's value in the variable value
+
+              fVarMap[lowerCaseName].value = value;
+          }
+          else
+          {
+              // Return an error and set the result to the variable's value
+
+              errorBuffer = fVarMap[lowerCaseName].value;
+              return kSTAFAlreadyExists;
+          }
+      }
+
+      return kSTAFOk;
+  }
+
+3) Changes to stafproc/STAFVariableService.h:
+
+   Defined the new map class definition variable used in the result
+   if an error occurs setting multiple variables:
+
+     STAFMapClassDefinitionPtr fSetVarClass;
+
+4) Changes to stafproc/STAFVariableService.cpp:
+
+   a) In the constructor, updated the help text for SET request
+      by adding the new optional FAILIFEXISTS option:
+
+   sHelpMsg = STAFString("*** VAR Service Help ***") +
+       *gLineSeparatorPtr + *gLineSeparatorPtr +
+       "SET [SYSTEM | SHARED | HANDLE <Handle>] [FAILIFEXISTS]" +
+       *gLineSeparatorPtr +
+       "    VAR <Name=Value> [VAR <Name=Value>]..." +
+       ...
+
+   b) In the constructor, updated the Variable service's command
+      parser as follows:
+
+   fVarParser.addOption("FAILIFEXISTS", 1,
+                        STAFCommandParser::kValueNotAllowed);
+
+   fVarParser.addOptionNeed("FAILIFEXISTS", "SET");
+
+   c) In the constructor, added a map class definition used when
+      an error occurs setting multiple variables
+
+   // Construct map-class for if an error occurs setting multiple variables
+
+   fSetVarClass = STAFMapClassDefinition::create(
+       "STAF/Service/Var/SetVar");
+
+   fSetVarClass->addKey("name", "Name");
+   fSetVarClass->addKey("rc", "RC");
+   fSetVarClass->addKey("result", "Result");
+
+  d) In the acceptRequest() method, made the following changes
+     for when the SET request is being handled.
+
+     Note that in addition to changes to support the new
+     FAILIFEXISTS option, also changed how it handles a
+     variable's value when it does not have format Name=Value.
+     Previously, you would get an RC 7 (Invalid Request) and
+     no error message.  Now RC 47 (Invalid Value) is returned
+     with an error message.  For example:
+
+     C:\>STAF local VAR SET SYSTEM VAR foo
+     Error submitting request, RC: 47
+     Additional info
+     ---------------
+     The VAR option's value does not have format Name=Value  
+
+    ...
+
+    STAFString result;
+
+    if (parsedResult->optionTimes("SET") != 0)
+    {
+        // Verify that the requesting machine/user has at least trust level 3
+
+        IVALIDATE_TRUST(3, "SET");
+
+        bool failIfExists = false;
+
+        if (parsedResult->optionTimes("FAILIFEXISTS") != 0)
+            failIfExists = true;
+
+        unsigned int numVars = parsedResult->optionTimes("VAR");
+
+        if (numVars == 1)
+        {
+            STAFString nameAndValue = parsedResult->optionValue("VAR", 1);
+            unsigned int equalPos = nameAndValue.find(kUTF8_EQUAL);
+
+            if (equalPos != STAFString::kNPos)
+            {
+                // For SET command, there is only one pool involved
+                rc = ((STAFVariablePool*)varPoolListMain[0])->set(
+                    nameAndValue.subString(0, equalPos),
+                    nameAndValue.subString(equalPos +
+                                           nameAndValue.sizeOfChar(equalPos)),
+                    result, failIfExists);
+            }
+            else
+            {
+                rc = kSTAFInvalidValue;
+                result = "The VAR option's value does not have format "
+                    "Name=Value";
+            }
+        }
+        else
+        {
+            // Create a marshalled list of maps for the result if an error
+            // occurs setting one of more variables
+
+            STAFObjectPtr mc = STAFObject::createMarshallingContext();
+            mc->setMapClassDefinition(fSetVarClass->reference());
+            STAFObjectPtr outputList = STAFObject::createList();
+            STAFRC_t setRC;
+            
+            for (int i = 1; i <= numVars; ++i)
+            {
+                STAFObjectPtr resultMap = fSetVarClass->createInstance();
+
+                STAFString nameAndValue = parsedResult->optionValue("VAR", i);
+                unsigned int equalPos = nameAndValue.find(kUTF8_EQUAL);
+                STAFString name;
+
+                if (equalPos != STAFString::kNPos)
+                {
+                    result = "";
+                    name = nameAndValue.subString(0, equalPos);
+
+                    // For SET command, there is only one pool involved
+                    setRC = ((STAFVariablePool*)varPoolListMain[0])->set(
+                        name,
+                        nameAndValue.subString(
+                            equalPos + nameAndValue.sizeOfChar(equalPos)),
+                        result, failIfExists);
+                }
+                else
+                {
+                    name = nameAndValue;
+                    setRC = kSTAFInvalidValue;
+                    result = "The VAR option's value does not have format "
+                        "Name=Value";
+                }
+                
+                resultMap->put("name", name);
+                resultMap->put("rc", STAFString(setRC));
+                resultMap->put("result", result);
+
+                // Set the overall return code to the first non-zero RC
+                if ((setRC != kSTAFOk) && (rc == kSTAFOk))
+                    rc = setRC;
+
+                outputList->append(resultMap);
+            }
+
+            if (rc != kSTAFOk)
+            {
+                // An error occurred setting one or more variables so return a
+                // marshalled list of maps for the result
+
+                mc->setRootObject(outputList);
+                result = mc->marshall();
+            }
+        }
+    }
+    ...
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

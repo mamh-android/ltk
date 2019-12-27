@@ -1,0 +1,56 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2005                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+jython_targets += $(REL)/lib/jython/jython.jar \
+                  $(REL)/lib/jython/Lib/STAFMarshalling.py \
+                  $(REL)/lib/jython/Lib/STAFJython.py
+
+Targets += $(jython_targets)
+CleanupTargets += cleanup_jython
+
+$(jython_targets): SUBSYS_REL := lib/jython
+SUBSYS_REL := lib/jython
+
+# Include inference rules
+include $(InferenceRules)
+
+ifndef JYTHON_ROOT
+  $(error You must set JYTHON_ROOT to the full pathname where you installed Jython)
+endif
+
+# Copy the original Jython.jar file, extract it, and remove the com/ziclix directory and its 
+# contents as we are not supposed to ship zxJDBC code for legal reasons.
+# Also, remove the org/python/util/ReadlineConsole.class file for legal reasons.
+
+$(O)/lang/jython/jython.jar: $(JYTHON_ROOT)/jython.jar
+	$(COPY_FILE)
+	@echo "*** Creating new $(@F) without zxJDBC or ReadlineConsole ***"
+	@cd $(O)/lang/jython; $(JAR) xf '$(OS_@)'
+	@$(DEL) $(O)/lang/jython/jython.jar
+	@$(DELTREE) $(O)/lang/jython/com/ziclix
+	@$(DEL) $(O)/lang/jython/org/python/util/ReadlineConsole.class
+	@cd $(O)/lang/jython; $(JAR) cf '$(OS_@)' *
+        
+# Create new Jython.jar
+
+$(REL)/lib/jython/jython.jar: $(O)/lang/jython/jython.jar
+	$(COPY_FILE)
+	@echo "*** Copying Jython Lib directory ***"
+	@$(MAKE_PATH) $(REL)/lib/jython/Lib
+	@$(RECURSIVE_COPY) $(JYTHON_ROOT)/Lib $(REL)/lib/jython
+	@find $(REL)/lib/jython/Lib -name "*.class" -exec rm {} \;
+
+# Copy STAF Jython support libraries
+        
+$(REL)/lib/jython/Lib/STAFMarshalling.py: $(SRC)/lang/jython/STAFMarshalling.py
+	$(COPY_FILE)
+$(REL)/lib/jython/Lib/STAFJython.py: $(SRC)/lang/jython/STAFJython.py
+	$(COPY_FILE)
+
+cleanup_jython:
+	-@$(DEL) $(O)/lang/jython/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/jython/* $(OUT_ERR_TO_DEV_NULL)

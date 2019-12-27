@@ -1,0 +1,1913 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : ProcSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Process Service
+.*  Detail:
+.*
+.*     This file describes the STAF Process Service.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.process service
+:ih1.services
+:i2.process service
+:h2 id=procsrv.Process Service
+:h3.Description
+:p.The PROCESS service is one of the internal STAF services.  It provides the
+following commands
+:ul compact.
+:li.START - Starts a process, and optionally registers for process end
+notification
+:li.STOP - Stops a process
+:li.LIST - Retrieves brief information on processes or lists the operational
+settings for the Process service
+:li.QUERY - Retrieves detailed information about a process with a specified
+handle
+:li.FREE - Releases the results data about a process
+:li.NOTIFY REGISTER - Registers for process end notification
+:li.NOTIFY UNREGISTER - Unregisters for process end notification
+:li.NOTIFY LIST - Displays the list of machines/processes to receive process
+end notification
+:li.SET - Sets operational settings for the Process service 
+:li.&help.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.START
+:i3.process service
+:h3 id=procstr.START
+:p.START allows you to start a process.  Processes may be started synchronously
+or asynchronously.  You may also specify to which workload they belong,
+parameters to pass to them, their working directory, any process specific
+STAF variables to set for them, as well as any environment variables they may
+need.
+:h4.Syntax
+:xmp.
+START &lbrk.SHELL &lbrk.<Shell>&rbrk.&rbrk. COMMAND <Command> &lbrk.PARMS <Parms>&rbrk.  &lbrk.WORKDIR <Directory>&rbrk.
+      &lbrk.VAR <Variable=Value>&rbrk....  &lbrk.ENV <Variable=Value>&rbrk.... &lbrk.USEPROCESSVARS&rbrk.
+      &lbrk.WORKLOAD <Name>&rbrk.  &lbrk.TITLE <Title>&rbrk.  &lbrk.WAIT &lbrk.<Number>[s|m|h|d|w]&rbrk. | ASYNC&rbrk.
+      &lbrk.STOPUSING <Method>&rbrk.  &lbrk.STATICHANDLENAME <Name>&rbrk.
+      &lbrk.NEWCONSOLE | SAMECONSOLE&rbrk.  &lbrk.FOCUS <Background | Foreground | Minimized>&rbrk.
+      &lbrk.USERNAME <User name> &lbrk.PASSWORD <Password>&rbrk.&rbrk.
+      &lbrk.DISABLEDAUTHISERROR | IGNOREDISABLEDAUTH&rbrk.
+      &lbrk.STDIN <File>&rbrk. &lbrk.STDOUT <File> | STDOUTAPPEND <File>&rbrk.
+      &lbrk.STDERR <File> | STDERRAPPEND <File> | STDERRTOSTDOUT&rbrk.
+      &lbrk.RETURNSTDOUT&rbrk. &lbrk.RETURNSTDERR&rbrk. &lbrk.RETURNFILE <File>&rbrk....
+      &lbrk.NOTIFY ONEND &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.  &lbrk.MACHINE <Machine>&rbrk.
+      &lbrk.PRIORITY <Priority>&rbrk. &lbrk.KEY <Key>&rbrk.&rbrk.
+:exmp.
+:p.:xph.WORKLOAD:exph. allows you to specify the name of the workload for which this
+process is a member.  This may be useful in conjunction with other PROCESS
+commands.  The default is no workload name. &varresNoErrors.
+:p.:xph.TITLE:exph. allows you to specify the program title of the process.
+Unless overridden by the process, the :xph.TITLE:exph. will be the text that
+is displayed on the title bar of the application. &varresNoErrors.
+:p.:xph.COMMAND:exph. specifies the actual command that you want to start.  If
+the path to the command is not specified, the system PATH will be searched
+for the command.  Only actual executable files, such as .EXEs, can be STARTed.
+Rexx files cannot be STARTed directly.
+.*On OS/2, they need to be started through a command processor, such as cmd.exe.
+On Windows systems, they need to be started through REXX.EXE.
+&varresNoErrors. &private.
+:p.:xph.PARMS:exph. specifies any parameters that you wish to pass to the
+command. &varresNoErrors. &private.
+:p.:xph.SHELL:exph. specifies that :xph.COMMAND:exph. should be started via a
+separate shell.  Using a separate shell allows complex commands involving
+pipelines to be readily executed. &varresNoErrors.
+Note, if :xph.COMMAND:exph. and :xph.PARMS:exph. are both specified they will be
+concatenated with a space between them, and the resulting string is what will
+be executed.
+You may specify an optional shell, which overrides any defaults specified in the
+STAF configuration file.  See :hdref refid=opparms. for more information on how
+to specify the shell.
+:p.:xph.WORKDIR:exph. specifies the directory from which the command should be
+executed.  If you do not specify :xph.WORKDIR:exph., the command will be
+started from whatever directory STAFProc is currently in. &varresNoErrors.
+:p.:xph.WAIT:exph. specifies that the START request should not return until the
+process has finished executing.  You may specify an optional time duration,
+after which the request should return.  If no time duration is specified,
+the request will wait indefinitely until the process has finished executing.
+If the :xph.WAIT:exph. does not timeout, the process termination information
+will not be saved after the process ends, and no FREE is necessary. &varres.
+The time duration may be expressed in milliseconds, seconds, minutes,
+hours, days, weeks, or years.  Its format is <Number>[s|m|h|d|w],
+where <Number> is an integer >= 0 and indicates milliseconds unless one
+of the following case-insensitive suffixes is specified:
+:ul compact.
+:li.s (for seconds)
+:li.m (for minutes)
+:li.h (for hours)
+:li.d (for days)
+:li.w (for weeks).
+:eul.
+Note that the calculated timeout cannot exceed 4294967294 milliseconds.
+So, the maximum values in each time category that can be specified are:
+:ul compact.
+:li.4294967294 (4294967294 milliseconds)
+:li.4294967s (4294967 seconds)
+:li.71582m (71582 minutes)
+:li.1193h (1193 hours)
+:li.49d (49 days)
+:li.7w (7 weeks)
+:eul.
+:p.:xph.ASYNC:exph. specifies that the process should be started asynchronously,
+and that the START request should return to the caller as soon as the process
+has begun execution.  In this case, the process termination will be saved after
+the process ends, and will later need to be FREE'd.  This is the default.
+:p.:xph.VAR:exph. allows you to specify variables that go into the process
+specific variable pool.
+:p.:xph.ENV:exph. allows you to specify environment variables that will be set
+for the process.  Environment variables may be mixed case, however most
+programs assume environment variable names will be uppercase, so, in most
+cases, ensure that your environment variable names are all in uppercase.
+&varresNoErrors.
+:p.:xph.USEPROCESSVARS:exph. specifies that variable references should try to
+be resolved from the variable pool associated with the process being started
+first.  If the variable is not found in this pool, originating handle's pool,
+originator's shared pool, and originator's system pool should be searched if
+the request came from local, otherwise originator's handle's pool, originator's
+shared pool, remote shared pool and remote system pool should be searched.
+:p.:xph.STOPUSING:exph. allows you to specify the method by which this process
+will be STOPed, if not overridden on the STOP command.  See :hdref refid=psstop.
+for more information. &varresNoErrors.
+:p.:xph.NEWCONSOLE:exph. specifies that the process should get a new console
+window.  So, if a process's stdout/stderr is not redirected, it will be
+unavailable.  This is the default for Windows systems.
+.*and OS/2 systems.
+:p.:xph.SAMECONSOLE:exph. specifies that the process should share the STAFProc
+console.  So, if a process's stdout/stderr is not redirected, it will be
+written to STAFProc's stdout/stderr.  This is the default for Unix systems.
+:p.:xph.FOCUS:exph. specifies the focus that is to be given to new windows
+opened when starting a process on a Windows system.  The window(s) it effects
+depends on whether you are using the default command mode or the shell command
+mode.  If the process is started using the default command mode (no
+:xph.SHELL:exph. option), then the specified focus specified is given to any
+new windows opened by the specified command.  Otherwise, if the process is
+started using the shell command mode, then the specified focus is given only
+to the new shell command window opened, not to any windows opened by the
+specified command.  This option only has effect on Windows systems.  &varresNoErrors.
+This option was added in STAF V3.1.4.  Recognized values are the following:
+:ul compact.
+:li.Background:  This indicates to display a window in the background
+(not give it focus) in its most recent size and position.
+This is the default mode.
+:li.Foreground:  This indicates to display a window in the foreground
+(give it focus) in its most recent size and position.
+:li.Minimized:  This indicates to display a window as minimized.
+:eul.
+:p.:xph.USERNAME:exph. specifies the username under which the process should be
+started. &varresNoErrors.
+:p.:note.The PROCESSAUTHMODE operational parameter must be enabled in the STAF
+configuration file on the system where the process is run under a different
+username.  See :hdref refid=opparms. for more information on how to
+enable the PROCESSAUTHMODE operational parameter.  There are additional
+requirements that must be met to run a process under a different username
+on a Windows system.  See :hdref refid=winuser. for more information.
+:p.:xph.PASSWORD:exph. specifies the password with which to authenticate the user
+specified with :xph.USERNAME:exph.. &private. &varres.
+:p.:xph.DISABLEDAUTHISERROR:exph. specifies that an error should be returned if
+a :xph.USERNAME/PASSWORD:exph. is specified but authentication has been
+disabled.  This option overrides any default specified in the STAF configuration
+file.
+:p.:xph.IGNOREDISABLEDAUTH:exph. specifies that any :xph.USERNAME/PASSWORD:exph.
+specified on the request is ignored if authentication is disabled.  This option
+overrides any default specified in the STAF configuration file.
+:p.:xph.STATICHANDLENAME:exph. specifies that a static handle should be created
+for this process.  The name specified for this option will be the registered
+name of the static handle.  Using this option will also cause the environment
+variable STAF_STATIC_HANDLE to be set appropriately for the process.
+See :hdref refid=stafshs. for more information on static handles. &varresNoErrors.
+:p.:xph.STDIN:exph. specifies the name of the file from which standard input
+will be read. &varresNoErrors.
+:p.:xph.STDOUT:exph. specifies the name of the file to which standard output
+will be redirected.  If the file already exists, it will be replaced.
+If the directory path specified for the file does not exist, it will be created.
+&varresNoErrors.
+:p.:xph.STDOUTAPPEND:exph. specifies the name of the file to which standard
+output will be redirected.  If the file already exists, the process' standard
+output will be appended to it. If the directory path specified for the file
+does not exist, it will be created. &varresNoErrors.
+:p.:xph.STDERR:exph. specifies the name of the file to which standard error
+will be redirected.  If the file already exists, it will be replaced.
+If the directory path specified for the file does not exist, it will be created.
+&varresNoErrors.
+:p.:xph.STDERRAPPEND:exph. specifies the name of the file to which standard
+error will be redirected.  If the file already exists, the process' standard
+error will be appended to it. If the directory path specified for the file
+does not exist, it will be created. &varresNoErrors.
+:p.:xph.STDERRTOSTDOUT:exph. specifies that standard error should be redirected
+to the same file to which standard output is being redirected.  This option is
+valid only if :xph.STDOUT:exph. or :xph.STDOUTAPPEND:exph.  or :xph.RETURNSTDOUT:exph. is specified.
+:p.:xph.RETURNSTDOUT:exph. specifies that the contents of the file to which
+standard output was redirected should be returned when the process completes.
+If :xph.STDOUT:exph. is not specified, standard output will be redirected
+to a temporary file.
+If :xph.STDERRTOSTDOUT:exph. is specified, the file returned
+will contain both standard output and standard error.
+This information is only available if using the :xph.WAIT:exph. or
+:xph.NOTIFY:exph. options.
+:p.:xph.RETURNSTDERR:exph. specifies that the contents of the file to which
+standard error was redirected should be returned when the process completes.
+If :xph.STDERR:exph. is not specified, standard error will be redirected
+to a temporary file.
+This information is only available if using the :xph.WAIT:exph. or
+:xph.NOTIFY:exph. options.
+:p.:xph.RETURNFILE:exph. specifies that the contents of the specified file
+should be returned when the process completes.  This information is only
+available if using the :xph.WAIT:exph. or :xph.NOTIFY:exph. options. &varresNoErrors.
+:p.:xph.NOTIFY ONEND:exph. specifies that you wish to send a notification
+when this process ends.  See :hdref refid=procreg. for the content of the
+notification message.
+:p.:xph.MACHINE:exph. specifies the machine to which the notification should
+be sent.  The default is the machine submitting the request. &varresNoErrors.
+:p.:xph.PRIORITY:exph. specifies the priority of the notification message.
+The default is 5. &varres.
+:p.:xph.KEY:exph. specifies a key that will be included in the notification
+message.  &varresNoErrors.
+:p.:xph.HANDLE:exph. specifies the handle to which the notification should be
+sent.  The default is the handle of the process submitting the request.
+&varres.
+:p.:xph.NAME:exph. specifies the registered name of the process(es) to which
+the notification should be sent. &varresNoErrors.
+:p.
+:h4.Notes
+:p.
+:ol.
+:li.On Windows systems, if you are redirecting stdin/out/err and are not
+using SAMECONSOLE, it is recommended that you redirect all three input/output
+streams.  If one or two streams are redirected, but not all three, the
+non-redirected streams will not be available to the application.  For example,
+if stdout and stderr are redirected, but not stdin, then the application will
+receive errors if it tries to read from standard input.  As another example,
+if stdin and stdout are redirected, but not stderr, then you will not see any
+of the standard error output displayed in the console window.  This problem
+only occurs when using NEWCONSOLE, which is the default.  You may freely
+redirect any combination of stdin, stdout, and stderr when using SAMECONSOLE.
+This problem is due to a known limitation in the Windows API.
+:li.A STAF handle variable for the process named STAF/Service/Process/OrgEndpoint
+is set that contains the endpoint for the system that originated the
+:xph.PROCESS START:exph. request.  The process can use this variable
+if it needs to communicate back to the machine that started the process.
+:li.Since the entire contents of returned files are stored in the
+result string, if you attempt to return the contents of a very large
+file, you may run out of memory so it is not recommended that you
+use the RETURNSTDOUT, RETURNSTDERR, or RETURNFILE options to return
+large files.  To help prevent this problem, you can specify a maximum size
+for a file returned by this request by setting the MAXRETURNFILESIZE
+operational parameter in the STAF configuration file on the machine where
+the process is run, or by setting the STAF/MaxReturnFileSize variable in the
+request variable pool of the handle that submitted the request.
+The lowest of these two values is used as the maximum return file size
+(not including 0 which indicates no limit).
+:eol.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes from START are documented in :hdref refid=retcode..
+
+:h4 id=psres.Results
+:p.
+:ul.
+:li.If the :xph.ASYNC:exph. option is specified, or defaulted to (by not
+specifying the :xph.WAIT:exph. option), the result buffer will
+contain the handle of the started process.
+:p.
+:li.If the :xph.WAIT:exph. option is specified and the submit call
+does not timeout, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Process/CompletionInfo>:exph. which
+represents the completion information for the process,
+including the return code from the process, the :xph.KEY:exph.
+(if one was specified with the :xph.NOTIFY ONEND:exph. option), as well as
+any files specified by :xph.RETURNSTDOUT:exph., :xph.RETURNSTDERR:exph.,
+and/or :xph.RETURNFILE:exph..
+:p. 
+The maps are defined as follows:
+:table cols='* * 3* *'.
+:tcap.Definition of map class STAF/Service/Process/CompletionInfo
+:tnote text='Description'.This map class represents completion information
+for a process.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.rc
+:c.Return Code
+:c.&stringObj.
+:c.
+:row.
+:c.key
+:c.Key
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.fileList
+:c.Files
+:c.:xph.<List> of <Map&colon.STAF/Service/Process/ReturnFileInfo>:exph.
+:c.
+:tnote text='Notes'.
+The "Files" value will contain a list of information about the files
+requested to be returned, or an empty list if no files were requested
+to be returned.  Files will be returned in the order of standard output,
+then standard error, then any files specified with the :xph.RETURNFILE:exph.
+option.
+:etnote.
+:etable.
+:p.
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Process/ReturnFileInfo
+:tnote text='Description'.This map class represents a file returned by the process.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.rc
+:c.Return Code
+:c.&stringObj.
+:c.
+:row.
+:c.data
+:c.Data
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+For each file, a standard STAF return code indicating the success or failure
+of retrieving the file's contents is provided.  If the file's return code
+is 0, then the data contained in the file is also provided.
+If the file's return code is 58 (Maximum Size Exceeded), that indicates
+that the file size exceeded the maximum return file size.
+:etnote.
+:etable.
+:p.
+For example, suppose a :xph.PROCESS START COMMAND "java TestA" WAIT:exph.
+request is submitted from the command line, and assume that the
+process completed successfully and returned 0.
+The result, in verbose format, could look like the following:
+:xmp.
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : []
+}
+:exmp.
+:p.
+For example, suppose a :xph.PROCESS START COMMAND "java TestA" RETURNSTDOUT RETURNSTDERR WAIT:exph.
+request is submitted from the command line, and assume that the
+process completed successfully and returned 0, that the
+standard output of the process was simply "Success !!!", and that the
+standard error of the process was blank.
+The result, in verbose format, could look like the following:
+:xmp.
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : [
+    {
+      Return Code: 0
+      Data       : Success !!!
+    }
+    {
+      Return Code: 0
+      Data       : 
+    }
+  ]
+}
+:exmp.
+:p.
+:li.If the :xph.WAIT:exph. option is specified but the submit call timed out,
+the result buffer will contain the handle of the started process.  Note, you
+will also receive a Timeout error code in this case.
+:eul.
+
+:h4.Examples
+:p.
+The following examples show the syntax, and results using the STAF command
+executable from a Windows command prompt.  These STAF requests could
+also be submitted from a program (e.g. Java, C++, Perl, shell, etc.) or
+via a &lt;process> element in a STAX job.
+:ul.
+:li.:hp2.Goal::ehp2. Start the java executable (with the -version parameter)
+on the local machine.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF local PROCESS START SHELL COMMAND "java -version"
+Response
+--------
+35
+:exmp.
+The result buffer contains the handle number of the process that was started
+(which in this case is 35).  This is not the return code of the process
+as the process was started asynchronously (no :xph.WAIT:exph. option was specified)
+so it doesn't wait for the process to complete.
+:p.If you invoke the same process again, you'll get a different handle number
+each time.  For example:
+:xmp.
+C:\>STAF local PROCESS START SHELL COMMAND "java -version"
+Response
+--------
+37
+:exmp.
+If you want the STAF command to wait for the process to complete before
+returning, specify the :xph.WAIT:exph. option.  For example:
+:xmp.
+C:\>STAF local PROCESS START SHELL COMMAND "java -version" WAIT
+Response
+--------
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : []
+}
+:exmp.
+The result buffer contains a map of the results from running the "java -version"
+command, including the return code from the command which was 0 in this example.
+A return code of 0 from a "java -version" command indicates that the
+command ran successfully.  Note that no files were returned, as indicated
+by an empty list, [], since none of the return file options (:xph.RETURNSSTDOUT:exph.,
+:xph.RETURNSTDERR:exph., :xph.RETURNFILE:exph.) were specified.
+:p.
+The "java -version" command writes the Java version information to standard error (stderr).
+To obtain that information, plus any information written to standard output (stdout),
+you could use the :xph.STDERRTOSTDOUT:exph. option to redirect stderr to stdout and
+use the :xph.RETURNSTDOUT:exph. option to return the content of stdout.  For example:
+:xmp.
+C:\>STAF local PROCESS START SHELL COMMAND "java -version" WAIT STDERRTOSTDOUT RETURNSTDOUT
+Response
+--------
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : [
+    {
+      Return Code: 0
+      Data       : java version "1.5.0"
+Java(TM) 2 Runtime Environment, Standard Edition (build 1.5.0-b64)
+Java HotSpot(TM) Client VM (build 1.5.0-b64, mixed mode, sharing)
+
+    }
+  ]
+}
+:exmp.
+The result buffer contains a map of the results from running the "java -version"
+command, including a return code of 0 and a list of the files returned by the
+process, which in this case contains one file (the stdout file).
+For each file returned, a standard STAF return code is provided which
+indicates the success or failure of retrieving the file's contents, which
+in this case was 0, indicating the file's contents were successfully retrieved.
+In addition, if the file's return code is 0, then the data contained in the
+file is also provided.  In this case, it contains the java version information.
+:p.
+Note that instead of specifying local as the machine on which to start this
+process, you could have specified the name of a remote machine that is also
+running STAF and which has given trust level 5 to the requesting machine.
+:p.
+:li.:hp2.Goal::ehp2. Start the myTest.exe executable on machine client1.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF client1 PROCESS START COMMAND myTest.exe
+Response
+--------
+60
+:exmp.
+The result buffer contains the handle number of the process that was started
+(which in this case is 60).  This is not the return code of the process
+as the process was started asynchronously (without the :xph.WAIT:exph. option)
+so the STAF request completes as soon as the process is started and doesn't
+wait for the process to complete.
+:p.
+However, if the myTest.exe file was not found in the system path on machine client1,
+you would get an error starting the process.  For example:
+:xmp.
+C:\>STAF client1 PROCESS START COMMAND myTest.exe
+Error submitting request, RC: 10
+Additional info
+---------------
+Error starting the process. CreateProcess failed with OS RC 2: The system cannot
+ find the file specified.
+:exmp.
+The return code from the STAF request is 10.  STAF RC 10 indicates a base
+operating system error was encountered (e.g. STAF local HELP ERROR 10 gives
+more information about STAF RC 10) and an error message that includes the
+actual base operating system error code, 2, is provided in the result buffer.
+OS error code 2 indicates that a file was not found.  In this case, the
+myTest.exe file was not found since it's not in the system path.
+:p.
+If myTest.exe is located in directory C:\tests on machine client1, you
+can fully qualify the path to myTest.exe so that the command can be located
+and successfully started.  For example:
+:xmp.
+C:\>STAF client1 PROCESS START COMMAND C:/tests/myTest.exe
+Response
+--------
+62
+:exmp.
+Or, if you wanted myTest.exe to run in an environment where the system path
+included the C:/tests directory, you can use the :xph.ENV:exph. option to
+update the system path environment variable.  Note that if you specify the
+:xph.SHELL:exph. option in this situation, you don't need to specify the
+path to the command because the updated system path will be used to
+find the command.  For example:
+:xmp.
+C:\>STAF client1 PROCESS START SHELL COMMAND myTest.exe ENV PATH=C:/tests{STAF/Config/Sep/Path}{STAF/Env/Path}
+Response
+--------
+64
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Start a java testcase named TestA (located in directory
+C:/tests) on machine client1 and wait for it to complete and return any data that
+the testcase program wrote to stdout and to stderr.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF client1 PROCESS START COMMAND "java -cp C:/tests TestA" WAIT RETURNSTDOUT RETURNSTDERR
+Response
+--------
+{
+  Return Code: 0
+  Key        : <None>
+  Files      : [
+    {
+      Return Code: 0
+      Data       : SUCCESS.  Yippee!!!
+    }
+    {
+      Return Code: 0
+      Data       :
+    }
+  ]
+}
+:exmp.
+The result buffer contains a map of the results from running the java testcase,
+including a return code of 0 and a list of the files returned.  The first file
+returned is stdout and it contains :xph."SUCCESS.  Yippee!!!":exph..  The second file
+returned is stderr and it contains nothing.
+:p.
+:li.:hp2.Goal::ehp2. Start a Windows .bat file named C:\test.bat on Windows machine
+client2 and wait for it to complete.  If the .bat file exits using the:xph. /B :exph.option,
+e.g. :xph. EXIT /B [rc]:exph., you'll see that the process return code when run via a
+PROCESS START request is always 0 instead of the value of ERRORLEVEL.
+(Note:  Run "HELP EXIT" from a Windows command prompt to explain what the:xph. /B :exph.
+option does.)
+In order to get the real process return code, you need to exit without using the:xph. /B :exph.
+option.  For example,:xph. EXIT 99 :exph..
+However, if you cannot change the .bat file (or don't want to), then here's an example
+of how you can use the Windows command separator (:xph.&:exph.) to run three commands
+as a single process.  First, run the .bat file.  Second, get the ERRORLEVEL value and
+set another environment variable named PROCESSRC (or whatever name you prefer) to it's value.
+Third, exit using the PROCESSRC value.  For this example, C:\test.bat contains:
+:xmp.
+@echo off
+EXIT /B 99
+:exmp.
+:p.:hp2.Syntax and Results::ehp2.
+:xmp.
+C:\>STAF client2 PROCESS START SHELL COMMAND "C:/test.bat & set PROCESSRC=%ERRORLEVEL% & exit %PROCESSRC%" WAIT
+Response
+--------
+{
+  Return Code: 99
+  Key        : <None>
+  Files      : []
+}
+:exmp.
+:eul.
+:p.
+The following examples show the goal and the syntax of the request to submit to the
+:xph.PROCESS:exph. service but not the results.
+:ul.
+:li.:hp2.Goal::ehp2. Start tc1.exe with a title of "Testcase 1" from directory
+d:\testcase with environment variables RUNMODE set to Type1 and AUTO=1.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc1.exe TITLE "Testcase 1" WORKDIR d:/testcase ENV RUNMODE=Type1 ENV AUTO=1:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start the tc2 executable from directory d:\webtests as part of workload
+Web Tests, with STAF variables WebServer set to testsrv1.test.austin.ibm.com and RunMode set to 1,
+and don't return until it completes.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2 WORKDIR d:/webtests VAR WebServer=testsrv1.test.austin.ibm.com VAR RunMode=1 WORKLOAD "Web Tests" WAIT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start testcase www1.exe.  The testcase resides in and should
+be run from the directory referred to by variable WWWTestDir.  Wait a
+maximum of 30 minutes for the process to end.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND {WWWTestDir}/www1.exe WORKDIR {WWWTestDir} WAIT 30m:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start tc2.exe from directory c:/testcase and register to
+receive a notification when the process ends.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2.exe WORKDIR c:/testcase NOTIFY ONEND:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start tc2.exe from directory c:\testcase and register to
+have a priority 1 notification sent to registered process name ProcessHandler
+on machine EventController.  The Key "9bt1az54fq" will be included in the
+notification message.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2.exe WORKDIR c:/testcase NOTIFY ONEND PRIORITY 1 MACHINE EventController NAME ProcessHandler KEY 9bt1az54fq:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start tc2.exe from directory c:\testcase and it to be STOPed
+via the SIGINT method.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2.exe WORKDIR c:/testcase STOPUSING SIGINT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start tc2.exe from directory c:\testcase and have it run in the
+same console as STAFProc.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2.exe WORKDIR c:/testcase SAMECONSOLE:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start tc2 from directory /testcases using userid testuser and
+password tupass and use privacy delimiters to indicate that the password is private.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2 WORKDIR /testcases USERNAME testuser PASSWORD !!@tupass@!!:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start tc2 from directory /testcases and redirect standard output
+to /testcases/tc2/stdout.txt.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc2 WORKDIR /testcase STDOUT /testcases/tc2/stdout.txt:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script tc3.sh and ensure it uses a static handle with
+registered name "Test case 3".
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc3.sh STATICHANDLENAME "Test case 3":exph.
+:p.
+:li.:hp2.Goal::ehp2. Execute the following shell-style command "ps | grep test |
+wc >testcount.txt"
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START SHELL COMMAND "ps | grep test | wc >testcount.txt":exph.
+:p.
+:li.:hp2.Goal::ehp2. Execute the following shell-style
+command "grep 'Count = ' /tests/out | awk '{print $5}'" redirecting its standard
+output and standard error to /tests/awk.out.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START SHELL COMMAND "grep 'Count = ' /tests/out | awk '{print $5}'" STDOUT /tests/awk.out STDERRTOSTDOUT:exph.
+:p.:hp2.Note::ehp2.  When using STAF V3.4.0 or later, you no longer have to use
+a caret (^) as an escape character for "{" if it does not denote a variable
+reference because the :xph.IGNOREERRRORS:exph. option is used when submitting a
+VAR RESOLVE request to resolve variables in option values on a PROCESS START request.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script tc3.sh and redirect its standard output and
+standard error to /tmp/tc3.out
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc3.sh STDOUT /tmp/tc3.out STDERRTOSTDOUT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script tc3.sh, redirect its standard output and
+standard error to /tmp/tc3.out, and wait for it to complete.  Additionally,
+have the contents of standard output (which also contains standard error),
+as well as the contents of file /tmp/tc3.results, returned when the script completes.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc3.sh STDOUT /tmp/tc3.out STDERRTOSTDOUT WAIT RETURNSTDOUT RETURNFILE /tmp/tc3.results:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script tc3.sh, redirect its standard output and
+standard error to a temporary file (indicated by not specifying STDOUT),
+and wait for it to complete.  Additionally, have the contents of standard output
+(which also contains standard error) returned when the script completes.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START COMMAND tc3.sh STDERRTOSTDOUT WAIT RETURNSTDOUT:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script "D:/tests/test1.sh machA" on a Windows system specifying
+to start the command via a Cygwin shell.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START SHELL "D:/Cygwin/bin/bash.exe -c %C" COMMAND "D:/tests/test1.sh machA" WORKDIR D:/tests:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script "/tests/test1.sh machA" on a Unix system specifying
+to start the command via a xterm shell with a title of "Test 1" and to redirect standard
+output to /tests/test1.out.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START SHELL "xterm -title %T -e /bin/sh -c %X" COMMAND "/tests/test1.sh machA" TITLE "Test 1" STDOUT /tests/test1.out:exph.
+:p.
+:li.:hp2.Goal::ehp2. Start shell-script "/tests/test1.sh machA" on a Unix system specifying
+to start the command via a C shell.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START SHELL "/bin/csh -c %C" COMMAND "/tests/test1.sh machA" WORKDIR /tests:exph.
+:p.
+:li.:hp2.Goal::ehp2. Run a command, 'echo $HOME', on a UNIX system as if the system was
+actually logged in as a user named test so that it echos the home directory for user
+test, e.g. /home/test, instead of the home directory for the root user that STAFProc
+was started with, e.g. /root.
+:p.:hp2.Syntax::ehp2.&nbsp;
+:xph.START SHELL 'su - %u -c %C' COMMAND 'echo $HOME' USERNAME test WAIT STDOUT /temp/test.out STDERRTOSTDOUT RETURNSTDOUT:exph.
+:eul.
+
+.*---------------------------------------------------------------------
+:ih1.process
+:i2.Starting a process under a different username
+:h4 id=winuser.Starting a Process Under a Different User on Windows
+:p.
+To start a process under a different user name on a Windows system, the following
+requirements must be met:
+:ol.
+:li.The :xph.PROCESSAUTHMODE:exph. operational parameter must be set
+to :xph.WINDOWS:exph. on the system where the process is run.
+See :hdref refid=opparms. for more information on how to enable
+the :xph.PROCESSAUTHMODE:exph. operational parameter.
+:li.The Windows system where the process is run must be Windows 2000 or later.
+:li.The user currently logged on the system where the process is specified to run
+must be a member of the Administrators group and must have the following user rights:
+:ul compact.
+:li.Act as part of the operating system  (if Win2000)
+:li.Replace a process level token  (if Win2000 or later)
+:eul.
+See :hdref refid=winuserrights. for more information on how to change user rights assignments.
+:li.On Windows XP systems, the user name specified when starting a process must have a password.
+:li.On Windows Vista and Windows Server 2008 systems, STAFProc.exe must be run as an administrator to start
+a process as another user.  Otherwise, submitting a STAF PROCESS START request specifying
+the USERNAME/PASSWORD options to start a process as another user will fail
+with RC 10 "LoadUserProfile failed with OS RC 1314:  A required privilege is not held by the
+client" even though you assigned the "Replace a process level token" user right to the
+administrator account.  On Windows Vista, STAFProc is run using the least amount of privileges
+(e.g. that of a standard user) even though you are logged in as an administrator.
+In order to start a process as another user, you must run STAFProc as an administrator.
+There are several ways to do this:
+:ul compact.
+:li.Find STAFProc.exe (e.g. C:\STAF\bin\STAFProc.exe) via Windows Explorer and
+right mouse click on it.  To change just this one instance of starting STAFProc,
+select "Run as administrator".
+:li.Or, find STAFProc.exe (e.g. C:\STAF\bin\STAFProc.exe) via Windows Explorer and
+right mouse click on it.  Select "Properties" and then select the "Compatibility" tab,
+and check the box under "Privilege Level" labeled "Run the program as an administrator"
+and select OK.  Now, any time you start STAFProc it will be run as an administrator.
+:li.Or find "Command Prompt" and right mouse on it and select "Run as administrator".
+Any program such as STAFProc that is run from a "Administrator: Command Prompt", will be
+run as an administrator.
+:eul.
+:eol.
+:p.
+There are operating system limitations on how many processes can run concurrently under a
+different user in the same desktop.  If you get RC 10 with OS RC 1816, and the user name
+that the process is being run under is not a member of the Administrator group, then you
+may want to give it the "Increase quotas" user right so that more processes can
+run concurrently.  See :hdref refid=winuserrights. for more information on how to change
+user rights assignments.
+:p.
+If you are having problems starting a process under a different user name, use the Trace service
+to enable error and warning trace points to see if you get more information.
+.*---------------------------------------------------------------------
+:ih1.process
+:i2.Changing User Rights Assignments
+:h4 id=winuserrights.Changing User Rights Assignments
+:p.
+This information is provided to help you change user rights assignments as needed to
+start a process under a different user name.
+:p.
+On Windows Vista systems, to view or modify user rights assignments in the local security policy,
+perform the following:
+:ol compact.
+:li.Open the Control Panel, from the Classic view, double click on "Administrative Tools".
+:li.Double click on "Local Security Policy".
+:li.Double click on "Local Policies".
+:li.Click on "User Rights Assignment".
+:li.Double click on the user right you want to view or modify.
+:li.Add any users or groups you require.
+:li.If the rights for a user currently logged on are changed, the user must
+logoff for the changes to take effect.
+:eol.
+:p.
+On Windows XP systems, to view or modify user rights assignments in the local security policy,
+when logged on as an administrator, perform the following:
+:ol compact.
+:li.Open the Control Panel, from the Classic view, double click on "Administrative Tools".
+:li.Double click on "Local Security Policy".
+:li.Click on "User Rights Assignment".
+:li.Double click on the user right you want to view or modify.
+:li.Add any users or groups you require.
+:li.If the rights for a user currently logged on are changed, the user must
+logoff for the changes to take effect.
+:eol.
+On Windows 2000 systems, to view or modify user rights assignments in the local security policy,
+when logged on as an administrator, perform the following:
+:ol compact.
+:li.Click on Start -> Settings -> Control Panel and double click on "Administrative Tools".
+:li.Double click on "Local Security Policy" and double click on "Local Policies".
+:li.Double click on "User Rights Assignment".
+:li.Double click on the user right you want to view or modify.
+:li.Add any user names you require.
+:li.If the rights for a user currently logged on are changed, the user must
+logoff for the changes to take effect.
+:eol.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.STOP
+:i3.process service
+:h3 id=psstop.STOP
+:p.STOP allows you to stop a process that was started via STAF (e.g. a process
+that was started by submitting a START request to the PROCESS service).
+You may stop a single process, all processes that are part of a given workload, or all
+processes started by STAF.
+:h4.Syntax
+:xmp.
+STOP <ALL CONFIRM | WORKLOAD <Name> | HANDLE <Handle>> &lbrk.USING <Method>&rbrk.
+:exmp.
+:p.:xph.ALL:exph. specifies that you want to stop all running processes that
+STAF has STARTed.  If you wish to do this, you must also specify the
+:xph.CONFIRM:exph. option.
+:p.:xph.WORKLOAD:exph. specifies that you want to stop all processes that are
+part of a given workload. &varres.
+:p.:xph.HANDLE:exph. specifies that only the specified handle should be stopped. &varres.
+:p.:xph.USING:exph. specifies the method used to stop the process.  &varres.
+The following methods are supported&colon.
+:ul compact.
+:li.SIGKILLALL - This unconditionally stops the process and all of its
+child processes.  On Unix systems, this sends a SIGKILL signal to the
+process and all of its child processes.
+On Windows XP and later systems,  this uses the taskkill command with
+the force (/f) and tree (/t) options.
+On Windows 2000 and earlier systems, this sends a WM_CLOSE message to
+the application (see below for more information on WM_CLOSE).
+This is particularly useful for stopping console applications which spawn
+numerous child processes.  This is the default.
+:li.SIGKILL - This unconditionally stops the process.  On Unix systems, this
+sends a SIGKILL signal to the process.  On Windows, this calls TerminateProcess().
+:li.SIGTERM - On Unix systems, this sends a SIGTERM signal to the process.
+On Windows systems, this sends a CTRL-Break event to the process (note,
+the process must have been STARTed with the SAMECONSOLE option for this to work).
+:li.SIGTERMALL - On Unix systems, this sends a SIGTERM signal to the process
+and all of its child processes.  This is not supported on Windows systems.
+:li.SIGINT - On Unix systems, this sends a SIGINT signal to the process.
+On Windows systems, this sends a CTRL-C event to the process (note, the
+process must have been STARTed with the SAMECONSOLE option for this to work).
+:li.SIGINTALL - On Unix systems, this sends a SIGINT signal to the process
+and all of its child processes.  This is not supported on Windows systems.
+:li.WM_CLOSE - On Windows systems, this unconditionally stops the process
+and all of its child processes by sending a WM_CLOSE message to the application.
+This will not work on console applications started using the SAMECONSOLE
+option.  This is not supported on Unix systems.
+:eul.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from STOP are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+:ul.
+:li.If the :xph.HANDLE:exph. option is specified, the result buffer
+will be empty if successful.
+:p.
+:li.If the :xph.ALL:exph. or :xph.WORKLOAD:exph. option is specified,
+the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Process/StopInfo>:exph. defined as follows
+if successful:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Process/StopInfo
+:tnote text='Description'.This map class represents statistics for
+stopped processes.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.stoppedProcesses
+:c.Stopped Processes
+:c.&stringObj.
+:c.
+:row.
+:c.totalProcesses
+:c.Total Processes
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+This map contains the number of processes actually stopped
+and the total number of processes.  These two numbers will be 
+different if some of the processes have already been stopped or
+have already completed execution on their own.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Stop process with handle 42.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.STOP HANDLE 42:exph.
+:p.
+:li.:hp2.Goal::ehp2. Gracefully stop process with handle 113 using the SIGTERM method.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.STOP HANDLE 113 USING SIGTERM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Unconditionally stop process with handle 17.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.STOP HANDLE 17 USING SIGKILL:exph.
+:p.
+:li.:hp2.Goal::ehp2. Stop all processes in the Web Tests workload.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.STOP WORKLOAD "Web Tests":exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Stopped Processes: 5
+Total Processes: 18
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Stop all processes currently running via STAF.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.STOP ALL CONFIRM:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Stopped Processes: 16
+Total Processes: 16
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.KILL
+:i3.process service
+:h3 id=pskill.KILL
+:p.KILL allows you to kill any process (even a process not started by STAF),
+except for the STAFProc process.  Instead, use the SHUTDOWN service to shut
+down the STAFProc process.
+:p.
+:hp2.Note&colon.:ehp2. If you want to kill a process that you started via STAF,
+in most cases, you probably want to use the STOP request to kill the process
+rather than using the KILL request.
+:p.
+:hp2.Warning&colon.:ehp2. Be very careful when using this command to specify
+the correct pid for the process you want to kill so that you don't accidently
+kill a process that you didn't intend to kill.
+
+:h4.Syntax
+:xmp.
+KILL PID <Pid> CONFIRM &lbrk.USING <Method>&rbrk.
+:exmp.
+:p.:xph.PID:exph. specifies the process id (e.g. pid) of the process that
+should be killed. &varres.
+:p.:xph.CONFIRM:exph. confirms that you really want to kill this process.
+:p.:xph.USING:exph. specifies the method used to kill the process.  &varres.
+The following methods are supported&colon.
+:ul compact.
+:li.SIGKILLALL - This unconditionally stops the process and all of its
+child processes.  On Unix systems, this sends a SIGKILL signal to the
+process and all of its child processes.
+On Windows XP and later systems,  this uses the taskkill command with
+the force (/f) and tree (/t) options.
+On Windows 2000 and earlier systems, this sends a WM_CLOSE message to
+the application (see below for more information on WM_CLOSE).
+This is particularly useful for stopping console applications which spawn
+numerous child processes.  This is the default.
+:li.SIGKILL - This unconditionally stops the process.  On Unix systems, this
+sends a SIGKILL signal to the process.  On Windows, this calls TerminateProcess().
+:li.SIGTERM - On Unix systems, this sends a SIGTERM signal to the process.
+On Windows systems, this sends a CTRL-Break event to the process (note,
+the process must have been STARTed with the SAMECONSOLE option for this to work).
+:li.SIGINT - On Unix systems, this sends a SIGINT signal to the process.
+On Windows systems, this sends a CTRL-C event to the process (note, the
+process must have been STARTed with the SAMECONSOLE option for this to work).
+:li.WM_CLOSE - On Windows systems, this unconditionally stops the process
+and all of its child processes by sending a WM_CLOSE message to the application.
+This will not work on console applications started using the SAMECONSOLE
+option.  This is not supported on Unix systems.
+:eul.
+:p.
+If the :xph.USING:exph. option is not specified, it will use the default
+stop method for the PROCESS service.  You can list the settings
+for the PROCESS service, including the default stop method by submitting
+a :xph.LIST SETTINGS:exph. request to the PROCESS service.
+
+:h4.Security
+:p.&seclvl. 5.
+
+:h4.Return Codes
+:p.All return codes from KILL are documented in :hdref refid=retcode..
+
+:h4.Results
+:p.
+If successful, the result buffer will be empty.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Kill the process with pid 1884 using the default stop
+method for the the PROCESS service.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.KILL PID 1884 CONFIRM:exph.
+:p.
+:li.:hp2.Goal::ehp2. Kill the process with pid 1232 using the SIGKILL method.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.KILL PID 1231 CONFIRM USING SIGKILL:exph.
+:p.
+:li.:hp2.Goal::ehp2. Kill the process with pid 3340 running on Windows using
+the WM_CLOSE method.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.KILL PID 3340 CONFIRM USING WM_CLOSE:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.process service
+:h3.LIST
+:p.LIST allows you to obtain information about all of the processes started
+via STAF, or only those processes started via STAF that are currently
+running, or only those processes started via STAF that have completed.
+You may get information about any process started in :xph.WAIT:exph. mode
+that is still running and/or about any process started in :xph.ASYNC:exph.
+mode that has not yet been freed.
+:p.You can also list the operational settings for the Process service.
+:h4.Syntax
+:xmp.
+LIST &lbrk.HANDLES&rbrk. &lbrk.RUNNING&rbrk. &lbrk.COMPLETED&rbrk. &lbrk.WORKLOAD <Name>&rbrk. &lbrk.LONG&rbrk. 
+:exmp.
+or
+:xmp.
+LIST SETTINGS
+:exmp.
+:p.:xph.HANDLES:exph. specifies that you want information for process handles.
+:p.:xph.RUNNING:exph. specifies that you only want information for processes
+that are currently running.
+:p.:xph.COMPLETED:exph. specifies that you only want information for processes
+started in :xph.ASYNC:exph. mode that have completed, but have not yet been
+freed.
+:p.:xph.WORKLOAD:exph. specifies that you want information for processes
+that are part of a given workload. &varres.
+:p.:xph.LONG:exph. specifies that you want to list more detailed information
+for the processes.
+:p.:xph.SETTINGS:exph. specifies that you want to list the current
+operational settings for the Process service.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.On successful return:
+:ul.
+:li.If option :xph.LONG:exph. is not specified (and option :xph.SETTINGS:exph.
+is not speciifed), the result buffer will contain
+a marshalled :xph.<List> of <Map&colon.STAF/Service/Process/ProcessListInfo>:exph.
+representing processes started in :xph.WAIT:exph. mode that are still
+running and/or processes started in :xph.ASYNC:exph. mode that have not
+yet been freed. 
+The map is defined as follows: 
+:table cols='* * * 3*'.
+:tcap.Definition of map class STAF/Service/Process/ProcessListInfo
+:tnote text='Description'.This map class represents a process.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.command
+:c.Command
+:c.&stringObj.
+:c.&maskPrivate.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.endTimestamp
+:c.End Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.rc
+:c.Return Code
+.br
+(RC)
+:c.&stringObj | &noneObj.
+:c.
+:tnote text='Notes'.
+The value for "End Date-Time" and "Return Code" will be &noneObj. if
+the process is still running.
+:etnote.
+:etable.
+:p.
+:li.If option :xph.LONG:exph. is specified, the result buffer will contain
+a marshalled :xph.<List> of <Map&colon.STAF/Service/Process/ProcessListLong>:exph.
+representing more detailed information about processes started in :xph.WAIT:exph. mode
+that are still running and/or processes started in :xph.ASYNC:exph. mode that have not
+yet been freed. 
+The map is defined as follows: 
+:table cols='* * * 3*'.
+:tcap.Definition of map class STAF/Service/Process/ProcessListLong
+:tnote text='Description'.This map class represents detailed information for a process.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.workload
+:c.Workload
+:c.&stringObj | &noneObj.
+:c.
+:row.
+:c.command
+:c.Command
+:c.&stringObj.
+:c.&maskPrivate.
+:row.
+:c.pid
+:c.PID
+:c.&stringObj.
+:c.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+.br
+(Start D-T)
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.endTimestamp
+:c.End Date-Time
+.br
+(End D-T)
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.rc
+:c.Return Code
+.br
+(RC)
+:c.&stringObj | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The "PID" value will contain the process id assigned by the operating system.
+:li.The value for "End Date-Time" and "Return Code" will be &noneObj. if
+the process is still running.
+:eol.
+:etnote.
+:etable.
+:p.
+:li.If option :xph.SETTINGS:exph. is specified, the result buffer will contain
+a marshalled :xph.<Map&colon.STAF/Service/Process/Settings>:exph.
+representing the current settings for the Process service.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Process/Settings
+:tnote text='Description'.This map class represents the operational
+settings for the Process service.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.defaultStopUsing
+:c.Default Stop Using Method
+:c.&stringObj.
+:c.
+:row.
+:c.defaultConsoleMode
+:c.Default Console Mode
+:c.&stringObj.
+:c.:xph.'New' | 'Same':exph.
+:row.
+:c.defaultFocus
+:c.Default Focus
+:c.&stringObj.
+:c.:xph.'Background' | 'Foreground' | 'Minimized':exph.
+:row.
+:c.processAuthMode
+:c.Process Auth Mode
+:c.&stringObj.
+:c.
+:row.
+:c.defaultAuthUsername
+:c.Default Auth Username
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.defaultAuthPassword
+:c.Default Auth Password
+:c.&stringObj. | &noneObj.
+:c.&maskPrivate.
+:row.
+:c.defaultAuthDisabledAction
+:c.Default Auth Disabled Action
+:c.&stringObj.
+:c.:xph.'Ignore' | 'Error':exph.
+:row.
+:c.defaultShell
+:c.Default Shell
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.defaultNewConsoleShell
+:c.Default New Console Shell
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.defaultSameConsoleShell
+:c.Default Same Console Shell
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.If the "Default Auth Username" is not set, it's value will be
+displayed as &noneObj..
+:li.If the "Default Auth Password" is not set, it's value will be
+displayed as &noneObj..  If a password has been set, :xph.'*******':exph.
+will be displayed instead of the actual password.
+:li.The values for "Default Shell", "Default New Console Shell", and
+"Default Same Console Shell" will display as &noneObj. if the
+corresponding default shell is not set (e.g. not overridden).
+:eol.
+:etnote.
+:etable.
+:eul.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. List all processes
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST:exph. (or :xph.LIST HANDLES:exph.)
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Handle Command                Start Date-Time   End Date-Time     RC
+------ ---------------------- ----------------- ----------------- ------
+17     notepad.exe            20051205-11:33:14 20040912-11:37:55 0
+25     java TestProcess 5 5 0 20051205-11:53:18 20040912-11:53:18 1
+29     java TestA             20051205-12:01:05 20040912-12:05:23 0
+43     java TestB             20051205-12:32:38 <None>            <None>
+47     C:/tests/MyTest.exe    20051205-12:32:56 <None>            <None>
+56     C:/tests/tc1.exe       20051205-12:33:24 20040912-12:35:32 3
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the processes that have completed.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST COMPLETED HANDLES:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Handle Command                Start Date-Time   End Date-Time     RC
+------ ---------------------- ----------------- ----------------- --
+17     notepad.exe            20051205-11:33:14 20040912-11:37:55 0
+25     java TestProcess 5 5 0 20051205-11:53:18 20040912-11:53:18 1
+29     java TestA             20051205-12:01:05 20040912-12:05:23 0
+56     C:/tests/tc1.exe       20051205-12:33:24 20040912-12:35:32 3
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the processes that are still running
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST RUNNING HANDLES:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Handle Command             Start Date-Time   End Date-Time RC
+------ ------------------- ----------------- ------------- ------
+43     java TestB          20051205-12:32:38 <None>        <None>
+47     C:/tests/MyTest.exe 20051205-12:32:56 <None>        <None>
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List detailed information about all the processes
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST LONG:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+H# Workload Command          PID  Start Date-Time   End Date-Time     RC     
+-- -------- ---------------- ---- ----------------- ----------------- --------- 
+17 <None>   notepad.exe      1444 20051205-11:33:14 20040912-11:37:55 0     
+25 <None>   java TestProcess 2836 20051205-11:53:18 20040912-11:53:18 1     
+             5 5 0
+29 My Test  java TestA       3376 20051205-12:01:05 20040912-12:05:23 0     
+43 My Test  java TestB       2776 20051205-12:32:38 <None>            <None>
+47 My Test  C:/tests/MyTest. 2448 20051205-12:32:56 <None>            <None>
+            exe
+56 TC1      C:/tests/tc1.exe 2840 20040912-12:33:24 20040912-12:35:32 3
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List all the processes with workload MyWorkload 
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST WORKLOAD "My Test":exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Handle Command             Start Date-Time   End Date-Time RC     
+------ ------------------- ----------------- ------------- ------
+43     java TestB          20051205-12:32:38 <None>        <None>
+47     C:/tests/MyTest.exe 20051205-12:32:56 <None>        <None>
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. List the current operational settings for the
+Process service
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Default Stop Using Method   : SigKillAll
+Default Console Mode        : New
+Default Focus               : Background
+Process Auth Mode           : Disabled
+Default Auth Username       : <None>
+Default Auth Password       : <None>
+Default Auth Disabled Action: Ignore
+Default Shell               : <None>
+Default New Console Shell   : <None>
+Default Same Console Shell  : <None>
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.process service
+:h3.QUERY
+:p.QUERY allows you to obtain detailed information about a process with a
+specified handle that was started via STAF.
+:h4.Syntax
+:xmp.
+QUERY HANDLE <Handle>
+:exmp.
+:p.:xph.HANDLE:exph. specifies the handle number of the process
+you want information on.  &varres.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from QUERY are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain a marshalled
+:xph.Map&colon.STAF/Service/Process/ProcessInfo>:exph., representing
+information about the process specified to be queried.
+The map is defined as follows:
+:table cols='* * * 3*'.
+:tcap.Definition of map class STAF/Service/Process/ProcessInfo
+:tnote text='Description'.This map class represents a process.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.Handle
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.title
+:c.Title
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.workload
+:c.Workload
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.shell
+:c.Shell
+:c.&stringObj. | &noneObj.
+:c.:xph.<Default Shell>:exph. if no value is specified
+:row.
+:c.command
+:c.Command
+:c.&stringObj.
+:c.&maskPrivate.
+:row.
+:c.parms
+:c.Parms
+:c.&stringObj. | &noneObj.
+:c.&maskPrivate.
+:row.
+:c.workdir
+:c.Workdir
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.focus
+:c.Focus
+:c.&stringObj.
+:c.:xph.'Background' | 'Foreground' | 'Minimized':exph.
+:row.
+:c.userName
+:c.User Name
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.key
+:c.Key
+:c.&stringObj. | &noneObj.
+:c.
+:row.
+:c.pid
+:c.PID
+:c.&stringObj.
+:c.
+:row.
+:c.startMode
+:c.Start Mode
+:c.&stringObj. 
+:c.:xph.'Async' | 'Wait':exph.
+:row.
+:c.startTimestamp
+:c.Start Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.endTimestamp
+:c.End Date-Time
+:c.&stringObj. | &noneObj.
+:c.&timestampFormat.
+:row.
+:c.rc
+:c.Return Code
+:c.&stringObj. | &noneObj.
+:c.
+:tnote text='Notes'.
+:ol compact.
+:li.The value for "PID" will be the process ID assigned by the operating system.
+:li.The value for "End Date-Time" and "Return Code" will be &noneObj. if
+the process is still running.
+:eol.
+:etnote.
+:etable.
+:p.
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Query a process with handle 17 that is still
+running.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY HANDLE 17:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Handle         : 17
+Handle Name    : <None>
+Title          : Notepad
+Workload       : MyWorkload
+Shell          : <None>
+Command        : notepad.exe
+Parms          : <None>
+Workdir        : <None>
+Focus          : Background
+User Name      : <None>
+Key            : <None>
+PID            : 3280
+Start Mode     : Async
+Start Date-Time: 20051205-11:33:14
+End Date-Time  : <None>
+Return Code    : <None>
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Query a process with handle 42 that has completed
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY HANDLE 42:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result in default format, could look like:
+:xmp.
+Handle         : 42
+Handle Name    : Web Tests
+Title          : TestA
+Workload       : <None>
+Shell          : <None>
+Command        : D:/Tests/TestA.exe
+Parms          : <None>
+Workdir        : D:/Tests
+Focus          : Background
+User Name      : <None>
+Key            : <None>
+PID            : 3285
+Start Mode     : Async
+Start Date-Time: 20051205-11:33:14
+End Date-Time  : 20051205-11:37:55
+Return Code    : 0
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.FREE
+:i3.process service
+:h3.FREE
+:p.When processes are STARTed asynchronously, the termination timestamp and
+return code are stored by STAF for later retrieval.  In order to free these
+values, you use the PROCESS FREE command.  You may only free information for
+processes that are already stopped.  You may free the termination information
+for a single process, all the stopped processes of a given workload, or all
+stopped processes that have been started by STAF.
+:h4.Syntax
+:xmp.
+FREE <ALL | WORKLOAD <Name> | HANDLE <Handle>>
+:exmp.
+:p.:xph.ALL:exph. specifies that you want to free the termination information
+for all stopped processes.
+:p.:xph.WORKLOAD:exph. specifies that you want to free the termination
+information for all processes that are part of a given workload. &varres.
+:p.:xph.HANDLE:exph. specifies that only the termination information for the
+specified handle should be freed. &varres.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.All return codes from FREE are documented in :hdref refid=retcode..
+:h4.Results
+:p.
+:ul.
+:li.If the :xph.HANDLE:exph. option is specified, the termination
+information will be freed for the specified handle, and the
+result buffer will be empty.
+:p.
+:li.If the :xph.ALL:exph. or :xph.WORKLOAD:exph. option is specified,
+the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Process/FreeInfo>:exph., representing
+the statistics for the freed processes.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Process/FreeInfo
+:tnote text='Description'.This map class represents statistics for
+freed processes.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.freedProcesses
+:c.Freed Processes
+:c.&stringObj.
+:c.
+:row.
+:c.totalProcesses
+:c.Total Processes
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+This map contains the number of processes for which termination
+information was actually freed and the total number of processes.
+These two numbers will be different if some of the processes have
+not yet been stopped or have not completed execution.
+:etnote.
+:etable.
+:eul.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Free the termination information for a process
+with handle 42.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.FREE HANDLE 42:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Freed Processes: 1
+Total Processes: 10
+:exmp.           
+:p.
+:li.:hp2.Goal::ehp2. Free the termination information for all the
+processes in the "Web Tests" workload.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.FREE WORKLOAD "Web Tests":exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in default format, could look like:
+:xmp.
+Freed Processes: 2
+Total Processes: 17
+:exmp.           
+:p.
+:li.:hp2.Goal::ehp2. Free the termination information for
+all stopped processes.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.FREE ALL:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Freed Processes: 15
+Total Processes: 16
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.process termination notifications
+:ih1.service commands
+:ih2.NOTIFY REGISTER/UNREGISTER
+:i3.process service
+:h3 id=procreg.NOTIFY REGISTER/UNREGISTER
+:p.NOTIFY REGISTER/UNREGISTER allow you to either register or unregister to
+receive a notification when a given process ends.
+
+:h4.Syntax
+:xmp.
+NOTIFY <REGISTER | UNREGISTER> ONENDOFHANDLE <Handle> &lbrk.MACHINE <Machine>&rbrk.
+       &lbrk.PRIORITY <Priority>&rbrk.  &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+:exmp.
+:p.
+:xph.REGISTER:exph. indicates you want to register for a notification
+when a process ends.  The queued message will have type "STAF/Process/End" and
+its message will contain a marshalled :xph.<Map>:exph. which represents the
+completion information for the process.  See tables :tref refid=STAFProcessEndTable.
+and :tref refid=ProcessReturnedFileTable. for the map definitions of a
+process completion message.
+:p.
+:xph.UNREGISTER:exph. indicates you want to unregister a process end
+notification.
+:p.
+:xph.ONENDOFHANDLE:exph. indicates the handle of the process for which you
+wish to receive the notification. &varres.
+:p.
+:xph.MACHINE:exph. specifies the machine to which the notification should
+be sent.  The default is the machine submitting the request. &varres.
+:p.
+:xph.PRIORITY:exph. specifies the priority of the notification message.
+The default is 5. &varres.
+:p.:xph.HANDLE:exph. specifies the handle to which the notification should be
+sent.  The default is the handle of the process submitting the request.
+&varres.
+:p.
+:xph.NAME:exph. specifies the registered name of the process(es) to which
+the notification should be sent. &varres.
+:table id='STAFProcessEndTable' cols='* 2* *'.
+:tcap.Definition of map for "STAF/Process/End" type message
+:tnote text='Description'.This map represents process completion information.
+:thd.
+:c.Key Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.handle
+:c.&stringObj.
+:c.
+:row.
+:c.endTimestamp
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.rc
+:c.&stringObj.
+:c.
+:row.
+:c.key
+:c.&stringObj.
+:c.
+:row.
+:c.fileList
+:c.:xph.<List> of <Map>.:exph.  See :tref refid=ProcessReturnedFileTable. for the
+map definition.
+:c.
+:tnote text='Notes'.
+The value for "fileList" will contain a list of information about the files
+requested to be returned.  Files will be returned in the order of standard output,
+then standard error, then any files specified with the :xph.RETURNFILE:exph.
+option.  The value for "fileList" will be empty if none of the options
+:xph.RETURNSTDOUT:exph., :xph.RETURNSTDERR:exph., or :xph.RETURNFILE:exph. were
+specified when the process was started.
+:etnote.
+:etable.
+:table id='ProcessReturnedFileTable' cols='* * *'.
+:tcap.Definition of map for returned files for a process
+:tnote text='Description'.This map class represents a file returned by the process.
+:thd.
+:c.Key Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.rc
+:c.&stringObj.
+:c.
+:row.
+:c.data
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+For each file, a standard STAF return code indicating the success or failure
+of retrieving the file's contents is provided.  If the file's return code
+is 0, then the data contained in the file is also provided.
+If the file's return code is 58 (Maximum Size Exceeded), that indicates
+that the file size exceeded the maximum return file size.
+:etnote.
+:etable.
+:p.
+For example, suppose a PROCESS START COMMAND "java TestA" request was
+submitted by handle 43, and assume that the process completed
+successfully at 20041019-17:03:48 and returned a process return code of 0.
+The queued STAF/PROCESS/END message will be a map that could look like the
+following: 
+:xmp.
+{
+  handle      : 43
+  endTimestamp: 20041019-17:03:48
+  rc          : 0
+  key         : <None>
+  fileList    : []
+}
+:exmp.
+:p.
+For example, suppose a :xph.PROCESS START COMMAND "java TestA" KEY 10 RETURNSTDOUT
+RETURNSTDERR:exph. request is submitted by handle 26 with key 10, and assume that
+the process completed successfully at 20041029-09:30:16 and returned a process
+return code of 3 and that the standard output of the process was simply
+"Success !!!", and that the standard error of the process was blank.
+The queued STAF/PROCESS/END message will be a map that could look like
+the following: 
+:xmp.
+{
+  handle      : 26
+  endTimestamp: 20041029-09:30:16
+  rc          : 3
+  key         : 10
+  fileList    : [
+    {
+      rc  : 0
+      data: Success !!!
+    }
+    {
+      rc  : 0
+      data: 
+    } 
+  ]
+}
+:exmp.
+
+:h4.Security
+:p.
+These commands require trust level 3.
+
+:h4.Return Codes
+:p.
+All return codes from NOTIFY REGISTER/UNREGISTER are documented in
+:hdref refid=retcode..
+
+:h4.Results
+:p.
+The result buffer will contain no data on return from a NOTIFY
+REGISTER/UNREGISTER command.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal::ehp2. Register the current process for a priority 1 notification
+when the process with handle 14 ends.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.NOTIFY REGISTER ONENDOFHANDLE 14 PRIORITY 1:exph.
+:p.
+:li.:hp2.Goal::ehp2. Register to have a process end notification sent to all
+processes with registered name ProcessHandler on machine EventController
+when process with handle 43 ends.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.NOTIFY REGISTER ONENDOFHANDLE 43 MACHINE EventController NAME ProcessHandler:exph.
+:p.
+:li.:hp2.Goal::ehp2. Unregister the event notification for handle 43 which is to be
+sent when process with handle 12 ends.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.NOTIFY UNREGISTER ONENDOFHANDLE 12 HANDLE 43:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.NOTIFY LIST
+:i3.process service
+:h3.NOTIFY LIST
+:p.NOTIFY LIST allows you to view the process end notification list for a
+given process.
+:h4.Syntax
+:xmp.
+NOTIFY LIST ONENDOFHANDLE <Handle>
+:exmp.
+:p.:xph.ONENDOFHANDLE:exph. indicates the handle of the process for which you
+wish to view the notification list. &varres.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from NOTIFY LIST are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain a marshalled
+:xph. <List> of <Map&colon.STAF/Service/Process/Notifiee>:exph., 
+representing the registered notifiees.
+The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Process/Notifiee
+:tnote text='Description'.This map class represents a registered notifiee.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.priority
+:c.Priority
+.br
+(P)
+:c.&stringObj.
+:c.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.notifyBy
+:c.Notify By
+:c.&stringObj.
+:c.:xph.'Name' | 'Handle':exph.
+:row.
+:c.notifiee
+:c.Notifiee
+:c.&stringObj.
+:c.
+:tnote text='Notes'.
+If the "Notify By" value is 'Name', the "Notifiee" value will be
+the handle name.  Otherwise, if the "Notify By" value is 'Handle', the
+"Notifiee" value will be the handle number.
+:etnote.
+:etable.
+
+:h4.Examples
+:p.
+:ul.
+:li.:hp2.Goal&colon.:ehp2. Retrieve the list of process end notifiees for the
+process with handle 57.  Assume there are 3 registered notfiees for
+handle 57: two registered by handle and one registered by name.
+:p.:hp2.Syntax&colon.:ehp2.&nbsp; :xph.NOTIFY LIST ONENDOFHANDLE 57:exph.
+:p.:hp2.Results::ehp2.  If the request is issued from the command line,
+the result, in table format, could look like:
+:xmp.
+Priority Machine                 Notify By Notifiee
+-------- --------------------    --------- ---------
+5        automate.austin.ibm.com Handle    48
+1        dyno.austin.ibm.com     Handle    51
+3        automate.austin.ibm.com Name      Web Tests
+:exmp.
+:eul.
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.process service
+:h3 id=processset.SET
+The SET command allows you to change the operational parameters for the
+Process service dynamically (without stopping/restarting STAF) which is
+important for STAF machines that must be continuously available.
+:p.
+Note that to make these settings permanent (e.g. if you want these changes
+to apply once STAF is stopped and restarted), you'll need to update the
+STAF configuration file with these new settings.
+
+:h4.Syntax
+:xmp.
+SET  &lbrk.DEFAULTSTOPUSING <Method>&rbrk. &lbrk.DEFAULTCONSOLE <New | Same>&rbrk.
+     &lbrk.DEFAULTFOCUS <Background | Foreground | Minimized>&rbrk.
+     &lbrk.PROCESSAUTHMODE <Auth Mode>&rbrk.
+     &lbrk.DEFAULTAUTHUSERNAME <User Name>&rbrk. &lbrk.DEFAULTAUTHPASSWORD <Password>&rbrk.
+     &lbrk.DEFAULTAUTHDISABLEDACTION <Error | Ignore>&rbrk. &lbrk.DEFAULTSHELL <Shell>&rbrk.
+     &lbrk.DEFAULTNEWCONSOLESHELL <Shell>&rbrk. &lbrk.DEFAULTSAMECONSOLESHELL <Shell>&rbrk.
+:exmp.
+:p.See section :hdref refid=opparms. for a description of these options.
+All of these options will resolve variables.
+:p.Note that the :xph.DEFAULTAUTPASSWORD:exph. option will handle private data.
+:p.Note that setting :xph.DEFAULTCONSOLE New:exph. is equivalent
+to setting the :xph.DEFAULTNEWCONSOLE:exph. operational parameter in the
+STAF configuration file.
+Similarly, setting :xph.DEFAULTCONSOLE Same:exph. is equivalent to setting
+the :xph.DEFAULTSAMECONSOLE:exph. operational parameter in the STAF
+configuration file.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.All return codes from :xph.SET:exph. are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain no data on return from a successful SET command.
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Change the default method used to stop processes
+to WM_Close.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET DEFAULTSTOPUSING WM_Close:exph.
+:p.
+:li.:hp2.Goal::ehp2. Change three operational parameters for the Process service.
+Change the mode by which usernames/passwords are authenticated when starting
+processes to use windows-based authentication and set the username under
+which processes will be started by default to User1 and set the password
+with which processes will be authenticated by default to secret and using privacy
+delimiters to indicate that it is private data.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET PROCESSAUTHMODE Windows
+DEFAULTAUTHUSERNAME user1 DEFAULTAUTHPASSWORD !!@secret@!!:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+

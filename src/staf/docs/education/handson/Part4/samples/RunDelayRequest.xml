@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="main"/>
+
+  <function name="main">
+
+    <stafcmd>
+      <location>'local'</location>
+      <service>'delay'</service>
+      <request>'delay 30000'</request>
+    </stafcmd>
+
+  </function>
+
+</stax>

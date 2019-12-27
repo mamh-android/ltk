@@ -1,0 +1,48 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001, 2005                                        #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+ant_class_targets =\
+  $(O)/lang/ant/STAF.class \
+  $(O)/lang/ant/STAFWrapData.class
+ant_targets += $(ant_class_targets)\
+                $(REL)/lib/STAFAnt.jar
+Targets += $(ant_targets)
+CleanupTargets += cleanup_ant
+
+$(ant_targets): SUBSYS_REL := lang/ant
+SUBSYS_REL := lang/ant
+
+# Include inference rules
+include $(InferenceRules)
+
+$(ant_targets): $(REL)/lib/JSTAF.zip
+
+ifndef ANT_ROOT
+  $(error You must set ANT_ROOT to the full pathname containing lib/ant.jar) 
+endif
+
+ANT_CLASSPATH = $(OS_O)/lang/ant$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)$(OS_PS)$(ANT_ROOT)/lib/ant.jar
+
+define ANT_JAVA_COMPILE_IT
+   @echo "*** Compiling Ant Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/lang/ant -classpath '$(ANT_CLASSPATH)' $(OS_SRC)/lang/ant/*.java
+endef
+
+$(O)/lang/ant/%.class: $(SRC)/lang/ant/%.java
+	$(ANT_JAVA_COMPILE_IT)
+
+# ANT Java targets
+
+$(REL)/lib/STAFAnt.jar: $(ant_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@$(CREATE_PATH)
+	@cd $(O)/lang/ant; $(JAR) cfM '$(OS_@)' `find . -name "*.class" -print`
+
+cleanup_ant:
+	-@$(DEL) $(O)/lang/ant/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/JSTAF.zip $(OUT_ERR_TO_DEV_NULL)

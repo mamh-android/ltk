@@ -1,0 +1,57 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFDEVICE = $(subst Name,STAFDeviceService,$(DLL))
+
+stafdeviceservice_targets += $(REL)/lib/$(LIB_STAFDEVICE)\
+                          $(REL)/include/DeviceService.h
+Targets += $(stafdeviceservice_targets)
+CleanupTargets += cleanup_stafdeviceservice
+
+$(stafdeviceservice_targets): SUBSYS_REL := services/sdg_sample
+SUBSYS_REL := services/sdg_sample
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafdeviceservice_targets): OBJS = $(stafdeviceservice_objs)
+$(stafdeviceservice_targets): LIBS = STAF
+$(stafdeviceservice_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafdeviceservice_objs :=\
+  DeviceService
+
+stafdeviceservice_objs        := $(foreach obj,$(stafdeviceservice_objs),$(O)/services/sdg_sample/$(obj)$(OS_OE))
+stafdeviceservice_dependents  := $(stafdeviceservice_objs:$(OS_OE)=.d)
+$(stafdeviceservice_dependents): SUBSYS_REL := services/sdg_sample
+
+ifeq ($(OS_NAME),win32)
+    stafdeviceservice_objs += $(SR_SRC)/DeviceService.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafdeviceservice_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFDeviceService targets
+
+$(REL)/lib/$(LIB_STAFDEVICE): $(stafdeviceservice_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+$(REL)/include/DeviceService.h: $(SRC)/services/sdg_sample/DeviceService.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafdeviceservice:
+	-@$(DEL) $(O)/services/sdg_sample/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/libDeviceService.so $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/include/DeviceService.h $(OUT_ERR_TO_DEV_NULL)
+
+

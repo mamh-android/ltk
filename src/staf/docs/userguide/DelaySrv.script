@@ -1,0 +1,96 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : DelaySrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Delay Service
+.*  Detail:
+.*
+.*     This file describes the STAF Delay Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.delay service
+:ih1.services
+:i2.delay service
+:h2 id=delaysrv.Delay Service
+:h3.Description
+:p.The DELAY service is an internal STAF service. A DELAY request simply
+sleeps for a specified amount of time before returning to the calling program.
+.*
+:ih1.service commands
+:ih2.DELAY
+:i3.delay service
+:h3.DELAY
+:h4.Syntax
+:xmp.
+DELAY <Number>&lbrk.s|m|h|d|w&rbrk.
+:exmp.
+:p.
+:xph.DELAY:exph. specifies an amount of time to sleep.  The time duration
+may be expressed in milliseconds, seconds, minutes, hours, days, weeks, or years.
+Its format is <Number>[s|m|h|d|w], where <Number> is an integer >= 0 and
+indicates milliseconds unless one of the following case-insensitive suffixes
+is specified:
+:ul compact.
+:li.s (for seconds)
+:li.m (for minutes)
+:li.h (for hours)
+:li.d (for days)
+:li.w (for weeks).
+:eul.
+Note that the calculated amount of time to sleep cannot exceed 4294967294
+milliseconds.  So, the maximum values in each time category that can be
+specified are:
+:ul compact.
+:li.4294967294 (4294967294 milliseconds)
+:li.4294967s (4294967 seconds)
+:li.71582m (71582 minutes)
+:li.1193h (1193 hours)
+:li.49d (49 days)
+:li.7w (7 weeks)
+:eul.
+
+:h4.Security
+
+:p.&seclvl. 2.
+
+:h4.Return Codes
+
+:p.All return codes from DELAY are documented in :hdref refid=retcode..
+
+:h4.Examples
+
+:ol.
+:li.:hp2.Goal&colon.:ehp2. Delay 100 milliseconds.
+:xmp.  
+DELAY 100
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2. Delay 5 seconds. 
+:xmp.
+DELAY 5s
+:exmp.
+:p.Note that this is equivalent to:
+:xmp.
+DELAY 5000
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2. Delay 1 minute.
+:xmp.
+DELAY 1m
+:exmp.
+:p.Note that this is equivalent to:
+:xmp.  
+DELAY 60000
+:exmp.
+:p.
+:li.:hp2.Goal&colon.:ehp2. Delay 2 hours.
+:xmp.
+DELAY 2h
+:exmp.
+:eol.

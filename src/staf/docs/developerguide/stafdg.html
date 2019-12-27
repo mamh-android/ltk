@@ -1,0 +1,3198 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns:st1="urn:schemas-microsoft-com:office:smarttags"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=us-ascii">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 10">
+<meta name=Originator content="Microsoft Word 10">
+<link rel=File-List href="stafdg_files/filelist.xml">
+<link rel=Edit-Time-Data href="stafdg_files/editdata.mso">
+<title>STAF V3 Developer's Guide</title>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="date"/>
+</head>
+
+<body bgcolor=white lang=EN-US link=blue vlink=blue style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<h1>STAF V3 Developer's Guide</h1>
+
+<p><b>Software Testing Automation Framework (STAF) V3 Developer's Guide</b></p>
+
+<p><st1:date Year="2013" Day="30" Month="09">December 13 2013<p>Version 3.4.16 </p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p>
+<font color=blue><h1><a NAME="ToC"></a>Contents</h1></font>
+<menu>
+<LI><A NAME="ToC_Intro"      HREF="#Header_Intro">Introduction</a></li>
+<li><a NAME="ToC_getsource"  HREF="#Header_getsource">Obtaining the STAF Source Code</a></li>
+<li><a NAME="ToC_buildreqs"  HREF="#Header_buildreqs">Requirements for Building STAF</a></li>
+<li><a NAME="ToC_bldenv"     HREF="#Header_bldenv">Explaining the STAF Source Tree and Build
+Environment</a></li>
+<li><a NAME="ToC_building"   HREF="#Header_building">Building STAF</a></li>
+  <menu>
+  <li><a name="ToC_buildSTAF" href="#Header_buildSTAF">Building STAF Core</a></li>
+  <li><a name="ToC_buildOpenSSL" href="#Header_buildOpenSSL">Building OpenSSL (needed by the STAFTCP connection provider)</a></li>
+  <li><a name="ToC_buildIPv6" href="#Header_buildIPv6">Building STAF IPv6 Support</a></li>
+  <li><a name="ToC_buildJava" href="#Header_buildJava">Building STAF Java Support</a></li>
+  <li><a name="ToC_buildPerl" href="#Header_buildPerl">Building STAF Perl Support</a></li>
+  <li><a name="ToC_buildPython" href="#Header_buildPython">Building STAF Python Support</a></li>
+  <li><a name="ToC_buildTcl" href="#Header_buildTcl">Building STAF Tcl Support</a></li>
+  <li><a name="ToC_buildDemo" href="#Header_buildDemo">Building STAF Demo</a></li>
+  <li><a name="ToC_buildZip" href="#Header_buildZip">Building Zip Service</a></li>
+  <li><a name="ToC_buildAnt" href="#Header_buildAnt">Building STAF Ant Task</a></li>
+  <li><a name="ToC_buildJython" href="#Header_buildJython">Building STAF Jython Support</a></li>
+  <li><a name="ToC_buildDocs" href="#Header_buildDocs">Building STAF Documentation</a></li>
+  <li><a name="ToC_buildRexx" href="#Header_buildRexx">Building STAF REXX Support</a></li>
+  <li><a name="ToC_buildNotes" href="#Header_buildNotes">Building STAF Build Notes</a></li>
+  <li><a name="ToC_buildPkg" href="#Header_buildPkg">Packaging STAF on Unix Machines</a></li>
+  </menu>
+<li><a name="ToC_buildServices" href="#Header_buildServices">Building External STAF Java Services</a>
+  <menu>
+  <li><a name="ToC_buildSTAX" href="#Header_buildSTAX">Building the STAX Service</a></li>
+  <li><a name="ToC_buildEvent" href="#Header_buildEvent">Building the Event Service</a></li>
+  <li><a name="ToC_buildCron" href="#Header_buildCron">Building the Cron Service</a></li>
+  <li><a name="ToC_buildEM" href="#Header_buildEM">Building the EventManager Service</a></li>
+  <li><a name="ToC_buildHTTP" href="#Header_buildHTTP">Building the HTTP Service</a></li>
+  <li><a name="ToC_buildEmail" href="#Header_buildEmail">Building the Email Service</a></li>
+  <li><a name="ToC_buildNS" href="#Header_buildNS">Building the Namespace Service</a></li>
+  <li><a name="ToC_buildJavaService" href="#Header_buildJavaService">Building Other Java Services</a></li>
+  </menu>
+<li><a NAME="ToC_bldrun"     HREF="#Header_bldrun">Running STAF from the Built Executables</a></li>
+  <menu>
+  <li><a NAME="ToC_UnixBldrun" HREF="#Header_UnixBldrun">Running on Unix</a>
+  <li><a NAME="ToC_WinBldrun" HREF="#Header_WinBldrun">Running on Windows</a>
+  </MENU>  
+<li><a NAME="ToC_installpkg" HREF="#Header_installpkg">Explaining how STAF is Packaged for Installation</a></li>
+<li><a name="ToC_designs" href="#Header_designs">STAF Design Documentation</a></li>
+<lI><A NAME="ToC_coding"     HREF="#Header_coding">STAF Coding Conventions</a></li>
+<li><a NAME="ToC_Bugs" HREF="#Header_Bugs">Reporting/Browsing/Fixing Bugs and Features</a></LI>
+<li><a NAME="ToC_Debugging" HREF="#Header_Debugging">Debugging on Linux</a></LI>
+<p>
+<li><a NAME="ToC_Links"      HREF="#Header_Links">Appendix A: Important Links</a></LI>
+<li><a NAME="ToC_CVSCommands" HREF="#Header_CVSCommands">Appendix B: Common CVS Commands</a></LI>
+<li><a NAME="ToC_NewDeveloper" HREF="#Header_NewDeveloper">Appendix C: New Developer Activities</a>
+  <menu>
+  <li><a NAME="ToC_JoinDevProjects" HREF="#Header_JoinDevProjects">Join the Open Source STAF Development Projects</a></LI>
+  <li><a NAME="ToC_JoinSupport" HREF="#Header_JoinSupport">Subscribe to Mailing Lists and Monitor Newsgroups</a></LI>
+  </menu>
+<li><a NAME="ToC_Shutdown" HREF="#Header_Shutdown">Appendix D: Shutting Down STAF on Unix</a></LI>
+</menu>
+<P>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p class=MsoNormal><a name="Header_Intro"></a><a href="#ToC_Intro"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_Intro'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_Intro'></span><a href="#ToC_Intro"><span
+style='mso-bookmark:Header_Intro'>Introduction</span><span style='mso-bookmark:
+Header_Intro'></span></a></h1>
+
+<p>This document explains how to build STAF. It assumes that you are familiar
+with the operating system(s) in question and the process of building software
+in general. It will walk you through the process of: <o:p></o:p></p>
+
+<ol start=1 type=1 compact>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l13 level1 lfo2;tab-stops:list .5in'>Obtaining the STAF source
+     code</li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l13 level1 lfo2;tab-stops:list .5in'>Setting up your build
+     environment</li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l13 level1 lfo2;tab-stops:list .5in'>Building STAF</li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l13 level1 lfo2;tab-stops:list .5in'>Using the output of the
+     build</li>
+</ol>
+
+<p>STAF developers are the intended audience for this document. </p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_getsource"></a><a href="#ToC_getsource"><span style='mso-bookmark:
+Header_getsource'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_getsource'></span><a href="#ToC_getsource"><span
+style='mso-bookmark:Header_getsource'>Obtaining the STAF Source Code</span><span
+style='mso-bookmark:Header_getsource'></span></a></h1>
+
+<p>Externally open sourced STAF code is available on <span class=SpellE>SourceForge</span>
+via two methods: </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l3 level1 lfo3;tab-stops:list .5in'>CVS - only current STAF code
+     is available </li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l3 level1 lfo3;tab-stops:list .5in'>tar/zip file containing the
+     source code (available for each STAF version released on SourceForge) </li>
+</ul>
+
+<h3>Obtaining STAF Source Code <span class=GramE>Via</span> a Tar/Zip File</h3>
+
+<p>Each tar/zip file contains a snapshot of the source code for a released version
+of STAF. </p>
+<p>
+<ol>
+ <li>Download the tar or zip file for the
+     STAF Source Version you want from the STAF Sourceforge website (e.g. STAF344-src.tar.gz or STAF344-src.zip) from
+     <a href="http://staf.sourceforge.net/getcurrent.php">http://staf.sourceforge.net/getcurrent.php</a>.
+ </li>
+ <p>
+ <li>If you downloaded the STAF source tar.gz file, you must uncompress and untar the file. For example:
+   <pre>
+   gunzip STAF344-src.tar.gz
+   tar -xvf STAF344-src.tar</pre>
+ <li>Or, if you downloaded the STAF source zip file, you must unzip the file (e.g. using WinZip, unzip,
+     or the STAF ZIP service, etc.).
+</ol>
+<p>
+
+<h3>Obtaining STAF Source Code <span class=GramE>Via</span> CVS</h3>
+
+<p>The current STAF code is contained in CVS, including code that has not been
+released yet. </p>
+<p>
+<ol>
+ <li>If on Windows: </li>
+ <p>
+ <ol type="a">
+  <li>Open a Cygwin window. </li>
+  <p>
+  <li><pre>cd /cygdrive/d</pre>
+  <p>where d is the drive where you want to put STAF code.</p>
+  <p>
+  <li><pre>md build</pre>
+  <p>where build is the name of the directory to where you are checking out STAF code. </p>
+  <p>
+  <li><pre>cd build</pre>
+ </ol>
+<p>
+ <li>If on Unix: </li>
+ <p>
+ <ol type="a">
+  <li>Log on as root </li>
+  <p>
+  <li><pre>cd /</pre>
+  <p>
+  <li><pre>mkdir build</pre>
+  <p>where build is the name of the directory to where you want to check out STAF code. </p>
+ </ol>
+<p>
+<li><pre>export CVS_RSH=ssh</pre>
+<p>This must be done once for each window. </p>
+<p>
+<li>The following command only needs to be done once per userid to set up your
+account. Change <span class=SpellE>developername</span> to your <span
+class=SpellE>userid</span>. </li>
+ <p>
+ <pre>ssh developername@staf.sourceforge.net</pre>
+ <p>Enter your <span class=SpellE>SourceForge</span> password when prompted.
+    <span class=GramE>Exit.</span> </p>
+<p>
+<li>The following command only needs to be done once per userid to create your
+     home directory (e.g. /home/users/d/de/<span class=SpellE>developername</span>).
+     Change <span class=SpellE>developername</span> to your <span class=SpellE>userid</span>.
+     </li>
+ <p>
+ <pre>ssh developername@cvs.staf.sourceforge.net</pre>
+ <p>Enter your <span class=SpellE>SourceForge</span> password
+  when prompted. You cannot execute anything here so it will exit for you. </p>
+<p>
+<li>The following command only needs to be done once per system to check out code.
+    It specifies where the <span class=SpellE>cvs</span> root is, that you are doing a check out
+    (co), and the directory (<span class=SpellE>src</span>) from the root of
+    the code you are checking out. Change <span class=SpellE>developername</span>
+    to your <span class=SpellE>userid</span>. </li>
+ <p>
+ <pre>cvs -d :ext:developername@staf.cvs.sourceforge.net:/cvsroot/staf co src</pre>
+ <p>Enter your <span class=SpellE>SourceForge</span> password when prompted. <br>
+    Enter <span class=GramE>Yes</span> if prompted to permanently add
+    staf.cvs.sourceforge.net to the list of known hosts. </p>
+<p>
+<li><pre>cd src/staf</pre>
+<p>
+<li><pre>cvs update</pre>
+  <p>Enter your <span class=SpellE>SourceForge</span> password when prompted. <br>
+  Refer to the <a href="#Header_CVSCommands">&quot;Common CVS Commands&quot;</a>
+  section for more information on &quot;<span class=SpellE>cvs</span>
+  update&quot;. </p>
+</ol>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_buildreqs"></a><a href="#ToC_buildreqs"><span style='mso-bookmark:
+Header_buildreqs'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_buildreqs'></span><a href="#ToC_buildreqs"><span
+style='mso-bookmark:Header_buildreqs'>Requirements for Building STAF</span><span
+style='mso-bookmark:Header_buildreqs'></span></a></h1>
+
+<p>To build STAF, you need to install the following software based on the
+operating system where you are building: </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l19 level1 lfo6;tab-stops:list .5in'><b>Windows</b> </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'><span class=SpellE>Cygwin</span>
+      - <span class=SpellE>Cygwin</span> is a UNIX environment for Windows. It
+      can be downloaded from http://www.cygwin.com
+      <ul>
+      <li>By default, when you install
+      Cygwin, the python package is not installed; however, Python is required
+      to build STAF. When you install Cygwin, go to the "Select Packages" panel,
+      expand "Interpreters" and change "python: An interactive object-oriented
+      scripting language" from "Skip" (click on the word) so that it changes to
+      "2.4.3-1" (or whatever version you are installing) and that "Bin" for the
+      python package now has a checkmark instead of "n/a". After the install,
+      from a Cygwin terminal run "python" and verify that it is now installed.
+      <li>If the version of Cygwin you are using includes GNU Make 3.81 (you
+      can determine this by running "make -v" in a Cygwin shell), then you will
+      receive the following errors when building the STAF "java", 
+      "zip", and "perl" projects:
+      <xmp>
+        /cygdrive/c/build/obj/win32/staf/retail/lang/java/java12/JSTAF.d:1: *** multiple target patterns. Stop.
+
+        /cygdrive/c/build/src/staf/services/zip/makefile.zip:125: *** target pattern contains no `%'. Stop.
+
+        /cygdrive/c/build/obj/win32/staf/retail/lang/perl/perl56/PLSTAF.d:1: *** multiple target patterns. Stop
+      </xmp>
+      This is a known issue with GNU Make 3.81.  More information can be found
+      in the mailing list thread:
+      <a href="http://sourceware.org/ml/cygwin/2006-09/msg00546.html">
+      http://sourceware.org/ml/cygwin/2006-09/msg00546.html</a>.
+      You can download a patched 3.81 make.exe from:
+      <a href="http://www.cmake.org/files/cygwin/make.exe">
+      http://www.cmake.org/files/cygwin/make.exe</a>.  You should rename your
+      existing /usr/bin/make.exe file and copy the patched file to
+      /usr/bin/make.exe.
+      </ul>
+  </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'>Microsoft Visual C++
+      6.0, or Microsoft Visual C++ 7.0, or the February 2003 Platform SDK (if
+      you are building IA-64 code or STAF IPv6 Support) </li>
+ </ul>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l19 level1 lfo6;tab-stops:list .5in'><b>AIX</b> </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'><span class=SpellE>xlC</span>
+      V5 or later </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'>GNU Make 3.78 or
+      later </li>
+ </ul>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l19 level1 lfo6;tab-stops:list .5in'><b>HP-UX</b> </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'><span class=SpellE>aCC</span>
+      3.25 or later </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'>GNU Make 3.78 or
+      later </li>
+ </ul>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l19 level1 lfo6;tab-stops:list .5in'><b>Other Unix Operating Systems
+     (e.g. Linux, Solaris, FreeBSD, Mac OS X, etc)</b> </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'>GCC 2.95.2 or later </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l19 level2 lfo6;tab-stops:list 1.0in'>GNU Make 3.78 or
+      later </li>
+ </ul>
+</ul>
+
+<p>To build the Java interface component of STAF and to build any STAF services
+written in Java, you need to install Java. Currently, we are mostly using Java
+1.4.2 (IBM or Sun), but also support other versions of Java, including Java 1.5.0. </p>
+
+<p>To build the REXX interface component of STAF, you need to install REXX. </p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_bldenv"></a><a href="#ToC_bldenv"><span style='mso-bookmark:Header_bldenv'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_bldenv'></span><a href="#ToC_bldenv"><span
+style='mso-bookmark:Header_bldenv'>Explaining the STAF Source Tree and Build
+Environment</span><span style='mso-bookmark:Header_bldenv'></span></a></h1>
+
+<p>All STAF source code is contained in the /<span class=SpellE>src/staf</span>
+directory. This is the directory from which you run 'make' to build various
+STAF projects. </p>
+
+<p>The STAF uses the &quot;whole-project <span class=SpellE>makefile</span>&quot;
+approach described in Peter Miller's <a
+href="http://www.pcug.org.au/~millerp/rmch/recu-make-cons-harm.html">Recursive
+Make Considered Harmful</a> article. </p>
+
+<p>The /<span class=SpellE>src/staf/stafif</span> directory contains STAF
+daemon and internal STAF Services source code. <br>
+The /<span class=SpellE>src/staf/stafproc</span> directory contains STAF C
+interface library source code. <br>
+The /<span class=SpellE>src/staf/services</span> directory contains source code
+for external STAF services like Log, Monitor, and Resource Pool. </p>
+
+<p>Any operating system specific code is contained in a subdirectory (e.g.
+win32, <span class=SpellE><span class=GramE>unix</span></span>) under the STAF
+component. </p>
+
+<p>There are subdirectories for each language in which STAF services can be
+implemented in the /<span class=SpellE>src/staf/<span class=GramE>lang</span></span>
+directory. </p>
+
+<p>The STAF source tree looks like the following: </p>
+
+<pre>
+/src/staf/                       - Contains all STAF source code
+/src/staf/makefile               - The master STAF makefile
+/src/staf/build/                 - Contains auxilliary makefiles used in building STAF
+/src/staf/codepage/              - Contains additional code pages
+/src/staf/connproviders          - Contains source code for STAF connection providers
+/src/staf/connproviders/localipc - Contains source code for the STAF Local IPC Connection Provier
+/src/staf/connproviders/tcp      - Contains source code for the STAF TCP Connection Provider
+/src/staf/docs/                  - Contains STAF documentation, including the makefile to build STAF docs
+/src/staf/eclipse/               - Contains source code for STAF Eclipse plug-ins
+/src/staf/History                - A file containing a history of changes made to STAF by version
+/src/staf/install/               - Contains STAF installation source code
+/src/staf/install/ia/            - Contains source code for installing STAF using InstallAnywhere (IA)
+/src/staf/install/ismp/          - Contains source code for installing STAF using InstallShield
+                                   Multi-Platform (ISMP) - Note this is no longer used as of STAF V3.3.0
+/src/staf/install/unix/          - Contains the STAFInst program used to install from a STAF tar file
+/src/staf/lang/                  - Contains source code for supporting the different languages in which
+                                   STAF services can be implemented
+/src/staf/lang/java/             - Contains source code for supporting STAF services implemented in Java
+/src/staf/lang/jython/           - Contains source code for supporting STAF services that package Jython
+/src/staf/lang/perl/             - Contains source code for supporting STAF services implemented in Perl
+/src/staf/lang/ant/              - Contains source code for the STAF Ant Task
+/src/staf/lang/rexx/             - Contains source code for supporting STAF services implemented in REXX
+/src/staf/lang/tcl/              - Contains source code for supporting STAF services implemented in Tcl
+/src/staf/lang/python/           - Contains source code for supporting STAF services implemented in Python
+/src/staf/LICENSE.htm            - Contains the license for STAF
+/src/staf/NOTICES.htm            - Contains notices about open source software packaged by STAF and
+                                   their licenses
+/src/staf/package/               - Contains makefiles used for packaging STAF
+/src/staf/samples/               - Contains sample source code showing how to interact with STAF from
+                                   different languages such as C, C++, and REXX
+/src/staf/samples/demo/          - Contains the STAF Demo source code
+/src/staf/serviceproxies/        - Contains source code for STAF service proxies
+/src/staf/services/              - Contains source code for external STAF services like Log, Monitor, and
+                                   Resource Pool, Zip, STAX, Event, EventManager, Cron, Email, etc
+/src/staf/stafclnt/              - Contains STAF command line utility source code
+/src/staf/stafif/                - Contains STAF C interface library source code
+/src/staf/stafinfo/              - Contains the STAF information utility source code
+/src/staf/stafproc/              - Contains STAF daemon and internal STAF Services source code
+/src/staf/stafreg/               - Contains source code for the STAF Registration program
+/src/staf/test/                  - Contains source code used to test STAF
+/src/staf/utils/                 - Contains source code for STAF utilities like fmtlog (Format Log Utility)
+/src/staf/webpages/sf/           - Contains source code for the STAF SourceForge web pages
+</pre>
+<p>
+
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p class=MsoNormal><a name="Header_building"></a><a href="#ToC_building">
+<!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_building'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_building'></span><a href="#ToC_building"><span
+style='mso-bookmark:Header_building'>Building STAF</span><span
+style='mso-bookmark:Header_building'></span></a></h1>
+
+<p>This section describes how to build STAF from a valid source tree.
+<p>
+<b>Note:</b>  STAF's master makefile is located in the <tt>/src/staf</tt> directory.
+   See it for additional information about the environment variables used. </p>
+<p>
+<ol>
+ <li>If on Windows, do the following steps in a Cygwin window.</li>
+ <p>
+ <li>Check out the latest STAF source code (if not already checked out). Refer to the
+ <a href="#Header_getsource">&quot;Obtaining the STAF Source Code&quot;</a> section.</li>
+ <p>
+ <li><tt>cd /build/src/staf</tt> &nbsp;  (Assuming /build is the directory where you 
+    checked out STAF source code.)</p>
+ <p>
+ <li>Set the appropriate environment variables: </li>
+ <p>
+ <ul type=circle>
+  <li><b>OS_NAME</b> - Set
+      to the operating system where you are building STAF. Valid values for
+      OS_NAME include:
+      <p>
+      <ul>  
+        <li><tt>win32</tt></li>
+        <li><tt>linux</tt></li>
+        <li><tt>linuxamd64</tt></li>
+        <li><tt>linuxia64</tt></li>
+        <li><tt>linux-ppc64-32</tt></li>
+        <li><tt>linux-ppc64-64</tt></li>
+        <li><tt>zlinux</tt></li>
+        <li><tt>aix</tt></li>
+        <li><tt>aix433</tt></li>
+        <li><tt>aix64</tt></li>
+        <li><tt>hpux</tt></li>
+        <li><tt>solaris</tt></li>
+        <li><tt>zos</tt></li>
+        <li><tt>freebsd</tt></li>
+        <li><tt>freebsd410</tt></li>
+        <li><tt>macosx</tt></li>
+      </ul>
+  </li>
+  <p>
+  <li><b>BUILD_ARCH</b> -
+      Set to the architecture type being used.
+      <p>
+      It is supported for the following operating systems:
+      <p>
+      <ul>
+        <li><tt>hpux</tt> - Valid values are:
+        <p>
+          <ul>
+            <li><tt>PA-RISC</tt></li> - Specifies to build for HP-UX PA-RISC 32-bit.
+            This is the default value if not specified.
+            <li><tt>PA-RISC64</tt></li> - Specifies to build for HP-UX PA-RISC 64-bit.
+            <li><tt>IA64-32</tt></li> - Specifies to build for HP-UX IA64 32-bit.
+            <li><tt>IA64-64</tt></li> - Specifies to build for HP-UX IA64 64-bit.
+          </ul>
+        </li>
+        <p>
+        <li><tt>solaris</tt> - Valid values are:
+        <p>
+          <ul>
+            <li><tt>SPARC</tt> - Specifies to build for Solaris Sparc 32-bit.
+            This is the default value if not specified.</li>
+            <li><tt>SPARC64</tt> - Specifies to build for Solaris Sparc 64-bit.</li>
+            <li><tt>x64-64</tt> - Specifies to build for Solaris AMD64 with 64-bit Java.</li>
+          </ul>
+        </li>
+        <p>
+        <li><tt>macosx</tt>
+          <p>
+          <ul>
+            <li><tt>i386</tt> - Specifies to build for Mac OS X Intel.</li>
+            <li><tt>ppc</tt> - Specifies to build for Mac OS X PowerPC 32-bit.</li>
+            <li><tt>ppc64</tt> - Specifies to build for Mac OS X PowerPC 64-bit.</li>
+            <li><tt>universal</tt> - Specifies to build for Mac OS X Universal binary with support for i386, x86_64, and ppc (OS X 10.6 or higher)</li>
+            <p>
+            Note: If the BUILD_ARCH environment variable is not specified when building
+            STAF for Mac OS X, it defaults to the architecture of the machine the build
+            runs on.</p>
+          </ul>
+        </li>
+        <p>
+        <li><tt>zlinux</tt>
+          <p>
+          <ul>
+            <li><tt>m31</tt> - Specifies to build for zlinux 31-bit.</li>
+            <p>
+            Note: If the BUILD_ARCH environment variable is not specified when building
+            STAF for zlinux, it defaults to 64-bit</p>
+          </ul>
+        </li>
+      </ul>
+  </li>
+  <p>
+  <li><b>CC_TYPE</b> - Set to the type of compiler being used.
+      Currently, this is only supported for Windows builds. Valid values are: </li>
+      <p>
+      <ul type=square>
+        <li><tt>MVC6</tt> - Microsoft Visual C++ 6 (This is the default) </li>
+        <li><tt>MVC7</tt> - Microsoft Visual C++ 7 (also known as Microsoft Visual Studio.NET 2003) </li>
+        <li><tt>MVC-SDK-IA64</tt> - The IA-64 compiler shipped as part of the Microsoft Platform SDK (currently,
+        we have only validated the compiler shipped as part of the February 2003
+        Platform SDK, but others may work) </li>
+      </ul>
+  <p>
+  <li><b>MSVCDIR</b> - If on Windows, set to the directory where you installed
+    the Microsoft Visual C/C++ Compiler. For example: </li>
+  <p>
+  <pre>export MSVCDIR=c:/MVStudio</pre>
+  <p>
+  Note: If a directory name where you installed your compiler contains spaces,
+  you must use the short name instead (e.g. C:/PROGRA~1/MICROS~1 instead
+  of C:/Program Files/Microsoft Visual Studio).
+  <p>
+  <li><b>VSCOMMONDIR</b> - If on Windows, set to the Microsoft Visual C++ Compiler's
+       COMMON directory. For example: </li>
+  <p>
+  <pre>export VSCOMMONDIR=d:/MVStudio/Common</pre>
+  <p>
+  Note: The VSCOMMONDIR environment variable is not
+  needed if you selected the default install location for the common Microsoft
+  Visual C++ components. </p>
+  <p>
+  Note: If a directory name where you installed your compiler contains spaces,
+  you must use the short name instead (e.g. C:/PROGRA~1/MICROS~1/Common instead
+  of C:/Program Files/Microsoft Visual Studio/Common).
+  <p>
+  <li><b>MSSDKDIR</b> - If on Windows, set to the directory in which you installed the
+      Microsoft Platform SDK. For example, </li>
+  <p>
+  <pre>export MSSDKDIR=d:/MicrosoftSDK</pre>
+  <p>
+  Note: MSSDKDIR only needs to be set if you are building IA-64 code for Windows.
+  Typically, only MSSDKDIR or MSVCDIR (and, possibly, VSCOMMONDIR) need to be set.
+  You don't normally need to set both. </p>
+  <p>
+  Note: If a directory name where you installed the Microsoft Platform SDK contains spaces,
+  you must use the short name instead (e.g. C:/PROGRA~1/MICROS~2 instead
+  of C:/Program Files/Microsoft SDK).
+  <p>
+  <li><b>BUILD_TYPE</b> - Set to either <tt>retail</tt> or <tt>debug</tt>. </li>
+  <p>
+  <li><b>PROJECTS</b> - Set to the project(s) that you want to build. Valid projects are: </li>
+  <p>
+  <ul type=square>
+   <li><tt>all</tt> - Builds all of the STAF projects </li>
+   <li><tt>staf</tt> - Builds the STAF core code </li>
+   <li><tt>connprov*</tt> - Builds the STAF TCP/IP V4 and Local connection providers </li>
+   <li><tt>java</tt> - Builds the STAF Java Interface </li>
+   <li><tt>perl</tt> - Builds the STAF <span class=SpellE>Perl</span> Interface </li>
+   <li><tt>python</tt> - Builds the STAF <span class=SpellE>Python</span> Interface </li>
+   <li><tt>tcl</tt> - Builds the STAF <span class=SpellE>Tcl</span> Interface </li>
+   <li><tt>rexx</tt> - Builds the STAF <span class=SpellE>Rexx</span> Interface </li>
+   <li><tt>docs</tt> - Builds the STAF documentation </li>
+   <li><tt>demo</tt> - Builds the STAF Demo </li>
+   <li><tt>jython</tt> - Builds the STAF Jython package that is packaged with some STAF services
+       such as the STAX, EventManager, and Cron services</li>
+   <li>Plus many more (e.g. <tt>stax</tt>, <tt>event</tt>, <tt>cron</tt>, etc.) </li>
+  </ul>
+  <p>The PROJECTS environment variable can be set to any valid
+  project or to multiple projects (in double quotes and separated by a space).
+  For example:</p>
+  <p>
+  <pre>
+   export PROJECTS=staf
+   export PROJECTS=&quot;staf connprov* java docs&quot;</pre>
+  </p>
+ </ul>
+<p>
+ <ul type=circle>
+  <li>If building the java project or a STAF service that is written in Java, the following
+      environment variables must be set: </li>
+  <p>
+  <ul type=square>
+   <li><b>JAVA_DRIVE</b> -
+       If on Windows, set to drive where you installed Java </li>
+   <li><b>JAVA_LIBS</b> -
+       set to <span class=SpellE>jvm</span> </li>
+   <li><b>JAVA_VERSION</b>
+       - set to the version of Java <span class=GramE>use are</span> using. For
+       example, 1.4 </li>
+   <li><b>JAVA_BUILD_V11</b>
+       - set to 1 if using Java 1.1.x; otherwise set to 0.
+       Note that STAF now requires Java 1.2 or later so the default for this
+       environment variable is 0.</li>
+   <li><b>JAVA_BUILD_V12</b>
+       - set to 1 if using Java 1.2 or later; otherwise set to 0.
+       Note that STAF now requires Java 1.2 or later so the default for this
+       environment variable is 1.</li>
+   <li><b>JAVA_V12_ROOT</b>
+       - set to the location where you installed Java. For example, on Windows,
+       if Java is installed in D:\ibmjdk1.4.2, specify /cygdrive/d/ibmjdk1.4.2 </li>
+   <li><b>JAVA_V12_LIBDIRS</b>
+       - set to the Java lib directory. For example on Windows, if Java is
+       installed in D:\ibmjdk1.4.2, specify /cygdrive/d/ibmjdk1.4.2/lib </li>
+  </ul>
+ </ul>
+ <p>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l17 level1 lfo7;tab-stops:list .5in'>To start the build, type: </li>
+  <p>
+  <pre>
+  make
+  </pre>
+</ol>
+
+<p>You may want to put these commands in a shell script that you run instead,
+e.g. &quot;<span class=GramE>. ./<span class=SpellE>setstaf.sh</span>&quot;.</span></p>
+
+<p class=MsoNormal><a name="Header_buildSTAF"></a><a href="#ToC_buildSTAF"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildSTAF'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildSTAF'></span><a href="#ToC_buildSTAF"><span
+style='mso-bookmark:Header_buildSTAF'>Building STAF Core</span><span
+style='mso-bookmark:Header_buildSTAF'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF core and
+     the TCP/IP (IPv4 Support) and local connection providers, the following environment
+     variables must be set before running make. Make sure the values match your
+     environment: </li>
+<p>
+<pre>
+  export PROJECTS="staf connprov*"
+  export OS_NAME=win32                             (See above for other valid OS_NAME values)
+  export BUILD_TYPE=retail
+  export MSVCDIR=d:/MVStudio                       (Only needed if on Windows)
+  export VSCOMMONDIR=d:/MVStudio/Common            (Only needed if on Windows)
+  export MSSDKDIR=d:/MicrosoftSDK                  (Only needed if on Windows and building IA-64 code)
+  export STAF_USE_IPV6=                            (Make sure not set to build TCP IPv4 libraries)
+  export OPENSSL_ROOT=c:/tools/openssl-0.9.8e-root (Needed if STAF_USE_SSL is set to 1)
+  make
+</pre>
+<p>
+To build STAF with OpenSSL support, then export STAF_USE_SSL=1 (which is the default).
+You also need to have the OpenSSL 0.9.8 binaries installed and set OPENSSL_ROOT to
+the root directory where they are installed.  If you're on a Unix machine, and you
+have more than one version of OpenSSL libraries installed in the $(OPENSSL_ROOT)/lib
+directory, then you also have to set OPENSSL_VERSION to the version of the
+OpenSSL libraries that you want to use (e.g. 0.9.8) so that it can determine the
+correct names for the OpenSSL libraries (e.g. libssl.so.0.9.8 and libcrypto.so.0.9.8
+if on Linux).
+See section <a href="#Header_buildOpenSSL">Building OpenSSL</a> for
+information on how you can build OpenSSL 0.9.8 binaries.
+<p>
+To build STAF without OpenSSL support (which means no secure TCP/IP interface and
+no support for getting a checksum via a FS GET ENTRY <fileName> CHECKSUM request),
+then do the following and you don't need to export OPENSSL_ROOT:
+<pre>
+  export STAF_USE_SSL=
+</pre>
+<p>
+<b>Note:</b>  If you're going to package STAF and/or use STAFInst to install the
+version of STAF you built and you are not building STAF IPv6 Support (as described
+in the next section), you need to create a IPv4 directory and copy the STAF and 
+STAFTCP libraries to that IPv4 directory.
+<p>
+For example, if on Unix, and in the src/staf directory:
+<pre>
+cd ../../rel/&lt;OS_NAME>/staf/retail/lib     (where &lt;OS_NAME> is linux, solaris, aix, etc.)
+mkdir IPv4
+cp libSTAF.so IPv4/.
+cp libSTAFTCP.so IPv4/.
+</pre>
+Or, for example, if on Windows, and in the src/staf directory:
+<pre>
+cd ../../rel/&lt;OS_NAME>/staf/retail/lib     (where &lt;OS_NAME> is win32, winamd64)
+mkdir IPv4
+copy STAF.dll IPv4/*
+copy STAFTCP.dll IPv4/*
+</pre>
+
+</ul>
+
+<h2><a name="Header_buildOpenSSL" href="#ToC_buildOpenSSL">Building OpenSSL</a></h2>
+
+<ul type=disc>
+<li>To build STAF with OpenSSL support (e.g. to provide support for a secure TCP/IP
+     interface and to provide the ability to get a checksum),
+     you need to have OpenSSL 0.9.8 binaries installed.  If they are not already
+     installed on your system, you'll have to build them.  Download OpenSSL 0.9.8
+     source code from the <a href="http://www.openssl.org">OpenSSL website</a>.
+     Note that we used OpenSSL 0.9.8e when we built the STAF binaries,
+     though the STAFTCP connection provider *should* work with any OpenSSL 0.9.8 version.
+     Untar the openssl-0.9.8e.tar.gz file that you downloaded.  OpenSSL provides instructions
+     on how to build OpenSSL on Unix operating systems in the INSTALL file and
+     for Windows in the INSTALL.W32 and INSTALL.W64 files.  Following is how
+     we built OpenSSL on various operating systems.</li>
+<p>
+<li><b>Windows 32-bit Instructions for Building OpenSSL:</b>
+<p>
+First, you need to setup the environment for building using MVStudio on a
+Windows 32-bit machine.
+Make sure this vcvars32.bat file reflects your environment, e.g. right drive letters, etc.
+<pre>
+C:\MVStudio\VC98\Bin\vcvars32
+</pre>
+The following builds OpenSSL binaries and puts them in C:\tools\openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd C:\tools\openssl-0.9.8e
+perl Configure VC-WIN32 --prefix=C:/tools/openssl-0.9.8e-root no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+ms\do_ms
+nmake -f ms\ntdll.mak
+nmake -f ms\ntdll.mak test       (Note: Ignore errors about ideatest since specified no-idea)
+nmake -f ms\ntdll.mak install
+</pre>
+
+<li><b>Windows AMD64 Instructions for Building OpenSSL:</b>
+<p>
+First, you need to setup the environment for building using MVStudio8 on a
+Windows AMD64 machine.   You also need the directory that contains
+bufferoverflowu.lib in the LIB path.
+<pre>
+C:\MVStudio8\VC\bin\amd64\vcvarsamd64
+set LIB=%LIB%;C:\MVStudio8\VC\PlatformSDK\lib
+</pre>
+The following builds OpenSSL binaries and puts them in C:\tools\openssl-0.9.8e-root-amd64
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd C:\tools\openssl-0.9.8e
+perl Configure VC-WIN64A --prefix=C:/tools/openssl-0.9.8e-root-amd64 no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+ms\do_win64a
+nmake -f ms\ntdll.mak
+cd out32dll
+..\ms\test                 (Note: Ignore errors about ideatest since specified no-idea)
+cd ..
+nmake -f ms\ntdll.mak install
+</pre>
+
+<li><b>Linux i386 32-bit Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-elf -march=pentium --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<h4><a name="Header_OpenSSL_execstack">Check if libcrypto.so.0.9.8 requests an executable stack</a></h4>
+<p>
+Once OpenSSL has been built, if you built a version of OpenSSL prior to 0.9.8g-2
+and you are using a Linux distribution with the Security-Enhanced Linux (SELinux)
+feature (e.g. provides an execstack command), to avoid any problems when SELinux
+is enabled you need to check if the libcrypto.so.0.9.8 shared library requests
+an executable stack.  If it does, you should clear execstack so that it doesn't
+request an executable stack.  For example:
+<pre>
+# cd /opt/dev/autobuild/tools/openssl-0.9.8e-root/lib  (Change to the directory you specified for the --openssldir option when you built OpenSSL)
+# execstack -q libcrypto.so.0.9.8
+X libcrypto.so.0.9.8
+</pre>
+If there is a "X" in first field in the output instead of a "-", then you need to
+clear execstack as follows:
+<pre>
+# execstack -c libcrypto.so.0.9.8
+# execstack -q libcrypto.so.0.9.8
+- libcrypto.so.0.9.8
+</pre>
+
+<li><b>Linux ppc64-32 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-ppc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+Once OpenSSL has been built, if you built a version of OpenSSL prior to 0.9.8g-2
+and you are using a Linux distribution with the Security-Enhanced Linux (SELinux)
+feature (e.g. provides an execstack command), follow the instructions in section
+<a href="#Header_OpenSSL_execstack">Check if libcrypto.so.0.9.8 requests an
+executable stack</a> to make sure that the libcrypto.so.0.9.8 shared library
+does not request an executable stack.
+<p>
+
+<li><b>Linux ppc64-64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<p>
+I had to make two changes in order to build OpenSSL 0.9.8e for linux-ppc64:
+<ol compact>
+<li>Command "make depend" fails unless you edit the Configure file and find the line
+for linux-ppc64.<br>In two places in that line, change <tt>-bpowerpc64-linux</tt> to <tt>-mpowerpc64 -m64</tt>.
+<li>Command "make test" fails when testing X509 conversion (in test_x509) and
+STAFProc will get a SIGSEGV (with one or more tcp interfaces configured) unless the patch
+from <a href="http://cvs.openssl.org/chngview?cn=16408">http://cvs.openssl.org/chngview?cn=16408</a>
+is applied to crypto/asn1/x_name.c in /opt/dev/autobuild/tools/openssl-0.9.8e.
+I found this patch via <a href="http://www.mail-archive.com/openssl-dev@openssl.org/msg23041.html">
+http://www.mail-archive.com/openssl-dev@openssl.org/msg23041.html</a>.
+</ol>
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-ppc64 --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+Once OpenSSL has been built, if you built a version of OpenSSL prior to 0.9.8g-2
+and you are using a Linux distribution with the Security-Enhanced Linux (SELinux)
+feature (e.g. provides an execstack command), follow the instructions in section
+<a href="#Header_OpenSSL_execstack">Check if libcrypto.so.0.9.8 requests an
+executable stack</a> to make sure that the libcrypto.so.0.9.8 shared library
+does not request an executable stack.
+<p>
+<li><b>Linux ia64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-ia64 --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Linux amd64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-x86_64 --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+Once OpenSSL has been built, if you built a version of OpenSSL prior to 0.9.8g-2
+and you are using a Linux distribution with the Security-Enhanced Linux (SELinux)
+feature (e.g. provides an execstack command), follow the instructions in section
+<a href="#Header_OpenSSL_execstack">Check if libcrypto.so.0.9.8 requests an
+executable stack</a> to make sure that the libcrypto.so.0.9.8 shared library
+does not request an executable stack.
+<p>
+<li><b>zLinux-32 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-31bit-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-generic32 -m31 -DB_ENDIAN -DNO_ASM --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-31bit-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+Once OpenSSL has been built, if you built a version of OpenSSL prior to 0.9.8g-2
+and you are using a Linux distribution with the Security-Enhanced Linux (SELinux)
+feature (e.g. provides an execstack command), follow the instructions in section
+<a href="#Header_OpenSSL_execstack">Check if libcrypto.so.0.9.8 requests an
+executable stack</a> to make sure that the libcrypto.so.0.9.8 shared library
+does not request an executable stack.
+<p>
+<li><b>zLinux-64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure linux-generic64 -DB_ENDIAN -DNO_ASM --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+Once OpenSSL has been built, if you built a version of OpenSSL prior to 0.9.8g-2
+and you are using a Linux distribution with the Security-Enhanced Linux (SELinux)
+feature (e.g. provides an execstack command), follow the instructions in section
+<a href="#Header_OpenSSL_execstack">Check if libcrypto.so.0.9.8 requests an
+executable stack</a> to make sure that the libcrypto.so.0.9.8 shared library
+does not request an executable stack.
+<p>
+<li><b>Solaris Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root-32
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure solaris-sparcv9-gcc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root-32 threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make clean   
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Solaris-sparc64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure solaris64-sparcv9-gcc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make clean
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Solaris-x86 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<p>
+I also had to do the following to get it to build on our Solaris-x86 machine:
+<ol compact>
+<li>Had to use the no-asm option on the ./Configure command to avoid cert errors when making and testing
+<li>Had to copy /usr/sfw/bin/gmake to /usr/sfw/bin/make
+<li>The OpenSSL FAQ says to do the following so <tt>ar</tt> is in the PATH so don't get error:
+<tt>make[1]: ar: Command not found</tt>
+<pre>
+PATH=$PATH:/usr/ccs/bin
+export PATH
+</pre>
+</ol>
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure solaris-x86-gcc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa no-asm
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Solaris-x64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<p>
+I also had to do the following to get it to build on our Solaris-x86 machine:
+<ol compact>
+<li>Had to copy /usr/sfw/bin/gmake to /usr/sfw/bin/make
+<li>The OpenSSL FAQ says to do the following so <tt>ar</tt> is in the PATH so don't get error:
+<tt>make[1]: ar: Command not found</tt>
+<pre>
+PATH=$PATH:/usr/ccs/bin
+export PATH
+</pre>
+</ol>
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure solaris64-x86_64-gcc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Solaris-x64-64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<p>
+I also had to do the following to get it to build on our Solaris-x86 machine:
+<ol compact>
+<li>Had to copy /usr/sfw/bin/gmake to /usr/sfw/bin/make
+<li>The OpenSSL FAQ says to do the following so <tt>ar</tt> is in the PATH so don't get error:
+<tt>make[1]: ar: Command not found</tt>
+<pre>
+PATH=$PATH:/usr/ccs/bin
+export PATH
+</pre>
+</ol>
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure solaris64-x86_64-gcc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Freebsd Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure BSD-x86-elf 386 --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Macosx-i386 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure darwin-i386-cc 386 --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>Macosx-ppc Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries on a Mac OS X i386 but for use when building STAF for
+macosx-ppc and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<p>
+I had to make the edit file Configure and changed the <tt>darwin-i386-cc</tt> line by adding
+option <tt>-arch ppc</tt> as follows:
+<pre>
+"darwin-i386-cc","cc:-O3 -arch ppc -fomit-frame-pointer -fno-common::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+</pre>
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./ConfigurePPC darwin-i836-cc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root-ppc threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make clean
+make
+make test
+make install
+</pre>
+
+<li><b>AIX Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure aix-cc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>AIX64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure aix64-cc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared -D_REENTRANT no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+/usr/local/bin/make depend
+/usr/local/bin/make
+/usr/local/bin/make test
+/usr/local/bin/make install
+</pre>
+
+<li><b>HPUX Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure hpux-parisc2-cc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>HPUX-ia64-32 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure hpux-ia64-cc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root-32 threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+<li><b>HPUX-ia64-64 Instructions for Building OpenSSL:</b>
+<p>
+The following builds OpenSSL binaries and puts them in /opt/dev/autobuild/tools/openssl-0.9.8e-root
+which is what you would set OPENSSL_ROOT to when building the STAF TCP/IP connection provider.
+<pre>
+cd /opt/dev/autobuild/tools/openssl-0.9.8e
+./Configure hpux64-ia64-cc --openssldir=/opt/dev/autobuild/tools/openssl-0.9.8e-root threads shared no-zlib no-rc5 no-idea no-ec no-ecdh no-ecdsa
+make depend
+make
+make test
+make install
+</pre>
+
+</ul>
+
+<p class=MsoNormal><a name="Header_buildIPv6"></a><a href="#ToC_buildIPv6"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildIPv6'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildIPv6'></span><a href="#ToC_buildIPv6"><span
+style='mso-bookmark:Header_buildIPv6'>Building STAF IPv6 Support</span><span
+style='mso-bookmark:Header_buildIPv6'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>
+     Building the STAF core (e.g. PROJECT=connprov*) builds the IPv4
+     libraries for the TCP connection provider.  If you also want to build
+     the IPv6 libraries for the TCP connection provider, follow these
+     instructions.  Note that you must have already built the STAF core
+     and your operating system must provide IPv6 support in order
+     to build STAF IPv6 support.  Also, if building on Windows, you must use
+     a compiler that supports the WinSock2 IPv6 libraries (e.g. Microsoft
+     Platform SDK). 
+</li>
+<p>
+These instructions assume you're currently in the src/staf directory and 
+on a Unix machine (you'd have to modify the instructions slightly for Windows,
+e.g. use STAF.dll and STAFTCP.dll instead of libSTAF.so and libSTAFTCP.so):
+<pre>
+# Create a IPv4 directory and move the IPv4 libraries that have already
+# been created to that directory
+
+cd ../../rel/&lt;OS_NAME>/staf/retail/lib     (where &lt;OS_NAME> is linux, solaris, aix, etc.)
+mkdir IPv4
+mv libSTAF.so IPv4/.
+mv libSTAFTCP.so IPv4/.
+
+# Delete the IPv4 objects and set the IPv6 environment variable
+# and build the IPv6 libraries
+
+cd ../../../../..
+rm -Rf obj/&lt;OS_NAME>/staf/retail/connproviders/tcp
+rm -Rf obj/&lt;OS_NAME>/staf/retail/stafif/STAFSocket*
+cd src/staf
+export STAF_USE_IPV6=1
+export MSSDKDIR=C:/MVC-SDK-IA64            (Only needed if on Windows)
+make
+
+# Create a IPv6 directory and copy the IPv6 libraries
+
+cd ../../rel/&lt;OS_NAME>/staf/retail/lib
+mkdir IPv6
+mv libSTAF.so IPv6/.
+mv libSTAFTCP.so IPv6/.
+
+# Copy the IPv4 libraries back to the lib directory
+
+cp IPv4/libSTAF.so .
+cp IPv4/libSTAFTCP.so .
+cd ../../../../../src/staf
+export STAF_USE_IPV6=
+</pre>
+
+<b>Note: </b>  If you're going to run STAF from the directories where you
+just built STAF (instead of packaging STAF to create a STAF install tar.gz
+file, if on a Unix operating system), and you want to use the STAF TCP
+IPv6 connection provider, leave the libSTAF.so and libSTAFTCP.so files
+built with STAF_USE_IPV6=1 in the <tt>rel/&lt;OS_NAME>/staf/retail/lib</tt>
+directory (instead of copying the STAF TCP IPv4 connection provider files
+back to this directory).
+
+</ul>
+
+<p class=MsoNormal><a name="Header_buildJava"></a><a href="#ToC_buildJava"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildJava'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildJava'></span><a href="#ToC_buildJava"><span
+style='mso-bookmark:Header_buildJava'>Building STAF Java Support</span><span
+style='mso-bookmark:Header_buildJava'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF Java
+     component (assuming you just built the STAF core), the following
+     environment variables must be set before running make. Make sure the
+     values match your environment. 
+     </li>
+<p>
+<pre>
+  export PROJECTS=java
+  export JAVA_DRIVE=d
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cygdrive/d/ibmjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/d/ibmjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh  (this is only required on AIX, when using Java 1.2+ to build)
+  make
+</pre>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildPerl"></a><a href="#ToC_buildPerl"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildPerl'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildPerl'></span><a href="#ToC_buildPerl"><span
+style='mso-bookmark:Header_buildPerl'>Building STAF Perl Support</span><span
+style='mso-bookmark:Header_buildPerl'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF PERL
+     component (assuming you just built the STAF core), the following
+     environment variables must be set before running make. Make sure the
+     values match your environment.
+     For any Perl versions that you don't want to build STAF support for,
+     set PERL_BUILD_Vnn=0 and then you don't need to set the other PERL_Vnn_xxx
+     variables for these Perl versions.
+     <p>
+     Note that this example is for a Windows 32-bit system.
+ </li>
+<p>
+<pre>
+  export PROJECTS=perl
+
+  export PERL_BUILD_V58=1
+  export PERL_V58_ROOT=c:/perl583
+  export PERL_V58_INCLUDEDIRS=c:/perl583/lib/CORE
+  export PERL_V58_LIBDIRS=c:/perl583/lib/CORE
+  export PERL_V58_LIBS=perl58
+
+  export PERL_BUILD_V56=1
+  export PERL_V56_ROOT=c:/perl
+  export PERL_V56_INCLUDEDIRS=c:/perl/lib/CORE
+  export PERL_V56_LIBDIRS=c:/perl/lib/CORE
+  export PERL_V56_LIBS=perl56
+
+  export PERL_BUILD_V510=1
+  export PERL_V510_ROOT=C:/ActivePerl-5.10
+  export PERL_V510_INCLUDEDIRS=C:/ActivePerl-5.10/lib/CORE
+  export PERL_V510_LIBDIRS=C:/ActivePerl-5.10/lib/CORE
+  export PERL_V510_LIBS=perl510
+
+  export PERL_BUILD_V512=1
+  export PERL_V512_ROOT=C:/ActivePerl-5.12
+  export PERL_V512_INCLUDEDIRS=C:/ActivePerl-5.12/lib/CORE
+  export PERL_V512_LIBDIRS=C:/ActivePerl-5.12/lib/CORE
+  export PERL_V512_LIBS=perl512
+
+  export PERL_BUILD_V514=1
+  export PERL_V514_ROOT=C:/ActivePerl-5.14
+  export PERL_V514_INCLUDEDIRS=C:/ActivePerl-5.14/lib/CORE
+  export PERL_V514_LIBDIRS=C:/ActivePerl-5.14/lib/CORE
+  export PERL_V514_LIBS=perl514
+
+  make
+</pre>
+
+<p>Note that you need to have ActivePerl 5.6/5.8/5.10/5.12/5.14 installed
+(if you want to build STAF Perl support for all of these Perl versions).
+You can download ActivePerl versions from
+<a href="http://aspn.activestate.com/ASPN/Downloads/ActivePerl/">
+http://aspn.activestate.com/ASPN/Downloads/ActivePerl/</a>.</p>
+
+<p>
+To build STAF Perl 5.6 support, you need both Perl 5.6 and 5.8 installed
+and you must set the environment variables documented above for both Perl 5.6 and for Perl
+5.8.  This is because building STAF Perl support requires xsubpp (the external subroutine
+preprocessor) which only exists in Perl 5.8.  STAF's Perl support code uses XS which is
+C-like glue code that gets massaged by Perl's xsubpp into legitimate C code.</p>
+</p>
+
+<p>
+To build STAF Perl 5.6/5.8, you must have the Perl 5.8 bin directory
+(such as /usr/local/ActivePerl-5.8/bin on Unix or c:/perl583/bin on Windows)
+in your PATH.  On Windows, verify that in the Cygwin shell where you will be
+building the Perl 5.6/5.8 support, the command "echo $PATH" shows the
+correct Cygwin-style directory for the Perl bin directory:
+<tt>/cygdrive/c/perl583/bin</tt>
+</p>
+
+<p>After installing <span class=SpellE>ActivePerl</span>,
+note that if you are using <span class=SpellE>cygwin</span>,
+when you are running STAF <span class=SpellE>perl</span> <span class=SpellE>testcases</span>,
+you must fully-qualify where the <span class=SpellE>perl</span> binary exists
+(i.e., /<span class=SpellE>cygdrive/d/perl/bin/perl</span> teststaf.pl). </p>
+
+<p>To build STAF support for <span class=SpellE>Perl</span>
+5.0 on Linux, you need to build project &quot;perl50&quot;. The &quot;<span
+class=SpellE>perl</span>&quot; project will only build STAF support for <span
+class=SpellE>Perl</span> 5.6 and <span class=SpellE>Perl</span> 5.8. </p>
+<p>
+<li>See the <a href="http://staf.sourceforge.net/current/STAFPerl.htm">
+STAF Perl User's Guide</a> for more information on STAF Perl support.</li></p>
+
+
+
+</ul>
+
+
+<p class=MsoNormal><a name="Header_buildPython"></a><a href="#ToC_buildPerl"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildPython'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildPerl'></span><a href="#ToC_buildPython"><span
+style='mso-bookmark:Header_buildPython'>Building STAF Python Support</span><span
+style='mso-bookmark:Header_buildPython'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF PYTHON
+     component (assuming you just built the STAF core), the following
+     environment variables must be set before running make. Make sure the
+     values match your environment. Note that this example is for a Windows
+     32-bit system.</li>
+<p>
+<pre>
+  export PROJECTS=python
+  export OS_NAME=win32
+
+  export PYTHON_V22_ROOT=c:/python22
+  export PYTHON_V22_INCLUDEDIRS=c:/python22/include
+  export PYTHON_V22_LIBDIRS=c:/python22/Libs
+  export PYTHON_V22_LIBS=python22
+  export PYTHON_BUILD_V22=1
+
+  export PYTHON_V23_ROOT=c:/python23
+  export PYTHON_V23_INCLUDEDIRS=c:/python23/include
+  export PYTHON_V23_LIBDIRS=c:/python23/Libs
+  export PYTHON_V23_LIBS=python23
+  export PYTHON_BUILD_V23=1
+
+  export PYTHON_V24_ROOT=c:/python24
+  export PYTHON_V24_INCLUDEDIRS=c:/python24/include
+  export PYTHON_V24_LIBDIRS=c:/python24/Libs
+  export PYTHON_V24_LIBS=python24
+  export PYTHON_BUILD_V24=1
+
+  export PYTHON_V25_ROOT=c:/python25
+  export PYTHON_V25_INCLUDEDIRS=c:/python25/include
+  export PYTHON_V25_LIBDIRS=c:/python25/Libs
+  export PYTHON_V25_LIBS=python25
+  export PYTHON_BUILD_V25=1
+
+  export PYTHON_V26_ROOT=c:/python26
+  export PYTHON_V26_INCLUDEDIRS=c:/python26/include
+  export PYTHON_V26_LIBDIRS=c:/python26/Libs
+  export PYTHON_V26_LIBS=python26
+  export PYTHON_BUILD_V26=1
+
+  export PYTHON_V27_ROOT=c:/python27
+  export PYTHON_V27_INCLUDEDIRS=c:/python27/include
+  export PYTHON_V27_LIBDIRS=c:/python27/Libs
+  export PYTHON_V27_LIBS=python27
+  export PYTHON_BUILD_V27=1
+
+  export PYTHON_V30_ROOT=c:/python30
+  export PYTHON_V30_INCLUDEDIRS=c:/python30/include
+  export PYTHON_V30_LIBDIRS=c:/python30/Libs
+  export PYTHON_V30_LIBS=python30
+  export PYTHON_BUILD_V30=1
+
+  export PYTHON_V31_ROOT=c:/python31
+  export PYTHON_V31_INCLUDEDIRS=c:/python31/include
+  export PYTHON_V31_LIBDIRS=c:/python31/Libs
+  export PYTHON_V31_LIBS=python31
+  export PYTHON_BUILD_V31=1
+
+  make
+</pre>
+
+<li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>The following example is for
+     a Linux 32-bit system.</li>
+<p>
+<pre>
+  export PROJECTS=python
+  export OS_NAME=linux
+
+  export PYTHON_V22_ROOT=/opt/Python-2.2
+  export PYTHON_V22_INCLUDEDIRS=/opt/Python-2.2/include/python2.2
+  export PYTHON_V22_LIBDIRS=/opt/Python-2.2/lib/python2.2/config
+  export PYTHON_V22_LIBS=python2.2
+  export PYTHON_BUILD_V22=1
+
+  export PYTHON_V23_ROOT=/opt/Python-2.3
+  export PYTHON_V23_INCLUDEDIRS=/opt/Python-2.3/include/python2.3
+  export PYTHON_V23_LIBDIRS=/opt/Python-2.3/lib/python2.3/config
+  export PYTHON_V23_LIBS=python2.3
+  export PYTHON_BUILD_V23=1
+
+  export PYTHON_V24_ROOT=/opt/Python-2.4
+  export PYTHON_V24_INCLUDEDIRS=/opt/Python-2.4/include/python2.4
+  export PYTHON_V24_LIBDIRS=/opt/Python-2.4/lib/python2.4/config
+  export PYTHON_V24_LIBS=python2.4
+  export PYTHON_BUILD_V24=1
+
+  export PYTHON_V25_ROOT=/opt/Python-2.5
+  export PYTHON_V25_INCLUDEDIRS=/opt/Python-2.5/include/python2.5
+  export PYTHON_V25_LIBDIRS=/opt/Python-2.5/lib/python2.5/config
+  export PYTHON_V25_LIBS=python2.5
+  export PYTHON_BUILD_V25=1
+
+  export PYTHON_V26_ROOT=/opt/Python-2.6
+  export PYTHON_V26_INCLUDEDIRS=/opt/Python-2.6/include/python2.6
+  export PYTHON_V26_LIBDIRS=/opt/Python-2.6/lib/python2.6/config
+  export PYTHON_V26_LIBS=python2.6
+  export PYTHON_BUILD_V26=1
+
+  export PYTHON_V27_ROOT=/opt/Python-2.7
+  export PYTHON_V27_INCLUDEDIRS=/opt/Python-2.7/include/python2.7
+  export PYTHON_V27_LIBDIRS=/opt/Python-2.7/lib/python2.7/config
+  export PYTHON_V27_LIBS=python2.7
+  export PYTHON_BUILD_V27=1
+
+  export PYTHON_V30_ROOT=/opt/Python-3.0
+  export PYTHON_V30_INCLUDEDIRS=/opt/Python-3.0/include/python3.0
+  export PYTHON_V30_LIBDIRS=/opt/Python-3.0/lib/python3.0/config
+  export PYTHON_V30_LIBS=python3.0
+  export PYTHON_BUILD_V30=1
+
+  export PYTHON_V31_ROOT=/opt/Python-3.1
+  export PYTHON_V31_INCLUDEDIRS=/opt/Python-3.1/include/python3.1
+  export PYTHON_V31_LIBDIRS=/opt/Python-3.1/lib/python3.1/config
+  export PYTHON_V31_LIBS=python3.1
+  export PYTHON_BUILD_V31=1
+
+  make
+</pre>
+
+<p>
+Note that if you don't want to build all versions of Python, then set
+PYTHON_BUILD_Vxx=0 for the versions you don't want to build.
+<p>
+Note that you need to have Python 2.x and or Python 3.x installed.  It can be downloaded
+from <a href="http://www.python.org">http://www.python.org</a>.</p>
+<p>
+Note that that you must run a STAF retail build (e.g. BUILD_TYPE=retail)
+for Python; a STAF debug build (e.g. BUILD_TYPE=debug) will fail.</p>
+<p>
+<li>See the <a href="http://staf.sourceforge.net/current/STAFPython.htm">
+STAF Python User's Guide</a> for more information on STAF Python support.</li></p>
+
+<li>Here are some tips for when building Python from source on unix platforms:
+<br>
+<ul>
+
+<li>Mac OS X Universal 10.6+ (macosx-universal)
+<pre>
+cd /tmp/Python-3.x.x
+export MACOSX_DEPLOYMENT_TARGET=10.6
+./configure --prefix=/usr/local/Python-3.x --enable-universalsdk --enable-shared --with-universal-archs=3-way
+make
+make install
+</pre>
+</li>
+
+<li>Linux PPC64-64 (linux-ppc64-64)
+<p>In order to build 64 bit libraries, run the following
+<pre>
+cd /tmp/Python-3.x.x
+export CC="/usr/bin/gcc -mpowerpc64 -m64 -O2"
+export CFLAGS=""
+./configure --prefix=/opt/Python-3.x-64
+make
+make install
+</pre>
+
+<li>Solaris Sparc64 (solaris-sparc64)
+<p>In order to build 64 bit libraries, run the following
+<pre>
+cd /tmp/Python-3.x.x
+export CC="/usr/sfw/bin/gcc -m64"
+export CFLAGS=""
+export LDDFLAGS=-m64
+export LDFLAGS=-m64
+./configure --prefix=/opt/Python-3.x-64
+&lt;Now update the Makefile and remove any "-O2" or "-O3" strings>
+make
+make install
+</pre>
+
+<li>Solaris x64_64 (solaris-x64-64)
+<p>In order to build 64 bit libraries, run the following
+<pre>
+cd /tmp/Python-3.x.x
+export PATH=/usr/ccs/bin:$PATH
+export LD_LIBRARY_PATH=/usr/sfw/lib/amd64:$LD_LIBRARY_PATH
+export CC="/usr/sfw/bin/gcc -m64"
+export CFLAGS=""
+export LDDFLAGS=-m64
+export LDFLAGS=-m64
+./configure --prefix=/opt/Python-3.x-64
+&lt;Now update the Makefile and remove any "-O2" or "-O3" strings>
+make
+make install
+</pre>
+
+<li>Solaris x86 (solaris-x86)
+<pre>
+cd /tmp/Python-3.x.x
+export PATH=/usr/ccs/bin:$PATH
+./configure --prefix=/opt/Python-3.x
+make
+make install
+</pre>
+
+</ul>
+
+</ul>
+
+</ul>
+
+<p class=MsoNormal><a name="Header_buildTcl"></a><a href="#ToC_buildTcl"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildTcl'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildTcl'></span><a href="#ToC_buildTcl"><span
+style='mso-bookmark:Header_buildTcl'>Building STAF Tcl Support</span><span
+style='mso-bookmark:Header_buildTcl'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF TCL
+     component (assuming you just built the STAF core), the following
+     environment variables must be set before running make. Make sure the
+     values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=tcl
+  export OS_NAME=win32
+  export TCL_INCLUDEDIRS=d:/tcl/include
+  export TCL_LIBS=d:/tcl/lib/tcl83
+  make
+</pre>
+
+<p>Note that you need to have Tcl Version 8.x installed.  It can be downloaded
+from <a href="http://tcl.sourceforge.net">http://tcl.sourceforge.net</a>.</p>
+
+<p>
+<li>See the <a href="http://staf.sourceforge.net/current/STAFTcl.htm">
+STAF Tcl User's Guide</a> for more information on STAF Tcl support.</li></p>
+
+</ul>
+
+<p class=MsoNormal><a name="Header_buildDemo"></a><a href="#ToC_buildDemo"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildDemo'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildDemo'></span><a href="#ToC_buildDemo"><span
+style='mso-bookmark:Header_buildDemo'>Building STAF Demo</span><span
+style='mso-bookmark:Header_buildDemo'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF Demo, the
+     following environment variables must be set before running make. Make sure
+     the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=demo
+  export OS_NAME=win32
+  export BUILD_TYPE=retail
+  export MSVCDIR=d:/MVStudio                (Only needed if on Windows)
+  export VSCOMMONDIR=d:/MVStudio/Common     (Only needed if on Windows)
+  export MSSDKDIR=d:/MicrosoftSDK           (Only needed if on Windows and building IA-64 code)
+  make
+</pre>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildZip"></a><a href="#ToC_buildZip"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildZip'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildZip'></span><a href="#ToC_buildZip"><span
+style='mso-bookmark:Header_buildZip'>Building Zip Service</span><span
+style='mso-bookmark:Header_buildZip'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF Zip
+     service, the following additional environment variables must be set before
+     running make. Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=zip
+  export ZLIB_SOURCEDIR=c:/tools/zlib-1.2.5 
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+
+<ul type=disc>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You must have <span
+      class=SpellE>zLib 1.2.5</span> source unpacked to your build system.  In the
+      above example, zLib 1.2.5 source was extraced into <tt>c:/tools/zlib-1.2.5</tt>.
+      You can download zLib source from the <a href="http://www.zlib.net/">zLib website</a>.
+      Note:  In STAF V3.4.8, we changed to support zLib 1.2.5 (instead of zLib 1.2.3)
+      which required some changes to the services/zip/makefile.zip file.</li>
+ </ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildAnt"></a><a href="#ToC_buildAnt"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildAnt'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildAnt'></span><a href="#ToC_buildAnt"><span
+style='mso-bookmark:Header_buildAnt'>Building STAF Ant Task</span><span
+style='mso-bookmark:Header_buildAnt'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF Ant Task, the following additional environment variables must be set before
+     running make. Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=ant
+  export ANT_ROOT=c:/tools/apache-ant-1.6.2
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+
+<ul type=disc>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      the Ant binaries package unpacked to your build system.  You can
+      download the Ant binaries (e.g. apache-ant-1.6.2.bin.zip or apache-ant-1.6.2.bin.tar.gz)
+      from <a href="http://ant.apache.org">http://ant.apache.org</a> and then
+      unpack it on your build system.
+      In the above example, the binaries zip file was unzipped into
+      <tt>c:/tools/apache-ant-1.6.2</tt>.</li>
+ </ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildJython"></a><a href="#ToC_buildJython"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildJython'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildJython'></span><a href="#ToC_buildJython"><span
+style='mso-bookmark:Header_buildJython'>Building STAF Jython Support</span><span
+style='mso-bookmark:Header_buildJython'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>
+     To build the STAF JYTHON component (assuming you just built the staf, connprov*, and java projects), the following
+      environment variables must be set before running make.  Make sure the values match your
+      environment.</li>
+<p>
+<pre>
+  export PROJECTS=jython
+  export JYTHON_ROOT=C:/jython2.1
+  export JAVA_DRIVE=d
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cygdrive/c/ibmjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/c/ibmjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh  (this is only required on AIX, when using Java 1.2+ to build)
+  make
+</pre>
+
+  <p>
+  <b>Notes:</b>
+  <p>
+  <ol>
+  <li>You need to have Jython 2.1 or later installed in the directory that you specify
+  for JYTHON_ROOT.  It can be downloaded from the <a href="http://www.jython.org">Jython website</a>.
+  </ol>
+</ul>
+<p>
+
+
+<p class=MsoNormal><a name="Header_buildDocs"></a><a href="#ToC_buildDocs"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildDocs'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildDocs'></span><a href="#ToC_buildDocs"><span
+style='mso-bookmark:Header_buildDocs'>Building STAF Documentation</span><span
+style='mso-bookmark:Header_buildDocs'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF
+     Documentation, the following environment variables must be set before running
+     make. Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=docs
+  export OS_NAME=win32
+  export BUILD_TYPE=retail
+  export B2H_ROOT=d:/tools/b2h
+  export JAVA_V12_ROOT=d:/tools/sunjdk1.4
+  export SAXON_ROOT=d:/tools/saxon
+  export DOCBOOK_ROOT=d:/tools/docbook
+  export MSVCDIR=d:/MVStudio                (Only needed if on Windows)
+  export VSCOMMONDIR=d:/MVStudio/Common     (Only needed if on Windows)
+  export MSSDKDIR=d:/MicrosoftSDK           (Only needed if on Windows and building IA-64 code)
+  make
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+
+<ul type=disc>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have B2H
+      (BookMaster to HTML) installed in order to build the STAF Documentation (i.e. STAF User's
+      Guide, etc.). Extract the b2h.tar file (available for IBM Austin STAF developers on our
+      STAF ftp server in the /tools directory) to d<span class=GramE>:/</span>tools/b2h
+      (or whatever directory you choose), and <span class=SpellE>untar</span>
+      the file in this directory. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      Saxon installed in order to build the STAF Documentation (i.e. STAF FAQ).
+      You can download Saxon (e.g. saxon6_5_3.zip) from the
+      <a href="http://saxon.sourceforge.net">Saxon website</a> to <tt>D:/tools/saxon</tt>
+      (or whatever directory you choose), and unzip the file in this directory.
+      This file and the <tt>saxon.jar</tt> file are also available for IBM Austin
+      STAF developers on our STAF ftp server in the <tt>/tools</tt> directory.
+      Note that you really only need the <tt>saxon.jar</tt>
+      file in the directory you specify for SAXON_ROOT. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have Docbook XSL 
+      installed in order to build the STAF Documentation (i.e. STAF FAQ).
+      You can download a <tt>docbook-xsl</tt> zip or tar file from the
+      <a href="http://sourceforge.net/projects/docbook">Docbook website</a> to <tt>D:/tools</tt>
+      (or whatever directory you choose), and unzip/untar the file in this directory
+      (it will create a <tt>docbook-&lt;version&gt;directory</tt> (which you may
+      want to rename to <tt>docbook</tt>).
+      Files docbook-xsl-1.64.1.zip and docbook-xsl-1.64.1.tar.gz are also
+      available for IBM Austin STAF developers on our STAF ftp server in the
+      /tools directory.</li>
+ </ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildRexx"></a><a href="#ToC_buildRexx"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildRexx'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildRexx'></span><a href="#ToC_buildRexx"><span
+style='mso-bookmark:Header_buildRexx'>Building STAF REXX Support</span><span
+style='mso-bookmark:Header_buildRexx'></span></a></h2>
+
+<ul type=disc>
+<li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAF REXX
+     component (assuming you just built the STAF core), the following
+     environment variables must be set before running make. Make sure the
+     values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=rexx
+  export OS_NAME=win32
+  export REXX_ROOT=/cygdrive/d/ObjREXX
+  export REXX_LIBDIRS=d:/ObjREXX/API
+  export RXPP_ROOT=d:/tools/rxpp
+  make
+</pre>
+</ul>
+
+<p style='margin-left:.5in'>Note that you need to have RXPP installed in order
+to build the STAF Documentation. On Windows, you should download the <span
+class=SpellE>rxpp.tar</span> file (available for IBM Austin STAF developers on our
+STAF ftp server in the /tools directory)) to
+d<span class=GramE>:/</span>tools/<span class=SpellE>rxpp</span>,
+and <span class=SpellE>untar</span> the file in this directory. </p>
+
+<p class=MsoNormal><a name="Header_buildNotes"></a><a href="#ToC_buildNotes"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildRexx'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildNotes'></span><a href="#ToC_buildNotes"><span
+style='mso-bookmark:Header_buildNotes'>STAF Build Notes</span><span
+style='mso-bookmark:Header_buildNotes'></span></a></h2>
+
+<p>On Solaris, there is an additional file that is not built
+with STAF but must be included in the lib directory. The file should already
+reside on your build system, so simply copy this file to the lib directory
+before packaging the build for distribution. The file is: </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l4 level1 lfo9;tab-stops:list .5in'>Solaris - libstdc++.so.2.10.0
+     </li>
+</ul>
+
+<p>Note that on Solaris, even if you build a retail version of STAF, the binary
+and library files will still contain symbolic information. After the build
+completes, you must run the &quot;strip&quot; command on every binary and
+library file before packaging the build for distribution. </p>
+
+<p>Note that on AIX, you may receive the following error message when building
+STAF: </p>
+<pre>
+    xlC_r: 1501-230 Internal Compiler error; Please contact your Service Representative
+</pre>
+<p class=MsoNormal>If you receive this error message, ignore it (it is a
+compiler bug on AIX) and re-start the build (by typing &quot;make&quot; again).
+The second make should be successful. </p>
+
+<p>To run using the version of STAF you just built, refer to the <a
+href="#Header_bldrun">&quot;Running STAF from the Built Executables&quot;</a>
+section. </p>
+
+<p class=MsoNormal><a name="Header_buildPkg"></a><a href="#ToC_buildPkg"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildPkg'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildPkg'></span><a href="#ToC_buildPkg"><span
+style='mso-bookmark:Header_buildPkg'>Packaging STAF on Unix Machines</span><span
+style='mso-bookmark:Header_buildPkg'></span></a></h2>
+
+<ul type=disc>
+<li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>On Unix machines,
+     you can package STAF as a tar or tar.gz file (without using InstallAnywhere)
+     so that you can use to install STAF on other machines with the same
+     operating system, using the STAFInst install method documented in the
+     STAF User's Guide.  To build the STAF Packaging component, <tt>pkg</tt>,
+     (assuming you already built all the STAF components
+     that you wanted to package), run the following:</li>
+     <p>
+     Note that the following example is for Linux, but you can replace linux
+     with another Unix operating system (e.g. aix, solaris, etc).
+<p>
+<pre>
+  export OS_NAME=linux
+  make PROJECTS=pkg
+
+  cd ../../pkg/linux/staf/retail
+
+  Rename the package tar file to the correct name and compress it.  For example,
+  if on a Linux machine,
+
+  mv stafpkg_linux.tar STAFxxx-linux.tar
+  gzip STAFxxx-linux.tar
+
+  (where xxx is the STAF version you built, e.g. 312)
+</pre>
+Now you have a STAFxxx-linux.tar.gz file that can be installed on any machine
+with the same operating system (by untarring it and running STAFInst).
+<p>
+<b>Notes:</b>
+<p>
+<ol>
+<li>If you didn't build all of the STAF
+components, you'll first need to edit the STAF package makefile for the
+operating system for which you built STAF to remove any files that you
+didn't build.  For example, on linux, the STAF package makefile is
+<tt>src/staf/package/makefile.pkg.linux</tt>.
+If you did not build STAF REXX support, STAF Perl support, or STAF Tcl support,
+then edit makefile.pkg.linux and remove the following files and save the file
+before running <tt>make PROJECTS=pkg</tt>.
+<pre>
+    $(PKG)/bin/GenWL.cmd \
+
+    $(PKG)/bin/STAF.tcl
+
+    $(PKG)/lib/libRXSTAF.so \
+    $(PKG/lib/libRxThread.so \
+
+    $(PKG)/lib/STAFUtil.rxl \
+    $(PKG)/lib/STAFCPar.rxl \
+    $(PKG)/lib/STAFPool.rxl \
+    $(PKG)/lib/STAFMon.rxl \
+    $(PKG)/lib/STAFLog.rxl \
+    $(PKG)/lib/STAFUtil.tcl \
+    $(PKG)/lib/pkgIndex.tcl \
+    $(PKG)/lib/STAFLog.tcl \
+    $(PKG)/lib/STAFMon.tcl \
+    $(PKG)/bin/PLSTAF.pm \
+    $(PKG)/bin/STAF.pl \
+    $(PKG)/bin/STAF2.pl \
+    $(PKG)/bin/STAFMon.pm \
+    $(PKG)/bin/STAFLog.pm \
+    $(PKG)/lib/perl56/libPLSTAF.so \
+    $(PKG)/lib/perl58/libPLSTAF.so \
+    $(PKG)/lib/perl510/libPLSTAF.so \
+    $(PKG)/lib/perl512/libPLSTAF.so \
+    $(PKG)/lib/perl514/libPLSTAF.so \
+    $(PKG)/lib/PySTAF.py \
+    $(PKG)/lib/PYSTAF.so \
+    $(PKG)/lib/PySTAFLog.py \
+    $(PKG)/lib/PySTAFMon.py \
+    $(PKG)/lib/libTCLSTAF.so \
+    $(PKG)/bin/STAF.tcl \
+    
+    $(PKG)/samples/genwl/Sample.gwl \
+
+    $(PKG)/samples/misc/OldVars.cfg \
+    $(PKG)/samples/rexx/PingTest.cmd \
+    $(PKG)/samples/rexx/Sample1.cmd \
+    $(PKG)/samples/rexx/Sample2.cmd \
+    $(PKG)/samples/rexx/Sample3.cmd \
+    $(PKG)/samples/rexx/Sample4.cmd \
+</pre>
+</ol>
+</ul>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+<p class=MsoNormal><a name="Header_buildServices"></a><a href="#ToC_buildServices"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildServices'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_buildServices'></span><a href="#ToC_buildServices"><span
+style='mso-bookmark:Header_buildServices'>Building External STAF Java Services</span><span
+style='mso-bookmark:Header_buildServices'></span></a></h1>
+
+We deliver external STAF services written in Java in their own zip/tar files that
+contain the service jar file, service documentation, etc.  This section provides
+instructions on how to build the various STAF Java services.
+
+<p class=MsoNormal><a name="Header_buildSTAX"></a><a href="#ToC_buildSTAX"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildSTAX'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildSTAX'></span><a href="#ToC_buildSTAX"><span
+style='mso-bookmark:Header_buildSTAX'>Building the STAX Service</span><span
+style='mso-bookmark:Header_buildSTAX'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the STAX service,
+     an external Java service, the following environment variables must be set
+     before running make. It also assumes that you have already built the staf, connprov*, java, and jython projects.
+     Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=stax
+  export JAVA_DRIVE=d
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cgdrive/d/ibmjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/d/ibmjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh            (This is only required on AIX, when using Java 1.2+ to build)
+  export XERCES_ROOT=c:/tools/xerces-2_6_2
+  export XALAN_ROOT=c:/tools/xalan-j_2_7_0
+  make
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+<ul>
+<ol>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have Java 1.4 or
+      later installed in the directory that you specify for JAVA_V12_ROOT as building
+      STAXDoc requires this.</li>
+ <p>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have the
+      Xerces2 Parser for Java installed in the directory that you specify for XERCES_ROOT.
+      We are currently using Xerces2-J Version 2.6.2 which can be downloaded from
+      <a href="http://xml.apache.org/xerces2-j/">http://xml.apache.org/xerces2-j/</a>.</li>
+ <p>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      Xalan-Java Java installed in the directory that you specify for XALAN_ROOT.
+      We are currently using Xalan-Java Version 2.7.0 which can be downloaded from
+      <a href="http://xml.apache.org/xalan-j/">http://xml.apache.org/xalan-j/</a>.</li>
+ <p>
+</ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildEvent"></a><a href="#ToC_buildEvent"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildEvent'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildEvent'></span><a href="#ToC_buildEvent"><span
+style='mso-bookmark:Header_buildEvent'>Building the Event Service</span><span
+style='mso-bookmark:Header_buildEvent'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the Event service,
+     an external Java service, the following environment variables must be set
+     before running make.
+     It also assumes that you have already built the staf, connprov*, and java projects.
+     Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=event
+  export JAVA_DRIVE=d
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cgdrive/d/ibmjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/d/ibmjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh            (This is only required on AIX, when using Java 1.2+ to build)
+  make
+</pre>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildCron"></a><a href="#ToC_buildCron"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildCron'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildCron'></span><a href="#ToC_buildCron"><span
+style='mso-bookmark:Header_buildCron'>Building the Cron Service</span><span
+style='mso-bookmark:Header_buildCron'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the <span
+     class=SpellE>Cron</span> service, an external Java service, the following
+     environment variables must be set before running make.
+     It also assumes that you have already built the staf, connprov*, java, and jython projects.
+     Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=cron
+  export JAVA_DRIVE=d
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cgdrive/d/ibmjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/d/ibmjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh            (This is only required on AIX, when using Java 1.2+ to build)
+  make
+</pre>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildEM"></a><a href="#ToC_buildEM"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildEM'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildEM'></span><a href="#ToC_buildEM"><span
+style='mso-bookmark:Header_buildEM'>Building the EventManager Service</span><span
+style='mso-bookmark:Header_buildEM'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the <span
+     class=SpellE>EventManager</span> service, an external Java service, the
+     following environment variables must be set before running make.
+     It also assumes that you have already built the staf, connprov*, java, and jython projects.
+     Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=eventmanager
+  export JAVA_DRIVE=d
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cgdrive/d/ibmjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/d/ibmjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh            (This is only required on AIX, when using Java 1.2+ to build)
+  make
+</pre>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildHTTP"></a><a href="#ToC_buildHTTP"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildHTTP'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildHTTP'></span><a href="#ToC_buildHTTP"><span
+style='mso-bookmark:Header_buildHTTP'>Building the HTTP Service</span><span
+style='mso-bookmark:Header_buildHTTP'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the Http service,
+     an external Java service, the following environment variables must be set
+     before running make.
+     It also assumes that you have already built the staf, connprov*, and java projects.
+     Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=http
+  export JAVA_DRIVE=c
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cygdrive/c/sunjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/c/sunjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh          (This is only required on AIX, when using Java 1.2+ to build)
+  export APACHE_XERCES_ROOT=c:/tools/xerces-2_6_2
+  export NEKOHTML_ROOT=c:/tools/nekohtml-0.9.5
+  export COMMONS_LOGGING_ROOT=c:/tools/commons-logging-1.1
+  export COMMONS_CODEC_ROOT=c:/tools/commons-codec-1.3
+  export COMMONS_HTTPCLIENT_ROOT=c:/tools/commons-httpclient-3.1
+  make
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+
+<ul type=disc>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have the
+      Apache Xerces2 Java Parser installed.
+      We use Xerces2-J Version 2.6.2 to build the HTTP service jar file that
+      we distribute via the STAF SourceForge website.  Xerces2 Java Parser
+      binaries can be downloaded from <a href="http://xml.apache.org/xerces2-j/">
+      http://xml.apache.org/xerces2-j/</a>.
+      You need to set the APACHE_XERCES_ROOT environment variable to the directory
+      where you installed (e.g. unzipped) the Apache Xerces 2 Java Parser.
+      </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have the
+      CyberNeko HTML Parser V0.9.3 or later installed.  We use CyberNeko HTML
+      Parser V0.9.5.  CyberNeko HTML Parser binaries can be downloaded from
+      <a href="http://www.apache.org/~andyc/neko/doc/html/">
+      http://www.apache.org/~andyc/neko/doc/html/</a>.
+      You need to set the NEKOHTML_ROOT environment variable to the directory
+      where you installed (e.g. unzipped) the HTML Parser.
+      </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      Commons Logging V1.1 or later installed.  We use Commons Logging V1.1
+      to build the HTTP service jar file that we distribute via the STAF
+      SourceForge website.  Commons Logging binaries can be
+      downloaded from <a href="http://jakarta.apache.org/commons/logging/">
+      http://jakarta.apache.org/commons/logging/</a>.
+      You must also set the COMMONS_LOGGING_ROOT environment variable to the
+      directory where you installed (e.g. unzipped) Commons Logging.
+      </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      Commons Codec V1.2 or later installed.  We use Commons Codec V1.3
+      to build the HTTP service jar file that we distribute via the STAF
+      SourceForge website.  Codec is currently comprised of a modest set of
+      utilities and a simple framework for encoding and decoding both textual
+      and binary data.  Commons Codec binaries can be downloaded from
+      <a href="http://jakarta.apache.org/commons/codec/">
+      http://jakarta.apache.org/commons/codec/</a>. 
+      You also must set the COMMONS_CODEC_ROOT environment variable to
+      the directory where you installed (e.g. unzipped) Commons Codec.
+      </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      Commons HttpClient V3.0 or later installed.  We use Commons HttpClient
+      V3.1 to build the HTTP service that we distribute via the STAF
+      SourceForge website.
+      The Jakarta Commons HttpClient component implements the client side of
+      the most recent HTTP standards and recommendations.  Commons HttpClient
+      binaries can be downloaded from
+      <a href="http://jakarta.apache.org/commons/httpclient/">
+      http://jakarta.apache.org/commons/httpclient/</a>.
+      You also must set the COMMONS_HTTPCLIENT_ROOT environment variable to the
+      directory where you installed (e.g. unzipped) Commons HttpClient.
+      </li>
+ </ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildEmail"></a><a href="#ToC_buildEmail"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildEmail'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildEmail'></span><a href="#ToC_buildEmail"><span
+style='mso-bookmark:Header_buildEmail'>Building the Email Service</span><span
+style='mso-bookmark:Header_buildEmail'></span></a></h2>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l14 level1 lfo8;tab-stops:list .5in'>To build the Email service,
+     an external Java service, the following environment variables must be set
+     before running make.
+     It also assumes that you have already built the staf, connprov*, and java projects.
+     Make sure the values match your environment. </li>
+<p>
+<pre>
+  export PROJECTS=email
+  export JAVA_DRIVE=c
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cygdrive/c/sunjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/c/sunjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh          (This is only required on AIX, when using Java 1.2+ to build)
+  export COMMONS_CODEC_ROOT=c:/tools/commons-codec-1.3
+  make
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+
+<ul type=disc>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have
+      Commons Codec V1.2 or later installed.  We use Commons Codec V1.3
+      to build the Email service jar file that we distribute via the STAF
+      SourceForge website.  Codec is currently comprised of a modest set of
+      utilities and a simple framework for encoding and decoding both textual
+      and binary data.  Commons Codec binaries can be downloaded from
+      <a href="http://jakarta.apache.org/commons/codec/">
+      http://jakarta.apache.org/commons/codec/</a>. 
+      You also must set the COMMONS_CODEC_ROOT environment variable to
+      the directory where you installed (e.g. unzipped) Commons Codec.
+      </li>
+ </ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildNS"></a><a href="#ToC_buildNS"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildNS'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildNS'></span><a href="#ToC_buildNS"><span
+style='mso-bookmark:Header_buildNS'>Building the Namespace Service</span><span
+style='mso-bookmark:Header_buildNS'></span></a></h2>
+
+<ul type=desc>
+ <li>To build the Namespace service, an external Java service, the following
+     environment variables must be set before running make.
+     It also assumes that you have already built the staf, connprov*, and java projects.
+     Make sure the values match your environment.</li>
+<p>
+<pre>
+  export PROJECTS=namespace
+  export JAVA_DRIVE=c
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cygdrive/c/sunjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/c/sunjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh            (This is only required on AIX, when using Java 1.2+ to build)
+  export XERCES_ROOT=c:/tools/xerces-2_6_2
+</pre>
+</ul>
+
+<p style='margin-left:.5in'><b>Notes:</b> </p>
+
+<ul type=disc>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l14 level2 lfo8;tab-stops:list 1.0in'>You need to have the
+      Xerces2 Java Parser installed.  We use Xerces2-J Version 2.6.2 to build
+      the Email service jar file that we distribute via the STAF SourceForge
+      website.  Xerces2 Java Parser binaries can be downloaded from
+      <a href="http://xml.apache.org/xerces2-j/"> http://xml.apache.org/xerces2-j/</a>.
+      You must set the XERCES_ROOT environment variable to the directory
+      where you installed (e.g. unzipped) the Xerces 2 Java Parser.
+      </li>
+ </ol>
+</ul>
+
+<p class=MsoNormal><a name="Header_buildJavaService"></a><a href="#ToC_buildJavaService"><!----------------------------------------------------------------------------><span
+style='mso-bookmark:Header_buildJavaService'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_buildJavaService'></span><a href="#ToC_buildJavaService"><span
+style='mso-bookmark:Header_buildJavaService'>Building Other Java Services</span><span
+style='mso-bookmark:Header_buildJavaService'></span></a></h2>
+
+<ul type=desc>
+<li>To build other Java services like FTP, FSEXT, NamedCounter, SXE, and Timer,
+    the following environment variables must be set: </li>
+<p>
+<pre>
+  export PROJECTS=&lt;Java service name>            (e.g. ftp, fsext, namedcounter, sxe, timer)
+  export JAVA_DRIVE=c
+  export JAVA_LIBS=jvm
+  export JAVA_VERSION=1.4
+  export JAVA_BUILD_V11=0
+  export JAVA_BUILD_V12=1
+  export JAVA_V12_ROOT=/cygdrive/c/sunjdk1.4.2
+  export JAVA_V12_LIBDIRS=/cygdrive/c/sunjdk1.4.2/lib
+  export JAVA_V12_BIN_DIR=/usr/java_dev2/sh            (This is only required on AIX, when using Java 1.2+ to build)
+  make
+</pre>
+</ul>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_bldrun"></a><a href="#ToC_bldrun"><span style='mso-bookmark:Header_bldrun'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_bldrun'></span><a href="#ToC_bldrun"><span
+style='mso-bookmark:Header_bldrun'>Running STAF from the Built Executables</span><span
+style='mso-bookmark:Header_bldrun'></span></a></h1>
+
+<p>To run STAF from the executables you built, perform the following based on
+the operating system you are using: </p>
+
+<p><a name="Header_UnixBldrun"></a><a href="#ToC_UnixBldrun"><span
+style='mso-bookmark:Header_UnixBldrun'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_UnixBldrun'></span><a
+href="#ToC_UnixBldrun"><span style='mso-bookmark:Header_UnixBldrun'>Running on
+Unix<span style='mso-bookmark:Header_UnixBldrun'></span></a></h2>
+<p>
+<ol>
+<li>If STAF is already running, shut it down: </li>
+ <p>
+ <pre>STAF local SHUTDOWN SHUTDOWN</pre>
+<p>
+<li>Change the environment settings to use the STAF directories you just built.
+For example, on Linux, do: </li>
+ <p>
+<pre>
+cd /build/rel/linux/staf/retail   (or /build/rel/linux/staf/debug)
+export STAFHome=$PWD
+export LD_LIBRARY_PATH=$STAFHome/lib:$STAFHome/lib/java12:$LD_LIBRARY_PATH
+export PATH=$STAFHome/bin:$PATH
+export STAFCONVDIR=$STAFHome/codepage
+</pre>
+<p>
+<li>Set up the STAF configuration file that you want to use. If you already have
+one set up where STAF was installed, you can copy it. For example: </li>
+ <p>
+ <pre>cp /usr/local/staf/bin/STAF.cfg bin</pre>
+<p>
+<li>Make sure you are now using version of STAF that you just build: </li>
+  <p>
+  <pre>which STAFProc</pre>
+  <p>
+  should show something like: <tt>/build/rel/linux/staf/retail/bin/STAFProc</tt>
+<p>
+<li>Start STAF: </li>
+  <p>
+  <pre>STAFProc &amp;</pre>
+  <p>If you get error &quot;<span class=SpellE>mprotect</span> <span
+  class=SpellE>reset<span class=GramE>:Bad</span></span> address&quot;, then
+  check the version (<tt>uname -a</tt>), and if 2.4, type the
+  following and then restart STAF: </p>
+  <p>
+  <pre>export LD_ASSUME_KERNEL=2.2.25</pre>
+</ol>
+<p>
+
+<p><a name="Header_WinBldrun"></a><a href="#ToC_WinBldrun"><span
+style='mso-bookmark:Header_WinBldrun'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_WinBldrun'></span><a href="#ToC_WinBldrun"><span
+style='mso-bookmark:Header_WinBldrun'>Running on Windows</span><span
+style='mso-bookmark:Header_WinBldrun'></span></a></h2>
+
+<p>You can run STAF from the executables you built from a Cygwin
+window or from a Windows command prompt. </p>
+
+<h3>Running in a Windows Command Prompt Window</h3>
+
+<ol>
+<li>If STAF is already running, shut it down: </li>
+ <p>
+ <pre>STAF local SHUTDOWN SHUTDOWN</pre>
+<p>
+<li>Change the environment settings to use the STAF retail (or debug) directories
+    you just built. For example, if you built a retail version of STAF in
+    directory D:\build, do: </li>
+  <p>
+  <pre>
+  D:
+  cd \build\rel\win32\staf\retail   (or \build\rel\win32\staf\debug)
+  set STAFHome=D:\build\rel\win32\staf\retail
+  set PATH=%STAFHome%\bin;%STAFHome%\lib;%STAFHome%\lib\java12;%PATH%
+  set STAFCONVDIR=%STAFHome%\codepage
+   </pre>
+
+<li>Set up the STAF configuration file that you want to use (in directory
+     D:\build\rel\win32\staf\retail\bin). If you already have one set up where
+     STAF was installed, you can copy it. For example: </li>
+  <p>
+  <pre>cp C:\STAF\bin\STAF.cfg D:\build\rel\win32\staf\retail\bin</pre>
+<p>
+<li>Make sure you are now using version of STAF that you just build: </li>
+  <p>
+  <pre>which STAFProc</pre>
+  <p>
+  Note: The &quot;which&quot; utility for Windows does not come
+  with <span class=GramE>Windows.</span> Should show something like:
+  <tt>d:\build\rel\win32\staf\retail\bin/STAFProc.exe</tt>. </p>
+<p>
+<li>Start STAF: </li>
+  <p>
+  <pre>STAFProc</pre>
+</ol>
+<p>
+
+<h3>Running in a <span class=SpellE>Cygwin</span> Window</h3>
+
+<ol>
+<li>If STAF is already running, shut it down: </li>
+ <p>
+ <pre>STAF local SHUTDOWN SHUTDOWN</pre>
+<p>
+<li>Change the environment settings to use the STAF retail (or debug) directories
+    you just built. For example, if you built a retail version of STAF in
+    directory D:\build, do: </li>
+  <p>
+  <pre>
+  cd /cygdrive/d/build/rel/win32/staf/retail   (or /cygdrive/d/build/rel/win32/staf/debug)
+  export STAFHome=$PWD
+  export PATH=$STAFHome/bin:$STAFHome/lib:$STAFHome/lib/java12:$PATH
+  export STAFCONVDIR=d:/build/rel/win32/staf/retail/codepage
+   </pre>
+
+<li>Set up the STAF configuration file that you want to use (in directory
+     /cygdrive/d/build/rel/win32/staf/retail/bin). If you already have one set
+     up where STAF was installed, you can copy it. For example: </li>
+  <p>
+  <pre>cp /cygdrive/c/STAF/bin/STAF.cfg /cygdrive/d/build/rel/win32/staf/retail/bin/STAF.cfg</pre>
+<p>
+<li>Make sure you are now using version of STAF that you just build: </li>
+  <p>
+  <pre>type STAFProc</pre>
+  <p>
+  Should show something like:
+  <p>
+  <pre>STAFProc is /cygdrive/d/build/rel/win32/staf/retail/bin/STAFProc</pre>
+<p>
+<li>Start STAF: </li>
+  <p>
+  <pre>STAFProc</pre>
+</ol>
+<p>
+
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_installpkg"></a><a href="#ToC_installpkg"><span style='mso-bookmark:
+Header_installpkg'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_installpkg'></span><a
+href="#ToC_installpkg"><span style='mso-bookmark:Header_installpkg'>Explaining
+How STAF is Packaged for Installation</span><span style='mso-bookmark:Header_installpkg'></span></a></h1>
+
+<p class=MsoNormal><span style='mso-bookmark:Header_installpkg'></span>STAF is
+packaged for installation using <span class=SpellE>InstallAnywhere</span> for
+most operating systems and/or as GNU zipped tar files for some of the
+<span class=GramE>Unix</span> operating systems. </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l1 level1 lfo13;tab-stops:list .5in'><span class=SpellE><b>InstallAnywhere</b></span><b>
+     (IA) Files:</b> </li>
+
+<p>We use InstallAnywhere (IA) to provide a GUI interface
+to install STAF. In order to package STAF using InstallAnywhere, you need a license
+for InstallAnywhere.  We provide two STAF InstallAnywhere installer files for each
+operating system that InstallAnywhere supports:
+<p>
+<ul compact>
+<li>An InstallAnywhere installer file that bundles a JVM for use by InstallAnywhere
+    (e.g. STAF3416-setup-win32.exe)
+<li>An InstallAnywhere installer file that does not bundle a JVM
+    (e.g. STAF3416-setup-win32-NoJVM.exe)
+</ul>
+<p>
+InstallAnywhere does not currently support z/OS and z/OS-64.
+Also, note that for Mac OS X, a .zip file (e.g. STAF3416-setup-macosx-universal.zip)
+is provided which when unzipped, provides a InstallAnywhere NoJVM executable file.</p>
+
+<p>For example, for STAF 3.4.16 for Windows x86 (32-bit), files
+STAF3416-setup-win32.exe and STAF3416-setup-win32-NoJVM.exe are available for download
+from the STAF SourceForge website. If you already have Java 1.4 or later installed,
+you could download the STAF3416-setup-win32-NoJVM.exe file which is smaller.
+If you do not already have Java installed, you would need to download the
+STAF3416-setup-win32.exe file (which includes a bundled JVM).</p>
+</ul>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l1 level1 lfo13;tab-stops:list .5in'><b>Tar File for Use with <span
+     class=SpellE>STAFInst</span>:</b> </li>
+
+<p>For Unix systems whose platforms are not supported by
+InstallAnywhere, such as z/OS, a GNU zipped tar file is provided. We also provide GNU
+zipped tar files for all Unix operating systems as well. Once the tar file is
+untarred, the <tt>STAFInst</tt> executable must be run to install STAF.</p>
+
+<p>For example, for STAF 3.4.16 for Linux 32-bit, file
+STAF3416-linux.tar.gz is available for download from the STAF SourceForge website.</p>
+
+<p>Here are the steps to create a Tar File (these steps will use Linux as an example): </p>
+<p>
+<ol compact>
+  <li><tt>cd /build/rel/linux/staf/retail directory.</tt></li>
+  <li>Change the execute permissions for <tt>STAFInst:</tt>
+      <br>&nbsp; <tt>chmod 777 STAFInst</tt></li>
+  <li>Tar the file:
+      <br>&nbsp; <tt>tar cf STAF3416-linux.tar</tt></li>
+  <li>Gzip the file:
+      <br>&nbsp; <tt>gzip STAF3416-linux.tar</tt></li>
+</ol>
+</ul>
+<p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_designs"></a><a href="#ToC_designs"><span style='mso-bookmark:
+Header_designs'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_designs'></span><a href="#ToC_designs"><span
+style='mso-bookmark:Header_designs'>STAF Design Documentation</span><span
+style='mso-bookmark:Header_designs'></span></a></h1>
+
+<p>When adding <span class=GramE>a features</span> to STAF, provide a design
+document in the docs/features directory in CVS. The feature design should be
+sent to the entire STAF development team to be reviewed before implementation. </p>
+
+<p>The template to use when creating a feature design document is
+docs/features/Feature_nnnnnn.txt. The naming convention for a design document
+is Feature_nnnnnn.txt where you replace <span class=SpellE>nnnnnn</span> with
+the actual feature number. </p>
+
+<p>The feature design template contains: </p>
+
+<pre><o:p>&nbsp;</o:p></pre><pre>Feature <span class=GramE>ID<span style='mso-spacerun:yes'>&nbsp; </span>:</span> <span
+class=SpellE>nnnnnn</span></pre><pre>Response Due: mm/<span class=SpellE>dd/yyyy</span></pre><pre>Title<span style='mso-spacerun:yes'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>: Add info on which interfaces are enabled</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>Description</pre><pre>-----------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>Problem(s) Solved</pre><pre>-----------------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>Related Features</pre><pre>----------------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>External Changes</pre><pre>----------------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>Internal Changes</pre><pre>----------------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>Design Considerations</pre><pre>---------------------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre>Backward Compatibility Issues</pre><pre>-----------------------------</pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre><pre><o:p>&nbsp;</o:p></pre>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_coding"></a><a href="#ToC_coding"><span style='mso-bookmark:Header_coding'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_coding'></span><a href="#ToC_coding"><span
+style='mso-bookmark:Header_coding'>STAF Coding Conventions</span><span
+style='mso-bookmark:Header_coding'></span></a></h1>
+
+<p>STAF provides consistent and easily readable source code by adhering to the
+following conventions: </p>
+
+<ol>
+ <li>Use Unix (\n) end of line characters. Developers
+     will be editing the source code on a variety of platforms with a variety
+     of editors.  The Unix EOL character is universal, windows EOL (\r\n) are not.
+     STAF FS service provides a command
+     to convert EOL characters. This can be used to convert the files you edit
+     if your editor automatically uses native EOL and not Unix EOL. </li>
+ <p>
+ <li>Keep all lines at 80 or less. Some editors (EMACS) only show 80 chars wide. </li>
+ <p>
+ <li>Don't use tab. The \t converts to a different number of spaces in different
+     environments.  The indent convention is 4 spaces. If you use tabs make sure they are
+     converted to spaces. </li>
+ <p>
+ <li>Open and close all blocks on their own line '{' and '}' should be alone on the
+     lines where they occur. For example:</li>
+    <p>
+    <pre>
+    try
+    {
+        connection->writeUInt(0);
+    }
+    </pre>
+    Not:
+    <p>
+    <pre>
+    try{ connection->writeUInt(0); }
+    </pre>
+ <li>Horizontal white space is your friend. </li>
+ <p>
+   <ol type="a">
+   <li>Separate arguments in function calls and declarations.</li>
+   <p>
+   <pre>void rollBuffer(char * buffer, int bufferLen, int rollLen)</pre>
+   <p>
+   <li>Separate operators from the arguments.</li>
+   <p>
+   <pre>int endIndx = bufferLen - rollLen;</pre>
+   <p>
+   <li>Separate comparators from the arguments.</li>
+   <p>
+   <pre>if ((i == offset) || (last == -1))</pre>
+   </ol>
+ <p>
+ <li>Vertical white space is your friend. </li>
+ <p>
+   <ol type="a">
+   <li>Separate variable declarations. </li>
+   <li>Separate clauses (if/while/for) </li>
+   <li>Separate comments </li>
+   <li>Separate logically independent sections of code </li>
+   <li>Separate functions </li>
+   </ol>
+ <p>
+ <li>Comments make life easier for the next person.  Accurate and informative
+     comments allow other people to understand and modify your code.
+     It allows for easy identification of the pertinent section of code that 
+     needs to be edited. </li>
+   <p>
+   <ol type="a">
+   <li>Comment function declarations. Tell what the function does and the
+       effect of all arguments</li>
+   <p>
+   <pre>
+   /***********************************************************************/
+   /* STAFStringNumOfWords - Returns the number of words in a STAFString  */
+   /*                                                                     */
+   /* Accepts: (In)  A STAFString_t                                       */
+   /*          (Out) The number of words                                  */
+   /*          (Out) A pointer to an OS return code (may be NULL)         */
+   /*                                                                     */
+   /* Returns: kSTAFOk on success                                         */
+   /*          other on error                                             */
+   /***********************************************************************/
+   </pre>
+   <li>Comment blocks of code. Allow editors to easily identify which block is relevant to them </li>
+   <p>
+   <pre>
+   /* This clause establishes the new eol marker.
+      It causes the use of binary transfer if the eol on both sides
+      are the same and no codepage conversion is to be done.
+      This allows for a faster transfer.    */
+   </pre>
+   <li>Comment confusing statements. Allow editors to understand what and why things are
+      happening.</li>
+   <p>
+   <pre>
+   // offset = buffer length - null char - ending index of eol
+   offset = len - 1 - endBuffer;
+   </pre>
+   </ol>
+ <li>Use self documenting code.
+ Highly descriptive variable names and indentation make code legible,
+ making the need for comments lower. </li>
+ <p>
+ <li>Naming convention:</li>
+ <p>
+ <ol type="a">
+  <li>Class names: Starts with &quot;STAF&quot; 1st letter of each word uppercase, no - or _,
+      remaining letters lower-case.
+   <p>
+   <pre>class STAFHandleManager</pre>
+   <p>
+  <li>Variables: Lowercase, no - or _, 1st word all lower-case, subsequent words 1st
+      letter uppercase </li>
+   <p>
+   <pre>unsigned int maxConvertedLength;</pre>
+   <p>
+  <li>Function declarations: variable naming convention </li>
+   <p>
+   <pre>void rollBuffer(char * buffer, int bufferLen, int rollLen)</pre>
+   <p>
+  <li>Enumerations: 1st letter k, variable naming convention </li>
+   <p>
+   <pre>enum IndexRep { kChar = 0, kByte = 1 };</pre>
+ </ol>
+ <p>
+ <li>Use simple code. The simpler the code the easier it is to maintain. </li>
+</ol>
+<p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_Bugs"></a><a href="#ToC_Bugs"><span style='mso-bookmark:Header_Bugs'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_Bugs'></span><a href="#ToC_Bugs"><span
+style='mso-bookmark:Header_Bugs'>Reporting/Browsing/Fixing Bugs and Features</span><span
+style='mso-bookmark:Header_Bugs'></span></a></h1>
+
+<p>All bug reports and feature requests for STAF are kept on <span
+class=SpellE>SourceForge</span>. </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l9 level1 lfo15;tab-stops:list .5in'>To report a new bug or to
+     browse a list of reported bugs, go to the STAF Home or Main Page on <span
+     class=SpellE>SourceForge</span> or click <a
+     href="http://sourceforge.net/tracker/?group_id=33142&amp;atid=407381">here</a>.
+     </li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l9 level1 lfo15;tab-stops:list .5in'>To request a feature or to
+     browse a list of requested features, go to the STAF Home or Main Page on <span
+     class=SpellE>SourceForge</span> or click <a
+     href="http://sourceforge.net/tracker/?atid=407384&amp;group_id=33142&amp;func=browse">here</a>.
+     </li>
+</ul>
+
+<p>When you begin work on a bug or feature, set the &quot;Assigned to&quot;
+field to your <span class=SpellE>userid</span>. Make the changes and test them.
+Update the history file to describe the new feature or bug fix you made, making
+sure you reference the request ID. Commit your changes into CVS, specifying the
+request ID in the commit message. Then update the bug/feature, adding comments
+on the changes you made, specify the Resolution and Status, and submit your changes.
+</p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_Debugging"></a><a href="#ToC_Debugging"><span style='mso-bookmark:
+Header_Debugging'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_Debugging'></span><a href="#ToC_Debugging"><span
+style='mso-bookmark:Header_Debugging'>Debugging on Linux</span><span
+style='mso-bookmark:Header_Debugging'></span></a></h1>
+
+<p>On Linux systems, you can use <span class=SpellE>gdb</span> to debug STAF,
+usually with more success using a debug version of STAF. Using <span
+class=SpellE>gdb</span> can be useful when a SIGSEGV problem is occurring. </p>
+<p>
+Use <tt>gdb</tt> to debug STAF locally as follows: </p>
+  <p>
+  <ol>
+  <li><tt>gdb STAFProc</tt>
+  <li><tt>run</tt>
+  <li>Recreate the problem.
+  </ol>
+<p>
+Use <tt>gdb</tt> to debug STAF remotely as follows: </p>
+  <p>
+  <ol>
+  <li>You need to establish two telnet sessions to the system to be debugged. </li>
+  <p>
+  <li>From one telnet session, type: </li>
+  <p>
+  <pre>
+      gdb STAFProc
+      run
+  </pre>
+  <li>From the other telnet session, recreate the problem. </li>
+  </ol>
+
+<p>Various commands that you might need while using <span class=SpellE>gdb</span>
+are: </p>
+
+<ul>
+ <li>help </li>
+ <li>help tracepoints </li>
+ <li>help stack </li>
+ <li>info threads </li>
+ <li>thread n </li>
+ <li>bt</li>
+</ul>
+<p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_Links"></a><a href="#ToC_Links"><span style='mso-bookmark:Header_Links'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_Links'></span><a href="#ToC_Links"><span
+style='mso-bookmark:Header_Links'>Appendix A: Important Links</span><span
+style='mso-bookmark:Header_Links'></span></a></h1>
+
+<p>Here are some commonly used links for STAF: </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l16 level1 lfo19;tab-stops:list .5in'>External Open Source STAF
+     Project (<span class=SpellE>SourceForge</span>): </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l16 level2 lfo19;tab-stops:list 1.0in'><a
+      href="http://staf.sourceforge.net">http://staf.sourceforge.net</a> - This
+      is our STAF Home page on <span class=SpellE>SourceForge</span> (where we
+      direct STAF users to visit) </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l16 level2 lfo19;tab-stops:list 1.0in'><a
+      href="http://sourceforge.net/projects/staf">http://sourceforge.net/projects/staf</a>
+      - This is our STAF Main page on <span class=SpellE>SourceForge</span>.
+      From here we can access all <span class=SpellE>SourceForge</span>
+      functions, including Administrator functions. </li>
+ </ul>
+</ul>
+<p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_CVSCommands"></a><a href="#ToC_CVSCommands"><span
+style='mso-bookmark:Header_CVSCommands'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_CVSCommands'></span><a
+href="#ToC_CVSCommands"><span style='mso-bookmark:Header_CVSCommands'>Appendix
+B: Common CVS Commands</span><span style='mso-bookmark:Header_CVSCommands'></span></a></h1>
+
+<p>Here are some of the common CVS commands that you will use. Use the 'man <span
+class=SpellE>cvs</span>' command to get more information about these CVS
+commands and others. </p>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE>cvs</span> update</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'><span class=GramE>Compares your directory tree with the tree
+in the CVS repository, by file, based on the directory that you are currently
+in.</span> Execute this command from within your private source directory when
+you wish to update your copies of source files from changes that other
+developers have made to the source in the CVS repository. A -d option can be
+used to add any new directories. Each file that has changed will have one of
+the following codes which indicate how it was changed: </p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>U</b> - <span
+      class=GramE>means</span> the CVS library's copy was more recently
+      updated. The file was brought up to date with respect to the repository.
+      This is done for any file that exists in the repository but not in your
+      source, and for files that you haven't changed but are not the most
+      recent versions available in the repository. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>M</b> - <span
+      class=GramE>means</span> that you most recently modified the file. The
+      file is modified in your working directory. 'M' can indicate one of two
+      states for a file you're working on: either there were no modifications
+      to the same file in the repository, so that your file remains as you last
+      saw it; or there were modifications in the repository as well as in your copy,
+      but they were merged successfully, without conflict, in your working
+      directory. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>C</b> - <span
+      class=GramE>means</span> a conflict. A conflict was detected while trying
+      to merge your changes to a file with changes from the source repository.
+      The file in your working directory is now the result of merging the two
+      versions; an unmodified copy of your file is also in your working
+      directory, with the name '<span class=GramE>.#</span><span class=SpellE>file.version</span>',
+      where version is the revision that your modified file started from. You
+      must edit any files marked with a C and resolve the conflicts. The <span
+      class=GramE>conflicts are indicated by
+      &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; and
+      &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; marks</span>.
+      &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; <span class=GramE>around</span>
+      lines of code that has been removed and
+      &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; around code that has been added.
+      </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>P</b> - <span
+      class=GramE>means</span> it's a production file. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>A</b> - <span
+      class=GramE>means</span> it's a file that you added. The file has been
+      added to your private copy of the sources, and will be added to the
+      source repository when you run '<span class=SpellE>cvs</span> commit' on
+      the file. This is a reminder to you that the file needs to be committed. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>R</b> - The file has
+      been removed from your private copy of the sources, and will be removed
+      from the source repository when you run '<span class=SpellE>cvs</span>
+      commit' on the file. This is a reminder to you that the file needs to be
+      committed. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'><b>?</b> - means the
+      file is in your working directory, but does not correspond to anything in
+      the source repository, and is not in the list of files for <span
+      class=SpellE>cvs</span> to ignore. It could be a new file for which you
+      have not yet done a '<span class=SpellE>cvs</span> add'. </li>
+ </ul>
+</ul>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE><span class=GramE>cvs</span></span> add file...</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'>Add a new file or directory to the CVS repository, pending a
+'<span class=SpellE>cvs</span> commit' on the same file. Can only be done from
+within sources created by a previous '<span class=SpellE>cvs</span> checkout'
+invocation. <span class=GramE>(Does not directory affect repository; changes
+working directory.)</span> </p>
+
+<p style='margin-left:.5in'>Note that if you are checking in a binary file
+(such as a gif or <span class=SpellE>pdf</span> file), you must add the -kb
+option to the add command. This indicates that the file is a binary file. This
+is important so that when updates are made to the file, <span class=SpellE>cvs</span>
+will not attempt to &quot;merge&quot; the 2 versions of the binary file, which
+may cause bad things to happen. </p>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE>cvs</span> checkout</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'>Make a working directory of source files for editing.
+(Creates or changes working directory.) This is a necessary preliminary for
+most <span class=SpellE>cvs</span> work: creates your private copy of the
+source. You can also use a path relative to the source <span class=SpellE>respository</span>
+here. You can work with this copy without interfering with others' work. At
+least one subdirectory level is always created. </p>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE>cvs</span> diff</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'>Show differences between files in working directory and
+source repository, or between two revisions in source repository. <span
+class=GramE>(Does not change either repository or working directory.)</span> <span
+class=GramE>Used to show the code changes.</span> &lt; <span class=GramE>in</span>
+front of lines of code indicate that these lines have been removed and &gt; in
+front of lines of code indicate that these lines have been added. </p>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE>cvs</span> commit -m &quot;Enter a message here that describes the change including the bug/feature ID (#0123456)&quot;</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'>Apply to the source repository changes, additions, and
+deletions from your working directory. <span class=GramE>(Changes repository.)</span>
+Use this command when you wish to 'publish' your changes to other developers,
+by incorporating them in the source repository. </p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'>Only check in tested
+      changes. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l12 level2 lfo20;tab-stops:list 1.0in'>Always do a &quot;<span
+      class=SpellE>cvs</span> diff&quot; before doing a <span class=SpellE>cvs</span>
+      <span class=GramE>commit.</span> Note that if every line is marked as
+      changed, then you may have used an editor that put <span class=SpellE>Ctl</span>-M's
+      on every line. Do not check in code that contains <span class=SpellE>Ctl</span>-M's.
+      </li>
+ </ul>
+</ul>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE>cvs</span> log</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'>Display log information. <span class=GramE>(Does not change
+repository or working directory.)</span> </p>
+
+<pre style='margin-left:.5in;text-indent:-.25in;mso-list:l12 level1 lfo20'><![if !supportLists]><span
+style='font-family:Symbol;mso-fareast-font-family:Symbol;mso-bidi-font-family:
+Symbol'><span style='mso-list:Ignore'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]><span
+class=SpellE><span class=GramE>cvs</span></span> remove file...</pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:.5in'>Use this command (after erasing any files listed) </p>
+
+<p class=MsoNormal>To list all of the CVS commands, type: </p>
+
+<pre><span class=SpellE><span class=GramE>cvs</span></span> help</pre>
+
+<p class=MsoNormal>To get help for a specific CVS command, for example update,
+type: </p>
+
+<pre><span class=SpellE><span class=GramE>cvs</span></span> --help update</pre>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_NewDeveloper"></a><a href="#ToC_NewDeveloper"><span
+style='mso-bookmark:Header_NewDeveloper'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_NewDeveloper'></span><a
+href="#ToC_NewDeveloper"><span style='mso-bookmark:Header_NewDeveloper'>Appendix
+C: New Developer Activities</span><span style='mso-bookmark:Header_NewDeveloper'></span></a></h1>
+
+<p>When a new developer joins the STAF team, he/she must perform the following
+activities. </p>
+
+<p><a name="Header_JoinDevProjects"></a><a href="#ToC_JoinDevProjects"><span
+style='mso-bookmark:Header_JoinDevProjects'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_JoinDevProjects'></span><a
+href="#ToC_JoinDevProjects"><span style='mso-bookmark:Header_JoinDevProjects'>Join
+the Open Source STAF Development Project</span><span style='mso-bookmark:Header_JoinDevProjects'></span></a></h2>
+
+<ol start=1 type=1>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l10 level1 lfo21;tab-stops:list .5in'>First read the IBM Open
+     Source Guidelines at <a href="http://ltc.linux.ibm.com/open_source">http://ltc.linux.ibm.com/open_source</a>.
+     </li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l10 level1 lfo21;tab-stops:list .5in'>Get an approval note from
+     your manager saying that you can participate in the External Open Source
+     STAF Project (and send David Bender a copy of this note). </li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l10 level1 lfo21;tab-stops:list .5in'>Register with <span
+     class=SpellE>SourceForge</span> at: </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l10 level2 lfo21;tab-stops:list 1.0in'><a
+      href="http://sourceforge.net/account/register.php">http://sourceforge.net/account/register.php</a>
+      </li>
+ </ul>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l10 level1 lfo21;tab-stops:list .5in'>Let another STAF Developer
+     know your <span class=SpellE>userid</span> so they can add you as a
+     developer for the projects. </li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l10 level1 lfo21;tab-stops:list .5in'>Get with another STAF
+     Developer to help you get your office machine set up to download the code
+     and build it. </li>
+</ol>
+
+<p><a name="Header_JoinSupport"></a><a href="#ToC_JoinSupport"><span
+style='mso-bookmark:Header_JoinSupport'><o:p></o:p></span></a></p>
+
+<h2><span style='mso-bookmark:Header_JoinSupport'></span><a
+href="#ToC_JoinSupport"><span style='mso-bookmark:Header_JoinSupport'>Subscribe
+to Mailing Lists and Monitor Newsgroups</span><span style='mso-bookmark:Header_JoinSupport'></span></a></h2>
+
+<p>External and internal STAF customers can send questions to the STAF <span
+class=SpellE>SourceForge</span> mailing lists and forums, and internal IBM STAF
+customers can post questions on the AWE Newsgroup. Part of the job
+responsibilities of a STAF Developer is to monitor the newsgroups, the <span
+class=SpellE>SourceForge</span> Mailing Lists, and the <span class=SpellE>SourceForge</span>
+Forums and respond to any questions or support requests. STAF developers get
+notes sent to them when anyone sends a note to one of the mailing lists or
+posts a message on a forum. However, STAF developers must monitor the
+Newsgroups to check for any new postings. </p>
+
+<ol start=1 type=1>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l7 level1 lfo22;tab-stops:list .5in'>Subscribe to the three STAF <span
+     class=SpellE>SourceForge</span> mailing lists. Click on the links below to
+     signup for a list, to post a message, to view archived messages, or to
+     change your subscription. We try to respond to any questions within a
+     couple of hours during normal business hours. </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l7 level2 lfo22;tab-stops:list 1.0in'><a
+      href="http://lists.sourceforge.net/lists/listinfo/staf-news"><span
+      class=SpellE><span class=GramE>staf</span></span><span class=GramE>-news</span></a>
+      - is a moderated, low-traffic list which carries only periodic
+      announcements of STAF releases and important updates. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l7 level2 lfo22;tab-stops:list 1.0in'><a
+      href="http://lists.sourceforge.net/lists/listinfo/staf-users"><span
+      class=SpellE><span class=GramE>staf</span></span><span class=GramE>-users</span></a>
+      - is the list for questions, suggestions, support, and general discussion
+      of STAF. </li>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l7 level2 lfo22;tab-stops:list 1.0in'><a
+      href="http://lists.sourceforge.net/lists/listinfo/staf-devel"><span
+      class=SpellE><span class=GramE>staf-devel</span></span></a> - is the list
+      for STAF developers only. </li>
+ </ul>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l7 level1 lfo22;tab-stops:list .5in'>Add the following IBM STAF
+     newsgroup to your browser. You can click on the link below to access the
+     newsgroup: </li>
+ <ul type=circle>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l7 level2 lfo22;tab-stops:list 1.0in'><a
+      href="news://websphere.austin.ibm.com/ibm.websphere.awe"><span
+      class=SpellE>ibm.websphere.awe</span></a> - <span class=SpellE>Websphere</span>
+      AWE (Automated <span class=SpellE>Websphere</span> Environment) </li>
+ </ul>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l7 level1 lfo22;tab-stops:list .5in'>Subscribe to the <span
+     class=SpellE>SourceForge</span> <a
+     href="http://lists.sourceforge.net/lists/listinfo/staf-dev-bugs"><span
+     class=SpellE>staf</span>-dev-bugs</a> mailing list. We use this private
+     mailing list to mirror incoming bugs and feature requests for STAF. </li>
+</ol>
+<p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<p><!----------------------------------------------------------------------------><a
+name="Header_Shutdown"></a><a href="#ToC_Shutdown"><span style='mso-bookmark:
+Header_Shutdown'><o:p></o:p></span></a></p>
+
+<h1><span style='mso-bookmark:Header_Shutdown'></span><a href="#ToC_Shutdown"><span
+style='mso-bookmark:Header_Shutdown'>Appendix D: Shutting Down STAF on <span
+class=GramE>Uni</span>x</span><span style='mso-bookmark:Header_Shutdown'></span></a></h1>
+
+<p>Currently, there is a bug that occurs sometimes where STAF cannot be
+restarted after shutting it down via &quot;STAF LOCAL SHUTDOWN <span
+class=SpellE>SHUTDOWN</span>&quot;. If this happens, perform the following: </p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo23;tab-stops:list .5in'>On Linux systems: </li>
+</ul>
+
+<pre style='margin-left:.5in'><span class=SpellE><span class=GramE>killall</span></span> -9 <span
+class=SpellE>STAFProc</span></pre>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo23;tab-stops:list .5in'>On other Unix systems: </li>
+ <ol start=1 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l0 level2 lfo23;tab-stops:list 1.0in'>Determine the <span
+      class=SpellE>pid</span> for STAF by typing: </li>
+ </ol>
+</ul>
+
+<pre style='margin-left:1.0in'><span class=SpellE><span class=GramE>ps</span></span> -ea | <span
+class=SpellE>grep</span> STAF</pre><pre style='margin-left:1.0in;text-indent:
+-.25in;mso-list:l0 level2 lfo23'><![if !supportLists]><span style='mso-fareast-font-family:
+"Courier New"'><span style='mso-list:Ignore'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span><![endif]>kill -9 <pid></pre>
+
+<p class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+margin-left:1.0in'>Replace <pid>with <span class=SpellE>STAF's</span> <span
+class=SpellE><span class=GramE>pid</span></span>. </p>
+
+<ul type=disc>
+ <ol start=3 type=1>
+  <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+      auto;mso-list:l0 level2 lfo23;tab-stops:list 1.0in'>Verify that STAF has
+      been completely stopped by typing: </li>
+ </ol>
+</ul>
+
+<pre style='margin-left:1.0in'><span class=SpellE><span class=GramE>ps</span></span> -ea | <span
+class=SpellE>grep</span> STAF</pre>
+<p>
+
+<div class=MsoNormal align=center style='text-align:center'>
+
+<hr size=2 width="100%" align=center>
+
+</div>
+
+<h1><span style='color:blue'>End <span class=GramE>Of</span> Document<o:p></o:p></span></h1>
+
+<p>This is the end of the document. </p>
+
+</div>
+
+</body>
+
+</html>

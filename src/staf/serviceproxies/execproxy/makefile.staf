@@ -1,0 +1,85 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2007                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFEXECPROXY = $(subst Name,STAFEXECPROXY,$(DLL))
+
+stafexecproxylib_targets += $(REL)/lib/$(LIB_STAFEXECPROXY)
+
+Targets += $(stafexecproxylib_targets)
+CleanupTargets += cleanup_stafexecproxylib
+
+$(stafexecproxylib_targets): SUBSYS_REL := serviceproxies/execproxy
+SUBSYS_REL := serviceproxies/execproxy
+
+$(stafexecproxylib_targets): OBJS = $(stafexecproxylib_objs)
+$(stafexecproxylib_targets): LIBS = STAF
+$(stafexecproxylib_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafexecproxylib_objs :=\
+  STAFExecProxyLib
+
+stafexecproxylib_objs        := $(foreach obj,$(stafexecproxylib_objs),$(O)/serviceproxies/execproxy/$(obj)$(OS_OE))
+stafexecproxylib_dependents  := $(stafexecproxylib_objs:$(OS_OE)=.d)
+$(stafexecproxylib_dependents): SUBSYS_REL := serviceproxies/execproxy
+
+ifeq ($(OS_NAME),win32)
+    stafexecproxylib_objs += $(SR_SRC)/STAFExecProxyLib.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafexecproxylib_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFExecProxyLib targets
+
+$(REL)/lib/$(LIB_STAFEXECPROXY): $(stafexecproxylib_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+
+cleanup_stafexecproxylib:
+	-@$(DEL) $(O)/serviceproxies/execproxy/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAFEXECPROXY) $(OUT_ERR_TO_DEV_NULL)
+
+#########
+stafexecproxy_targets += $(REL)/bin/STAFExecProxy$(OS_EE)
+
+Targets += $(stafexecproxy_targets)
+CleanupTargets += cleanup_stafexecproxy
+
+$(stafexecproxy_targets): SUBSYS_REL := serviceproxies/execproxy
+SUBSYS_REL := stafexecproxy_objs
+
+$(stafexecproxy_targets): OBJS = $(stafexecproxy_objs)
+$(stafexecproxy_targets): LIBS = STAF
+
+stafexecproxy_objs :=\
+  STAFExecProxy
+
+stafexecproxy_objs        := $(foreach obj,$(stafexecproxy_objs),$(O)/serviceproxies/execproxy/$(obj)$(OS_OE))
+stafexecproxy_dependents  := $(stafexecproxy_objs:$(OS_OE)=.d)
+$(stafexecproxy_dependents): SUBSYS_REL := serviceproxies/execproxy
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafexecproxy_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFExecProxy targets
+
+$(REL)/bin/STAFExecProxy$(OS_EE): $(stafexecproxy_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(LINK_IT)
+
+cleanup_stafexecproxy:
+	-@$(DEL) $(O)/serviceproxies/execproxy/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAFExecProxy$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+

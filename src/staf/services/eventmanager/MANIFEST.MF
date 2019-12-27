@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Main-Class: com.ibm.staf.service.eventmanager.EventManagerUI
+Class-Path: ../lib/JSTAF.jar ../bin/JSTAF.jar JSTAF.jar ../../lib/JSTAF.jar ../../bin/JSTAF.jar
+
+Name: staf/service/info
+Service-Class: com.ibm.staf.service.eventmanager.EventManagerService
+Packaged-Jars: jython
+
+Name: staf/service/shared_jython
+Jython-Version: 2.5.2-staf-v1

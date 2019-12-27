@@ -1,0 +1,308 @@
+Feature ID  : 3077278
+Title       : Provide ability to list/query functions in a STAX job
+
+Description
+-----------
+
+Provide the ability to list functions (including imported
+functions) available in an active STAX job (sorted by
+function name) and to query a function in an active job by
+adding support for the following requests:
+
+STAF <machine> STAX LIST JOB <Job ID> FUNCTIONS
+STAF <machine> STAX QUERY JOB <Job ID> FUNCTION <Function Name>
+
+
+Problem(s) Solved
+-----------------
+
+The new <function-import> element doesn't have a way to
+let you know which functions were not imported (e.g. because
+they already existed because they were previously imported
+from an xml file that contains one or more functions with
+the same name).  Providing the ability to LIST/QUERY functions
+lets you determine which file/machine a function came from.
+This is useful when debugging function name collisions.
+
+
+Related Features
+----------------
+
+- Feature #2952811: Add ability to requires functions from other files
+
+
+External Changes
+----------------
+
+a) Added a FUNCTIONS option to the LIST JOB <Job ID> request
+   to list the functions currently available in a STAX job,
+   sorted in ascending order by function name.
+
+   Syntax:
+
+   LIST JOB <Job ID> FUNCTIONS
+
+   Example:
+
+   C:\STAF local STAX LIST JOB 1 FUNCTIONS
+   Response
+   --------
+   Function File                                Machine
+   -------- ----------------------------------- -------------
+   A1       c:\stax\functionRequires.xml        local://local
+   B1       c:\stax\group1\commonFunctions1.xml local://local
+   B2       c:\stax\group1\commonFunctions1.xml local://local
+   B3       c:\stax\group1\commonFunctions1.xml local://local
+   C1       c:\stax\group2\commonFunctions2.xml local://local
+   C2       c:\stax\group2\commonFunctions2.xml local://local
+   Main     c:\stax\functionRequires.xml        local://local
+
+b) Added a FUNCTION option to the QUERY JOB <Job ID> request
+   to get detailed information about a function in a STAX job.
+
+   Syntax:
+
+   QUERY JOB <Job ID> FUNCTION <Function Name>
+
+   Examples:
+
+   C:\>STAF local STAX QUERY JOB 1 FUNCTION B1
+   Response
+   -------- 
+   {
+     Function: B1
+     File    : c:\stax\group1\commonFunctions1.xml
+     Machine : local://local
+     Scope   : global
+     Requires: B2
+     Imports : []
+   }
+
+   C:\>STAF local STAX QUERY JOB 1 FUNCTION A1
+   Response
+   --------
+   {
+     Function: A1
+     File    : c:\stax\functionRequires.xml
+     Machine : local://local
+     Scope   : global
+     Requires: <None>
+     Imports : [
+       {
+         Functions: B1
+         File     : group1/commonFunctions1.xml
+         Machine  : <None>
+       }
+     ]
+   }
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+services/stax/service/STAXFunctionActionFactory.java
+services/stax/service/STAX.java
+services/stax/docs/userguide/staxug.html
+test/STAFTest.xml
+
+1) Changes to services/stax/service/STAXFunctionActionFactory.java:
+
+   a) Changed the constructor so that it is passed the STAX service
+      object so that it can register as a LIST and QUERY handler.
+      Also changed the constructor to define the map classes
+      to list functions for a job and to query a function for a job.
+
+     public STAXFunctionActionFactory(STAX staxService)
+     {
+         staxService.registerListHandler("FUNCTIONS", this);
+         staxService.registerQueryHandler("FUNCTION", "Function Name", this);
+
+         // Construct map-class for LIST JOB <Job ID> FUNCTIONS information
+
+         fFunctionListInfoMapClass = new STAFMapClassDefinition(
+             sFunctionListInfoMapClassName);
+
+         fFunctionListInfoMapClass.addKey("function", "Function");
+         fFunctionListInfoMapClass.addKey("file", "File");
+         fFunctionListInfoMapClass.addKey("machine", "Machine");
+
+         // Construct map-class for query function information for a job
+
+         fQueryFunctionMapClass = new STAFMapClassDefinition(
+             sQueryFunctionMapClassName);
+
+         fQueryFunctionMapClass.addKey("function", "Function");
+         fQueryFunctionMapClass.addKey("file", "File");
+         fQueryFunctionMapClass.addKey("machine", "Machine");
+         fQueryFunctionMapClass.addKey("scope", "Scope");
+         fQueryFunctionMapClass.addKey("requires", "Requires");
+         fQueryFunctionMapClass.addKey("imports", "Imports");
+
+         // Construct map-class for query function import info for a job
+
+         fQueryFunctionImportMapClass = new STAFMapClassDefinition(
+             sQueryFunctionImportMapClassName);
+
+         fQueryFunctionImportMapClass.addKey("functions", "Functions");
+         fQueryFunctionImportMapClass.addKey("file", "File");
+         fQueryFunctionImportMapClass.addKey("machine", "Machine");
+     }
+
+   b) Changed the constructor to implement the STAXListRequestHandler
+      and STAXQueryRequestHandler interfaces, so it can:
+      - List functions via a LIST JOB <jobID> FUNCTIONS request to
+      provide a list of functions for the job, sorted in ascending
+      order by function name.  
+      - Query a function via a QUERY JOB <jobID> FUNCTION <Function Name>
+      request to provide detailed information about the specified
+      function.  
+
+   public class STAXFunctionActionFactory implements STAXActionFactory,
+                                                     STAXListRequestHandler,
+                                                     STAXQueryRequestHandler
+
+    c) Here's is the handleListRequest method for the
+       STAXListRequestHandler interface:
+
+    public STAFResult handleListRequest(String type, STAXJob job,
+                                        STAXRequestSettings settings)
+    {
+        if (type.equalsIgnoreCase("functions"))
+        {
+            // LIST JOB <Job ID> FUNCTIONS
+
+            // Create the marshalling context and set its map class definitions
+            // and create an empty list to contain the function entries
+
+            STAFMarshallingContext mc = new STAFMarshallingContext();
+            mc.setMapClassDefinition(fFunctionListInfoMapClass);
+            List functionList = new ArrayList();
+
+            // Get a map of the functions, sorted by function name
+
+            Iterator iter = job.getSTAXDocument().getSortedFunctionMap().
+                values().iterator();
+
+            // Iterate through the function map, generating the output list
+
+            while (iter.hasNext())
+            {
+                STAXFunctionAction function = (STAXFunctionAction)iter.next();
+
+                Map functionMap = fFunctionListInfoMapClass.createInstance();
+
+                functionMap.put(
+                    "function", (String)function.getName());
+                functionMap.put("file", (String)function.getXmlFile());
+                functionMap.put("machine", (String)function.getXmlMachine());
+
+                functionList.add(functionMap);
+            }
+
+            mc.setRootObject(functionList);
+
+            return new STAFResult(STAFResult.Ok, mc.marshall());
+        }
+        else
+            return new STAFResult(STAFResult.DoesNotExist, type);
+    }
+
+    d) Here are the handleQueryRequest() and handleQueryJobRequest()
+       methods for the STAXQueRequestHandler interface:
+
+    public STAFResult handleQueryRequest(String type, String key, STAXJob job,
+                                        STAXRequestSettings settings)
+    {
+        if (type.equalsIgnoreCase("function"))
+        {
+            // QUERY JOB <Job ID> FUNCTION <Function Name>
+
+            // Create the marshalling context and set its map class definitions
+
+            STAFMarshallingContext mc = new STAFMarshallingContext();
+            mc.setMapClassDefinition(fQueryFunctionMapClass);
+            mc.setMapClassDefinition(fQueryFunctionImportMapClass);
+
+            STAXFunctionAction function = (STAXFunctionAction)job.getFunction(
+                key);
+            
+            if (function == null)
+            {
+                return new STAFResult(
+                    STAFResult.DoesNotExist,
+                    "Function '" + key + "' does not exist."); 
+            }
+
+            Map functionMap = fQueryFunctionMapClass.createInstance();
+
+            functionMap.put("function", key);
+            functionMap.put("file", function.getXmlFile());
+            functionMap.put("machine", function.getXmlMachine());
+            functionMap.put("scope", function.getScope());
+
+            if (function.getRequires().length() != 0)
+                functionMap.put("requires", function.getRequires());
+
+            List functionImportList = function.getImportList();
+            List importList = new ArrayList();
+            
+            if (functionImportList != null)
+            {
+                Iterator iter = functionImportList.iterator();
+
+                while(iter.hasNext())
+                {
+                    STAXFunctionImport importData =
+                        (STAXFunctionImport)iter.next();
+                    
+                    Map importMap =
+                        fQueryFunctionImportMapClass.createInstance();
+
+                    // Note that the file name and machine values are those,
+                    // if any, that were specified in the function-import
+                    // element, not their resolved values
+
+                    importMap.put("file", importData.getFile());
+                    importMap.put("machine", importData.getMachine());
+
+                    if (importData.getFunctions().length() != 0)
+                        importMap.put("functions", importData.getFunctions());
+
+                    importList.add(importMap);
+                }
+            }
+
+            functionMap.put("imports", importList);
+
+            mc.setRootObject(functionMap);
+
+            return new STAFResult(STAFResult.Ok, mc.marshall());
+        }
+        else
+            return new STAFResult(STAFResult.DoesNotExist, type);
+    }
+
+    public STAFResult handleQueryJobRequest(STAXJob job,
+                                            STAXRequestSettings settings)
+    {
+        return new STAFResult(STAFResult.Ok, ""); 
+    }
+
+2) Changes to services/stax/service/STAX.java:
+
+  a) Added passing the STAX class object to the constructor for
+     STAXFunctionActionFactory when adding it to fActionFactoryMap
+     since STAXFunctionActionFactory is now implementing the
+     STAXListRequestHandler and STAXQueryRequestHandler interfaces
+     to list functions and to query a function.
+
+  fActionFactoryMap.put(
+      "function", new STAXFunctionActionFactory(this));
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

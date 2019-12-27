@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="main"/>
+
+  <function name="main">
+
+    <sequence>
+
+      <stafcmd>
+        <location>'local'</location>
+        <service>'var'</service>
+        <request>'resolve string {STAF/Config/OS/Name}'</request>
+      </stafcmd>
+
+      <if expr="RC != 0">
+        <message>'Oops, RC = %s, Result = %s' % (RC, STAFResult)</message>
+        <else>
+          <message>'Great!  STAF/Config/OS/Name = %s' % (STAFResult)</message>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+</stax>

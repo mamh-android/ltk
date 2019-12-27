@@ -1,0 +1,45 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+stafreg_targets += $(REL)/bin/STAFReg$(OS_EE)
+Targets += $(stafreg_targets)
+CleanupTargets += cleanup_stafreg
+
+$(stafreg_targets): SUBSYS_REL := stafreg
+SUBSYS_REL := stafreg
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafreg_targets): OBJS = $(stafreg_objs)
+$(stafreg_targets): LIBS = STAF
+
+stafreg_objs :=\
+  STAFReg
+
+stafreg_objs        := $(foreach obj,$(stafreg_objs),$(O)/stafreg/$(obj)$(OS_OE))
+stafreg_dependents  := $(stafreg_objs:$(OS_OE)=.d)
+$(stafreg_dependents): SUBSYS_REL := stafreg
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafreg_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFReg targets
+
+$(REL)/bin/STAFReg$(OS_EE): $(stafreg_objs) $(REL)/lib/$(LIB_STAF) $(MAKEFILE_NAME)
+	$(LINK_IT)
+
+cleanup_stafreg:
+	-@$(DEL) $(O)/stafreg/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/STAFReg$(OS_EE) $(OUT_ERR_TO_DEV_NULL)
+

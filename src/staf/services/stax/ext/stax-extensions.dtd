@@ -1,0 +1,62 @@
+<!--
+   STAX Extensions Document Type Definition (DTD)
+
+   This DTD module is identified by the SYSTEM identifier:
+
+     SYSTEM 'stax-extensions.dtd'
+
+   This DTD is used for files specified using the EXTENSIONXMLFILE
+   parameter when registering the STAX service with extensions.
+
+-->
+
+<!--================= STAX Extension File Definition =============== -->
+<!--
+     The root element extensions contains all other elements.  It
+     consists of one or more extension elements.
+-->
+<!ELEMENT stax-extensions    (extension+)>
+
+<!--================= The Extension Element ======================== -->
+<!--
+     Specifies a STAX extension.  It can consist of 0 or more
+     parameter elements, followed by 0 or more include-element or
+     0 or more exclude-element elements.
+-->
+<!ELEMENT extension          (parameter*,
+                              (include-element* | exclude-element*))>
+<!ATTLIST extension
+          jarfile            CDATA   #REQUIRED
+>
+
+<!--================= The Parameter Element ======================== -->
+<!--
+     Specifies a parameter for a STAX extension.
+-->
+<!ELEMENT parameter          EMPTY>
+<!ATTLIST parameter
+          name               CDATA   #REQUIRED
+          value              CDATA   #REQUIRED
+>
+
+<!--================= The Include Element ========================= -->
+<!--
+     Specifies to only register this element for a STAX extension
+     instead of registering all elements specified in the extension
+     jar file's manifest file.
+-->
+<!ELEMENT include-element    EMPTY>
+<!ATTLIST include-element
+          name               CDATA   #REQUIRED
+>
+
+<!--================= The Exclude Element ========================= -->
+<!--
+     Specifies to excluce registering this element for a STAX extension
+     instead of registering all elements specified in the extension
+     jar file's manifest file.
+-->
+<!ELEMENT exclude-element    EMPTY>
+<!ATTLIST exclude-element
+          name               CDATA   #REQUIRED
+>

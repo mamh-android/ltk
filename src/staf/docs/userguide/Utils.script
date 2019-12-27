@@ -1,0 +1,141 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Utils SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Services
+.*  Detail:
+.*
+.*     This is the high level file which imbeds the other utilities
+.*     descriptions
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.Log Utilities
+:ih1.utilities
+:h1 id=utils.Log Utilities
+:p.Some utilities are provided to assist in viewing and formatting STAF
+log files and the JVM Log files.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.Log Viewer
+:i1.STAFLogViewer command
+:ih1.commands
+:i2.STAFLogViewer
+:ih1.utilities
+:i2.View STAF log
+:h2 id=STAFLogViewer.STAF Log Viewer Class
+:h3.Description
+The STAFLogViewer class provides a Java GUI that can display any STAF log on
+any machine currently running STAF.
+A STAF log is a binary log file that has been created by the STAF Log service.
+This Java class submits requests to STAF, so STAF has to be running.
+:p. 
+This Java class can be run as an application via the command line or can be
+run via another Java program.
+:p.
+:ih1.utility commands
+:ih2.STAFLogViewer
+:i3.STAFLogViewer utility
+For more information on how to use the STAFLogViewer class, see section
+"3.6.1 Class STAFLogViewer" in the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFJava.htm#Header_STAFLogViewer">STAF Java User's Guide</A>.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.JVM Log Viewer
+:i1.STAFJVMLogViewer command
+:ih1.commands
+:i2.STAFJVMLogViewer
+:ih1.utilities
+:i2.View STAF JVM log
+:h2 id=STAFJVMLogViewer.JVM Log Viewer Class
+:h3.Description
+
+The :xph.STAFJVMLogViewer:exph. class provides a Java GUI that can display a
+JVM Log for any STAF Java service that is currently registered.
+Each Java service that is registered with STAF runs in a JVM (Java Virtual Machine).
+A JVM Log is a text log file that is associated with each JVM created by STAF.
+Note that more than one Java service may use the same JVM (and thus share the same
+JVM Log file) depending on the options used when registering the service.
+Section :hdref refid=serviceregcfg. provides more information on registering
+STAF Java services using the JSTAF library.
+:p.
+A JVM Log file contains JVM start information such as the date/time when the JVM
+was created, the JVM executable, and the J2 options used to start the JVM.
+It also any other information logged by the JVM.  This includes any
+errors that may have occurred while the JVM was running and any debug information
+output by a Java service.  Also, the JVM Log for the STAX service contains the
+output from any print statements that are used within a :xph.<script>:exph. element
+in a STAX xml job file which is useful when debugging Python code contained in
+a :xph.<script>:exph. element.  When a problem occurs with a STAF Java service,
+you should always check it's JVM Log as it may contain information to help debug
+the problem.
+:p.
+STAF stores JVM Log files in the :xph.{STAF/DataDir}/lang/java/jvm/&lt;JVMName>:exph.
+directory.   STAF retains a configurable number of JVM Logs (five by default) for each
+JVM.  The current JVM log file is named :xph.JVMLog.1:exph. and older saved JVM log
+files, if any, are named :xph.JVMLog.2:exph. to :xph.JVMLog.<MAXLOGS>:exph..
+When a JVM is started, if the size of the :xph.JVMLog.1:exph. file exceeds the
+maximum configurable size (1M by default), the :xph.JVMLog.1:exph. file is copied
+to :xph.JVMLog.2:exph. and so on for any older JVM Logs, and a new :xph.JVMLog.1:exph.
+file will be created.
+:p.
+When using the :xph.STAFJVMLogViewer:exph., you can specify the machine where the
+STAF JVM log resides (e.g. where the Java service is registered) and you can
+specify/select the name of the STAF service whose JVM Log you want to display.
+This Java class submits requests to STAF, so STAF has to be running. 
+This Java class can be run as an application via the command line or can be
+run via another Java program.
+:p.
+Note that the STAX Monitor Java application uses the :xph.STAFJVMLogViewer:exph.
+class to display the JVM log for the STAX service and for other services.
+:p.
+:ih1.utility commands
+:ih2.STAFJVMLogViewer
+:i3.STAFJVMLogViewer utility
+For more information on how to use the STAFJVMLogViewer class, see section
+"3.6.2 Class STAFJVMLogViewer" in the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFJava.htm#Header_STAFJVMLogViewer">STAF Java User's Guide</A>.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.Formatting STAF Logs as Html or Text
+:i1.STAFLogFormatter command
+:ih1.commands
+:i2.STAFLogFormatter
+:ih1.utilities
+:i2.Format STAF log as Html or Text
+:h2 id=STAFLogFormatter.STAF Log Formatter Class
+:h3.Description
+The STAFLogFormatter class allows you to format a STAX log (which
+is a binary file that has been created by the STAF Log service) as html
+or text.
+:p.
+This Java class can be run as an application via the command line or can be
+run via another Java program.  When run as an application, it submits the
+specified Log query request to query a STAF log on any machine currently
+running STAF and then formats the output as either html or text.
+Or, when run via a Java program that has already submitted a LOG QUERY request,
+you can use the STAFLogFormatter class to format the log query result
+as either html or text.  You can specify various options including whether you
+want the formatted output written to a file.
+:p.
+:ih1.utility commands
+:ih2.STAFLogFormatter
+:i3.STAFLogFormatter utility
+For more detailed information on using the STAFLogFormatter class,
+see section "3.6.3 Class STAFLogFormatter" in the 
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAFJava.htm#Header_STAFLogFormatter">STAF Java User's Guide</A>.
+:p.
+.*
+.*---------------------------------------------------------------------
+.*
+.im FLogUtil

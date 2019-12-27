@@ -1,0 +1,344 @@
+#
+# An unexpected error has been detected by HotSpot Virtual Machine:
+#
+#  SIGSEGV (0xb) at pc=0x00000000, pid=27898, tid=2471111488
+#
+# Java VM: Java HotSpot(TM) Server VM (1.5.0_19-b02 mixed mode)
+# Problematic frame:
+# C  0x00000000
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread is native thread
+
+siginfo:si_signo=11, si_errno=0, si_code=1, si_addr=0x00000000
+
+Registers:
+EAX=0x8f9b0710, EBX=0x93bb3580, ECX=0x00000000, EDX=0x0857b6a0
+ESP=0x934a223c, EBP=0x934a2248, ESI=0x8f9b0710, EDI=0x00000000
+EIP=0x00000000, CR2=0x00000000, EFLAGS=0x00210282
+
+Top of Stack: (sp=0x934a223c)
+0x934a223c:   93b9446a 8f9b0710 00000000 934a2298
+0x934a224c:   93b94a86 8f9b0710 934a2278 0857b6a0
+0x934a225c:   93bb3580 93bb3580 0857c6fc 934a22d0
+0x934a226c:   93b41d90 0857c6fc 0857c6fc 8f9b0710
+0x934a227c:   00000000 00000000 00000000 8f98df90
+0x934a228c:   b6b08414 085719f0 08576a78 934a22d8
+0x934a229c:   b6b0032d 0857b538 0857b6e8 b6b08580
+0x934a22ac:   0857b690 00000000 93b9f5c7 00000000 
+
+Instructions: (pc=0x00000000)
+0xfffffff0:   
+
+Stack: [0x930a2000,0x934a3000),  sp=0x934a223c,  free space=4096k
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0x8eafb9b0 JavaThread "org.python.google.common.base.internal.Finalizer" daemon [_thread_blocked, id=27936]
+  0x8f1fdc10 JavaThread "Thread-13" [_thread_in_native, id=27935]
+  0x943f77b0 JavaThread "Thread-12" [_thread_blocked, id=27934]
+  0x8f86a4f0 JavaThread "Thread-10" [_thread_blocked, id=27933]
+  0x8f89a1a0 JavaThread "Thread-9" [_thread_blocked, id=27932]
+  0x8f42bc28 JavaThread "Thread-8" [_thread_blocked, id=27931]
+  0x946f26e8 JavaThread "Thread-7" [_thread_blocked, id=27930]
+  0x8f8fbdc0 JavaThread "Thread-6" [_thread_blocked, id=27929]
+  0x9465a8a8 JavaThread "org.python.google.common.base.internal.Finalizer" daemon [_thread_blocked, id=27926]
+  0x9437f178 JavaThread "Thread-1" [_thread_blocked, id=27912]
+  0x0854b990 JavaThread "Low Memory Detector" daemon [_thread_blocked, id=27908]
+  0x0854a5b0 JavaThread "CompilerThread1" daemon [_thread_blocked, id=27907]
+  0x08549558 JavaThread "CompilerThread0" daemon [_thread_blocked, id=27906]
+  0x085485a8 JavaThread "AdapterThread" daemon [_thread_blocked, id=27905]
+  0x085476f8 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=27904]
+  0x0853e4b0 JavaThread "Finalizer" daemon [_thread_blocked, id=27903]
+  0x0853ce10 JavaThread "Reference Handler" daemon [_thread_blocked, id=27902]
+  0x0847eca0 JavaThread "main" [_thread_blocked, id=27898]
+
+Other Threads:
+  0x0853aa60 VMThread [id=27901]
+  0x08490df0 WatcherThread [id=27909]
+
+VM state:not at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap
+ PSYoungGen      total 19776K, used 18557K [0xadf70000, 0xafc30000, 0xb0a10000)
+  eden space 17536K, 96% used [0xadf70000,0xaeff9038,0xaf090000)
+  from space 2240K, 72% used [0xaf090000,0xaf2263e0,0xaf2c0000)
+  to   space 2368K, 0% used [0xaf9e0000,0xaf9e0000,0xafc30000)
+ PSOldGen        total 4032K, used 2733K [0x98a10000, 0x98e00000, 0xadf70000)
+  object space 4032K, 67% used [0x98a10000,0x98cbb790,0x98e00000)
+ PSPermGen       total 22144K, used 22025K [0x94a10000, 0x95fb0000, 0x98a10000)
+  object space 22144K, 99% used [0x94a10000,0x95f92690,0x95fb0000)
+
+Dynamic libraries:
+08048000-08057000 r-xp 00000000 08:01 16001019   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/bin/java
+08057000-08059000 rwxp 0000e000 08:01 16001019   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/bin/java
+0847b000-08f64000 rwxp 00000000 00:00 0          [heap]
+8db00000-8dbfb000 rwxp 00000000 00:00 0 
+8dbfb000-8dc00000 ---p 00000000 00:00 0 
+8dd00000-8ddfe000 rwxp 00000000 00:00 0 
+8ddfe000-8de00000 ---p 00000000 00:00 0 
+8de00000-8def8000 rwxp 00000000 00:00 0 
+8def8000-8df00000 ---p 00000000 00:00 0 
+8df00000-8dffe000 rwxp 00000000 00:00 0 
+8dffe000-8e000000 ---p 00000000 00:00 0 
+8e300000-8e400000 rwxp 00000000 00:00 0 
+8e500000-8e5ff000 rwxp 00000000 00:00 0 
+8e5ff000-8e600000 ---p 00000000 00:00 0 
+8e600000-8e700000 rwxp 00000000 00:00 0 
+8e700000-8e7f0000 rwxp 00000000 00:00 0 
+8e7f0000-8e800000 ---p 00000000 00:00 0 
+8e800000-8e8ec000 rwxp 00000000 00:00 0 
+8e8ec000-8e900000 ---p 00000000 00:00 0 
+8e900000-8e9e9000 rwxp 00000000 00:00 0 
+8e9e9000-8ea00000 ---p 00000000 00:00 0 
+8ea00000-8eafc000 rwxp 00000000 00:00 0 
+8eafc000-8eb00000 ---p 00000000 00:00 0 
+8eb00000-8ec00000 rwxp 00000000 00:00 0 
+8ec7f000-8ec82000 rwxp 00000000 00:00 0 
+8ec82000-8ed00000 rwxp 00000000 00:00 0 
+8ed00000-8edff000 rwxp 00000000 00:00 0 
+8edff000-8ee00000 ---p 00000000 00:00 0 
+8ee7b000-8ee7e000 ---p 00000000 00:00 0 
+8ee7e000-8eefc000 rwxp 00000000 00:00 0 
+8eefc000-8eeff000 ---p 00000000 00:00 0 
+8eeff000-8ef7d000 rwxp 00000000 00:00 0 
+8ef7d000-8ef80000 ---p 00000000 00:00 0 
+8ef80000-8effe000 rwxp 00000000 00:00 0 
+8effe000-8f001000 ---p 00000000 00:00 0 
+8f001000-8f07f000 rwxp 00000000 00:00 0 
+8f07f000-8f082000 ---p 00000000 00:00 0 
+8f082000-8f100000 rwxp 00000000 00:00 0 
+8f100000-8f1fe000 rwxp 00000000 00:00 0 
+8f1fe000-8f200000 ---p 00000000 00:00 0 
+8f27f000-8f282000 ---p 00000000 00:00 0 
+8f282000-8f300000 rwxp 00000000 00:00 0 
+8f300000-8f3fd000 rwxp 00000000 00:00 0 
+8f3fd000-8f400000 ---p 00000000 00:00 0 
+8f400000-8f4fb000 rwxp 00000000 00:00 0 
+8f4fb000-8f500000 ---p 00000000 00:00 0 
+8f500000-8f600000 rwxp 00000000 00:00 0 
+8f600000-8f6fe000 rwxp 00000000 00:00 0 
+8f6fe000-8f700000 ---p 00000000 00:00 0 
+8f712000-8f715000 ---p 00000000 00:00 0 
+8f715000-8f793000 rwxp 00000000 00:00 0 
+8f800000-8f8fc000 rwxp 00000000 00:00 0 
+8f8fc000-8f900000 ---p 00000000 00:00 0 
+8f900000-8f9f4000 rwxp 00000000 00:00 0 
+8f9f4000-8fa00000 ---p 00000000 00:00 0 
+8fa00000-8faf6000 rwxp 00000000 00:00 0 
+8faf6000-8fb00000 ---p 00000000 00:00 0 
+8fb6a000-8fb6d000 ---p 00000000 00:00 0 
+8fb6d000-8fbeb000 rwxp 00000000 00:00 0 
+8fbeb000-8fbee000 ---p 00000000 00:00 0 
+8fbee000-8fc6c000 rwxp 00000000 00:00 0 
+8fc6c000-90459000 r-xs 00000000 08:01 17056025   /usr/local/staf/data/STAF/lang/java/service/EMANAGER/jars/jython.jar
+90efd000-90f00000 rwxp 00000000 00:00 0 
+90f00000-90f7e000 rwxp 00000000 00:00 0 
+90f7e000-90f81000 rwxp 00000000 00:00 0 
+90f81000-9137f000 rwxp 00000000 00:00 0 
+9137f000-91382000 ---p 00000000 00:00 0 
+91382000-91400000 rwxp 00000000 00:00 0 
+91400000-914fe000 rwxp 00000000 00:00 0 
+914fe000-91500000 ---p 00000000 00:00 0 
+91504000-9150f000 r-xp 00000000 08:01 17176852   /tmp/jffi7576268041676329911.tmp (deleted)
+9150f000-91510000 rwxp 0000a000 08:01 17176852   /tmp/jffi7576268041676329911.tmp (deleted)
+91510000-9151b000 r-xp 00000000 08:01 17176850   /tmp/jffi5991928512630573326.tmp (deleted)
+9151b000-9151c000 rwxp 0000a000 08:01 17176850   /tmp/jffi5991928512630573326.tmp (deleted)
+9151c000-9154b000 rwxp 00000000 00:00 0 
+9154b000-91554000 r-xs 00000000 08:01 17043833   /usr/local/staf/samples/demo/STAFDemo.jar
+91554000-91583000 rwxp 00000000 00:00 0 
+91583000-91d70000 r-xs 00000000 08:01 17044278   /usr/local/staf/data/STAF/lang/java/service/STAX/jars/jython.jar
+91d70000-92060000 r-xs 00000000 08:01 17044276   /usr/local/staf/data/STAF/lang/java/service/STAX/jars/xalan.jar
+92060000-92157000 r-xs 00000000 08:01 17044094   /usr/local/staf/data/STAF/lang/java/service/STAX/jars/xercesImpl.jar
+92157000-930a2000 r-xs 00000000 08:01 17044061   /usr/local/staf/services/stax/STAX.jar
+930a2000-930a5000 rwxp 00000000 00:00 0 
+930a5000-934a3000 rwxp 00000000 00:00 0 
+934a3000-934a4000 ---p 00000000 00:00 0 
+934a4000-938a4000 rwxp 00000000 00:00 0 
+938a4000-93a48000 r-xp 002c8000 08:01 15992254   /usr/lib/locale/locale-archive
+93a48000-93b20000 r-xp 00000000 08:01 15993610   /usr/lib/i386-linux-gnu/libstdc++.so.6.0.16
+93b20000-93b21000 ---p 000d8000 08:01 15993610   /usr/lib/i386-linux-gnu/libstdc++.so.6.0.16
+93b21000-93b25000 r-xp 000d8000 08:01 15993610   /usr/lib/i386-linux-gnu/libstdc++.so.6.0.16
+93b25000-93b26000 rwxp 000dc000 08:01 15993610   /usr/lib/i386-linux-gnu/libstdc++.so.6.0.16
+93b26000-93b2d000 rwxp 00000000 00:00 0 
+93b2d000-93bb3000 r-xp 00000000 08:01 17043675   /usr/local/staf/lib/IPv4/libSTAF.so
+93bb3000-93bb5000 rwxp 00086000 08:01 17043675   /usr/local/staf/lib/IPv4/libSTAF.so
+93bb5000-93bc6000 r-xp 00000000 08:01 17043686   /usr/local/staf/lib/libJSTAFSH.so
+93bc6000-93bc7000 rwxp 00010000 08:01 17043686   /usr/local/staf/lib/libJSTAFSH.so
+93bc7000-93bdd000 r-xs 00000000 08:01 17043672   /usr/local/staf/lib/JSTAF.jar
+93bdd000-93be0000 r-xs 00000000 08:01 16000939   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/ext/dnsns.jar
+93be0000-93c07000 r-xs 00000000 08:01 16000938   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/ext/sunjce_provider.jar
+93c07000-93ccd000 r-xs 00000000 08:01 16000940   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/ext/localedata.jar
+93ccd000-93cf8000 r-xs 00000000 08:01 16001086   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/ext/sunpkcs11.jar
+93cf8000-93cf9000 ---p 00000000 00:00 0 
+93cf9000-93d79000 rwxp 00000000 00:00 0 
+93d79000-93d7c000 ---p 00000000 00:00 0 
+93d7c000-93dfa000 rwxp 00000000 00:00 0 
+93dfa000-93dfd000 ---p 00000000 00:00 0 
+93dfd000-93e7b000 rwxp 00000000 00:00 0 
+93e7b000-93e7e000 ---p 00000000 00:00 0 
+93e7e000-93efc000 rwxp 00000000 00:00 0 
+93efc000-93eff000 ---p 00000000 00:00 0 
+93eff000-93f7d000 rwxp 00000000 00:00 0 
+93f7d000-93f80000 ---p 00000000 00:00 0 
+93f80000-93ffe000 rwxp 00000000 00:00 0 
+93ffe000-941fe000 r-xp 00000000 08:01 15992254   /usr/lib/locale/locale-archive
+941fe000-94201000 ---p 00000000 00:00 0 
+94201000-9427f000 rwxp 00000000 00:00 0 
+9427f000-94282000 ---p 00000000 00:00 0 
+94282000-94300000 rwxp 00000000 00:00 0 
+94300000-943fe000 rwxp 00000000 00:00 0 
+943fe000-94400000 ---p 00000000 00:00 0 
+94400000-94421000 rwxp 00000000 00:00 0 
+94421000-94500000 ---p 00000000 00:00 0 
+94504000-9450b000 r-xs 00000000 08:01 15994526   /usr/lib/i386-linux-gnu/gconv/gconv-modules.cache
+9450b000-94512000 r-xp 00000000 08:01 16001054   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libnio.so
+94512000-94513000 rwxp 00006000 08:01 16001054   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libnio.so
+94513000-94542000 r-xs 00000000 08:01 17044277   /usr/local/staf/data/STAF/lang/java/service/STAX/jars/serializer.jar
+94542000-94561000 r-xs 00000000 08:01 17044275   /usr/local/staf/data/STAF/lang/java/service/STAX/jars/xmlParserAPIs.jar
+94561000-9457d000 r-xp 00000000 08:01 7996223    /lib/i386-linux-gnu/libgcc_s.so.1
+9457d000-9457e000 r-xp 0001b000 08:01 7996223    /lib/i386-linux-gnu/libgcc_s.so.1
+9457e000-9457f000 rwxp 0001c000 08:01 7996223    /lib/i386-linux-gnu/libgcc_s.so.1
+9457f000-94580000 ---p 00000000 00:00 0 
+94580000-94600000 rwxp 00000000 00:00 0 
+94600000-94700000 rwxp 00000000 00:00 0 
+94700000-94715000 r-xp 00000000 08:01 17043685   /usr/local/staf/lib/libJSTAF.so
+94715000-94716000 rwxp 00014000 08:01 17043685   /usr/local/staf/lib/libJSTAF.so
+94716000-9471e000 r-xp 00000000 08:01 8005359    /lib/i386-linux-gnu/libcrypt-2.15.so
+9471e000-9471f000 r-xp 00007000 08:01 8005359    /lib/i386-linux-gnu/libcrypt-2.15.so
+9471f000-94720000 rwxp 00008000 08:01 8005359    /lib/i386-linux-gnu/libcrypt-2.15.so
+94720000-94747000 rwxp 00000000 00:00 0 
+94747000-94759000 r-xp 00000000 08:01 16001053   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libnet.so
+94759000-9475a000 rwxp 00011000 08:01 16001053   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libnet.so
+94762000-94763000 ---p 00000000 00:00 0 
+94763000-947e3000 rwxp 00000000 00:00 0 
+947e3000-947e4000 ---p 00000000 00:00 0 
+947e4000-9486f000 rwxp 00000000 00:00 0 
+9486f000-94884000 rwxp 00000000 00:00 0 
+94884000-94886000 rwxp 00000000 00:00 0 
+94886000-9492f000 rwxp 00000000 00:00 0 
+9492f000-9493a000 rwxp 00000000 00:00 0 
+9493a000-9494f000 rwxp 00000000 00:00 0 
+9494f000-94951000 rwxp 00000000 00:00 0 
+94951000-949f9000 rwxp 00000000 00:00 0 
+949f9000-94a09000 rwxp 00000000 00:00 0 
+94a09000-94a0f000 rwxp 00000000 00:00 0 
+94a0f000-95fb0000 rwxp 00000000 00:00 0 
+95fb0000-98a10000 rwxp 00000000 00:00 0 
+98a10000-98e00000 rwxp 00000000 00:00 0 
+98e00000-adf70000 rwxp 00000000 00:00 0 
+adf70000-afc30000 rwxp 00000000 00:00 0 
+afc30000-b0a10000 rwxp 00000000 00:00 0 
+b0a10000-b0a19000 rwxp 00000000 00:00 0 
+b0a19000-b0ad0000 rwxp 00000000 00:00 0 
+b0ad0000-b0d10000 rwxp 00000000 00:00 0 
+b0d10000-b3ad0000 rwxp 00000000 00:00 0 
+b3ad0000-b4336000 r-xs 00000000 08:01 16000948   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/charsets.jar
+b4336000-b434b000 r-xs 00000000 08:01 16000941   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/jce.jar
+b434b000-b43d0000 r-xs 00000000 08:01 16000936   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/jsse.jar
+b43d0000-b443a000 rwxp 00000000 00:00 0 
+b443a000-b6a94000 r-xs 00000000 08:01 16001113   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/rt.jar
+b6a94000-b6aa3000 r-xp 00000000 08:01 16001050   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libzip.so
+b6aa3000-b6aa5000 rwxp 0000e000 08:01 16001050   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libzip.so
+b6aa5000-b6ac6000 r-xp 00000000 08:01 16001049   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libjava.so
+b6ac6000-b6ac8000 rwxp 00020000 08:01 16001049   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libjava.so
+b6ac8000-b6ad3000 r-xp 00000000 08:01 8005362    /lib/i386-linux-gnu/libnss_files-2.15.so
+b6ad3000-b6ad4000 r-xp 0000a000 08:01 8005362    /lib/i386-linux-gnu/libnss_files-2.15.so
+b6ad4000-b6ad5000 rwxp 0000b000 08:01 8005362    /lib/i386-linux-gnu/libnss_files-2.15.so
+b6ad5000-b6adf000 r-xp 00000000 08:01 8005366    /lib/i386-linux-gnu/libnss_nis-2.15.so
+b6adf000-b6ae0000 r-xp 00009000 08:01 8005366    /lib/i386-linux-gnu/libnss_nis-2.15.so
+b6ae0000-b6ae1000 rwxp 0000a000 08:01 8005366    /lib/i386-linux-gnu/libnss_nis-2.15.so
+b6ae1000-b6af7000 r-xp 00000000 08:01 8005378    /lib/i386-linux-gnu/libnsl-2.15.so
+b6af7000-b6af8000 r-xp 00015000 08:01 8005378    /lib/i386-linux-gnu/libnsl-2.15.so
+b6af8000-b6af9000 rwxp 00016000 08:01 8005378    /lib/i386-linux-gnu/libnsl-2.15.so
+b6af9000-b6afb000 rwxp 00000000 00:00 0 
+b6afd000-b6b08000 r-xp 00000000 08:01 17043678   /usr/local/staf/lib/libSTAFLIPC.so
+b6b08000-b6b09000 rwxp 0000a000 08:01 17043678   /usr/local/staf/lib/libSTAFLIPC.so
+b6b09000-b6b0a000 rwxp 00000000 00:00 0 
+b6b0a000-b6b15000 r-xp 00000000 08:01 16001048   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libverify.so
+b6b15000-b6b16000 rwxp 0000b000 08:01 16001048   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/libverify.so
+b6b16000-b6b40000 r-xp 00000000 08:01 8005369    /lib/i386-linux-gnu/libm-2.15.so
+b6b40000-b6b41000 r-xp 00029000 08:01 8005369    /lib/i386-linux-gnu/libm-2.15.so
+b6b41000-b6b42000 rwxp 0002a000 08:01 8005369    /lib/i386-linux-gnu/libm-2.15.so
+b6b42000-b70ac000 r-xp 00000000 08:01 16001040   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/server/libjvm.so
+b70ac000-b710f000 rwxp 00569000 08:01 16001040   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/server/libjvm.so
+b710f000-b7528000 rwxp 00000000 00:00 0 
+b7528000-b76cb000 r-xp 00000000 08:01 8005358    /lib/i386-linux-gnu/libc-2.15.so
+b76cb000-b76cc000 ---p 001a3000 08:01 8005358    /lib/i386-linux-gnu/libc-2.15.so
+b76cc000-b76ce000 r-xp 001a3000 08:01 8005358    /lib/i386-linux-gnu/libc-2.15.so
+b76ce000-b76cf000 rwxp 001a5000 08:01 8005358    /lib/i386-linux-gnu/libc-2.15.so
+b76cf000-b76d3000 rwxp 00000000 00:00 0 
+b76d3000-b76d6000 r-xp 00000000 08:01 8005373    /lib/i386-linux-gnu/libdl-2.15.so
+b76d6000-b76d7000 r-xp 00002000 08:01 8005373    /lib/i386-linux-gnu/libdl-2.15.so
+b76d7000-b76d8000 rwxp 00003000 08:01 8005373    /lib/i386-linux-gnu/libdl-2.15.so
+b76d8000-b76ef000 r-xp 00000000 08:01 8005367    /lib/i386-linux-gnu/libpthread-2.15.so
+b76ef000-b76f0000 r-xp 00016000 08:01 8005367    /lib/i386-linux-gnu/libpthread-2.15.so
+b76f0000-b76f1000 rwxp 00017000 08:01 8005367    /lib/i386-linux-gnu/libpthread-2.15.so
+b76f1000-b76f3000 rwxp 00000000 00:00 0 
+b76f3000-b76f4000 r-xp 002c5000 08:01 15992254   /usr/lib/locale/locale-archive
+b76f4000-b76fc000 rwxs 00000000 08:01 17176831   /tmp/hsperfdata_lbzhu/27898
+b76fc000-b7703000 r-xp 00000000 08:01 8005360    /lib/i386-linux-gnu/libnss_compat-2.15.so
+b7703000-b7704000 r-xp 00006000 08:01 8005360    /lib/i386-linux-gnu/libnss_compat-2.15.so
+b7704000-b7705000 rwxp 00007000 08:01 8005360    /lib/i386-linux-gnu/libnss_compat-2.15.so
+b7705000-b770b000 r-xp 00000000 08:01 16001038   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/native_threads/libhpi.so
+b770b000-b770c000 rwxp 00006000 08:01 16001038   /usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/native_threads/libhpi.so
+b770c000-b770d000 rwxp 00000000 00:00 0 
+b770d000-b770e000 r-xp 00000000 00:00 0 
+b770e000-b7710000 rwxp 00000000 00:00 0 
+b7710000-b7711000 r-xp 00000000 00:00 0          [vdso]
+b7711000-b7731000 r-xp 00000000 08:01 8005370    /lib/i386-linux-gnu/ld-2.15.so
+b7731000-b7732000 r-xp 0001f000 08:01 8005370    /lib/i386-linux-gnu/ld-2.15.so
+b7732000-b7733000 rwxp 00020000 08:01 8005370    /lib/i386-linux-gnu/ld-2.15.so
+bfdd8000-bfddb000 ---p 00000000 00:00 0 
+bfddc000-bffd8000 rwxp 00000000 00:00 0          [stack]
+
+VM Arguments:
+jvm_args: -Xmx384m
+java_command: com.ibm.staf.service.STAFServiceHelper STAFJVM1
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+CLASSPATH=/usr/local/staf/lib/JSTAF.jar:/usr/local/staf/samples/demo/STAFDemo.jar
+PATH=/usr/local/staf/bin:/usr/local/staf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
+USERNAME=lbzhu
+LD_LIBRARY_PATH=/usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386/server:/usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/lib/i386:/usr/lib/jvm/java-1.5.0-sun-1.5.0.19/jre/../lib/i386:/usr/local/staf/lib
+SHELL=/bin/bash
+DISPLAY=:0.0
+
+Signal Handlers:
+SIGSEGV: [libjvm.so+0x517270], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGBUS: [libjvm.so+0x517270], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGFPE: [libjvm.so+0x43a0a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGPIPE: [libjvm.so+0x43a0a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGILL: [libjvm.so+0x43a0a0], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGUSR1: SIG_DFL, sa_mask[0]=0x00000000, sa_flags=0x00000000
+SIGUSR2: [libjvm.so+0x43c4f0], sa_mask[0]=0x00000000, sa_flags=0x10000004
+SIGHUP: [libjvm.so+0x43bf20], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGINT: [libjvm.so+0x43bf20], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGQUIT: [libjvm.so+0x43bf20], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+SIGTERM: [libjvm.so+0x43bf20], sa_mask[0]=0x7ffbfeff, sa_flags=0x10000004
+
+
+---------------  S Y S T E M  ---------------
+
+OS:wheezy/sid
+
+uname:Linux 3.2.0-35-generic #55-Ubuntu SMP Wed Dec 5 17:45:18 UTC 2012 i686
+libc:glibc 2.15 NPTL 2.15 
+rlimit: STACK 8192k, CORE 100000k, NPROC 15707, NOFILE 4096, AS infinity
+load average:0.18 0.27 0.32
+
+CPU:total 2 (cores per cpu 2, threads per core 1) family 6 model 7 stepping 10, cmov, cx8, fxsr, mmx, sse, sse2
+
+Memory: 4k page, physical 2025084k(164952k free), swap 2059260k(1782376k free)
+
+vm_info: Java HotSpot(TM) Server VM (1.5.0_19-b02) for linux-x86, built on May  4 2009 01:43:34 by java_re with gcc 3.2.1-7a (J2SE release)
+
+time: Tue Dec 24 11:14:41 2013
+elapsed time: 332461 seconds
+

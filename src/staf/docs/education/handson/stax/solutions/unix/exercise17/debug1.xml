@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="StartHere"/>
+
+  <script>
+    machine  = 'local'
+    classpath = 'CLASSPATH=/usr/local/staf/testcases:{STAF/Env/CLASSPATH}'
+    testList = [ [ 'Test1', 'STAFTestcase 8' ],
+                 [ 'Test2', 'SimpleTestcase 12' ],
+                 [ 'Test3', 'STAFTestcase 15' ] ]
+  </script>
+
+  <function name="StartHere">
+
+    <paralleliterate var="test" in="testList">
+
+      <testcase name="test[0]">
+ 
+        <sequence>
+
+          <process name="test[0]">
+            <location>machine</location>
+            <command>'java'</command>
+            <!-- Note that the end-tag was </parm> and it should have been </parms> -->
+            <parms>test[1]</parms>
+            <env>classpath</env>
+          </process>
+
+          <if expr="RC == 0">
+ 
+            <sequence>
+              <message>'%s passed' % test[0]</message>
+              <tcstatus result="'pass'"/>
+            </sequence>
+
+            <else>
+              <sequence>
+                <message>
+                  '%s failed with RC=%s, STAFResult=%s' % (test[0], RC, STAFResult)
+                </message>
+                <tcstatus result="'fail'">
+                  '%s failed with RC=%s, STAFResult=%s' % (test[0], RC, STAFResult)
+                </tcstatus> 
+              </sequence>
+            </else>
+
+          <!-- Note that the end-tag for if </if> was missing -->
+          </if>
+
+        </sequence>
+ 
+      </testcase>
+ 
+    </paralleliterate>
+
+  </function>
+
+</stax>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+    Function Library
+-->
+
+<stax>
+
+  <defaultcall function="FunctionA12"/>
+  
+  <function name="FunctionA12">
+  
+    <sequence>
+        
+      <message>"FunctionA12 is executing from file library12.xml"</message>
+      
+      <script>currentFunction = "FunctionA12"</script>
+     
+    </sequence>
+  
+  </function>
+  
+  <function name="FunctionB12">
+  
+    <sequence>
+        
+      <message>"FunctionB12 is executing from file library12.xml"</message>
+      
+      <script>currentFunction = "FunctionB12"</script>
+     
+    </sequence>
+  
+  </function>
+
+  <function name="FunctionC12">
+  
+    <sequence>
+        
+      <message>"FunctionC12 is executing from file library12.xml"</message>
+      
+      <script>currentFunction = "FunctionC12"</script>
+     
+    </sequence>
+  
+  </function>
+  
+  <function name="FunctionD12">
+  
+    <sequence>
+        
+      <message>"FunctionD12 is executing from file library12.xml"</message>    
+      
+      <script>currentFunction = "FunctionD12"</script>
+     
+    </sequence>
+  
+  </function>
+  
+  <function name="ExistingFunction">
+  
+    <sequence>
+        
+      <message>"ExistingFunction is executing from file library12.xml"</message>
+     
+    </sequence>
+  
+  </function>
+
+  
+</stax>

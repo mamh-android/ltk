@@ -1,0 +1,58 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFPOOL = $(subst Name,STAFPool,$(DLL))
+
+stafrespoolservice_targets += $(REL)/lib/$(LIB_STAFPOOL)\
+                              $(REL)/include/STAFResPoolService.h
+Targets += $(stafrespoolservice_targets)
+CleanupTargets += cleanup_stafrespoolservice
+
+$(stafrespoolservice_targets): SUBSYS_REL := services/respool
+SUBSYS_REL := services/respool
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafrespoolservice_targets): OBJS = $(stafrespoolservice_objs)
+$(stafrespoolservice_targets): LIBS = STAF
+$(stafrespoolservice_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafrespoolservice_objs :=\
+  STAFResPoolService
+
+stafrespoolservice_objs        := $(foreach obj,$(stafrespoolservice_objs),$(O)/services/respool/$(obj)$(OS_OE))
+stafrespoolservice_dependents  := $(stafrespoolservice_objs:$(OS_OE)=.d)
+$(stafrespoolservice_dependents): SUBSYS_REL := services/respool
+
+ifeq ($(OS_NAME),win32)
+    stafrespoolservice_objs += $(SR_SRC)/STAFPool.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafrespoolservice_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFPool targets
+
+$(REL)/lib/$(LIB_STAFPOOL): $(stafrespoolservice_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+$(REL)/include/STAFResPoolService.h: $(SRC)/services/respool/STAFResPoolService.h $(MAKEFILE_NAME)
+	$(COPY_FILE)
+
+cleanup_stafrespoolservice:
+	-@$(DEL) $(O)/services/respool/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAFPOOL) $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) %(REL)/include/STAFResPoolService.h $(OUT_ERR_TO_DEV_NULL)
+
+
+

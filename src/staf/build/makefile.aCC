@@ -1,0 +1,100 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+#########################
+# Setup C/C++ variables #
+#########################
+
+ifeq ($(filter PA-RISC PA-RISC64 IA64-32 IA64-64,$(BUILD_ARCH)),)
+$(error Invalid BUILD_ARCH specified: $(BUILD_ARCH))
+endif
+
+CC_CC             := aCC
+CC_C              := cc
+
+ifeq ($(BUILD_TYPE),retail)
+    CC_BUILD_TYPE_FLAGS = $(CC_OPTIMIZE)
+else
+    CC_BUILD_TYPE_FLAGS = $(CC_DEBUG)
+endif
+
+CC_DEBUG        := -g
+CC_OPTIMIZE     := +O1
+CC_FPIC         := +z
+
+ifeq (PA-RISC,$(findstring PA-RISC,$(BUILD_ARCH)))
+    CC_MK_SHARED_LIB := aCC -b -lstd -lstream -lCsup -lm -Wl,-B,symbolic
+
+    ifeq ($(BUILD_ARCH),PA-RISC)
+      CC_ARCHITECTURE := +DAportable
+      OS_COMMONFLAGS += -DSTAF_INVOKE_JNI_INITIALIZE
+    else
+# BUILD_ARCH is PA-RISC64
+      CC_ARCHITECTURE := +DAportable +DD64 -mt
+      OS_COMMONFLAGS += -DSTAF_OS_64BIT
+    endif
+
+    CC_INCLUDEDIRS  := /opt/aCC/include/iostream
+    CC_STD_SUPPORT  := -Dstd= -DSTAF_Config_NoSTDIOStreamSupport \
+                       -DSTAF_Config_NoSTDFStreamSupport
+else
+    # BUILD_ARCH is IA64-32 or IA64-64
+    CC_CC := aCC -AA
+    CC_C := aCC -Ae
+    CC_MK_SHARED_LIB := aCC -AA -b -lstd_v2 -lCsup -lunwind -lm 
+
+    ifeq ($(BUILD_ARCH),IA64-64)
+        CC_ARCHITECTURE := +DD64 -mt
+    else
+        CC_ARCHITECTURE := +DD32 -mt
+    endif
+endif
+
+# Note: Message 829 warns about using character string literals to initialize
+#       character pointers.  We do this fairly frequently, and fixing it would
+#       make things relatively ugly, code-wise, so we suppress it.
+# Note: Message 4285 warns about operator= does not have a check for the source
+#       and destination addresses being non-identical in stafif/STAFRefPtr.h",
+#       line 140, but we do have a check.
+
+CC_SUPPRESSMESSAGES := +W829,4285
+
+CC_SHAREDLIBNAMEFLAGS = -DSTAF_SHARED_LIB_PREFIX=$(OS_SHARED_LIB_PREFIX) \
+                        -DSTAF_SHARED_LIB_SUFFIX=$(OS_SHARED_LIB_SUFFIX)
+CC_COMMONFLAGS_C = $(OS_COMMONFLAGS) $(COMMONFLAGS) $(CC_BUILD_TYPE_FLAGS) \
+                   $(CC_STD_SUPPORT) $(CC_ARCHITECTURE) $(CC_FPIC) \
+                   $(CC_SHAREDLIBNAMEFLAGS) -DSTAF_NATIVE_COMPILER
+CC_COMMONFLAGS   = $(CC_COMMONFLAGS_C) $(CC_SUPPRESSMESSAGES)
+CC_CFLAGS_C      = $(CC_COMMONFLAGS_C) $(CFLAGS)
+CC_CFLAGS        = $(CC_COMMONFLAGS) $(CFLAGS)
+CC_LINKFLAGS     = $(CC_COMMONFLAGS) $(LINKFLAGS) -Wl,+s
+
+##########################################
+# Set commands needed by master makefile #
+##########################################
+
+# Don't really have a way to do dependencies with aCC
+#define CC_DEPEND_IT
+#    cd $(@D); $(CC_CC) -E -M $(CC_FLAGS) $(ALL_INCLUDEDIR_LIST) $< >/dev/null; \
+#       cat $(subst .d,.u,$@) |\
+#       sed -e 's@\(.*\)\.o:@$(@D)/\1.o $(@D)/\1.d:@' >$@; \
+#       rm $(subst .d,.u,$@) 
+#endef
+
+CC_DEPEND_IT     = touch $@
+
+CC_DEPEND_IT_C   = touch $@
+
+CC_COMPILE_IT    = $(CC_CC) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_COMPILE_IT_C  = $(CC_C) -c -o $@ $(CC_CFLAGS_C) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_LINK_IT       = $(CC_CC) -o $@ $(CC_LINKFLAGS) $(ALL_INCLUDEDIR_LIST)\
+                   $(ALL_LIBDIR_LIST) $(ALL_LIB_LIST) $(OBJS)
+
+CC_SHARED_LIB_IT = $(CC_MK_SHARED_LIB) -o $@ $(CC_LINKFLAGS) $(ALL_LIBDIR_LIST)\
+                   $(ALL_LIB_LIST) $(OBJS)

@@ -1,0 +1,41 @@
+DESC: AIX Java 1.4.1 by IBM
+JVM_EXE: jre/bin/java
+CLASSPATH: "-cp "
+CLASSPATH_SEPARATOR: :
+SYSTEM: -D
+SYSTEM_SEPARATOR: =
+JVM_PROPERTIES:
+	"java.vendor=IBM..."
+	"java.version=1.4.1..."
+/:
+SET_ENV_FOR_WIZARD:
+	JAVA2D_USEAWTFONTS=0
+/:
+AIX_32BIT_ENV_VARS:
+	LDR_CNTRL=MAXDATA=0x40000000
+/:
+AIX_32BIT_ENV_VARS_FOR_PRODLAUNCHER:
+	0	
+/:
+PLATFORM_HINT:
+  JAVA_HOME
+  JDKHOME
+/:
+PATH_HINT:
+	/usr/java141
+	"/usr/java141"
+/:
+VERBOSE: -verbose
+VERBOSE_GC: -verbose:gc
+VERBOSE_CLASS: -verbose:class
+VERBOSE_JNI: -verbose:jni
+VERSION: -version
+BOOT_CLASSPATH: -Xbootclasspath:
+NO_CLASS_GC: -Xnoclassgc
+INIT_JAVA_HEAP: -Xms
+MAX_JAVA_HEAP: -Xmx
+REDUCE_OS_SIGNALS: -Xrs
+CHECK_JNI: -Xcheck:jni
+RUNHPROF_HELP: -Xrunhprof:help
+RUNHPROF_OPTION: -Xrunhprof
+DEBUG: -Xdebug

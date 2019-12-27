@@ -1,0 +1,1036 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!-- 
+   Tests Feature 464868, "Support for Dynamically Adding Services":
+     - Added a ADD request to the "SERVICE" service.
+     - Added a REMOVE request to the "SERVICE" service.
+     - Need to make sure the current internal design doesn't break
+       when two simultaneous requests to dynamically add the same
+       service are encountered.
+       
+     This job should run and complete with no failures.
+       
+  -->
+
+<stax>
+
+  <defaultcall function="Main"/>
+
+  <script>
+    # Update as needed to point to the machine where this test should run.
+    machName = 'local'
+  
+    # Update as needed to point to the location where the STAX.jar and
+    # STAFEvent.jar files are located. -->
+    
+    serviceDir = '{STAF/Config/STAFRoot}/services'   
+    
+    scenarioList = [
+                    'Scenario01', 'Scenario02', 'Scenario08', 'Scenario09',
+                    'Scenario10', 'Scenario11', 'Scenario12', 'StressScenario'
+                   ]
+  </script>
+    
+  <function name="Main"> 
+        
+    <block name="'Dynamic Services Test'">    
+    
+      <sequence>
+      
+        <message>
+          'Starting Dynamic Services Test on machine %s' % machName
+        </message>
+
+        <message>'serviceDir=%s' % serviceDir</message>
+
+        <script>import string</script>
+
+        <call function="'Preparation'"/>
+
+        <iterate var="scenarioName" in="scenarioList" indexvar="i">
+        
+          <testcase name='scenarioName'>        
+          
+            <call function='scenarioName'/>              
+            
+          </testcase>
+          
+        </iterate>
+      
+        <call function="'CleanUp'"/>
+
+        <message>
+          'Finishing Dynamic Services Test - there should be 0 fails.'
+        </message>
+      
+      </sequence>
+          
+    </block>
+    
+  </function>
+
+
+  <function name="Preparation">
+
+    <block name="'Preparation'"> 
+
+      <testcase name="'Preparation'"> 
+      <sequence>      
+
+        <message>"Preparing to run scenarios"</message>
+
+        <script>
+           # List of services that must not exist before the Scenarios are run:
+           Service_List = [ 'Log1', 'Log2',
+                            'Respool1', 'Respool2',
+                            'STAX1', 'STAX2',
+                            'Event1', 'Event2',
+                            'Log11', 'Log12', 'Log13', 'Log14',
+                            'Respool11', 'Respool12', 'Respool13', 'Respool14',
+                            'STAX11', 'STAX12', 'STAX13', 'STAX14',
+                            'Event11', 'Event12', 'Event13', 'Event14'
+                          ]
+        </script>
+
+        <iterate var="service" in="Service_List">
+
+          <sequence>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE', 'REMOVE SERVICE %s' % (service) ]
+            </call>
+
+            <!-- Pass if service is successfully removed or doesn't exist (RC=0 or 48) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0, 48], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+        <message>"Create a list of the rest of the external services"</message>
+
+        <call function="'RunSTAFCommand'">[ machName, 'SERVICE', 'LIST' ]</call>
+        <script>listOutput = STAXResult[1]</script>
+ 
+        <!-- Pass if services are successfully listed (RC=0) -->
+        <call function="'CheckSuccess'">[STAXResult[0], [0], STAXResult[1]]</call>
+
+        <!-- Convert list output to a Python list -->
+        <script>
+          PreExisting_ExtService_List = []
+          import string, random
+          lines = string.split(listOutput, '\n')
+          for line in lines:
+            endPos = string.find(line, ': External')
+            if endPos > 0:
+              PreExisting_ExtService_List.append(line[:endPos])
+        </script>
+        <message>'PreExisting_ExtService_List:%s' % PreExisting_ExtService_List</message>
+
+      </sequence>
+      </testcase>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario01">
+
+    <block name="'Adding C++ Services'"> 
+
+      <sequence>      
+
+        <message>"Scenario01: Adding C++ External Services Sequentially"</message>
+
+        <script>
+           # Each service to be added is described by a list of the following:
+           #   Service Name, Library Name
+           C_Service_List = [
+                              [ 'Log1', 'STAFLog' ],
+                              [ 'Respool1', 'STAFPool' ],
+                              [ 'Log2', 'STAFLog' ],
+                              [ 'Respool2', 'STAFPool' ]
+                            ]
+        </script>
+
+        <iterate var="service" in="C_Service_List">
+
+          <sequence>
+
+            <script>
+              serviceName = service[0]
+              serviceLib = service[1]
+            </script>
+
+            <message>'Adding a C++ service named %s' % serviceName</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE',
+                'ADD SERVICE %s LIBRARY %s' % (serviceName, serviceLib) ]
+            </call>
+
+            <!-- Pass if service is successfully added (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+            
+            <!-- Make sure the new service exists in the service list -->
+            <call function="'CheckIfExists'">serviceName</call>
+            <!-- Pass if returns 1; Fail if returns 0 -->
+            <call function="'CheckSuccess'">
+              [STAXResult, [1]]
+            </call>
+
+            <!-- Make sure the new service is available by submitting a HELP request -->
+            <call function="'RunSTAFCommand'">[ machName, serviceName, 'HELP' ]</call>
+            <!-- Pass if service is successfully added (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario02">
+
+    <block name="'Adding Java Services'"> 
+
+      <sequence>      
+
+        <message>"Scenario02: Adding Java External Services Sequentially"</message>
+
+        <script>
+           # Each service to be added is described by a list of the following:
+           #   Service Name, Executable
+           Java_Service_List = [
+                                 [ 'STAX1',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event1', '%s/STAFEvent.jar' % serviceDir ],
+                                 [ 'STAX2',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event2', '%s/STAFEvent.jar' % serviceDir ]
+                               ]
+        </script>
+
+        <iterate var="service" in="Java_Service_List">
+
+          <sequence>
+
+            <script>
+              serviceName = service[0]
+              serviceExe = service[1]
+            </script>
+
+            <message>'Adding a Java service named %s' % serviceName</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE',
+                'ADD SERVICE %s LIBRARY JSTAF EXECUTE %s OPTION "JVMName=MyJVM"' % (serviceName, serviceExe) ]
+            </call>
+
+            <!-- Pass if service is successfully added (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+            <!-- Make sure the new service exists in the service list -->
+            <call function="'CheckIfExists'">serviceName</call>
+            <!-- Pass if returns 1; Fail if returns 0 -->
+            <call function="'CheckSuccess'">
+              [STAXResult, [1]]
+            </call>
+
+            <!-- Make sure the new service is available by submitting a HELP request -->
+            <call function="'RunSTAFCommand'">[ machName, serviceName, 'HELP' ]</call>
+            <!-- Pass if service is successfully added (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario08">
+
+    <block name="'Removing C++ Services'"> 
+
+      <sequence>      
+
+        <message>"Scenario08: Removing C++ External Services Sequentially"</message>
+
+        <script>
+           # Each service to be removed is described by a list of the following:
+           #   Service Name
+           C_Service_List = [ 'Log1', 'Respool1', 'Log2', 'Respool2' ] 
+        </script>
+
+        <iterate var="service" in="C_Service_List">
+
+          <sequence>
+
+            <message>'Removing a C++ service named %s' % service</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE', 'REMOVE SERVICE %s' % (service) ]
+            </call>
+
+            <!-- Pass if service is successfully removed (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+            
+            <!-- Make sure the removed service no longer exists in the service list -->
+            <call function="'CheckIfExists'">service</call>
+            <!-- Pass if returns 0; Fail if returns 1 -->
+            <call function="'CheckSuccess'">
+              [STAXResult, [0]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario09">
+
+    <block name="'Removing Java Services'"> 
+
+      <sequence>      
+
+        <message>"Scenario09: Removing Java External Services Sequentially"</message>
+
+        <script>
+           # Each service to be removed is described by a list of the following:
+           #   Service Name
+           Java_Service_List = [ 'stax1', 'Event1', 'STAX2', 'EVENT2' ]
+        </script>
+
+        <iterate var="service" in="Java_Service_List">
+
+          <sequence>
+
+            <message>'Removing a Java service named %s' % service</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE', 'REMOVE SERVICE %s' % (service) ]
+            </call>
+
+            <!-- Pass if service is successfully removed (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+            
+            <!-- Make sure the removed service no longer exists in the service list -->
+            <call function="'CheckIfExists'">service</call>
+            <!-- Pass if returns 0; Fail if returns 1 -->
+            <call function="'CheckSuccess'">
+              [STAXResult, [0]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario10">
+
+    <block name="'Adding C++ Services in Parallel'"> 
+
+      <sequence>      
+
+        <message>"Scenario10: Adding C++ External Services in Parallel"</message>
+
+        <script>
+           # Each service to be added is described by a list of the following:
+           #   Service Name, Library Name
+           C_Service_List = [
+                              [ 'Log1', 'STAFLog' ],
+                              [ 'Respool1', 'STAFPool' ],
+                              [ 'Log2', 'STAFLog' ],
+                              [ 'Respool2', 'STAFPool' ]
+                            ]
+        </script>
+
+        <paralleliterate var="service" in="C_Service_List">
+
+          <sequence>
+
+            <message>'Adding a C++ service named %s' % service[0]</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE',
+                'ADD SERVICE %s LIBRARY %s' % (service[0], service[1]) ]
+            </call>
+
+            <!-- Pass if service is successfully added (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </paralleliterate>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario11">
+
+    <block name="'Adding Java Services in Parallel'"> 
+
+      <sequence>      
+
+        <message>"Scenario11: Adding Java External Services in Parallel"</message>
+
+        <script>
+           # Each service to be added is described by a list of the following:
+           #   Service Name, Executable
+           Java_Service_List = [
+                                 [ 'STAX1',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event1', '%s/STAFEvent.jar' % serviceDir ],
+                                 [ 'STAX2',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event2', '%s/STAFEvent.jar' % serviceDir ]
+                               ]
+        </script>
+
+        <paralleliterate var="service" in="Java_Service_List">
+
+          <sequence>
+
+            <message>'Adding a Java service named %s' % service[0]</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE',
+                'ADD SERVICE %s LIBRARY JSTAF EXECUTE %s OPTION "JVMName=MyJVM"' % (service[0], service[1]) ]
+            </call>
+
+            <!-- Pass if service is successfully added (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </paralleliterate>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="Scenario12">
+
+    <block name="'Error Checking'"> 
+
+      <sequence>      
+
+        <message>"Scenario12: Checking for appropriate error messages"</message>
+
+        <message>'Try to delete a non-existing service named DoesNotExist'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE', 'REMOVE SERVICE DoesNotExist' ]
+        </call>
+
+        <!-- Pass if get RC=48 -->
+        <call function="'CheckSuccessX'">
+          [STAXResult[0], [48], STAXResult[1], ['DoesNotExist'] ]
+        </call>
+
+        <message>'Try to delete an internal service named ECHO'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE', 'REMOVE SERVICE ECHO' ]
+        </call>
+
+        <!-- Pass if get RC=32 -->
+        <call function="'CheckSuccessX'">
+          [ STAXResult[0], [32], STAXResult[1], ['ECHO'] ]
+        </call>
+
+        <message>'Try to add a service that already exists'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE STAX LIBRARY JSTAF EXECUTE %s/STAX.jar OPTION "JVMName=MyJVM"' % serviceDir ]
+        </call>
+
+        <!-- Pass if get RC=49 -->
+        <call function="'CheckSuccessX'">
+          [ STAXResult[0], [49], STAXResult[1], ['STAX'] ]
+        </call>
+
+        <message>'Try to add a Java service specifying an executable that does not exist (or is not in the CLASSPATH)'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE STAX20 LIBRARY JSTAF EXECUTE com.ibm.staf.service.stax.STAXxyz OPTION "JVMName=MyJVM"' ]
+        </call>
+
+        <!-- Pass if get RC=27 -->
+        <call function="'CheckSuccess'">
+          [ STAXResult[0], [27], STAXResult[1] ]
+        </call>
+
+        <message>'Try to add a service specifying a jar file that does not exist'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE DoesNotExist LIBRARY JSTAF EXECUTE %s/DoesNotExist.jar OPTION "JVMName=MyJVM"' % serviceDir ]
+        </call>
+
+        <!-- Pass if get RC=27 -->
+        <call function="'CheckSuccess'">
+          [ STAXResult[0], [27], STAXResult[1] ]
+        </call>
+        
+        <message>'Try to add a service specifying an invalid executable name'</message>
+        <!-- Note that the executable name is 'com.ibm.staf.service.stax.STAX Ooops' -->
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE STAX99 LIBRARY JSTAF EXECUTE com.ibm.staf.service.stax.STAX Ooops' ]
+        </call>
+
+        <!-- Pass if get RC=27 -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [27], STAXResult[1]]
+        </call>
+
+        <message>'Try to add a Java service specifying an invalid parameter'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE STAX99 LIBRARY JSTAF EXECUTE %s/STAX.jar PARMS "NUMTHREADSX 99" OPTION "JVMName=MyJVM"' % serviceDir ]
+        </call>
+
+        <!-- Pass if get RC=27 -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [27], STAXResult[1]]
+        </call>
+
+        <message>'Try to add a C++ service specifying an invalid parameter'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE LOG99 LIBRARY STAFLog PARMS "MAXRECORDSIZEX 4096"' ]
+        </call>
+
+        <!-- Pass if get RC=7 -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [7], STAXResult[1]]
+        </call>
+
+        <message>'Try to add a Java service specifying an invalid option'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE STAX99 LIBRARY JSTAF EXECUTE %s/STAX.jar OPTION "A=99" OPTION "JVMName=MyJVM"' % serviceDir ]
+        </call>
+
+        <!-- Pass if get RC=27 -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [27], STAXResult[1]]
+        </call>
+
+        <message>'Try to add a C++ service specifying an invalid option'</message>
+
+        <call function="'RunSTAFCommand'">  
+          [ machName, 'SERVICE',
+            'ADD SERVICE LOG99 LIBRARY STAFLog PARMS "MAXRECORDSIZE 4096" OPTION "J2=99"' ]
+        </call>
+
+        <!-- Pass if get RC=27 -->
+        <call function="'CheckSuccess'">
+          [STAXResult[0], [27], STAXResult[1]]
+        </call>
+
+      </sequence>
+ 
+    </block>
+
+  </function>
+
+
+  <function name="StressScenario">
+
+    <block name="'Stress Scenario'"> 
+
+      <sequence>      
+
+        <message>"StressScenario: Adding, Removing, and Listing External Services in Parallel"</message>
+
+        <parallel>
+
+          <call function="'Add_C_Services'"/>  
+
+          <call function="'Add_Java_Services'"/>
+          
+          <call function="'Random_Delete'"/>
+
+          <block name="'List Services'">
+            <testcase name="'List Services'">
+              <loop var="i" from="1" to="10">
+                <!-- List the services -->
+                <sequence>
+   
+                  <message>'List the services'</message>
+                  <call function="'RunSTAFCommand'">  
+                    [ machName, 'SERVICE', 'LIST' ]
+                  </call>
+
+                  <!-- Pass if services are successfully listed (RC=0) -->
+                  <call function="'CheckSuccess'">
+                    [STAXResult[0], [0], STAXResult[1]]
+                  </call>
+
+                </sequence>
+              </loop>
+            </testcase>
+          </block>
+
+        </parallel>
+
+      </sequence>
+  
+    </block>
+
+  </function>
+
+
+  <function name="Add_C_Services">
+
+    <block name="'Add C++ Services'"> 
+     <testcase name="'Add C++ Services'">
+      <sequence>      
+
+        <message>"Stress: Adding C++ Services"</message>
+
+        <script>
+           # Each service to be added is described by a list of the following:
+           #   Service Name, Library Name
+           C_Service_List = [
+                              [ 'Log11', 'STAFLog' ],
+                              [ 'Respool11', 'STAFPool' ],
+                              [ 'Log12', 'STAFLog' ],
+                              [ 'Respool12', 'STAFPool' ],
+                              [ 'Log12', 'STAFLog' ],
+                              [ 'Respool12', 'Respool' ],
+                              [ 'Log13', 'STAFLog' ],
+                              [ 'Respool13', 'STAFPool' ],
+                              [ 'Log14', 'STAFLog' ],
+                              [ 'Respool14', 'STAFPool' ]
+                            ]
+        </script>
+
+        <iterate var="service" in="C_Service_List">
+
+          <sequence>
+
+            <message>'Adding a C++ service named %s' % service[0]</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE',
+                'ADD SERVICE %s LIBRARY %s' % (service[0], service[1]) ]
+            </call>
+
+            <!-- Pass if service is successfully added or already exists (RC=0, 49) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0, 49], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+      </sequence>
+     </testcase> 
+    </block>
+
+  </function>
+
+
+  <function name="Add_Java_Services">
+    
+    <block name="'Add Java Services'"> 
+     <testcase name="'Add Java Services'">
+      <sequence>      
+
+        <message>"Stress:  Adding Java Services"</message>
+
+        <script>
+           # Each service to be added is described by a list of the following:
+           #   Service Name, Executable
+           Java_Service_List = [
+                                 [ 'STAX11',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event11', '%s/STAFEvent.jar' % serviceDir ],
+                                 [ 'STAX12',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event12', '%s/STAFEvent.jar' % serviceDir ],
+                                 [ 'STAX12',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event12', '%s/STAFEvent.jar' % serviceDir ],
+                                 [ 'STAX13',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event13', '%s/STAFEvent.jar' % serviceDir ],
+                                 [ 'STAX14',  '%s/STAX.jar' % serviceDir ],
+                                 [ 'Event14', '%s/STAFEvent.jar' % serviceDir ]
+                               ]
+        </script>
+
+        <iterate var="service" in="Java_Service_List">
+
+          <sequence>
+
+            <message>'Adding a Java service named %s' % service[0]</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE',
+                'ADD SERVICE %s LIBRARY JSTAF EXECUTE %s OPTION "JVMName=MyJVM"' % (service[0], service[1]) ]
+            </call>
+
+            <!-- Pass if service is successfully added or already exists (RC=0 or 49) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0, 49], STAXResult[1]]
+            </call>
+
+          </sequence>
+
+        </iterate>
+
+      </sequence>
+     </testcase> 
+    </block>
+
+  </function>
+
+
+  <function name="Random_Delete">
+    
+    <block name="'Random Delete'"> 
+     <testcase name="'Random Delete'">
+      <sequence>      
+
+        <message>"Stress:  List Services and Randomly Delete One Repeatedly"</message>
+
+        <call function="'RunSTAFCommand'">[ machName, 'SERVICE', 'LIST' ]</call>
+        <script>listOutput = STAXResult[1]</script>
+ 
+        <!-- Pass if services are successfully listed (RC=0) -->
+        <call function="'CheckSuccess'">[STAXResult[0], [0], STAXResult[1]]</call>
+
+        <!-- Convert list output to a Python list -->
+        <script>
+          Service_List = []
+          import string, random
+          lines = string.split(listOutput, '\n')
+          for line in lines:
+            endPos = string.find(line, ': External')
+            if endPos > 0:
+              service = line[:endPos]
+              if service not in PreExisting_ExtService_List:
+                Service_List.append(service)
+        </script>
+        <message>'Service_List:%s' % Service_List</message>
+
+        <loop while="Service_List">
+          <sequence>
+ 
+            <!-- Randomly select an entry from the list and remove it -->
+            <script>
+              service = random.choice(Service_List)
+              Service_List.remove(service)
+            </script> 
+
+            <message>'Removing service %s' % service</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE', 'REMOVE SERVICE %s' % (service) ]
+            </call>
+
+            <!-- Pass if service is successfully removed (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+        </loop>
+
+      </sequence>
+    </testcase>
+   </block>
+
+  </function>
+
+
+  <function name="CheckIfExists">
+
+    <function-description>
+      Checks if a service name exists is the service list. 
+      If not, return 0.  If exists, return 1.
+    </function-description>
+
+    <function-single-arg>
+
+      <function-required-arg name="name">
+        The name of the service whose existance is being checked. 
+      </function-required-arg>
+
+    </function-single-arg>
+
+    <sequence>      
+
+      <message>'Check if service %s exists' % name</message>
+
+      <call function="'RunSTAFCommand'">[ machName, 'SERVICE', 'LIST' ]</call>
+      <script>listOutput = STAXResult[1]</script>
+ 
+      <!-- Pass if services are successfully listed (RC=0) -->
+      <call function="'CheckSuccess'">[STAXResult[0], [0], STAXResult[1]]</call>
+
+      <!-- Check if serviceName is in service list;  If not, found=0; else found=1 -->
+      <script>
+          found = 0
+          import string
+          lines = string.split(listOutput, '\n')
+          for line in lines:
+            endPos = string.find(line, ': External')
+            if endPos > 0:
+              service = line[:endPos]
+              if service == name.upper():
+                found = 1
+                break
+      </script>
+
+      <return>found</return>
+ 
+    </sequence>
+     
+  </function>
+
+
+  <function name="CleanUp">
+    
+    <block name="'CleanUp'"> 
+     <testcase name="'CleanUp'">
+      <sequence>      
+
+        <!-- Delete Services that were added by this test -->
+
+        <call function="'RunSTAFCommand'">[ machName, 'SERVICE', 'LIST' ]</call>
+        <script>listOutput = STAXResult[1]</script>
+ 
+        <!-- Pass if services are successfully listed (RC=0) -->
+        <call function="'CheckSuccess'">[STAXResult[0], [0], STAXResult[1]]</call>
+
+        <!-- Convert list output to a Python list -->
+        <script>
+          Service_List = []
+          import string, random
+          lines = string.split(listOutput, '\n')
+          for line in lines:
+            endPos = string.find(line, ': External')
+            if endPos > 0:
+              service = line[:endPos]
+              if service not in PreExisting_ExtService_List:
+                Service_List.append(service)
+        </script>
+        <message>'Service_List:%s' % Service_List</message>
+
+        <iterate var="service" in="Service_List">
+          <sequence>
+
+            <message>'Removing service %s' % service</message>
+
+            <call function="'RunSTAFCommand'">  
+              [ machName, 'SERVICE', 'REMOVE SERVICE %s' % (service) ]
+            </call>
+
+            <!-- Pass if service is successfully removed (RC=0) -->
+            <call function="'CheckSuccess'">
+              [STAXResult[0], [0], STAXResult[1]]
+            </call>
+
+          </sequence>
+        </iterate>
+
+      </sequence>
+    </testcase>
+   </block>
+
+  </function>
+
+
+  <function name="RunSTAFCommand">
+
+    <function-description>
+      Runs the STAF command specified by service and request on the specified machine.
+      Returns the RC and STAFResult in a list.
+    </function-description>
+
+    <function-list-args>
+
+      <function-required-arg name="location">
+        The name of the machine of which you wish to make a request
+      </function-required-arg>
+
+      <function-required-arg name="service">
+        The name of the STAF service to which you are submitting a request 
+      </function-required-arg>
+
+      <function-required-arg name="request">
+        The actual request string that you wish to submit to the STAF service 
+      </function-required-arg>
+
+    </function-list-args>
+
+    <sequence>
+
+      <message>'STAF %s %s %s' % (location, service, request)</message>
+
+      <stafcmd>
+        <location>location</location>
+        <service>service</service>
+        <request>request</request>
+      </stafcmd>
+ 
+      <return>[RC, STAFResult]</return>
+
+    </sequence>
+
+  </function>
+
+  <function name="CheckSuccessX">
+
+    <function-description>
+      Checks if a value meets the specified success criteria. 
+      If not, records a testcase fail result, sends a failure message to the STAX Monitor,
+      and terminates the job.
+    </function-description>
+
+    <function-list-args>
+
+      <function-required-arg name="rcValue">
+        The RC value to be compared with the specified RC success criteria. 
+      </function-required-arg>
+
+      <function-required-arg name="rcSuccessCriteria">
+        A list of values indicating success for RC. 
+      </function-required-arg>
+
+      <function-optional-arg name="resultValue" default="''">
+        The STAFResult value to be compared with the specified STAFResult success criteria
+      </function-optional-arg>
+
+      <function-optional-arg name="resultSuccessCriteria" default="['']">
+        A list of values indicating success for STAFResult
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <if expr="rcValue not in rcSuccessCriteria">
+
+      <sequence> 
+
+        <script>msg = 'Failed with RC=%s, STAFResult=%s' % (rcValue, resultValue)</script>
+        <tcstatus result="'fail'">msg</tcstatus>
+        <message>msg</message>
+        <terminate/>
+
+      </sequence>
+
+      <elseif expr="resultValue != '' and resultValue not in resultSuccessCriteria">
+        <sequence>
+          <script>msg = 'Failed with STAFResult=%s, Expected STAFResult=%s' % (resultValue, resultSuccessCriteria)</script>
+          <tcstatus result="'fail'">msg</tcstatus>
+          <message>msg</message>
+          <terminate/> 
+        </sequence>
+      </elseif>
+ 
+      <else>
+        <tcstatus result="'pass'"/>
+      </else>
+
+    </if>
+
+  </function>
+
+
+  <function name="CheckSuccess">
+
+    <function-description>
+      Checks if a value meets the specified success criteria. 
+      If not, records a testcase fail result, sends a failure message to the STAX Monitor,
+      and terminates the job.
+    </function-description>
+
+    <function-list-args>
+
+      <function-required-arg name="value">
+        The value to be compared with the specified success criteria. 
+      </function-required-arg>
+
+      <function-required-arg name="successCriteria">
+        A list of values indicating success. 
+      </function-required-arg>
+
+      <function-optional-arg name="result" default="''">
+        The message to be displayed if value does not meet success criteria
+      </function-optional-arg>
+
+    </function-list-args>
+
+    <if expr="value not in successCriteria">
+
+      <sequence> 
+
+        <script>msg = 'Failed with RC=%s, STAFResult=%s' % (value, result)</script>
+        <tcstatus result="'fail'">msg</tcstatus>
+        <message>msg</message>
+        <terminate/>
+
+      </sequence>
+
+      <else>
+        <tcstatus result="'pass'"/> 
+      </else>
+
+    </if>
+
+  </function>
+
+</stax>

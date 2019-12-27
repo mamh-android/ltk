@@ -1,0 +1,113 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : STAFUG.SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework User's Guide
+.*  Detail:
+.*
+.*     This file contains the ISO 9001 control information and is the
+.*     top-level script file for the STAF User's Guide.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:userdoc.
+.*
+.* -- Imbed our symbols
+.*
+.se varres = 'This option will resolve variables.'
+.se varresNoErrors = 'This option will resolve variables using the :xph.IGNOREERRORS:exph. option.'
+.se private = 'This option will handle private data.'
+.se maskPrivate = 'Private data will be masked.'
+.se seclvl = 'This command requires trust level'
+.se help = 'HELP &minus. Returns syntax information'
+.se stringObj = ':xph.&lt.String&gt.:exph.'
+.se noneObj = ':xph.&lt.None&gt.:exph.'
+.se anyObj = ':xph.&lt.Any&gt.:exph.'
+.se timestampFormat = ':xph.&lt.YYYYMMDD-HH&colon.MM&colon.SS&gt.:exph.'
+.*
+.* -- This creates the title page
+.*
+:prolog.
+:docprof style=ISO9001
+         headnum='*3'
+         layout=1
+         duplex=sb
+         ldrdots=yes.
+.*
+.* -- The short title will be displayed at the bottom of the page as a
+.*    running footer.
+.*
+:title stitle='STAF V3 User&apos.s Guide'.
+Software Testing Automation Framework (STAF) User's Guide
+Version 3.4.16
+:etitle.
+.*
+.* -- This creates the current date printing on the title page
+.*
+:date.&date.
+.*
+.*:address.
+.*11400 Burnet Road
+.*Austin, TX 78758
+.*:eaddress.
+.*
+.* -- Revision tags
+.*
+.* Revisions per external review comments of 08/01/95, v0.2.1 draft
+.*:revision id=rev1 char='1' date='08/25/95' run=yes.
+.*
+:eprolog.
+.*
+.* -- This creates the following front matter text on the title page.
+.*
+:frontm.
+:tipage.
+.*.fo right
+.*.fo left
+.*:snotice.
+.*
+.* -- Disclaimer statement
+.*
+.*:p.The responsibility for using the latest level of this document lies
+.*with the user of the document.   Discard this level if a new level is available.
+.*To validate your copy, refer to the master copy located in the SVT Quality
+.*Records Database on Lotus Notes server AUSDB011.
+.*:esnotice.
+.*
+.*---------------------------------------------------------------------
+.*
+:toc.
+:body.
+.*
+.*---------------------------------------------------------------------
+.*
+.im Overview
+.im Concepts
+.im Install
+.im Config
+.im Commands
+.im APIRef
+.im Services
+.im Utils
+.*.im Migrate
+.*
+.*---------------------------------------------------------------------
+.*
+:appendix.
+.im ErrRef
+.im CmdRef
+.*.im RSPRef
+.im SampRef
+.im CodeRef
+:backm.
+:index.
+.*.im stafglos
+.cp
+:h1 id=stafugend.End Of Document
+:p.This is the end of the document.
+:euserdoc.

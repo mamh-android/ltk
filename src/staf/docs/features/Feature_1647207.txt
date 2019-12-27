@@ -1,0 +1,879 @@
+Feature ID  : 1647207
+Title       : Provide new service to run commands at STAF startup/shutdown
+
+Description
+-----------
+
+Provide the ability to run one or more STAF service requests when
+STAFProc starts up on a machine and/or when STAFProc shuts down
+on a machine.
+
+Problem(s) Solved
+-----------------
+
+We've had multiple requests for providing the ability to run one or more
+processes when STAF is started on a machine and/or when STAF is shutdown on
+a machine.  This feature provides that ability.  It also provides an
+interface to manage registrations via the REGISTER, UNREGISTER, and UPDATE
+requests instead of requiring you to edit a text file.
+
+Related Features
+----------------
+
+Support Request #1411067 "Simple Start/Stop" service included a simple STAF
+Java service that runs processes that you tell it to run.  To use it, you
+create a separate file that you edit to contain the commands that the service
+will run via a STAF local PROCESS START COMMAND "<command> start | stop" WAIT)
+request during its init() and term() functions.
+
+
+External Changes
+----------------
+
+1) This service will be an internal STAF service and will be registered
+   as the LIFECYCLE service (with the full name being the STAF LifeCycle
+   service).
+
+2) REQUEST SYNTAX
+
+  STAF LifeCycle service help
+
+  REGISTER   PHASE <Startup | Shutdown>
+             MACHINE <Machine> SERVICE <Service> REQUEST <Request>
+             [PRIORITY <Priority>] [DESCRIPTION <Desription>]
+
+  UNREGISTER ID <Registration ID>
+
+  UPDATE     ID <Registration ID> [PRIORITY <Priority>]
+             [MACHINE <Machine>] [SERVICE <Service>] [REQUEST <Request>]
+             [PHASE <Startup | Shutdown>] [DESCRIPTION <Description>]
+
+  LIST       [PHASE <Startup | Shutdown>] [LONG]
+
+  QUERY      ID <Registration ID>
+
+  TRIGGER    <ID <Registration ID> | PHASE <Startup | Shutdown>> CONFIRM
+
+  ENABLE     ID <Registration ID>
+
+  DISABLE    ID <Registration ID>
+
+  HELP
+
+
+a) REGISTER 
+
+  REGISTER registers a STAF service request to be executed either when
+  STAFProc starts up or is shut down on the local machine.
+
+  Each STAF service request that is registered will be submitted
+  synchronously when STAFProc starts up or is shutdown, or is
+  triggered via the TRIGGER request.  This means that if you register
+  a STAF service request that never completes (e.g. a PROCESS START
+  WAIT request without a TIMEOUT option for a command that never
+  completes, or a SEM MUTEX REQUEST request without a TIMEOUT option
+  for a mutex semaphore that never becomes available), then if
+  registered for Startup, STAFProc will hang starting up, or if
+  registered for Shutdown, STAFProc will never shutdown.
+ 
+  Syntax
+
+    REGISTER   PHASE <Startup | Shutdown>
+               MACHINE <Machine> SERVICE <Service> REQUEST <Request>
+               [PRIORITY <Priority>] [DESCRIPTION <Desription>]
+
+    PHASE specifies when the STAF service request will be submitted.
+    Valid values are "Startup" and "Shutdown" (case in-sensitive).
+    Specifying "Startup" indicates to submit the service request when
+    STAFProc starts up.  Specifying "Shutdown" indicates to submit the
+    service request when STAFProc shuts down.  This option will resolve
+    STAF variables.
+
+    MACHINE specifies the endpoint for the machine where the service
+    request will be executed.  This option will not resolve STAF
+    variables (so then can be resolved when the service request is
+    executed).
+
+    SERVICE specifies the name of the service to be executed.  This
+    option will not resolve STAF variables (so then can be resolved
+    when the service request is executed).
+
+    REQUEST specifies the request to be executed.  This option will
+    not resolve STAF variables (so then can be resolved when the
+    service request is executed). 
+
+    PRIORITY specifies the priority of the registration which is used in
+    determining the order in which the registration will be submitted
+    when STAFProc starts up or shuts down.  It is a number from 1 - 99.
+    The default is 50.  Registrations with priority 1 will be submitted
+    first, followed by registrations with priority 2, and so on.
+    Registrations with the same priority will be submitted in order by
+    registration ID.  This option will resolve STAF variables. 
+
+    DESCRIPTION specifies a description of the registration. It is for 
+    informational purposes only. 
+
+  Security
+
+    This request requires at least trust level 5. 
+
+  Results
+
+    Upon successful return, the result buffer contains the registration ID.
+
+  Examples
+
+    1) Start a process that runs command "C:/tests/TestA.exe" on machine
+       client1.company.com whenever STAFProc starts up and specify priority
+       25 for the registration.
+
+       Syntax:
+
+         REGISTER PHASE Startup PRIORITY 25 MACHINE client1.company.com
+         SERVICE PROCESS REQUEST "START COMMAND C:/tests/TestA.exe"
+         DESCRIPTION "Start TestA"
+
+    2) Run STAX job /tests/TestA.xml on machine server1 whenever STAFProc
+       starts up.  Pass the STAX job's main function an argument map as
+       follows: 
+         { 'testMach': 'client1', 'serverMach': 'server1'}
+ 
+       Syntax: 
+
+         REGISTER PHASE Startup MACHINE server1 SERVICE STAX REQUEST
+         "EXECUTE FILE /tests/TestA.xml ARGS \"{ 'testMach': 'client1', 'serverMach': 'server1' }\"" 
+
+       Note: Because the REQUEST value is enclosed in double quotes, any
+       double quotes used within this value need to be escaped with a
+       backslash.
+
+    3) Start a process that runs command "C:/tests/TestB.exe" on the
+       local machine whenever STAFProc is shut down.
+         
+       Syntax: 
+
+         REGISTER PHASE Shutdown MACHINE local SERVICE PROCESS REQUEST
+         "START COMMAND C:/tests/TestB.exe" DESCRIPTION "Start TestB"
+
+b) UNREGISTER
+
+  UNREGISTER unregisters a STAF service request with the STAF LifeCycle
+  service. 
+
+  Syntax
+
+    UNREGISTER ID <Registration ID>
+
+    ID specifies the registration ID to be unregistered.  This option
+    will resolve variables.
+
+  Security
+
+    This request requires at least trust level 5. 
+
+  Results
+
+    Upon successful return, the result buffer will be empty.
+
+  Example
+
+    Unregister the STAF service request with ID 5.
+
+    Syntax:
+ 
+      UNREGISTER ID 5
+
+c) UPDATE
+
+  UPDATE allows you to update one or more fields for a registration.
+
+  Syntax:
+
+    UPDATE     ID <Registration ID> [PRIORITY <Priority>]
+               [MACHINE <Machine>] [SERVICE <Service>] [REQUEST <Request>]
+               [PHASE <Startup | Shutdown>] [DESCRIPTION <Description>]
+
+    ID specifies the registration ID to be updated.  This option will
+    resolve variables.
+    
+    PRIORITY specifies the priority of the registration which is used in
+    determining the order in which the registration will be submitted
+    when STAFProc starts up or shuts down.  It must be a number from
+    1 - 99.  Registrations with priority 1 will be submitted first,
+    followed by registrations with priority 2, and so on.  Registrations
+    with the same priority will be submitted in order by registration ID.
+    This option will resolve variables. 
+
+    MACHINE specifies the name of the machine where the command will be
+    executed.  This option will not resolve STAF variables (so they will
+    be resolved when the service request is executed).
+
+    SERVICE specifies the name of the service to be executed.  This option
+    will not resolve STAF variables (so they will be resolved when the
+    service request is executed).
+
+    REQUEST specifies the request to be executed.  This option will not
+    resolve STAF variables (so they will be resolved when the service
+    request is executed). 
+
+    PHASE specifies when the STAF service request will be submitted.
+    Valid values are "Startup" and "Shutdown" (case-insensitiveii).
+    Specifying "Startup" indicates to submit the service request when
+    STAFProc starts up.  Specifying "Shutdown" indicates to submit the
+    service request when STAFProc shuts down.  This option will resolve
+    STAF variables.
+
+    DESCRIPTION specifies a description of the registration. It is for 
+    informational purposes only.
+    
+  Security
+
+    This request requires at least trust level 5. 
+
+  Results
+
+    Upon successful return, the result buffer will be empty.
+
+  Example
+
+    Update the priority of registration ID 2 to have priority 25 and
+    description "Run TestA".
+  
+      UPDATE ID 2 PRIORITY 25 DESCRIPTION "Run TestA"
+
+d) LIST
+
+  LIST lists information about the STAF service requests registered with 
+  the LIFECYCLE service.  The registrations will be listed in the order in
+  which they will be submitted, which is by Phase (Startup registrations
+  first, then Shutdown registrations), and then in ascending order by
+  priority within the same phase, and then in ascending order by
+  registration ID within the same phase and priority.
+ 
+  Syntax
+
+    LIST       [PHASE <Startup | Shutdown>] [LONG]
+
+    PHASE specifies to list only the registrations with a matching
+    phase.  Valid values are "Startup" or "Shutdown" (case-insensitive).
+    This option will resolve STAF variables.
+
+    Both startup and shutdown registrations will be listed if the PHASE
+    option is not specified on the LIST request.
+
+    LONG specifies to list all of the registration information, including
+    description.
+
+  Security
+
+    This request requires at least trust level 2.
+
+  Results
+
+    Upon successful return:
+ 
+    a) The result buffer for a LIST request without the LONG option
+    specified will contain a marshalled <List> of
+    <Map:STAF/Service/LifeCycle/Reg> which represents a list of the
+    matching registrations. The map is defined as follows: 
+
+    Description: This map class represents a registration. 
+
+    Key Name    Display Name Type     Format / Value
+    ----------- ------------ -------- ----------------------
+    phase       Phase        <String> 'Startup' | 'Shutdown'
+    priority    Priority     <String> '1' - '99'
+                (P)
+    id          ID           <String>
+    state       State        <String> 'Enabled' | 'Disabled'
+    machine     Machine      <String>   
+    service     Service      <String>   
+    request     Request      <String> Private data will be masked.  
+
+    b) The result buffer for a LIST request with the LONG option specified
+    will contain a marshalled <List> of <Map:STAF/Service/LifeCycle/RegDetails>
+    which represents a list of the matching registrations with detailed
+    information.  The map is defined as follows: 
+
+    Description: This map class represents a registration with detailed
+    information. 
+
+    Key Name    Display Name Type              Format / Value
+    ----------- ------------ ----------------- --------------------
+    phase       Phase        <String>          'Startup' | 'Shutdown'
+    priority    Priority     <String>          '1' - '99'
+                (P)
+    id          ID           <String>
+    state       State        <String>          'Enabled' | 'Disabled'
+    machine     Machine      <String>   
+    service     Service      <String>   
+    request     Request      <String>          Private data will be masked.  
+    description Description  <String> | <None>
+                (Desc)
+
+  Examples
+
+  1) List all of the registrations:
+
+    LIST
+
+    Phase   P  ID State   Machine Service Request
+    ------- -- -- ------- ------- ------- -----------------------------------------
+    Startup 25 1  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestA.exe
+    Startup 25 4  Enabled client1 PROCESS START SHELL COMMAND C:/test/TestB.exe WAI
+                                          T
+    Startup 40 3  Disable local   PROCESS START SHELL COMMAND C:/test/TestC.exe WAI
+                  d                       T
+    Startup 50 5  Enabled server1 STAX    EXECUTE FILE C:/stax/jobA.xml
+    Shutdow 25 2  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestTerm.exe
+    n
+    Shutdow 50 6  Enabled server1 STAX    EXECUTE FILE C:/stax/jobTerm.xml
+    n
+
+  2) List the startup registrations
+
+    LIST PHASE Startup
+
+    Phase   P  ID State   Machine Service Request
+    ------- -- -- ------- ------- ------- -----------------------------------------
+    Startup 25 1  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestA.exe
+    Startup 25 4  Enabled client1 PROCESS START SHELL COMMAND C:/test/TestB.exe WAI
+                                          T
+    Startup 40 3  Disable local   PROCESS START SHELL COMMAND C:/test/TestC.exe WAI
+                  d                       T
+    Startup 50 5  Enabled server1 STAX    EXECUTE FILE C:/stax/jobA.xml
+
+  3) List the shutdown registrations
+
+    LIST PHASE Shutdown
+
+    Phase    P  ID State   Machine Service Request
+    -------- -- -- ------- ------- ------- ----------------------------------------
+    Shutdown 25 2  Enabled local   PROCESS START SHELL COMMAND C:/tests/TestTerm.ex
+                                           e
+    Shutdown 50 6  Enabled server1 STAX    EXECUTE FILE C:/stax/jobTerm.xml
+
+  4) List the startup registrations in the long format:
+
+    LIST PHASE Startup LONG
+
+    Phase   P  ID State   Machine Service Request                       Description
+    ------- -- -- ------- ------- ------- ----------------------------- -----------
+    Startup 25 1  Enabled local   PROCESS START SHELL COMMAND C:/tests/ Run TestA
+                                          TestA.exe
+    Startup 25 4  Enabled client1 PROCESS START SHELL COMMAND C:/test/T Run TestB
+                                          estB.exe WAIT
+    Startup 40 3  Disable local   PROCESS START SHELL COMMAND C:/test/T Run TestC
+                  d                       estC.exe WAIT
+    Startup 50 5  Enabled server1 STAX    EXECUTE FILE C:/stax/jobA.xml Run STAX Jo
+                                                                        bA
+
+e) QUERY
+
+  QUERY allows you to get information about a STAF service request registered
+  with the LIFECYCLE service. 
+ 
+  Syntax
+
+    QUERY ID <Registration ID>
+
+    ID specifies the registration ID to be queried.  This option will
+    resolve variables.
+
+  Security
+
+    This request requires at least trust level 2.
+
+  Results
+
+    Upon successful return, the result buffer will contain information about
+    the specified registration ID in a marshalled <Map:STAF/Service/LifeCycle/RegQuery>. 
+    The map is defined as follows: 
+
+    Description: This map class represents a registration being queried. 
+
+    Key Name    Display Name Type              Format / Value
+    ----------- ------------ ----------------- --------------------
+    phase       Phase        <String>          'Startup' | 'Shutdown'
+    priority    Priority     <String>          '1' - '99'
+    id          ID           <String>
+    state       State        <String>          'Enabled' | 'Disabled'
+    machine     Machine      <String>   
+    service     Service      <String>   
+    request     Request      <String>          Private data will be masked.  
+    description Description  <String> | <None>
+
+  Examples
+
+  1) Query registration ID 5:
+
+    QUERY ID 5
+
+    Phase      : Startup
+    Priority   : 50
+    ID         : 5
+    State      : Enabled
+    Machine    : server1
+    Service    : STAX
+    Request    : EXECUTE FILE C:/stax/jobA.xml
+    Description: Run STAX JobA
+  
+
+f) TRIGGER
+
+  TRIGGER allows you to submit a single registered STAF service request,
+  or to submit all STAF service requests registered to be run at the
+  Startup or Shutdown phase.  It is useful for testing the registrations
+  without requiring that STAFProc be started or shut down.
+
+  Only enabled STAF requests will be submitted by a TRIGGER PHASE request.
+  A TRIGGER ID request will submit enabled and disabled STAF requests.
+  Each STAF service request that is triggered will be submitted
+  synchronously (e.g. waits for the STAF service request to complete)
+  before returning or submitting the next STAF service request if the
+  PHASE is specified and there are multiple STAF service requests to be
+  triggered at startup or shutdown.  This means that if you register a
+  STAF service request that never completes (e.g. a PROCESS START WAIT
+  request without a TIMEOUT option for a command that never completes,
+  or a SEM MUTEX REQUEST request without a TIMEOUT option for a mutex
+  semaphore that never becomes available), then the TRIGGER request will
+  never complete.
+
+  Syntax
+
+    TRIGGER    <ID <Registration ID> | PHASE <Startup | Shutdown>> CONFIRM
+
+    ID specifies the registration ID which is to be triggered. 
+
+    PHASE specifies to trigger all of the registrations with a matching
+    phase.  Valid values are "Startup" and "Shutdown" (case-insensitive).
+    This option will resolve variables.
+
+    CONFIRM confirms you really want to trigger submitting the
+    registration(s). 
+
+  Security
+
+    This request requires trust level 5. 
+
+  Results
+
+    Upon successful return: 
+    
+    - If the ID option is specified, the result buffer will contain a
+      marshalled <Map:STAF/Service/LifeCycle/TriggerId> which represents
+      information about the submitted STAF service request.
+      The map is defined as follows: 
+
+      Description: This map class represents information about the
+                   submitted STAF service request. 
+
+      Key Name      Display Name Type     Format / Value  
+      ------------- ------------ -------- --------------
+      machine       Machine      <String>
+      service       Service      <String>
+      request       Request      <String>
+      rc            RC           <String>
+      result        Result       <String>
+
+    - If the PHASE option is specified, the result buffer will contain
+      a marshalled <List> of <Map:STAF/Service/LifeCycle/TriggerIds>
+      which represents a list of information about each submitted STAF
+      service request.  The map is defined as follows: 
+
+      Description: This map class represents information about the
+                   submitted STAF service requests. 
+
+      Key Name      Display Name Type     Format / Value  
+      ------------- ------------ -------- --------------
+      id            ID           <String>
+      machine       Machine      <String>
+      service       Service      <String>
+      request       Request      <String>
+      rc            RC           <String>
+      result        Result       <String>
+
+    Upon unsuccessful return, the result buffer will contain a string
+    containing additional information about the error.
+
+  Examples
+
+    1) Submit the STAF service request specified by registration ID 5.
+
+    Syntax:  TRIGGER ID 5 CONFIRM
+
+    Result:  If the request is submitted from the command line, the result,
+             could look like the following if successful: 
+
+    Machine: server1
+    Service: STAX
+    Request: EXECUTE FILE C:/stax/jobA.xml
+    RC     : 0
+    Result : 4
+
+    2) Submit the STAF service request(s) specified to run at Startup:
+ 
+    Syntax:  TRIGGER PHASE Startup CONFIRM
+
+    Result:  If the request is submitted from the command line, the result
+             could look like the following, in verbose mode, if successful:
+
+    [
+      {
+        ID     : 1
+        Machine: local
+        Service: PROCESS
+        Request: START SHELL COMMAND C:/tests/TestA.exe
+        RC     : 0
+        Result : 58
+      }
+      {
+        ID     : 4
+        Machine: client1
+        Service: PROCESS
+        Request: START SHELL COMMAND C:/test/TestB.exe WAIT
+        RC     : 0
+        Result : {
+          Return code: 0
+          Key        : <None> 
+          Files      : [
+            {
+              Return code: 0
+              Data       : TestB was successful
+            }
+          ]
+        }
+      }
+      {
+        ID     : 5
+        Machine: server1
+        Service: STAX
+        Request: EXECUTE FILE C:/stax/jobA.xml
+        RC     : 0
+        Result : 4
+      }
+    ]
+
+    3) Submit the STAF service request(s) specified to run at Shutdown:
+ 
+    Syntax:  TRIGGER PHASE Shutdown CONFIRM
+
+    Result:  If the request is submitted from the command line, the result
+             could look like the following, in tabular mode, if successful:
+
+    ID Machine Service Request          RC Result
+    -- ------- ------- ---------------- -- ----------------------------------------
+    2  local   PROCESS START SHELL COMM 0  293
+                       AND C:/tests/Tes
+                       tTerm.exe
+    6  server1 STAX    EXECUTE FILE C:/ 16 STAFConnectionProviderConnect: Timed out
+                       stax/jobTerm.xml     connecting to endpoint: select() timeou
+                                           t: 22, Endpoint: tcp://server1
+
+g) ENABLE
+
+  ENABLE enables a registration.  This means that the service request
+  specified for the registration ID will be submitted when STAFProc starts
+  up or when STAFProc shuts down.
+ 
+  Syntax
+
+    ENABLE ID <Registration ID> 
+
+    ID specifies the registration ID which is to be enabled. 
+
+  Security
+
+    This request requires at least trust level 5. 
+
+  Results
+
+    Upon successful return, the result buffer will be empty. Note that an
+    error will not be returned if the registration ID is already enabled. 
+
+h) DISABLE
+
+  DISABLE disables registration.  This means that the service request
+  specified for the registration ID will not be submitted when STAFProc
+  starts up or when STAFProc shuts down. 
+ 
+  Syntax
+
+    DISABLE ID <Registration ID> 
+
+    ID specifies the registration ID which is to be disabled. 
+
+  Security
+
+    This request requires at least trust level 5. 
+
+  Results
+
+    Upon successful return, the result buffer will be empty. Note that an
+    error will not be returned if the registration ID is already disabled. 
+
+i) HELP
+
+  HELP displays the request options and how to use them. 
+
+  Syntax
+
+    HELP 
+
+  Security
+
+    This request requires at least trust level 1. 
+
+  Results
+
+    The result buffer contains the Help messages for the request options
+    for the STAF LifeCycle service. 
+
+3) Persistent Registration Data
+
+  Note that registration information for this service is persistent data.
+  This means that if you register with the LIFECYCLE service and you shutdown
+  STAF and restart it (or if you reboot the machine), the prior registration
+  information will still be active. When the STAFProc starts, it reads in the
+  previous STAF LIFECYCLE registration information, and will execute the
+  enabled registered STAF commands at startup or at shutdown. 
+
+  Someone might want to be able to proliferate the startup/shutdown
+  registrations for multiple machines.  We'll document the location of
+  the file that contains the LIFECYCLE service's registrations,
+  {STAF/DataDir}/service/lifecycle/lifecycle.reg, but we'll suggest that
+  you may not want to copy the file to another machine, particularly on
+  a different operating system, because things that seem platform
+  agnostic aren't always such.
+
+4) Service Logging
+
+  The STAF LifeCycle service maintains a machine log where it writes
+  information about the STAF commands that it has submitted. It is important
+  to check the log to determine the results of STAF commands submitted by the
+  LifeCycle service.
+
+  Tags like [ID=<id>] in the log entries can be useful when querying the log.
+  They can be used with the CONTAINS option of the LOG service's QUERY request. 
+
+  The logname for the STAF LifeCycle service is LIFECYCLE. 
+
+  The LifeCycle service will log an entry when the following occurs: 
+
+  - When a REGISTER request is received, a log entry with level "Info"
+    is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] Register request: <request>
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the REGISTER request,
+          <orgHandleName> is the name of the handle that originated the
+                          REGISTER request,
+          <orgHandle#>    is the handle number that originated the REGISTER
+                          request,
+          <request>       is the REGISTER request
+
+  - When an UNREGISTER request is received, a log entry with level
+    "Info" is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>]  Unregistered.
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the UNREGISTER request,
+          <orgHandleName> is the name of the handle that originated the
+                          UNREGISTER request,
+          <orgHandle#>    is the handle number that originated the UNREGISTER
+                          request
+
+  - When STAFProc is started or when a "TRIGGER PHASE Startup" request is
+    submitted, each enabled registration with phase "Startup" will have its
+    STAF service request submitted and a log entry with level "Info" is
+    logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] [TRIGGER Startup]
+    Submitted: STAF <machine> <service> <request>  
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the TRIGGER request,
+          <orgHandleName> is the name of the handle that originated the
+                          TRIGGER request,
+          <orgHandle#>    is the handle number that originated the TRIGGER
+                          request,
+          <machine>       is where the STAF service request was submitted,
+          <service>       is the service to which the STAF service request
+                          was submitted,
+          <request>       is the STAF service request submitted
+
+  - When STAFProc is shut down or when a "TRIGGER PHASE Shutdown" request is
+    submitted, each enabled registration with phase "Shutdown" will have its
+    STAF service request submitted and a log entry with level "Info" is
+    logged with message:
+
+      [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] [TRIGGER Shutdown]
+      Submitted: STAF <machine> <service> <request>
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the TRIGGER request,
+          <orgHandleName> is the name of the handle that originated the
+                          TRIGGER request,
+          <orgHandle#>    is the handle number that originated the TRIGGER
+                          request,
+          <machine>       is where the STAF service request was submitted,
+          <service>       is the service to which the STAF service request
+                          was submitted,
+          <request>       is the STAF service request submitted
+
+  - When a TRIGGER ID request is submitted for a registration (enabled or
+    disabled), its STAF service request will be submitted and a log entry
+    with level "Info" is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>] [Trigger ID]
+    Submitted: STAF <machine> <service> <request>
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the TRIGGER request,
+          <orgHandleName> is the name of the handle that originated the
+                          TRIGGER request,
+          <orgHandle#>    is the handle number that originated the TRIGGER
+                          request,
+          <machine>       is where the STAF service request was submitted,
+          <service>       is the service to which the STAF service request
+                          was submitted,
+          <request>       is the STAF service request
+
+  - When STAFProc is started or when a TRIGGER STARTUP request is
+    submitted, for each disabled registration with phase "Startup", a log 
+    entry with level "Info" is logged with message:
+
+    [ID=<id>] ID is disabled.  STAF service request not submitted.
+
+    where <id> is the registration ID of the disabled registration.
+
+  - When STAFProc is shut down or when a TRIGGER SHUTDOWN request is
+    submitted, for each disabled registration with a runtime of
+    "Shutdown", a log entry with level "Info" is logged with message:
+
+    [ID=<id>] ID is disabled.  STAF service request not submitted.
+
+    where <id> is the registration ID of the disabled registration.
+
+  - When a submitted STAF service request has completed, a log entry
+    with level "Info" is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>]
+    Completed. RC=<rc>, Result=<result>      
+
+    where <id>            is the ID for which the STAF service request was run,
+          <orgMachine>    is the machine that originated the TRIGGER request,
+          <orgHandleName> is the name of the handle that originated the
+                          TRIGGER request,
+          <orgHandle#>    is the handle number that originated the TRIGGER
+                          request,
+          <rc>            is the return code from the STAF service request,
+          <result>        is the result from the STAF service request.
+
+  - When an UPDATE request is received, a log entry with level "Info"
+    is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>]
+    Update request: <request>
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the UPDATE request,
+          <orgHandleName> is the name of the handle that originated the
+                          UPDATE request,
+          <orgHandle#>    is the handle number that originated the UPDATE
+                          request,
+          <request>       is the UPDATE request.
+
+  - When an ENABLE request is received, a log entry with level "Info"
+    is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>]  Enabled.
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the ENABLE request,
+          <orgHandleName> is the name of the handle that originated the
+                          ENABLE request,
+          <orgHandle#>    is the handle number that originated the ENABLE
+                          request.
+
+  - When a DISABLE request is received, a log entry with level "Info"
+    is logged with message:
+
+    [ID=<id>] [<orgMachine>, <orgHandleName>, <orgHandle#>]  Disabled.
+
+    where <id>            is the registration ID,
+          <orgMachine>    is the machine that originated the DISABLE request,
+          <orgHandleName> is the name of the handle that originated the 
+                          DISABLE request.
+          <orgHandle#>    is the handle number that originated the DISABLE
+                          request.
+
+Internal Changes
+----------------
+
+- The "Startup" registrations will be submitted by STAFProc after
+  all of the internal services and external services have been
+  registered (e.g. right after outputting "STAFProc V3.x.x initialized").
+  STAFProc will submit a TRIGGER STARTUP request to the LIFECYCLE service.
+
+- The "Shutdown" registrations will be submitted by STAFProc when it
+  gets the signal to shutdown before any external or internal services
+  are unregistered.  STAFProc will submit a TRIGGER SHUTDOWN request to
+  the LIFECYCLE service.
+
+- Need to make install and packages changes so that this service is
+  provided with core STAF on all platforms.
+
+- Store persistent registration information in binary in file:
+   {STAF/DataDir}/service/lifecycle/lifecycle.reg
+
+  The format for this file is as follows (with formatID=1):
+
+    <formatID><numRegistrations>[<registration>]...
+ 
+    - formatID         is an unsigned int with a length of 1 byte
+    - numRegistrations is an unsigned int with a length of 4 bytes
+                        Note: This is the number of times a
+                              <registration> entry exists in the file.
+   
+  and each <registration> entry has format:
+  
+    <id><phase><priority><state><machine><service><request><description>
+    
+    - id          is an unsigned int with a length of 4 bytes
+    - phase       is an unsigned int with a length of 1 byte
+    - priority    is an unsigned int with a length of 1 byte
+    - state       is an unsigned int with a length of 1 byte
+    - machine     is a STAFString
+    - service     is a STAFString
+    - request     is a STAFString
+    - description is a STAFString
+
+  Note: A STAFString is written in the following format:
+
+   <stringLength><String>
+  
+   - stringLength is an unsigned int with a legnth of 4 bytes
+   - string is the data in UTF-8 encoding
+
+
+Design Considerations
+---------------------
+
+- When submitting registrations at startup or shutdown, they will be
+  submitted sequentially in order by priority and within the same
+  priority, by the registration ID.  Note that you can easily update
+  the priority for a registration by submitting an UPDATE request to
+  the LIFECYCLE service. 
+
+- A registration GUI could be provided (written in Java or via an
+  Eclipse plug-in), somewhat similar to the EventManager and Cron UI,
+  in the future if desired.
+
+
+Backward Compatibility Issues
+-----------------------------
+ 
+- None

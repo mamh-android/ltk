@@ -1,0 +1,1270 @@
+#!/bin/sh -
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+###############################################################################
+# Grep for ENTRY to go to the entry point of this script
+###############################################################################
+
+CHMD="chmod"
+COPY="cp"
+REMV="rm -f"
+LINK="ln -sf"
+MKDR="mkdir -p"
+RMDR="rmdir -p"
+BASE="basename"
+DIRN="dirname"
+
+NAME=""
+MAIL=""
+ORGN=""
+
+REGISTR="YES"
+PREVIEW="NO"
+VERBOSE="NO"
+WARNING="DONOTEND"
+
+REGINF_FILE="STAFReg.inf"
+
+# The STAFReg.cmp file is in the {STAF/DataDir}/register directory.  However,
+# STAFInst doesn't have access to {STAF/DataDir}.  So, it assumes the default
+# DataDir location which is $TARGET_PATH/data/<STAFInstanceName>
+REGCMP_FILE="data/*/register/STAFReg.cmp"
+
+SH_FILE="STAFEnv.sh"
+START_STAFPROC_FILE="startSTAFProc.sh"
+UNINST_FILE="STAFUninst"
+MANFST_FILE="STAFInst.mfs"
+MANFST_PATH=
+
+STAF_TREE=""
+
+LIB_PATH=""
+BIN_PATH=""
+
+SOURCE_PATH="."
+
+# Assign the default target directory for where to install STAF
+# The default target directory is /usr/local/staf for all Unix platforms
+# except for Mac OS X (Darwin) where it's /Library/staf as admin users
+# don't have access to /usr.
+
+OS=`uname -s`
+
+if [ "$OS" = "Darwin" ]
+then
+    TARGET_PATH="/Library/staf"
+else
+    TARGET_PATH="/usr/local/staf"
+fi
+
+
+INSTALL_SET="FULL"        # "MINM", "RECM", "FULL"
+INSTALL_TYPE=""           # ""
+
+RO_PERM="444"             # RO file set permissions
+RX_PERM="555"             # RX file set permissions
+RW_PERM="664"             # RW file set permissions
+DP_PERM="775"             # STAF tree permissions
+
+TCPOPTION="IPV4"          # Default TCP option
+PERLOPTION="5.8"          # Default USE_PERL_VERSION option
+USE_PERL_SYSTEM_PATH="0"  # Default USE_PERL_SYSTEM_PATH option
+
+if [ "$OS" = "FreeBSD" ]
+then
+    PYTHONOPTION="2.4"    # Default USE_PYTHON_VERSION option
+elif [ "$OS" = "Darwin" ]
+then
+    PYTHONOPTION="macosx" # Determine this after the options have been read,
+                          # by accessing the install.properties file
+else
+    PYTHONOPTION="2.2"    # Default USE_PYTHON_VERSION option
+fi
+
+USE_PYTHON_SYSTEM_PATH="0" # Default USE_PYTHON_SYSTEM_PATH option
+
+TCLOPTION="8.4"          # Default USE_TCL_VERSION option
+USE_TCL_SYSTEM_PATH="0"  # Default USE_TCL_SYSTEM_PATH option
+
+###############################################################################
+
+Usage () {
+
+    echo ""
+    echo "Usage: STAFInst [-source <source path>] [-target <target path>]     "
+    echo "       [-bin <directory>] [-lib <directory>] [-preview]             "
+    echo "       [-type < m | r | f >] [-verbose] [-warn]   "
+    echo "       [-ro <mode>] [-rx <mode>] [-rw <mode>] [-dp <mode>]          "
+    echo "       [-noreg | [-name <name>] [-email <email>] [-org <org>]]      "
+    echo "       [-acceptlicense] [-option <name=value>]...                   "
+    echo ""
+    echo "source path : Path where STAF was extracted to                      "
+    echo "              (this option defaults to ./)                          "
+    echo "target path : Path where STAF will be installed                     "
+    echo "              (this option defaults to "$TARGET_PATH
+    echo "bin path    : Path where links to executables are created           "
+    echo "lib path    : Path where links to libraries are created             "
+    echo "f, m, r     : Full, minimum, or recommended install                 "
+    echo "ro,rw,rx,dp : Set permissions for read-only, read-write, read-exec, "
+    echo "              and the entire STAF directory                         "
+    echo "              (e.g. -rw 600 -ro a+r -dp 755 are all valid)          "
+    echo "verbose     : Verbose (what is the install doing?)                  "
+    echo "warn        : Bail on warnings (without this flag the install conti-"
+    echo "              nues on warnings)                                     "
+    echo "preview     : Displays intended actions of STAFInst without touching"
+    echo "              the file system.                                      "
+    echo "acceptlicense : Indicates that you agree to the terms of the license"
+    echo "                agreement for this software                         "
+    echo "option      : Specify options for installed components.  The valid  "
+    echo "              <name=value> pairs are:                               "
+    echo "              TCP=IPV4 (default) or TCP=IPV4_IPV6                   "
+    echo "              USE_PERL_VERSION=5.8 (default) or 5.6/5.10/5.12/5.14  "
+    echo "              USE_PERL_SYSTEM_PATH=0 (default) or 1                 "
+    echo "              USE_PYTHON_VERSION=2.2 (default) or 2.3/2.4/2.5/2.6/2.7"
+    echo "                                               or 3.0/3.1            "
+    echo "              USE_PYTHON_SYSTEM_PATH=0 (default) or 1               "
+    echo "              USE_TCL_VERSION=8.4 (default) or 8.5 or 8.6           "
+    echo "              USE_TCL_SYSTEM_PATH=0 (default) or 1                  "
+    exit 1
+
+}
+
+###############################################################################
+
+Exec () {
+
+    # 1 = The full command to be executed
+
+    [ "$VERBOSE" = "YES"   ] && echo "Executing $1 ..."
+    [ "$PREVIEW" = "YES"   ] && return 0
+    `$1 >/dev/null 2>&1`     && return 0
+ 
+    Warn "$1 failed ..."
+
+    return 1
+
+}
+
+###############################################################################
+
+DisplayLicense () {
+
+    if [ "$ACCEPTLICENSE" = "YES" ]
+    then
+        return 0
+    fi
+
+    echo ""
+    echo "This software is licensed under the Eclipse Public License (EPL) V1.0"
+    echo ""
+    echo "Press ENTER to view the licenses"
+    read from stdin
+    echo "*******************************************************************************"
+    echo ""
+    echo "Eclipse Public License -v 1.0 "
+    echo ""
+    echo "THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC"
+    echo "LICENSE (\"AGREEMENT\"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM"
+    echo "CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT."
+    echo ""
+    echo "1. DEFINITIONS"
+    echo ""
+    echo "\"Contribution\" means:"
+    echo ""
+    echo "   a) in the case of the initial Contributor, the initial code and "
+    echo "      documentation distributed under this Agreement, and"
+    echo ""
+    echo "   b) in the case of each subsequent Contributor:"
+    echo ""
+    echo "      i)  changes to the Program, and"
+    echo ""
+    echo "      ii) additions to the Program;"
+    echo ""
+    echo "where such changes and/or additions to the Program originate from and are"
+    echo "distributed by that particular Contributor. A Contribution 'originates' from"
+    echo "a Contributor if it was added to the Program by such Contributor itself or"
+    echo "anyone acting on such Contributor's behalf. Contributions do not include"
+    echo "additions to the Program which: (i) are separate modules of software"
+    echo "distributed in conjunction with the Program under their own license agreement,"
+    echo "and (ii) are not derivative works of the Program."
+    echo ""
+    echo "\"Contributor\" means any person or entity that distributes the Program."
+    echo ""
+    echo "\"Licensed Patents \" mean patent claims licensable by a Contributor which are"
+    echo "necessarily infringed by the use or sale of its Contribution alone or when"
+    echo "combined with the Program."
+    echo ""
+    echo "\"Program\" means the Contributions distributed in accordance with this"
+    echo "Agreement."
+    echo ""
+    echo "\"Recipient\" means anyone who receives the Program under this Agreement,"
+    echo "including all Contributors."
+    echo ""
+    echo "Press ENTER to continue"
+    read from stdin
+    echo "2. GRANT OF RIGHTS"
+    echo ""
+    echo "   a) Subject to the terms of this Agreement, each Contributor hereby grants"
+    echo "      Recipient a non-exclusive, worldwide, royalty-free copyright license to"
+    echo "      reproduce, prepare derivative works of, publicly display, publicly"
+    echo "      perform, distribute and sublicense the Contribution of such Contributor,"
+    echo "      if any, and such derivative works, in source code and object code form."
+    echo ""
+    echo "   b) Subject to the terms of this Agreement, each Contributor hereby grants"
+    echo "      Recipient a non-exclusive, worldwide, royalty-free patent license under"
+    echo "      Licensed Patents to make, use, sell, offer to sell, import and otherwise"
+    echo "      transfer the Contribution of such Contributor, if any, in source code and"
+    echo "      object code form. This patent license shall apply to the combination of"
+    echo "      the Contribution and the Program if, at the time the Contribution is"
+    echo "      added by the Contributor, such addition of the Contribution causes such"
+    echo "      combination to be covered by the Licensed Patents. The patent license"
+    echo "      shall not apply to any other combinations which include the Contribution."
+    echo "      No hardware per se is licensed hereunder."
+    echo ""
+    echo "   c) Recipient understands that although each Contributor grants the licenses"
+    echo "      to its Contributions set forth herein, no assurances are provided by any"
+    echo "      Contributor that the Program does not infringe the patent or other"
+    echo "      intellectual property rights of any other entity. Each Contributor"
+    echo "      disclaims any liability to Recipient for claims brought by any other"
+    echo "      entity based on infringement of intellectual property rights or"
+    echo "      otherwise. As a condition to exercising the rights and licenses granted"
+    echo "      hereunder, each Recipient hereby assumes sole responsibility to secure"
+    echo "      any other intellectual property rights needed, if any. For example, if a"
+    echo "      third party patent license is required to allow Recipient to distribute"
+    echo "      the Program, it is Recipient's responsibility to acquire that license"
+    echo "      before distributing the Program."
+    echo ""
+    echo "   d) Each Contributor represents that to its knowledge it has sufficient"
+    echo "      copyright rights in its Contribution, if any, to grant the copyright"
+    echo "      license set forth in this Agreement."
+    echo ""
+    echo "Press ENTER to continue"
+    read from stdin
+    echo "3. REQUIREMENTS"
+    echo ""
+    echo "A Contributor may choose to distribute the Program in object code form under"
+    echo "its own license agreement, provided that:"
+    echo ""
+    echo "   a) it complies with the terms and conditions of this Agreement; and"
+    echo ""
+    echo "   b) its license agreement:"
+    echo ""
+    echo "      i)  effectively disclaims on behalf of all Contributors all warranties"
+    echo "          and conditions, express and implied, including warranties or"
+    echo "          conditions of title and non-infringement, and implied warranties or"
+    echo "          conditions of merchantability and fitness for a particular purpose;"
+    echo ""
+    echo "      ii) effectively excludes on behalf of all Contributors all liability for"
+    echo "          damages, including direct, indirect, special, incidental and"
+    echo "          consequential damages, such as lost profits;"
+    echo ""
+    echo "      iii) states that any provisions which differ from this Agreement are"
+    echo "          offered by that Contributor alone and not by any other party; and"
+    echo ""
+    echo "      iv) states that source code for the Program is available from such"
+    echo "          Contributor, and informs licensees how to obtain it in a reasonable"
+    echo "          manner on or through a medium customarily used for software exchange."
+    echo ""
+    echo "When the Program is made available in source code form:"
+    echo ""
+    echo "   a) it must be made available under this Agreement; and"
+    echo ""
+    echo "   b) a copy of this Agreement must be included with each copy of the Program."
+    echo ""
+    echo "Contributors may not remove or alter any copyright notices contained within the"
+    echo "Program."
+    echo ""
+    echo "Each Contributor must identify itself as the originator of its Contribution, if"
+    echo "any, in a manner that reasonably allows subsequent Recipients to identify the"
+    echo "originator of the Contribution."
+    echo ""
+    echo "Press ENTER to continue"
+    read from stdin
+    echo "4. COMMERCIAL DISTRIBUTION"
+    echo ""
+    echo "Commercial distributors of software may accept certain responsibilities with"
+    echo "respect to end users, business partners and the like. While this license is"
+    echo "intended to facilitate the commercial use of the Program, the Contributor who"
+    echo "includes the Program in a commercial product offering should do so in a manner"
+    echo "which does not create potential liability for other Contributors. Therefore, if"
+    echo "a Contributor includes the Program in a commercial product offering, such"
+    echo "Contributor (\"Commercial Contributor\") hereby agrees to defend and indemnify"
+    echo "every other Contributor (\"Indemnified Contributor\") against any losses,"
+    echo "damages and costs (collectively \"Losses\") arising from claims, lawsuits and"
+    echo "other legal actions brought by a third party against the Indemnified"
+    echo "Contributor to the extent caused by the acts or omissions of such Commercial"
+    echo "Contributor in connection with its distribution of the Program in a commercial"
+    echo "product offering. The obligations in this section do not apply to any claims or"
+    echo "Losses relating to any actual or alleged intellectual property infringement. In"
+    echo "order to qualify, an Indemnified Contributor must: a) promptly notify the"
+    echo "Commercial Contributor in writing of such claim, and b) allow the Commercial"
+    echo "Contributor to control, and cooperate with the Commercial Contributor in, the"
+    echo "defense and any related settlement negotiations. The Indemnified Contributor"
+    echo "may participate in any such claim at its own expense."
+    echo ""
+    echo "For example, a Contributor might include the Program in a commercial product"
+    echo "offering, Product X. That Contributor is then a Commercial Contributor. If that"
+    echo "Commercial Contributor then makes performance claims, or offers warranties"
+    echo "related to Product X, those performance claims and warranties are such"
+    echo "Commercial Contributor's responsibility alone. Under this section, the"
+    echo "Commercial Contributor would have to defend claims against the other"
+    echo "Contributors related to those performance claims and warranties, and if a court"
+    echo "requires any other Contributor to pay any damages as a result, the Commercial"
+    echo "Contributor must pay those damages."
+    echo ""
+    echo "Press ENTER to continue"
+    read from stdin
+    echo "5. NO WARRANTY"
+    echo ""
+    echo "EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS PROVIDED ON AN"
+    echo "\"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS"
+    echo "OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF"
+    echo "TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE."
+    echo "Each Recipient is solely responsible for determining the appropriateness of"
+    echo "using and distributing the Program and assumes all risks associated with its"
+    echo "exercise of rights under this Agreement, including but not limited to the risks"
+    echo "and costs of program errors, compliance with applicable laws, damage to or loss"
+    echo "of data, programs or equipment, and unavailability or interruption of"
+    echo "operations."
+    echo ""
+    echo "6. DISCLAIMER OF LIABILITY"
+    echo ""
+    echo "EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT NOR ANY"
+    echo "CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL,"
+    echo "SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST"
+    echo "PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,"
+    echo "STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY"
+    echo "WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS"
+    echo "GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES."
+    echo ""
+    echo "Press ENTER to continue"
+    read from stdin
+    echo "7. GENERAL"
+    echo ""
+    echo "If any provision of this Agreement is invalid or unenforceable under applicable"
+    echo "law, it shall not affect the validity or enforceability of the remainder of the"
+    echo "terms of this Agreement, and without further action by the parties hereto, such"
+    echo "provision shall be reformed to the minimum extent necessary to make such"
+    echo "provision valid and enforceable."
+    echo ""
+    echo "If Recipient institutes patent litigation against any entity (including a"
+    echo "cross-claim or counterclaim in a lawsuit) alleging that the Program itself"
+    echo "(excluding combinations of the Program with other software or hardware)"
+    echo "infringes such Recipient's patent(s), then such Recipient's rights granted"
+    echo "under Section 2(b) shall terminate as of the date such litigation is filed."
+    echo ""
+    echo "All Recipient's rights under this Agreement shall terminate if it fails to"
+    echo "comply with any of the material terms or conditions of this Agreement and does"
+    echo "not cure such failure in a reasonable period of time after becoming aware of"
+    echo "such noncompliance. If all Recipient's rights under this Agreement terminate,"
+    echo "Recipient agrees to cease use and distribution of the Program as soon as"
+    echo "reasonably practicable. However, Recipient's obligations under this Agreement"
+    echo "and any licenses granted by Recipient relating to the Program shall continue"
+    echo "and survive."
+    echo ""
+    echo "Everyone is permitted to copy and distribute copies of this Agreement, but in"
+    echo "order to avoid inconsistency the Agreement is copyrighted and may only be"
+    echo "modified in the following manner. The Agreement Steward reserves the right to"
+    echo "publish new versions (including revisions) of this Agreement from time to time."
+    echo "No one other than the Agreement Steward has the right to modify this Agreement."
+    echo "The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation"
+    echo "may assign the responsibility to serve as the Agreement Steward to a suitable"
+    echo "separate entity. Each new version of the Agreement will be given a"
+    echo "distinguishing version number. The Program (including Contributions) may always"
+    echo "be distributed subject to the version of the Agreement under which it was"
+    echo "received. In addition, after a new version of the Agreement is published,"
+    echo "Contributor may elect to distribute the Program (including its Contributions)"
+    echo "under the new version. Except as expressly stated in Sections 2(a) and 2(b)"
+    echo "above, Recipient receives no rights or licenses to the intellectual property of"
+    echo "any Contributor under this Agreement, whether expressly, by implication,"
+    echo "estoppel or otherwise. All rights in the Program not expressly granted under"
+    echo "this Agreement are reserved."
+    echo ""
+    echo "This Agreement is governed by the laws of the State of New York and the"
+    echo "intellectual property laws of the United States of America. No party to this"
+    echo "Agreement will bring a legal action under this Agreement more than one year"
+    echo "after the cause of action arose. Each party waives its rights to a jury trial"
+    echo "in any resulting litigation."
+    echo ""
+    echo "Press ENTER to continue"
+    read from stdin
+    echo ""
+
+    return 0
+
+}
+
+###############################################################################
+
+CreateUninstall () {
+
+    # No Parameters
+
+    [ "$VERBOSE" = "YES"   ] && echo "Creating uninstall file ..."
+    [ "$PREVIEW" = "YES"   ] && return 0
+
+    [ ! -d $TARGET_PATH    ]           && \
+    Exec "$MKDR $TARGET_PATH"          && \
+    Exec "$CHMD $DP_PERM $TARGET_PATH"
+
+    echo "#!/bin/sh" >  $UNINST_FILE
+    echo ""          >> $UNINST_FILE
+    echo "# This is automatically generated by STAFInst" >> $UNINST_FILE
+
+    echo "$REMV $REGINF_FILE >/dev/null 2>&1" >> $UNINST_FILE
+    echo "$REMV $REGCMP_FILE >/dev/null 2>&1" >> $UNINST_FILE
+    echo "$REMV $UNINST_FILE >/dev/null 2>&1" >> $UNINST_FILE
+
+}
+
+###############################################################################
+
+CloseUninstall () {
+
+    # No Parameters
+
+    [ "$VERBOSE" = "YES"   ] && echo "Closing uninstall file ..."
+    [ "$PREVIEW" = "YES"   ] && return 0
+
+    for STAF_PATH in $STAF_TREE
+    do
+        echo    "$RMDR $STAF_PATH >/dev/null 2>&1" >> $UNINST_FILE
+    done
+
+    echo "$RMDR $TARGET_PATH >/dev/null 2>&1" >> $UNINST_FILE
+    Exec "$CHMD 500 $UNINST_FILE" && return 0
+
+    return 0
+
+}
+
+###############################################################################
+
+Copy () {
+
+    # 1 = Full Path Source File (e.g. /tmp/staf/bin/STAFProc)
+    # 2 = TARGET_PATH           (e.g. /usr/local/staf)
+    # 3 = Hierarchical File     (e.g. bin/STAFProc)
+
+    FILELIST=`echo $1`
+
+    for SRCFILE in $FILELIST
+    do
+        TRGPATH=`$DIRN "$2/$3"`
+        TRGFILE=`$BASE $SRCFILE`
+
+        [ "$VERBOSE"  = "YES"   ] && [ ! -d $TRGPATH ] && \
+        echo "Creating path $TRGPATH ..."
+
+        [ "$PREVIEW" != "YES"   ]                      && \
+        [ ! -d $TRGPATH         ]                      && \
+        [   -f $SRCFILE         ]                      && \
+        Exec "$MKDR $TRGPATH"                          && \
+        Exec "$CHMD $DP_PERM $TRGPATH"                 && \
+        STAF_TREE=$TRGPATH" "$STAF_TREE
+
+        [ ! -f $SRCFILE         ]                      && \
+        Warn "Copy: File $SRCFILE does not exist"
+
+        [ "$PREVIEW" != "YES"   ]                      && \
+        [   -f $SRCFILE         ]                      && \
+        Exec "$COPY $SRCFILE $TRGPATH"                 && \
+        echo "$REMV $TRGPATH/$TRGFILE >/dev/null 2>&1" >> $UNINST_FILE
+    done
+ 
+    return 0
+
+}
+
+###############################################################################
+
+Link () {
+
+    # 1 = Target Directory for the links to be created
+    # 2 = Source File
+    # 3 = List of space-separated aliases to 2
+
+    BASENAME=`$BASE $2`
+
+    [ "$VERBOSE" = "YES"   ] && \
+    echo "Creating links $BASENAME $3 in $1 to $2 ..."
+
+    [ "$PREVIEW" = "YES"   ] && return 0
+    [ ! -f $2              ] && return 0
+
+    [ ! -d $1              ]   && \
+    Exec "$MKDR $1"            && \
+    Exec "$CHMD $DP_PERM $1"   && \
+    STAF_TREE=$1" "$STAF_TREE
+
+    Exec "$LINK $2 $1"         && \
+    echo "$REMV $1/$BASENAME >/dev/null 2>&1" >> $UNINST_FILE
+
+    for ALIAS in $3
+    do
+        Exec "$LINK $2 $1/$ALIAS" && \
+        echo "$REMV $1/$ALIAS >/dev/null 2>&1" >> $UNINST_FILE
+    done
+
+    return 0
+
+}
+
+###############################################################################
+
+Link2 () {
+
+    # 1 = Source File
+    # 2 = Alias File
+
+    [ "$VERBOSE" = "YES"   ] && echo "Creating internal link $2 to $1 ..."
+    [ "$PREVIEW" = "YES"   ] && return 0
+
+    [ ! -f $1              ] && return 0
+
+    Exec "$LINK $1 $2"       && \
+    echo "$REMV $2 >/dev/null 2>&1" >> $UNINST_FILE
+
+    return 0
+
+}
+
+###############################################################################
+
+Chmd () {
+
+    # 1 = Permissions in RX, RW, RO format
+    # 2 = The file to change permissions to
+
+    [ "$VERBOSE" = "YES"   ] && echo "Changing permissions for $2 to $1 ..."
+    [ "$PREVIEW" = "YES"   ] && return 0
+
+    PERM="$DP_PERM"
+
+    [ "$1" = "RX" ] && PERM="$RX_PERM"
+    [ "$1" = "RW" ] && PERM="$RW_PERM"
+    [ "$1" = "RO" ] && PERM="$RO_PERM"
+
+    Exec "$CHMD $PERM $2"    && return 0
+
+}
+
+###############################################################################
+
+Warn () {
+
+    # 1 = The message
+
+    [ "$VERBOSE" = "YES" ] && echo "WARNING: $@"
+    [ "$WARNING" = "END" ] && Bail "$@"
+
+    return 0
+}
+
+###############################################################################
+
+Bail () {
+
+    # 1 = The message
+
+    echo "STAFInst: $@"
+    echo "Installation unsuccessful"
+    exit 1
+
+}
+
+###############################################################################
+
+DoInstall () {
+
+    #echo "Source : $SOURCE_PATH"
+    #echo "Target : $TARGET_PATH"
+    #echo "BinPath: $BIN_PATH"
+    #echo "LibPath: $LIB_PATH"
+    #echo "Manfst : $MANFST_FILE"
+    #echo "Name   : $NAME"
+    #echo "Mail   : $MAIL"
+    #echo "Org    : $ORGN"
+    #echo "Registr: $REGISTR"
+    #echo "Set    : $INSTALL_SET"
+    #echo "Type   : $INSTALL_TYPE"
+
+    [ ! -f "$MANFST_PATH" ] && MANFST_PATH=./"$MANFST_FILE"
+    [ $# -lt 1 ] && set -- `ls $MANFST_PATH 2>/dev/null`
+
+    Exec "$MKDR $TARGET_PATH"
+
+    # default all to something other than M,R,F,ML,RL,FL, or ' ' so that we
+    # can then initialize according to the type of install desired. this is
+    # convenient to have only one install loop as instead of 3 (1 per install
+    # type) NOTE: if STAFInst.mfs has an XX|YY type then this would not work
+    # as expected!!!
+
+    M="M" && MB="MB" && ML="ML" && \
+    R="X" && RB="XX" && RL="XX" && \
+    F="Y" && FB="YY" && FL="YY"
+
+    [ "$INSTALL_SET" != "MINM" ] && R="R" && RB="RB" && RL="RL" && \
+    [ "$INSTALL_SET" != "RECM" ] && F="F" && FB="FB" && FL="FL"
+
+    for MANIFEST
+    do
+        while read TYPE MODE FILE ALIASES
+        do
+            case "$TYPE" in
+            \#)
+                ;;
+            $M|$R|$F)
+                #########################################################
+                if [ "$FILE" = "codepage/ibm-1047.bin" ]
+                then
+                    [ "$OS" = "OS/390" ] && [ "$MODE"  != "--" ]  && \
+                    Copy "$SOURCE_PATH/$FILE" "$TARGET_PATH" "$FILE"    && \
+                    Chmd "$MODE" "$TARGET_PATH/$FILE"
+
+                    [ "$OS" = "OS/390" ] && [ "$MODE" = "--" ]   && \
+                    Link "$TARGET_PATH" "$TARGET_PATH/$FILE" "$TARGET_PATH/$ALIASES"
+                else
+                    [ "$MODE"         != "--"       ]                   && \
+                    Copy "$SOURCE_PATH/$FILE" "$TARGET_PATH" "$FILE"    && \
+                    Chmd "$MODE" "$TARGET_PATH/$FILE"
+                    [ "$MODE"          = "--"       ]                   && \
+                    Link "$TARGET_PATH" "$TARGET_PATH/$FILE" "$TARGET_PATH/$ALIASES"
+                fi
+                ;;
+                #########################################################
+            $MB|$RB|$FB)
+                #########################################################
+                [ "$MODE"         != "--"       ]                   && \
+                Copy "$SOURCE_PATH/$FILE" "$TARGET_PATH" "$FILE"    && \
+                Chmd "$MODE" "$TARGET_PATH/$FILE"
+
+                # OS/400 and MAC OS X are case-insensitive so don't create
+                # the alias links on them (e.g. Don't create a link named
+                # bin/staf to point to bin/STAF)
+                [ "$MODE" != "--" ] && \
+                [ $OS != "OS400" ] && [ $OS != "Darwin" ] && \
+                Link2 "$TARGET_PATH/$FILE" "$TARGET_PATH/$ALIASES"
+
+                [ "$BIN_PATH"     != ""         ]                   && \
+                Link "$BIN_PATH" "$TARGET_PATH/$FILE" "$ALIASES"
+                ;;
+                #########################################################
+            $ML|$RL|$FL)
+                #########################################################
+                [ "$MODE"         != "--"       ]                   && \
+                Copy "$SOURCE_PATH/$FILE" "$TARGET_PATH" "$FILE"    && \
+                Chmd "$MODE" "$TARGET_PATH/$FILE"
+
+                [ "$LIB_PATH"     != ""         ]                   && \
+                Link "$LIB_PATH" "$TARGET_PATH/$FILE" "$ALIASES"
+                ;;
+                #########################################################
+            *)
+                ;;
+            esac
+        done < "$MANIFEST"
+    done
+
+    echo "Installation successful"
+}
+
+HandleOptions() {
+
+    SUFFIX=".so"
+
+    # On most Unix platforms, the suffix is ".so".  However, if the platform
+    # is HP-UX for PA-RISC, then the suffix is ".sl" or if the platform is.
+    # Mac OS X, the suffix is ".dylib".
+
+    ARCH=`uname -m`
+
+    if [ "$OS" = "HP-UX" ]
+    then
+        if [ "$ARCH" != "ia64" ]
+        then
+            SUFFIX=".sl"
+        fi
+       
+    elif [ "$OS" = "Darwin" ]
+    then
+        SUFFIX=".dylib"
+    fi
+
+    # OPTION TCP
+
+    if [ "$TCPOPTION" = "IPV4_IPV6" ]
+    then
+        TCPDIR="IPv6"
+    else
+        TCPDIR="IPv4"
+    fi
+
+    SRCFILE="$TARGET_PATH/lib/$TCPDIR/libSTAF$SUFFIX"
+    ALIASFILE="$TARGET_PATH/lib/libSTAF$SUFFIX"
+
+    [ "$VERBOSE" = "YES" ] && echo "Creating link $ALIASFILE to $SRCFILE..."
+
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE 
+
+    SRCFILE="$TARGET_PATH/lib/$TCPDIR/libSTAFTCP$SUFFIX"
+    ALIASFILE="$TARGET_PATH/lib/libSTAFTCP$SUFFIX"
+
+    [ "$VERBOSE" = "YES" ] && echo "Creating link $ALIASFILE to $SRCFILE..."
+
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    [ "$LIB_PATH" != "" ] && \
+    SRCFILE="$TARGET_PATH/lib/libSTAF$SUFFIX" && \
+    ALIASFILE="$LIB_PATH/libSTAF$SUFFIX" && \
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE && \
+    SRCFILE="$TARGET_PATH/lib/libSTAFTCP$SUFFIX" && \
+    ALIASFILE="$LIB_PATH/libSTAFTCP$SUFFIX" && \
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    # OPTION USE_PERL_VERSION
+
+    if [ "$PERLOPTION" = "5.8" ]
+    then
+        PERLDIR="perl58"
+    elif [ "$PERLOPTION" = "5.10" ]
+    then
+        PERLDIR="perl510"
+    elif [ "$PERLOPTION" = "5.12" ]
+    then
+        PERLDIR="perl512"
+    elif [ "$PERLOPTION" = "5.14" ]
+    then
+        PERLDIR="perl514"
+    elif [ "$PERLOPTION" = "5.6" ]
+    then
+        PERLDIR="perl56"
+    fi
+
+    SRCFILE="$TARGET_PATH/lib/$PERLDIR/libPLSTAF$SUFFIX"
+    ALIASFILE="$TARGET_PATH/lib/libPLSTAF$SUFFIX"
+
+    [ "$VERBOSE" = "YES" ] && echo "Creating link $ALIASFILE to $SRCFILE..."
+
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    [ "$LIB_PATH" != "" ] && \
+    SRCFILE="$TARGET_PATH/lib/libPLSTAF$SUFFIX" && \
+    ALIASFILE="$LIB_PATH/libPLSTAF$SUFFIX" && \
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    # OPTION USE_PYTHON_VERSION
+
+    if [ "$PYTHONOPTION" = "2.2" ]
+    then
+        PYTHONDIR="python22"
+    elif [ "$PYTHONOPTION" = "2.3" ]
+    then
+        PYTHONDIR="python23"
+    elif [ "$PYTHONOPTION" = "2.4" ]
+    then
+        PYTHONDIR="python24"
+    elif [ "$PYTHONOPTION" = "2.5" ]
+    then
+        PYTHONDIR="python25"
+    elif [ "$PYTHONOPTION" = "2.6" ]
+    then
+        PYTHONDIR="python26"
+    elif [ "$PYTHONOPTION" = "2.7" ]
+    then
+        PYTHONDIR="python27"
+    elif [ "$PYTHONOPTION" = "3.0" ]
+    then
+        PYTHONDIR="python30"
+    elif [ "$PYTHONOPTION" = "3.1" ]
+    then
+        PYTHONDIR="python31"
+    fi
+
+    SRCFILE="$TARGET_PATH/lib/$PYTHONDIR/PYSTAF.so"
+    ALIASFILE="$TARGET_PATH/lib/PYSTAF.so"
+
+    [ "$VERBOSE" = "YES" ] && echo "Creating link $ALIASFILE to $SRCFILE..."
+
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    [ "$LIB_PATH" != "" ] && \
+    SRCFILE="$TARGET_PATH/lib/PYSTAF.so" && \
+    ALIASFILE="$LIB_PATH/PYSTAF.so" && \
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    # OPTION USE_TCL_VERSION
+
+    if [ "$TCLOPTION" = "8.4" ]
+    then
+        TCLDIR="tcl84"
+    elif [ "$TCLOPTION" = "8.5" ]
+    then
+        TCLDIR="tcl85"
+    elif [ "$TCLOPTION" = "8.6" ]
+    then
+        TCLDIR="tcl86"
+    fi
+
+    SRCFILE="$TARGET_PATH/lib/$TCLDIR/libTCLSTAF.so"
+    ALIASFILE="$TARGET_PATH/lib/libTCLSTAF.so"
+
+    [ "$VERBOSE" = "YES" ] && echo "Creating link $ALIASFILE to $SRCFILE..."
+
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    [ "$LIB_PATH" != "" ] && \
+    SRCFILE="$TARGET_PATH/lib/PYSTAF.so" && \
+    ALIASFILE="$LIB_PATH/PYSTAF.so" && \
+    Exec "$LINK $SRCFILE $ALIASFILE" && \
+    echo "$REMV $ALIASFILE >/dev/null 2>&1" >> $UNINST_FILE
+
+    return 0
+}
+
+###############################################################################
+
+Register() {
+
+    [ "$REGISTR" = "NO"  ] && return 0
+    [ "$VERBOSE" = "YES" ] && echo "Writing registration file ..."
+    [ "$PREVIEW" = "YES" ] && return 0
+
+    echo "name: "$NAME  >  $REGINF_FILE
+    echo "email: "$MAIL >> $REGINF_FILE
+    echo "org: "$ORGN   >> $REGINF_FILE
+
+    return 0
+
+}
+
+###############################################################################
+
+CreateScript() {
+
+    if [ "$OS" = "Linux" ]
+    then
+        LIBPATHVAR=LD_LIBRARY_PATH
+    elif [ "$OS" = "AIX" ]
+    then
+        LIBPATHVAR=LIBPATH
+    elif [ "$OS" = "HP-UX" ]
+    then
+        LIBPATHVAR=SHLIB_PATH
+    elif [ "$OS" = "OS/390" ]
+    then
+        LIBPATHVAR=LIBPATH
+    elif [ "$OS" = "SunOS" ]
+    then
+        LIBPATHVAR=LD_LIBRARY_PATH
+    elif [ "$OS" = "FreeBSD" ]
+    then
+        LIBPATHVAR=LD_LIBRARY_PATH
+    elif [ "$OS" = "Darwin" ]
+    then
+        LIBPATHVAR=DYLD_LIBRARY_PATH
+    else
+        LIBPATHVAR=LIBPATH
+    fi
+
+    echo '#!/bin/sh' > $SH_FILE
+    echo '# STAF environment variables' >> $SH_FILE
+    echo 'PATH='$TARGET_PATH'/bin:${PATH:-}' >> $SH_FILE
+    echo $LIBPATHVAR'='$TARGET_PATH'/lib:${'$LIBPATHVAR':-}' >> $SH_FILE
+    echo 'CLASSPATH='$TARGET_PATH'/lib/JSTAF.jar:'$TARGET_PATH'/samples/demo/STAFDemo.jar:${CLASSPATH:-}' >> $SH_FILE
+    echo 'STAFCONVDIR='$TARGET_PATH'/codepage' >> $SH_FILE
+    echo 'if [ $# = 0 ]' >> $SH_FILE
+    echo 'then' >> $SH_FILE
+    echo '    STAF_INSTANCE_NAME=STAF' >> $SH_FILE
+    echo 'else' >> $SH_FILE
+    echo '    if [ $1 != "start" ]' >> $SH_FILE
+    echo '    then' >> $SH_FILE
+    echo '        STAF_INSTANCE_NAME=$1' >> $SH_FILE
+    echo '    else' >> $SH_FILE
+    echo '        # Ignore "start" STAF Instance name' >> $SH_FILE
+    echo '        STAF_INSTANCE_NAME=STAF' >> $SH_FILE
+    echo '    fi' >> $SH_FILE
+    echo 'fi' >> $SH_FILE
+    echo 'export PATH' $LIBPATHVAR 'CLASSPATH STAFCONVDIR STAF_INSTANCE_NAME' >> $SH_FILE
+
+    if [ "$OS" = "OS400" ]
+    then
+        echo 'QIBM_MULTI_THREADED=Y' >> $SH_FILE
+        ARCHITECTURE=`grep architecture $TARGET_PATH/install.properties`
+        if [ $ARCHITECTURE = "architecture=32-bit" ]
+        then
+            echo 'QIBM_JAVA_PASE_STARTUP=/usr/lib/start32' >> $SH_FILE
+        else
+            echo 'QIBM_JAVA_PASE_STARTUP=/usr/lib/start64' >> $SH_FILE
+        fi
+        echo 'export QIBM_MULTI_THREADED QIBM_JAVA_PASE_STARTUP' >> $SH_FILE
+    fi
+
+    echo '#!/bin/sh' > $START_STAFPROC_FILE
+    echo '# Sets up the STAF environment variables and starts STAFProc' >> $START_STAFPROC_FILE
+    echo '# in the background, logging STAFProc output to nohup.out' >> $START_STAFPROC_FILE
+    echo '. '$SH_FILE >> $START_STAFPROC_FILE
+    echo 'nohup '$TARGET_PATH'/bin/STAFProc &' >> $START_STAFPROC_FILE
+
+    Exec "$CHMD 555 $START_STAFPROC_FILE"
+
+}
+
+###############################################################################
+# ENTRY - parse options and values, bail on failure
+###############################################################################
+
+OPTNAME="name"
+OPTMAIL="email"
+OPTORGN="org"
+
+###############################################################################
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        -source|-s)
+            [ -z "$2" ] && Bail "-source option needs an argument, source path"
+            SOURCE_PATH="$2"
+            shift;;
+        -target|-t)
+            [ -z "$2" ] && Bail "-target option needs an argument, target path"
+            [ -z "$2" ] && 2=$TARGET_PATH
+            TARGET_PATH="$2"
+            shift;;
+        -bin|-b)
+            [ -z "$2" ] && Bail "-bin option needs an argument, bin directory"
+            BIN_PATH="$2"
+            shift;;
+        -lib|-l)
+            [ -z "$2" ] && Bail "-lib option needs an argument, lib directory"
+            LIB_PATH="$2"
+            shift;;
+        -type)
+            [ -z "$2" ] && \
+            Bail "-type option needs an argument from"             \
+                 " m|r|f"
+
+            [ "$2" != "f"   -a "$2" != "r"   -a "$2" != "m"  ] && \
+            Bail "-type option has unknown value, must use one of" \
+                 " m|r|f"
+
+            [ "$2" = "f" ] && \
+            INSTALL_SET="FULL"
+
+            [ "$2" = "r" ] && \
+            INSTALL_SET="FULL"
+
+            [ "$2" = "m" ] && \
+            INSTALL_SET="MINM"
+
+            shift;;
+        -ro)
+            [ -z "$2" ] && Bail "-ro option needs an argument, permission bits"
+            RO_PERM="$2"
+            shift;;
+        -rw)
+            [ -z "$2" ] && Bail "-rw option needs an argument, permission bits"
+            RW_PERM="$2"
+            shift;;
+        -rx)
+            [ -z "$2" ] && Bail "-rx option needs an argument, permission bits"
+            RX_PERM="$2"
+            shift;;
+        -dp)
+            [ -z "$2" ] && Bail "-dp option needs an argument, permission bits"
+            DP_PERM="$2"
+            shift;;
+        -preview)
+            VERBOSE="YES"
+            PREVIEW="YES"
+            ;;
+        -verbose)
+            VERBOSE="YES"
+            ;;
+        -warn)
+            WARNING="END"
+            ;;
+        -noreg)
+            REGISTR="NO"
+            ;;
+        -"$OPTNAME"|-"$OPTMAIL"|-"$OPTORGN")
+
+            [ "$1" = "-name"  ] && OPTION="name"
+            [ "$1" = "-email" ] && OPTION="email"
+            [ "$1" = "-org"   ] && OPTION="org"
+
+            [ -z "$2" ]           && \
+            Bail "-$OPTION option needs an argument, your $OPTION"
+
+            [ "$REGISTR" = "NO" ] && \
+            Bail "-$OPTION cannot be used if -noreg has been specified"
+
+            REGISTR="YES"
+
+            [ "$OPTION" = "$OPTNAME" ] && NAME="$2"
+            [ "$OPTION" = "$OPTMAIL" ] && MAIL="$2"
+            [ "$OPTION" = "$OPTORGN" ] && ORGN="$2"
+
+            shift;;
+        -acceptlicense)
+            ACCEPTLICENSE="YES"
+            ;;
+        -option)
+            OPTION="$2"
+
+            if [ "$OPTION" = "TCP=IPV4" ]
+            then
+                TCPOPTION="IPV4"
+            elif [ "$OPTION" = "TCP=IPV4_IPV6" ]
+            then
+                TCPOPTION="IPV4_IPV6"
+            fi
+
+            if [ "$USE_PERL_SYSTEM_PATH" = "0" ]
+            then
+                if [ "$OPTION" = "USE_PERL_VERSION=5.8" ]
+                then
+                    PERLOPTION="5.8"
+                elif [ "$OPTION" = "USE_PERL_VERSION=5.10" ]
+                then
+                    PERLOPTION="5.10"
+                elif [ "$OPTION" = "USE_PERL_VERSION=5.12" ]
+                then
+                    PERLOPTION="5.12"
+                elif [ "$OPTION" = "USE_PERL_VERSION=5.14" ]
+                then
+                    PERLOPTION="5.14"
+                elif [ "$OPTION" = "USE_PERL_VERSION=5.6" ]
+                then
+                    PERLOPTION="5.6"
+                fi
+            fi
+
+            if [ "$OPTION" = "USE_PERL_SYSTEM_PATH=1" ]
+            then
+                USE_PERL_SYSTEM_PATH="1"
+
+                # Look for a line like the following in the perl -v output
+                # and extract the Perl version from it:
+                # 
+                # This is perl, v5.6.1 built ...
+                # This is perl, v5.8.9 built ...
+                # This is perl 5, version 12, subversion 4 (v5.12.4) built ...
+                # This is perl 5, version 14, subversion 2 (v5.14.2) built ... 
+
+                PERLVERSION=`perl -v 2> /dev/null | awk '/This is perl/' | sed -e 's/.*v5./5./' -e 's/[) ].*//' -e 's/[\.0-9*]$//' -e 's/\.$//'`
+
+                if [ "$PERLVERSION" = "5.8" ]
+                then
+                    PERLOPTION="5.8"
+                elif [ "$PERLVERSION" = "5.10" ]
+                then
+                    PERLOPTION="5.10"
+                elif [ "$PERLVERSION" = "5.12" ]
+                then
+                    PERLOPTION="5.12"
+                elif [ "$PERLVERSION" = "5.14" ]
+                then
+                    PERLOPTION="5.14"
+                elif [ "$PERLVERSION" = "5.6" ]
+                then
+                    PERLOPTION="5.6"
+                else
+                    USE_PERL_SYSTEM_PATH="0"
+                fi
+            fi
+
+            if [ "$USE_PYTHON_SYSTEM_PATH" = "0" ]
+            then
+                if [ "$OPTION" = "USE_PYTHON_VERSION=2.2" ]
+                then
+                    PYTHONOPTION="2.2"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=2.3" ]
+                then
+                    PYTHONOPTION="2.3"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=2.4" ]
+                then
+                    PYTHONOPTION="2.4"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=2.5" ]
+                then
+                    PYTHONOPTION="2.5"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=2.6" ]
+                then
+                    PYTHONOPTION="2.6"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=2.7" ]
+                then
+                    PYTHONOPTION="2.7"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=3.0" ]
+                then
+                    PYTHONOPTION="3.0"
+                elif [ "$OPTION" = "USE_PYTHON_VERSION=3.1" ]
+                then
+                    PYTHONOPTION="3.1"
+                fi
+            fi
+
+            if [ "$OPTION" = "USE_PYTHON_SYSTEM_PATH=1" ]
+            then
+                USE_PYTHON_SYSTEM_PATH="1"
+
+                if [ "$OS" = "Darwin" ]
+                then
+                    # sed on Mac OS X does not support special character '+'
+                    PYTHONVERSION=`python -V 2>&1 | sed 's/Python[[:space:]]\([0-9]\.[0-9]\).*/\1/'`
+                else
+                    PYTHONVERSION=`python -V 2>&1 | sed 's/Python[[:space:]]\+\([0-9]\+\.[0-9]\+\).*/\1/'`
+                fi
+
+                if [ "$PYTHONVERSION" = "2.2" ]
+                then
+                    PYTHONOPTION="2.2"
+                elif [ "$PYTHONVERSION" = "2.3" ]
+                then
+                    PYTHONOPTION="2.3"
+                elif [ "$PYTHONVERSION" = "2.4" ]
+                then
+                    PYTHONOPTION="2.4"
+                elif [ "$PYTHONVERSION" = "2.5" ]
+                then
+                    PYTHONOPTION="2.5"
+                elif [ "$PYTHONVERSION" = "2.6" ]
+                then
+                    PYTHONOPTION="2.6"
+                elif [ "$PYTHONVERSION" = "2.7" ]
+                then
+                    PYTHONOPTION="2.7"
+                elif [ "$PYTHONVERSION" = "3.0" ]
+                then
+                    PYTHONOPTION="3.0"
+                elif [ "$PYTHONVERSION" = "3.1" ]
+                then
+                    PYTHONOPTION="3.1"
+                else
+                    USE_PYTHON_SYSTEM_PATH="0"
+                fi
+            fi
+
+            if [ "$USE_TCL_SYSTEM_PATH" = "0" ]
+            then
+                if [ "$OPTION" = "USE_TCL_VERSION=8.4" ]
+                then
+                    TCLOPTION="8.4"
+                elif [ "$OPTION" = "USE_TCL_VERSION=8.5" ]
+                then
+                    TCLOPTION="8.5"
+                elif [ "$OPTION" = "USE_TCL_VERSION=8.6" ]
+                then
+                    TCLOPTION="8.6"
+                fi
+            fi
+
+            if [ "$OPTION" = "USE_TCL_SYSTEM_PATH=1" ]
+            then
+                USE_TCL_SYSTEM_PATH="1"
+
+                # need to create a script file to determine the TCL version
+                echo "puts \"\$tcl_version\"" >  "version.tcl"
+                TCLVERSION=`tclsh version.tcl`
+
+                if [ "$TCLVERSION" = "8.4" ]
+                then
+                    TCLOPTION="8.4"
+                elif [ "$TCLVERSION" = "8.5" ]
+                then
+                    TCLOPTION="8.5"
+                elif [ "$TCLVERSION" = "8.6" ]
+                then
+                    TCLOPTION="8.6"
+                else
+                    USE_TCL_SYSTEM_PATH="0"
+                fi
+            fi
+
+            shift;;
+        -*)
+            Usage
+            ;;
+    esac
+    shift
+done
+
+###############################################################################
+# check that all required conditions are met or bail with error message
+###############################################################################
+
+[ ! -d  "$SOURCE_PATH"          ] && \
+Bail "Directory $SOURCE_PATH does not exist"
+
+# If the Python version was not already specified,
+# determine the Mac OS X platform and set the default python version
+if [ "$PYTHONOPTION" = "macosx" ]
+then
+    macOSXplatform=`grep platform=macosx-universal $SOURCE_PATH/install.properties`
+    if [ "$macOSXplatform" = "platform=macosx-universal" ]
+    then
+        PYTHONOPTION="2.6"    # Default USE_PYTHON_VERSION option
+    else
+        PYTHONOPTION="2.3"    # Default USE_PYTHON_VERSION option
+    fi
+fi
+
+###############################################################################
+
+[ "$SOURCE_PATH" = "$TARGET_PATH" ] && \
+echo "The STAF tar.gz installer file should be untarred into a "    && \
+echo "temporary directory from which you run the STAFInst command." && \
+echo "This temporary directory (the source directory) cannot be"    && \
+echo "the same as the target directory ($TARGET_PATH)."             && \
+Bail "Source and target directories are the same"
+
+[ "$SOURCE_PATH" = "." ] &&\
+[ "$PWD" = "$TARGET_PATH" ] && \
+echo "The STAF tar.gz installer file should be untarred into a "    && \
+echo "temporary directory from which you run the STAFInst command." && \
+echo "This temporary directory (the source directory) cannot be"    && \
+echo "the same as the target directory ($TARGET_PATH)."             && \
+Bail "Source and target directories are the same."
+
+###############################################################################
+
+[ -f "$TARGET_PATH/bin/STAFProc" ]                               && \
+echo "If you are migrating to a new release of STAF or  "        && \
+echo "reinstalling STAF, please copy your STAF.cfg file "        && \
+echo "to a safe location and then run $TARGET_PATH/STAFUninst. " && \
+echo "Then execute STAFInst again."                              && \
+Bail "STAF is already installed"
+
+###############################################################################
+
+MANFST_PATH="$SOURCE_PATH"/"$MANFST_FILE"
+
+[ ! -f    "$MANFST_PATH" ] && \
+[ ! -f  ./"$MANFST_FILE" ] && Bail "couldn't find $MANFST_FILE"
+
+###############################################################################
+
+REGINF_FILE=$TARGET_PATH/$REGINF_FILE
+REGCMP_FILE=$TARGET_PATH/$REGCMP_FILE
+UNINST_FILE=$TARGET_PATH/$UNINST_FILE
+SH_FILE=$TARGET_PATH/$SH_FILE
+START_STAFPROC_FILE=$TARGET_PATH/$START_STAFPROC_FILE
+
+###############################################################################
+
+DisplayLicense && CreateUninstall && DoInstall && HandleOptions && CloseUninstall && Register && CreateScript
+
+###############################################################################

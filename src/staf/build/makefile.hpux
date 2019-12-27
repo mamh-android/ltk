@@ -1,0 +1,69 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_SUBTYPE = hpux
+OS_LIBS = pthread
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := aCC 
+endif
+
+OS_COMMONFLAGS := -DSTAF_OS_NAME_HPUX -D_REENTRANT -DSTAF_NO_GETHOSTBYNAME_R \
+                  -DSTAF_NO_GETHOSTBYADDR_R \
+                  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+
+BUILD_ARCH ?= PA-RISC
+
+ifeq (IA64,$(findstring IA64,$(BUILD_ARCH)))
+    OS_SHARED_LIB_SUFFIX := .so
+    
+    ifeq ($(BUILD_ARCH),IA64-64)
+        OS_COMMONFLAGS += -DSTAF_OS_64BIT
+    endif
+else
+    OS_SHARED_LIB_SUFFIX := .sl
+endif
+
+OS_DL_LIB := dld
+
+# Provide the default location for Java files on this system
+
+JAVA_BUILD_V11 ?= 0
+JAVA_V11_ROOT ?= /opt/java
+JAVA_V11_INCLUDE_OS_NAME ?= hp-ux
+JAVA_V11_LIBDIRS ?= $(JAVA_V11_ROOT)/lib/PA_RISC/native_threads
+JAVA_V11_CC_FLAGS ?= -D_HPUX -DNATIVE +u4
+JAVA_V11_LIBS ?= java Csup stream std
+
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /opt/java1.3
+JAVA_V12_INCLUDE_OS_NAME ?= hp-ux
+#JAVA_V12_LIBDIRS ?= $(JAVA_V12_ROOT)/jre/lib/PA_RISC/classic
+JAVA_V12_CC_FLAGS ?= -D_HPUX -DNATIVE +u4
+
+# Provide the default location for zlib files on this system
+
+ZLIB_SOURCEDIR ?= /opt/dev/autobuild/tools/zlib-1.2.5
+
+# Provide the default location for openssl files on this system
+
+OPENSSL_ROOT ?= /opt/dev/autobuild/tools/openssl-0.9.8e-root
+
+# Provide the default location for Ant on this system
+
+ANT_ROOT ?= /opt/dev/autobuild/tools/apache-ant-1.6.2

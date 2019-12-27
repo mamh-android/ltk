@@ -1,0 +1,4015 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<article class="faq">
+<title>Getting Started With STAX 3</title>
+<para>
+Getting Started With STAX 3
+</para>
+<para>
+Version 3.0.4
+</para>
+<para>
+Last Updated:  August 18, 2010
+</para>
+
+<qandaset> <!-- defaultlabel='qanda' -->>
+
+<qandadiv>
+<title>Introduction</title>
+
+<qandadiv>
+<title>Overview</title>
+<screen></screen>
+
+<para>
+STAX is an XML-based execution engine which is implemented as an external Java
+STAF service.  STAX was designed to make it significantly easier to automate
+the workflow of your tests and test environments.
+</para>
+<para>
+STAX can be used to automate any task.  For example, some teams use STAX to
+automate their product build process.  Other teams use STAX to automate a
+variety of types of tests, from unit test, Function Verification Test, System
+Verfication Test, etc.
+</para>
+<para>
+This document will guide you through many common tasks that are performed when
+using STAX.  For more detailed information on STAX, see the STAX User's Guide
+at http://staf.sourceforge.net/getstax.php.
+</para>
+<para>
+Note that this document is based on STAX V3.0.0. Older releases of STAX may not
+have the same functionality that is described in this document.
+</para>
+<para>
+Before reading this document you should already be familiar with the Software
+Testing Autoamtion Framework (STAF), or at least have read the "Getting Started
+with STAF" document.
+</para>
+
+<para>
+STAX is comprised of three components: A Programming Language, an Execution
+Engine, and the STAX Monitor.
+</para>
+<screen></screen>
+
+<qandadiv>
+<title>Programming Language</title>
+
+<para>
+STAX provides an XML-based programming language, which in many ways provides
+capabilities similar to other programming languages, but which is specifically
+designed for automation.  Programs that are written in this language are called
+STAX jobs.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Execution Engine</title>
+
+<para>
+The STAX service is the STAX execution engine (similar to interpreters for other
+programming or scripting languages) which takes a STAX XML job as input, and
+manages the execution and runtime behavior of the job.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>STAX Monitor</title>
+
+<para>
+The STAX Monitor is a GUI application that provides a dynamically updated view
+of your jobs as they are executing.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Technologies</title>
+
+<para>
+The are four core technologies used in STAX:  STAF, XML, Python, and Java.
+</para>
+<screen></screen>
+
+<qandadiv>
+<title>STAF</title>
+
+<para>
+STAF provides the infrastructure upon which STAX builds.  This means that all
+of the STAF services can be accessed and used within your STAX jobs.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>XML</title>
+
+<para>
+The STAX programming language is based on XML. This provides built-in structure
+to your jobs, as well as providing a set of existing tools for use in
+constructing your jobs, such as XML (aware) editors and XSLT.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Python</title>
+
+<para>
+The STAX programming language builds on the Python scripting language for
+variable and expression evaluation.  This means that in addition to the STAX
+programming language, you can also call any standard Python libraries or
+custom-written Python libraries.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Java</title>
+
+<para>
+STAX uses Jython to execute the Python code in STAX jobs.  Jython is an
+implementation of the Python scripting language that is written in 100% pure
+Java.  This means that you can also execute Java classes (standard or
+custom-written) within your STAX jobs.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Concepts</title>
+
+<qandadiv>
+<title>STAX Elements</title>
+
+<para>
+A STAX Element is a node in a STAX XML job.  A STAX Job is comprised of a
+structured hierarchy of STAX Elements.  Some of the items that STAX Elements
+can represent are: data to be used during the job, commands/processes to be
+executed, definitions of the logic and control flow within the job, and wrappers
+such as functions and blocks that encompass other STAX Elements.
+</para>
+
+
+<emphasis>Processes</emphasis>
+
+<para>
+A STAX Process element really defines the execution information for a STAF
+PROCESS START command.  A process element specifies a command to be executed and
+the machine where it should run. 
+
+</para>
+
+<emphasis>Commands</emphasis>
+
+<para>
+A STAX STAF Command (stafcmd) element defines execution information for all
+other STAF service commands.  A stafcmd element specifies the STAF service and
+request to be executed and the machine where it should run.
+</para>
+
+<emphasis>Scripts</emphasis>
+
+<para>
+STAX Script elements are used to define Python code, usually for variable and
+expression evaluation.
+</para>
+
+<emphasis>Groups</emphasis>
+
+<para>
+STAX can execute groups of STAX Elements sequentially or in parallel.  When
+Elements are executed in parallel, STAX will run each of the Elements on a
+separate thread.
+</para>
+
+<emphasis>Loops</emphasis>
+
+<para>
+Loop Elements are available which allow a STAX Element to be executed
+repeatedly.  In addition, there are Iterate Elements (both sequential and
+parallel) which allow a STAX Element to be executed repeately while stepping
+through a list of data for each iteration.
+</para>
+
+<emphasis>Wrappers</emphasis>
+
+<para>
+STAX has several Wrapper Elements which simply provide additional functionality
+to another STAX Element.  These Wrapper Elements can denote Testcases (with
+testcase status), Blocks (for which execution control can be manipulated),
+Timers (for time-based execution control), and Functions (for splitting jobs
+into pieces that have a well-defined role).
+</para>
+
+<emphasis>Functions</emphasis>
+
+<para>
+Functions are a nearly universal program structuring-device.  Functions serve
+two primary development roles: code reuse and procedural decomposition.
+Functions are the simplest way to package logic you may wish to use in more than
+one place and more than one time.  Functions allow you to group and parameterize
+sections of XML to be used arbitrarily many times later.
+</para>
+
+<emphasis>Sub-Jobs</emphasis>
+
+<para>
+STAX provides a Job Element so that sub-jobs can be executed within a parent
+job with synchronized completion as well as providing access to the sub-job
+result.
+</para>
+
+<emphasis>Logic Flow</emphasis>
+
+<para>
+STAX provides an If Element which can evaluate conditions using Python to
+determine logic flow within STAX jobs, thus allowing job flow to branch
+dynamically.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>STAX Machine Environment</title>
+
+<qandadiv>
+<title>Typical Setup</title>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="staxconfig.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Typically you will configure STAX, along with other Java STAF services, such as
+Event, EventManager, Cron, and Email, on a single server-type machine.  We will
+call this machine the STAX service machine.  This machine must be up and
+running STAF while STAX jobs are executing on it.
+</para>
+
+<para>
+The other machines in your STAF environment do not need to be running the STAX
+service.  However, since the STAX service machine will be executing processes
+on these other machines, each of the other machines must grant the STAX service
+machine a trust level of 5, so that the PROCESS START requests have the required
+trust level.
+</para>
+
+<para>
+The STAX Monitor is a distributed Java application that displays information
+about STAX jobs that the STAX service machine is currently running.  The STAX
+Monitor application can be executed on any machine in your STAF environment
+(including the STAX service machine itself).  The machine on which you are
+running the STAX Monitor must grant the STAX Service machine a trust level of 3.
+</para>
+
+<para>
+Note that since both the STAX Service and the STAX Monitor are written in Java,
+you need to install a JVM (Sun or IBM) on the STAX Service and any machines on
+which you want to run the STAX Monitor.
+The STAX Service requires Java 1.4 or later and the STAX Monitor requires
+Java 1.3 or later.  IBM employees must download the Sun or
+IBM JVM from the internal JIM site.  Non-IBM users can download from
+java.sun.com.  We recommend that you install the most recent fixpack for the JVM
+you want to use, so that you will have all of the latest fixes.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Configuring STAX</title>
+
+<qandadiv>
+
+<title>Requirements</title>
+
+<itemizedlist>
+<listitem>
+    Java 1.4 or later must be installed.
+</listitem>
+<listitem>STAF V3 must be installed.  See the installation instructions in the
+    STAF documentation.  Verify that the CLASSPATH environment variable contains the
+    JSTAF.jar file (e.g. C:\STAF\bin\JSTAF.jar or /usr/local/staf/lib/JSTAF.jar).
+    JSTAF.jar contains the STAF Java APIs to communicate with STAF from
+    Java programs and is required to register STAF services written in Java.
+</listitem>
+</itemizedlist>
+
+</qandadiv>
+
+<qandadiv>
+<title>Download</title>
+
+<para>
+The STAX service is an external Java STAF service that you will download to your
+STAX service machine.  You can download the latest version of STAX from
+http://staf.sourceforge.net/getstax.php.  We provide a .zip file (for Windows)
+and a .tar file (for Unix).  Note that the contents of the .zip and .tar files
+are identical.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Unpackage</title>
+
+<para>
+It is recommended that you unzip/untar the STAX service file to a directory
+named "services" within your root STAF directory (usually C:/STAF/services on
+Windows or /usr/local/staf/services on Unix) on your STAX service machine.
+</para>
+
+<para>
+After you unzip/untar the STAX service file, you will have the following files:
+</para>
+
+<para>
+<informaltable frame="all">
+<tgroup cols="2">
+<tbody>
+<row>
+<entry>stax/STAX.jar</entry>
+<entry>This is the STAX service jar file.  This jar file does not need to be in
+your CLASSPATH.</entry>
+</row>
+<row>
+<entry>stax/STAXMon.jar</entry>
+<entry>This is the jar file for the STAX Monitor application.  This jar file does not need to be in
+your CLASSPATH.</entry>
+</row>
+<row>
+<entry>stax/STAFEvent.jar</entry>
+<entry>This is the Event service jar file.  The Event service can be downloaded
+from the staf.sourceforge.net website, but for convenience it is included in the
+STAX download.  This jar file does not need to be in your CLASSPATH</entry>
+</row>
+<row>
+<entry>stax/STAXDoc.jar</entry>
+<entry>This is the jar file for the STAX Doc application.  This jar file does not need to be in
+your CLASSPATH.</entry>
+</row>
+<row>
+<entry>stax/samples/sample1.xml</entry>
+<entry>A sample STAX job which demonstrates some of the capabilities of STAX.
+</entry>
+</row>
+<row>
+<entry>stax/samples/FunctionList.xsl</entry>
+<entry>An XSL Stylesheet that can be used to generate HTML documents that
+describe the functions in your STAX jobs.</entry>
+</row>
+<row>
+<entry>stax/libraries/STAXUtil.html</entry>
+<entry>Documentation for the library of common functions that you can call in your STAX jobs.
+</entry>
+</row>
+<row>
+<entry>stax/libraries/STAXUtil.xml</entry>
+<entry>A library of common functions that you can call in your STAX jobs.
+</entry>
+</row>
+<row>
+<entry>stax/docs/History</entry>
+<entry>A text file containing the complete history of STAX bugs/features.
+</entry>
+</row>
+<row>
+<entry>stax/docs/staxgs.pdf</entry>
+<entry>The Getting Started with STAX Guide.</entry>
+</row>
+<row>
+<entry>stax/docs/staxug.pdf</entry>
+<entry>The STAX User's Guide.</entry>
+</row>
+<row>
+<entry>stax/docs/STAXDoc.pdf</entry>
+<entry>The STAX Doc User's Guide.  STAXDoc is a tool that lets you generate
+documentation for your STAX jobs.</entry>
+</row>
+<row>
+<entry>stax/ext/stax-extensions.dtd</entry>
+<entry>The DTD for a STAX extensions xml file.   This DTD is used for files specified
+using the EXTENSIONXMLFILE parameter when registering the STAX service with extensions.</entry>
+</row>
+<row>
+<entry>stax/readme.1st</entry>
+<entry>The Readme file for this STAX service version.</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+</para>
+
+</qandadiv>
+
+<qandadiv>
+<title>Configure</title>
+
+<para>
+Now it's time to configure the STAX service on the STAX service machine.  Using
+any text editor, open the STAX service machine's STAF.cfg file (typically
+C:/STAF/bin/STAF.cfg on Windows or /usr/local/staf/bin/STAF.cfg on Unix).
+</para>
+
+<para>
+You will need to configure the STAX and Event services, as well as increase the
+default setting for MAXQUEUESIZE (if you intend to run the STAX Monitor on the
+STAX service machine).
+</para>
+
+<screen>
+SERVICE STAX LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/stax/STAX.jar \
+    OPTION J2=-Xmx384m
+SERVICE EVENT LIBRARY JSTAF EXECUTE \
+    {STAF/Config/STAFRoot}/services/stax/STAFEvent.jar
+SET MAXQUEUESIZE 10000
+</screen>
+
+<para>
+It is recommended that you always specify the "J2=-Xmx384m" option for the STAX
+service JVM (changing the 384m value for a value appropriate for the amount of
+RAM on your STAX service machine).  This option increases the maximum Java
+heap (memory) size and can alleviate OutOfMemory errors in the STAX JVM.
+</para>
+
+<para>
+In this example we are assuming that the STAX service is the first service in
+your STAF.cfg file.  If it was not, since you are changing the JVM options, you
+would also need to include the JVMName option, to specify a unique name for the
+STAX service's JVM.
+</para>
+
+<para>
+Note that these service configuration statements assume that you have the JVM
+bin directory in your System PATH, so that when STAFProc starts, it will be
+able to start the JVM for these services.  If you do not want to include the
+JVM bin directory in your PATH, then you can use the "OPTION JVM=xxx" to
+specify which Java executable to use for the services.
+</para>
+
+<para>
+At this point, you should configure the additional STAF Java services (such
+as EventManager, Cron, and Email) by downloading them from
+http://staf.sourceforge.net/getservices.php, unpackaging them, and configuring
+them in your STAF.cfg as well:
+</para>
+
+<screen>
+SERVICE STAX LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/stax/STAX.jar \
+    OPTION J2=-Xmx384m
+SERVICE EVENT LIBRARY JSTAF EXECUTE \
+    {STAF/Config/STAFRoot}/services/stax/STAFEvent.jar
+SERVICE EVENTMANAGER LIBRARY JSTAF EXECUTE \
+    {STAF/Config/STAFRoot}/services/eventmanager/STAFEventManager.jar
+SERVICE CRON LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/cron/STAFCron.jar
+SERVICE EMAIL LIBRARY JSTAF EXECUTE \
+    {STAF/Config/STAFRoot}/services/email/STAFEmail.jar \
+    PARMS MAILSERVER na.relay.ibm.com
+SET MAXQUEUESIZE 10000
+</screen>
+
+<para>
+Note that the "na.relay.ibm.com" mail server is only avaiable within IBM.  If
+you are not an IBM employee, you will need to change this to a valid SMTP
+server within your company.
+</para>
+
+<para>
+Save the changes you have just made to the STAF.cfg file, and restart STAFProc
+in order to pick up the changes.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Running the STAX Service</title>
+
+<para>
+Open a command prompt, and type <command>staf local service list</command>
+</para>
+
+<para>
+Verify that the STAX and Event services (as well as EventManager, Cron, and
+Email) are listed in the output:
+</para>
+
+<screen>
+$ staf local service list
+Response
+--------
+Name         Library    Executable
+------------ ---------- -------------------------------------------------------
+CRON         JSTAF      C:/STAF/services/cron/STAFCron.jar
+DELAY        &lt;Internal> &lt;None>
+DIAG         &lt;Internal> &lt;None>
+ECHO         &lt;Internal> &lt;None>
+EMAIL        JSTAF      C:/STAF/services/email/STAFEmail.jar
+EVENT        JSTAF      C:/STAF/services/stax/STAFEvent.jar
+EVENTMANAGER JSTAF      C:/STAF/services/eventmanager/STAFEventManager.jar
+FS           &lt;Internal> &lt;None>
+HANDLE       &lt;Internal> &lt;None>
+HELP         &lt;Internal> &lt;None>
+LOG          STAFLog    &lt;None>
+MISC         &lt;Internal> &lt;None>
+PING         &lt;Internal> &lt;None>
+PROCESS      &lt;Internal> &lt;None>
+QUEUE        &lt;Internal> &lt;None>
+SEM          &lt;Internal> &lt;None>
+SERVICE      &lt;Internal> &lt;None>
+SHUTDOWN     &lt;Internal> &lt;None>
+STAX         JSTAF      C:/STAF/services/stax/STAX.jar
+TRACE        &lt;Internal> &lt;None>
+TRUST        &lt;Internal> &lt;None>
+VAR          &lt;Internal> &lt;None>
+</screen>
+
+<para>
+Next, execute <command>staf local stax version</command> and make sure that
+you are running the correct version of STAX:
+</para>
+
+<screen>
+$ staf local stax version
+Response
+--------
+3.0.0
+</screen>
+
+<para>
+Next, execute <command>staf local stax help</command> to see all of the
+command requests that the STAX service accepts:
+</para>
+
+<screen>
+$ staf local stax help
+Response
+--------
+STAX Service Help:
+
+EXECUTE   &lt; &lt;FILE &lt;XML File Name> [MACHINE &lt;Machine Name>]> | DATA &lt;xml data> >
+          [JOBNAME &lt;Job Name>] [FUNCTION &lt;Function ID>] [ARGS &lt;Arguments>]
+          [SCRIPTFILE &lt;File Name>... [SCRIPTFILEMACHINE &lt;machine name>]]
+          [SCRIPT &lt;Python Code>]... [CLEARLOGS [&lt;Enabled | Disabled>]]
+          [ HOLD | TEST | WAIT [Timeout] [RETURNRESULT] ]
+          [LOGTCELAPSEDTIME &lt;Enabled | Disabled>]
+          [LOGTCNUMSTARTS &lt;Enabled | Disabled>]
+          [LOGTCSTARTSTOP &lt;Enabled | Disabled>]
+
+GET       DTD
+
+LIST      JOBS | SETTINGS | EXTENSIONS | EXTENSIONJARFILES |
+          JOB &lt;Job ID> &lt;THREADS | PROCESSES | STAFCMDS | SUBJOBS | BLOCKS | TESTCASES>
+
+QUERY     EXTENSIONJARFILE &lt;Jar File Name> | EXTENSIONJARFILES |
+          &lt;JOB ob ID> [THREAD &lt;Thread ID> | PROCESS &lt;Location:Handle> | STAFCMD
+          &lt;Request#> | BLOCK &lt;Block Name> | TESTCASE &lt;Test Name>
+
+HOLD      JOB &lt;Job ID> [BLOCK &lt;Block Name>]
+
+RELEASE   JOB &lt;Job ID> [BLOCK &lt;Block Name>]
+TERMINATE JOB &lt;Job ID> [BLOCK &lt;Block Name>]
+
+UPDATE    JOB &lt;Job ID> TESTCASE &lt;Testcase name> STATUS &lt;Status>
+          [MESSAGE &lt;Message text>] [FORCE]
+
+START     JOB &lt;Job ID> TESTCASE &lt;Testcase name> [KEY &lt;Key>]
+
+STOP      JOB &lt;Job ID> TESTCASE &lt;Testcase name> [KEY &lt;Key>]
+
+SET       [CLEARLOGS &lt;Enabled | Disabled>]
+          [LOGTCELAPSEDTIME &lt;Enabled | Disabled>]
+          [LOGTCNUMSTARTS &lt;Enabled | Disabled>]
+          [LOGTCSTARTSTOP &lt;Enabled | Disabled>]
+
+VERSION   [JYTHON]
+
+HELP
+</screen>
+
+<para>
+You can find more information on these commands in the STAX User's Guide.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>STAX JVM Log</title>
+
+<para>
+Errors that occur when running the STAX service will be stored in its JVM log.
+This log is data/STAF/lang/java/jvm/STAFJVM1/JVMLog.1 in your root STAF 
+directory (typically C:/STAF/data/STAF/lang/java/jvm/STAFJVM1/JVMLog.1 for
+Windows, or /usr/local/staf/data/STAF/lang/java/jvm/STAFJVM1/JVMLog.1 for Unix).
+</para>
+
+<para>
+If you edit this file, you should see something similar to:
+</para>
+
+<screen>
+******************************************************************************
+*** 20050305-17:24:51 - Start of Log for JVMName: STAFJVM1
+*** JVM Executable: java
+*** JVM Options   : -Xmx384m
+******************************************************************************
+
+Registered Extensions for stax Version 3.0.0:
+</screen>
+
+<para>
+Note that the first time you configure the STAX service, you may see several 
+"*sys-package-mgr*: processing new jar" messages in the JVM log.  This is
+expected behavior, and does not indicate an error.
+</para>
+<screen></screen>
+
+</qandadiv>
+</qandadiv>
+
+<qandadiv>
+<title>Running the STAX Monitor</title>
+
+<qandadiv>
+<title>Starting the STAX Monitor</title>
+
+<para>
+Now you're ready to start the STAX Monitor and run a sample STAX job.  From a
+command prompt, type <command>cd C:/STAF/services/stax</command> and then
+<command>java -jar STAXMon.jar</command>.  If you would prefer to not have
+to have the C:/STAF/services/stax directory as your current directory, then
+fully-qualify the path to the STAXMon.jar file: <command>
+java -jar C:/STAF/services/stax/STAXMon.jar</command>
+</para>
+
+<para>
+The first thing you will see is the STAX Monitor splash screen, which
+indicates which version of the STAX Monitor you are running:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="staxmonsplash.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+The very first time that you start the STAX Monitor, the STAX Monitor Properties
+dialog will be displayed:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon2.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+On subsequent restarts of the STAX Monitor, you can access the STAX Monitor
+Properties dialog via the "File" menu in the main STAX Monitor panel.
+</para>
+
+<para>
+The most important information in the STAX Monitor Properties dialog is the
+STAX machine info.  If you are running the STAX Monitor on the same machine as
+the STAX service machine, then leave the STAX Machine field set to "local".  If
+you are running the STAX Monitor on a different machine than the STAX service
+machine, then change the STAX Machine field from "local" to the hostname of the
+STAX service machine.  In most cases, the STAX service name is "STAX", so you
+don't need to change that field.
+</para>
+
+<para>
+Note that the Event Service machine and name are determined by querying the STAX
+service machine, which is why these fields are disabled.
+</para>
+
+<para>
+Next click on Save to close the STAX Monitor Properties.  You will then see the
+main STAX Monitor panel:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon1.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+The Active Jobs table shows you all of the STAX jobs that the STAX service on
+the STAX service machine is running.  Since you have not yet submitted any
+jobs, there are none listed in the table.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Running a sample STAX job</title>
+
+<para>
+Next you will execute the sample STAX job, sample1.xml.  Click on the "Submit
+New Job..." button in the main STAX Monitor panel.  You will then see the "STAX
+Job Parameters" dialog:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon3.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+In this dialog you fill in information about the STAX job that you want to
+execute.  In the "XML Job Info" section, leave "local machine" selected and
+specify the full path to the sample1.xml file (for example, 
+C:/STAF/services/stax/samples/sample1.xml), or click on the "Browse..." button,
+and navigate to the samples directory and select sample1.xml.
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon4.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Next click on the "Submit New Job" button.  This will submit an EXECUTE request
+to the STAX service, passing along the job information you specified.
+</para>
+
+<para>
+You will then see a separate window displayed that shows you a dynamic view
+of your STAX job as it is executing:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon5.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice in the title bar that the Job ID is 1.  Every time the STAX service is
+started on the STAX service machine, the Job ID counter will reset to 1.
+</para>
+
+<para>
+In the "Active Job Elements" tab, you will see the Processes and STAF Commands
+that are currently running.  Note that they are displayed in a hierarchical
+format, depending on the blocks that are defined in your STAX job.
+</para>
+
+<para>
+As the job executes, you will see that there are testcase passes/fails
+displayed in the "Testcase Info" tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon6.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+The "Messages" tab displays informational messages that are written by your
+STAX job.
+</para>
+
+<para>
+If you click on any entries in the "Active Job Elements" tree, you will see
+detailed information about that item in the "Current Selection" tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon7.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Note that this sample STAX job uses a timer to specify that the job should only
+execute for 2 minutes, so after 2 minutes the job will complete:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon8.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Click on "File" in the menu bar, and then "Exit and Resubmit Job".  This will
+close this window, and submit the same STAX job again.  Now you will see a new
+STAX Monitor window for Job ID 2:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon9.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Now close this window and go back to the main STAX Monitor panel:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon10.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Note that closing the STAX Monitor did not have any affect on the STAX Job.  The
+STAX service is continuing to execute the job.  Right-click on the Job ID 2 row
+in the "Active Jobs" table, and select "Start Monitoring".  You will see a new
+window for Job 2 that displays its current execution:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon11.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Now that you are familiar with some of the basics about the STAX Monitor, you
+are ready to start learning about how to create STAX jobs.  But first, since
+these jobs use XML and Python, you need to learn some basic information about
+both in the next 2 sections of this document.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Understanding XML</title>
+
+<qandadiv>
+<title>XML Elements</title>
+
+<para>
+STAX uses XML to describe STAX job definitions.  XML documents are made up of
+XML elements.  You create XML elements with an opening tag, such as 
+<command>&lt;stax></command>,
+followed by the element content (if any), such as text or other elements, and
+ending with the matching closing tag that starts with &lt;/, such as
+<command>&lt;/stax></command>.  Note that XML elements names are
+case-sensitive.
+</para>
+
+<para>
+Here is an example of an XML element that contains text:
+</para>
+
+<screen>
+&lt;log>'This is some text'&lt;/log>
+</screen>
+
+<para>
+Here is an example of an empty XML element:
+</para>
+
+<screen>
+&lt;nop>&lt;/nop>
+</screen>
+
+<para>
+Here is another example of an empty element that illustrates that you can close
+an empty element with />.  This example is equivalent to the previous example:
+</para>
+
+<screen>
+&lt;nop/>
+</screen>
+
+<para>
+Here is an example of an element that contains 2 sub-elements, each of which
+contain text:
+</para>
+
+<screen>
+&lt;process>
+  &lt;location>'machineA'&lt;/location>
+  &lt;command>'C:/tests/stress1.exe'&lt;/command>
+&lt;/process>
+</screen>
+
+<para>
+Sub-elements are indented to the right of the containing element.  The number
+of indentation spaces is up to you, but the recommendation is 2 spaces.
+</para>
+
+<para>
+XML comments start with &lt;!-- and end with -->.  For example:
+</para>
+
+<screen>
+&lt;!-- Assign a list of machines to variable machList -->
+</screen>
+
+<para>
+Every STAX job has a root element, the <command>stax</command> element,
+so each STAX job will have the following basic template:
+</para>
+
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+   .
+   .
+   .
+&lt;/stax>
+</screen>
+
+<para>
+The first 2 lines are always the same.  Within the &lt;stax> element, you will
+define the workflow of your job.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>XML Attributes</title>
+
+<para>
+XML Attributes are name-value pairs that allow you to specify additional data
+in opening tags.  To assign a value to an attribute, you use an equal sign.
+You must enclose the attribute value in quotes (we recommend using double
+quotes).  Here is an example of specifying an attribute for the testcase 
+element:
+</para>
+
+<screen>
+&lt;testcase name="'Test1'">
+</screen>
+
+<para>
+Note the attribute name is <command>name</command>, the value is
+<command>'Test1'</command>, and the value is enclosed in double quotes.  You
+can also specify multiple attributes:
+</para>
+
+<screen>
+&lt;testcase name="'Test1'" mode="'strict'">
+</screen>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Understanding Python</title>
+
+<para>
+STAX uses Python for variable and expression evaluation.  STAX uses Jython to
+execute the Python code.  Jython is an implementation of the Python scripting
+language written in 100% pure Java that runs under any compliant JVM.  Using
+Jython, you can write Python code that interacts with any Java code.
+</para>
+
+<para>
+You use <command>script</command> elements within your STAX jobs to
+define Python variables and execute Python code.  However, also note that in
+most cases, all of the element content and element attributes in your STAX jobs
+will also be evaluated as Python code.
+</para>
+<screen></screen>
+
+<qandadiv>
+<title>Python variable names</title>
+
+<para>
+STAX variable names must follow the Python variable naming conventions:
+</para>
+
+<itemizedlist>
+<listitem>
+Variable names must start with an underscore or letter, and be followed by any
+number of letters, numbers, or underscores.
+</listitem>
+<listitem>
+Python variables are case-sensitive.  For example, <command>X</command> and
+<command>x</command> refer to two different variable names.
+</listitem>
+<listitem>
+Python reserved words cannot be used as variable names.
+</listitem>
+<listitem>
+STAX reserved words cannot be used as variable names.  The STAX reserved words
+are <command>RC</command>, any word beginning with <command>STAX</command>,
+and any word beginning with <command>STAF</command>.
+</listitem>
+</itemizedlist>
+
+</qandadiv>
+
+<qandadiv>
+<title>Using Python variables</title>
+
+<para>
+Python string constants can be enclosed in single or double quotes, which allows
+embedded quotes of the opposite flavor.  For example, the following two lines do
+exactly the same thing in a STAX job.  They assign a literal string "CoolTest1"
+to the value of a variable named testName:
+</para>
+
+<screen>
+&lt;script>testName = "CoolTest1"&lt;/script>
+&lt;script>testName = 'CoolTest1'&lt;/script>
+</screen>
+
+<para>
+However, the following line is not the same.  It assigns the value of a
+variable named CoolTest1 to the value of a variable named testName.  If this
+was not what you intended and a variable named CoolTest1 does not exist, you
+will get an error.
+</para>
+
+<screen>
+&lt;script>testName = CoolTest1&lt;/script>
+</screen>
+
+<para>
+Note that since XML attribute values are evaluated as Python code, we
+recommend that you use double quotes to enclose the attribute value, and use
+single quotes for Python literal strings.  For example:
+</para>
+
+<screen>
+&lt;testcase name="'Test1'">
+</screen>
+
+<para>
+Using this convention makes your STAX jobs easier to read, compared to the
+following two examples, which use the same (single/double) quoting for both
+attributes and Python literal strings: 
+</para>
+
+<screen>
+&lt;testcase name=""Test1"">
+&lt;testcase name=''Test1''>
+</screen>
+
+<para>
+To specify an attribute value that is a Python variable (not a literal string),
+specify the following:
+</para>
+
+<screen>
+&lt;testcase name="testName">
+</screen>
+
+<para>
+Since we only have one set of quotes (for the attribute value), Python will
+treat testName as a variable reference, and since we defined this variable in
+a <command>script</command> element earlier in this section, the attribute
+value will be the literal string "CoolTest1".
+</para>
+
+<para>
+You can also include Python variable references within literal strings by using
+<command>%s</command> string substitution.  For example:
+</para>
+
+<screen>
+&lt;testcase name="'%s Part A' % testName">
+</screen>
+
+<para>
+Within the literal string you can include any number of %s variable references.
+After closing the literal string, you specify <command>%</command> followed
+by the variable reference(s).  If there is more than one variable reference,
+then they must be enclosed by parenthesis and separated by commas:
+</para>
+
+<screen>
+&lt;testcase name="'%s Part A on machine %s' % (testName, machineName)">
+</screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Python Lists</title>
+
+<para>
+Python lists are objects that contain any number of other Python objects,
+including other Python lists.  Python lists are enclosed with square braces, are
+comma-separated, and are 0-indexed.  For example:
+</para>
+
+<screen>
+&lt;script>L1 = ['abc', [0, 'xyz'], 8]&lt;/script>
+</screen>
+
+<para>
+Here we have created a Python variable, L1, that is set to a list of 3 objects.
+L1[0] is the literal string <command>'abc'</command>.  L1[1] is a nested
+sublist <command>[0, 'xyz']</command>.  L1[2] is the number
+<command>8</command>.
+</para>
+
+<para>
+If we examine the nested sublist, L1[1][0] is the number <command>0</command>,
+and L1[1][1] is the literal string <command>'xyz'</command>.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Python Dictionaries</title>
+
+<para>
+Python dictionaries are similar to maps in other languages.  Python
+dictionaries are enclosed with curly braces, and contain a series of
+comma-separated key/value pairs.  For example:
+</para>
+
+<screen>
+&lt;script>M1 = {'machine': 'server1', 'duration': '2h'}&lt;/script>
+</screen>
+
+<para>
+Here we have created a Python variable, M1, that is set to a dictionary.  This
+dictionary contains two keys: <command>'machine'</command> and 
+<command>'duration'</command>.  The value for 'machine' is 
+<command>'server1'</command> and the value for 'duration' is
+<command>'2h'</command>.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>References</title>
+
+<para>
+For more information about Python, Jython, and XML:
+<itemizedlist>
+<listitem>
+See the <ulink url="http://www.jython.org">http://www.jython.org</ulink>
+website for more information about Jython.
+</listitem>
+<listitem>
+See the <ulink url="http://www.python.org">http://www.python.org</ulink>
+website for more information about Python.
+</listitem>
+<listitem>
+See the <ulink url="http://www.w3c.org">http://www.w3c.org</ulink>
+website for more information about XML.
+</listitem>
+<listitem>
+See the <ulink url="http://www.xml.org/xml/resources_focus_beginnerguide.shtml">
+XML Beginner's Guide</ulink>.
+</listitem>
+</itemizedlist>
+</para>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Writing and Executing STAX Jobs</title>
+
+<para>
+In these sections you will be executing some sample STAX jobs.  To better
+understand the STAX jobs, these STAX jobs are shown with line numbers.
+For easier cut/paste of these STAX jobs, they are also included, without the
+line numbers, in section 8 of this doucment
+</para>
+<screen></screen>
+
+<qandadiv>
+<title>Basic STAX job template</title>
+
+<para>
+Now you are ready to start writing and executing some simple STAX jobs.  Let's
+take a look at the basic template of a STAX job:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:       &lt;nop/>
+10:    &lt;/function>
+11:
+12:  &lt;/stax>
+</screen>
+
+<para>
+Note that lines 1 and 2 are always the same, on line 4 we have the opening
+<command>stax</command> tag, and on line 12 we have the closing
+<command>stax</command> tag.  <command>function</command>
+elements are used as the main structuring mechanism in STAX jobs.  You can
+only define <command>function</command> elements within the root
+<command>stax</command> element.
+</para>
+
+<para>
+In this example we have defined one <command>function</command> named "main".
+In the root <command>stax</command> element you are required to have a
+<command>defaultcall</command> element which indicates which function should
+be called when the job is submitted, if the submitter does not specify a
+particular function.  In this example, we have defined the "main" function as
+the default function.
+</para>
+
+<para>
+The attributes for <command>function</command> and
+<command>defaultcall</command> are always literal strings (you cannot use
+Python variables).  That is why you see the double quotes, which enclose the
+attribute value, but you don't see any other quotes for Python, even though
+they are literal strings.
+</para>
+
+<para>
+In our "main" <command>function</command>, we have defined an empty
+<command>nop</command> element.  This is the simplest STAX job that you could
+create and execute.  Let's execute it now.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as 
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>.
+Copy/paste lines 1-12 (delete the first five characters on each line, to get
+rid of the line numbers and whitespace), and save the file as DoesNothing.xml.
+Go to the main STAX Monitor panel, and click on the "Submit New Job..." button.
+For "XML Job File" "Filename:", enter the full path to the DoesNothing.xml
+file.  Next, click on the "Test" button to check the STAX job for XML and
+Python errors.  You should see a "Validation Successful" popup.  Next, click on
+the "Submit New Job" button.  You should see a new STAX Monitor window for this
+STAX job, and it should complete immediately.
+</para>
+<para>
+<command>Note:</command>  If you use an XML editor, you'll probably want to get
+the STAX DTD (Document Type Definition) file so that the XML editor can use it
+to validate the xml syntax.  The stax.dtd file is not provided with the STAX service
+because it's contents can vary because you can extend it by registering STAX service
+extensions.  You can get the stax.dtd file by running the following from a command prompt:
+<programlisting>
+  set STAF_QUIET_MODE=1               (or if on Unix:  export STAF_QUIET_MODE=1)
+  STAF local STAX GET DTD > stax.dtd
+  set STAF_QUIET_MODE=                (or if on Unix:  unset STAF_QUIET_MODE)
+</programlisting>
+Then the stax.dtd file will reside in the current directory.
+Note that <ulink url="http://staf.sourceforge.net/current/staxug.pdf">Appendix D: STAX
+Extensions Document Type Definition (DTD)</ulink> in the STAX User's Guide contains the
+DTD for the STAX service (without any extensions). 
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Starting a process</title>
+
+<para>
+Now let's create a STAX job that starts a process.  This example will use
+"notepad" on Windows.  If you are on Unix, you can substitute some other GUI
+application (like "xclock"):
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:
+10:      &lt;process>
+11:        &lt;location>'local'&lt;/location>
+12:        &lt;command>'notepad'&lt;/command>
+13:      &lt;/process>
+14:
+15:    &lt;/function>
+16:
+17:  &lt;/stax>
+</screen>
+
+<para>
+Notice that we have replaced the <command>nop</command> element with a
+<command>process</command> element, which has 2 sub-elements: 
+<command>location</command> and <command>command</command>.  We've specified
+that we want the process executed on the local machine (the STAX service
+machine), and the command to execute is notepad.  Note that for location and
+command, the text is surrounded by single quotes, indicating that these are
+Python literal strings.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as 
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-17
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as RunNotepadProcess.xml.  Go to the main
+STAX Monitor panel, and click on the "Submit New Job..." button.  For "XML Job
+File" "Filename:", enter the full path to the RunNotepadProcess.xml file.  Next,
+click on the "Test" button to check the STAX job for XML and Python errors.  You
+should see a "Validation Successful" popup.  Next, click on the "Submit New Job"
+button.  You should see a new STAX Monitor window for this STAX job, and you
+should see a Notepad process on your system.  Your STAX Monitor window should
+look like:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon12.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that in the "Active Job Elements" tree, you always have a "main" block
+(note that this is not related to the function named "main").  The "main" block
+shows one process running.  Click on the process in the tree to see the details
+about the process:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon13.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+At this point the STAX job is waiting for the process to complete.  Bring the
+Notepad application to the foreground, and close it. The STAX Monitor should
+now show the job as completed.
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon14.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Starting a stafcmd</title>
+
+<para>
+Now let's run a STAF service command:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:
+10:      &lt;stafcmd>
+11:        &lt;location>'local'&lt;/location>
+12:        &lt;service>'delay'&lt;/service>
+13:        &lt;request>'delay 30000'&lt;/request>
+14:      &lt;/stafcmd>
+15:
+16:    &lt;/function>
+17:
+18:  &lt;/stax>
+</screen>
+
+<para>
+In this example we now have a <command>stafcmd</command> element which allows
+us to call any STAF service.  It has sub-elements <command>location</command>,
+<command>service</command>, and <command>request</command>.  We have 
+indicated that we want to call the DELAY service on the local machine, and have
+it delay for 30 seconds.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-18
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as RunDelayRequest.xml.  Go to the main STAX
+Monitor panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the RunDelayRequest.xml file.  Next, click
+on the "Test" button to check the STAX job for XML and Python errors.  You
+should see a "Validation Successful" popup.  Next, click on the "Submit New Job"
+button.  You should see a new STAX Monitor window for this STAX job.  Your STAX
+Monitor window should look like:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon15.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+The "Active Job Elements" tree now shows the STAF Command executing.  Click on
+the command to see the details about it:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon16.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the STAF Command completes (in 30 seconds), the job should complete.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Checking the stafcmd return code and the result</title>
+
+<para>
+Now let's run another STAF service command, and check the return code and the
+result value.
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:
+10:      &lt;sequence>
+11:
+12:        &lt;stafcmd>
+13:          &lt;location>'local'&lt;/location>
+14:          &lt;service>'var'&lt;/service>
+15:          &lt;request>'resolve string {STAF/Config/OS/Name}'&lt;/request>
+16:        &lt;/stafcmd>
+17:
+18:        &lt;if expr="RC != 0">
+19:          &lt;message>'Oops, RC = %s, Result = %s' % (RC, STAFResult)&lt;/message>
+20:          &lt;else>
+21:            &lt;message>'Great!  STAF/Config/OS/Name = %s' % (STAFResult)&lt;/message>
+22:          &lt;/else>
+23:        &lt;/if>
+24:
+25:      &lt;/sequence>
+26:
+27:    &lt;/function>
+28:
+29:  &lt;/stax>
+</screen>
+
+<para>
+In this STAX job, we have a <command>stafcmd</command> at line 12 that
+resolves the STAF/Config/OS/Name variable.  Notice that within the
+<command>function</command>, we have added a <command>sequence</command>
+element at line 10.  This is needed because the wrapper elements, such as 
+<command>function</command>, can only contain a single sub-element.
+In RunDelayRequest.xml, we only had the single <command>stafcmd</command>
+within the function, so the sequence was not needed.  Now, however, we have a
+<command>stafcmd</command> element and an <command>if</command> element,
+which is why we need to enclose those with the <command>sequence</command>.
+</para>
+
+<para>
+It is highly recommended that after every <command>stafcmd</command> you check
+with return code from the service request.  The return code is accessible via
+the RC variable.  Notice that on line 18 we have an <command>if</command>
+element to check the return code.  For its <command>expr</command> attribute,
+we specify a Python expression that will be evaluated as either true or false.
+</para>
+
+<para>
+This STAX job also introduces the <command>message</command> element.  You
+use this element to write information to the STAX Monitor.  So, if
+<command>RC != 0</command>, then we will write the "Oops" message to the STAX
+Monitor, otherwise, we will write the "Great!" message to the STAX Monitor.
+</para>
+
+<para>
+Also notice that in the <command>message</command> elements, we are using the
+%s string substitution to include the RC and STAFResult variables in the
+messages.  The STAFResult variable we be set to the result string returned by
+the service (in this case, the STAF/Config/OS/Name variable).
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-29
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as CheckSTAFCmdRC.xml.  Go to the main STAX
+Monitor panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the CheckSTAFCmdRC.xml file.  Next, click on
+the "Test" button to check the STAX job for XML and Python errors.  You should
+see a "Validation Successful" popup.  Next, click on the "Submit New Job"
+button.  You should see a new STAX Monitor window for this STAX job.  Your STAX
+Monitor window should look like:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon17.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice in the Messages tab, you see the message written by the STAX job.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Checking the process return code and the result</title>
+
+<para>
+This next STAX job will run a Java class that is provided in the STAXMon.jar
+file.  Here is the syntax for this Java class:
+</para>
+
+<screen>
+java -cp C:\STAF\bin\JSTAF.jar;C:\STAF\services\stax\STAXMon.jar com.ibm.staf.service.stax.TestProcess
+
+Usage: java TestProcess loopCount incrementSeconds returnCode
+</screen>
+
+<para>
+Here are the parameters the class accepts:
+</para>
+
+<para>
+<informaltable frame="all">
+<tgroup cols="2">
+<tbody>
+<row>
+<entry>loopCount</entry>
+<entry>The number of loops the class should perform.</entry>
+</row>
+<row>
+<entry>incrementSeconds</entry>
+<entry>The number of seconds the class should wait during each loop iteration.</entry>
+</row>
+<row>
+<entry>returnCode</entry>
+<entry>The return code the class should return.</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+</para>
+
+<para>
+This STAX job will execute this process with the parameters "10 3 99":
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:
+10:      &lt;sequence>
+11:
+12:        &lt;process name="'My Test Process'">
+13:          &lt;location>'local'&lt;/location>
+14:          &lt;command>'java'&lt;/command>
+15:          &lt;parms>'com.ibm.staf.service.stax.TestProcess 10 3 99'&lt;/parms>
+16:          &lt;env>
+17:            'CLASSPATH=C:/STAF/bin/JSTAF.jar;C:/STAF/services/stax/STAXMon.jar'
+18:          &lt;/env>
+19:          &lt;stderr mode="'stdout'"/>
+20:          &lt;returnstdout/>
+21:        &lt;/process>
+22:
+23:        &lt;if expr="RC != 0">
+24:          &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+25:          &lt;else>
+26:            &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+27:          &lt;/else>
+28:        &lt;/if>
+29:
+30:      &lt;/sequence>
+31:
+32:    &lt;/function>
+33:
+34:  &lt;/stax>
+</screen>
+
+<para>
+For this <command>process</command> element, we are running the "java"
+executable on the local machine, and we are using the <command>env</command>
+element to set the CLASSPATH for the process.  Also notice that we have
+specified the "name" attribute for the <command>process</command>. 
+For both <command>process</command> and <command>stafcmd</command>, if you
+don't specify the "name" attribute, they will be given names like Process1,
+Process2, STAFCmd1, STAFCmd2, for example. Using the "name" attribute allows you
+to specify more detailed names that can self-document what is happening in your
+STAX jobs.
+</para>
+
+<para>
+Also notice that we are specifying the <command>stderr</command> and
+<command>returnstdout</command> elements.  The
+<command>returnstdout</command> element indicates that we want the standard
+output of the process to be returned when the process completes.  The
+<command>stderr</command> element indicates that we want the standard error
+information to be returned as part of the standard output.  This allows you to
+examine the information in your STAX job after the process completes, and it is
+a good practice to specify these elements for your processes.
+</para>
+
+<para>
+Next, we have an <command>if</command> element to check if the RC variable
+is set.  The RC variable will be set to the error code returned by the process.
+In this STAX job, the process will be returning error code 99.  It is highly
+recommended that you check the return code after every <command>process</command>.
+</para>
+
+<para>
+Notice in the <command>message</command> element that we specify the
+STAXResult variable.  This variable will contain any files, such as stdout or
+stderr, that we specified to return when the job completes.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-34
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as RunTestProcess.xml.  Go to the main STAX
+Monitor panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the RunTestProcess.xml file.  Next, click on
+the "Test" button to check the STAX job for XML and Python errors.  You should
+see a "Validation Successful" popup.  Next, click on the "Submit New Job"
+button.  You should see a new STAX Monitor window for this STAX job.  Your STAX
+Monitor window should look like the following (click on "My Test Process" in the
+Active Job Elements tree to get the details about the process):
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon18.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the job completes, click on the Messages tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon19.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that STAXResult variable is set to [[0, '']].  This variable contains
+a list of all of the files you specified to have returned after the process
+completes.  In this example we only specified one file to return, the standard
+output (which will include the standard error).  The first item (in the first
+sublist), 0, is the RC from retrieving the file.  The second item (in the first
+sublist), '', is the content of the file (in this example the process did not
+write anything to stdout or stderr).
+</para>
+
+<para>
+Now change the 99 in the <command>parms</command> element to 0, and rerun the
+job.  Verify that when the job completes, you get the "Process RC was 0"
+message:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon20.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Now change the <command>parms</command> element and remove the last
+parameter, 0, so that the TestProcess writes to its standard output (to
+indicate that it was not passed the correct nubmer of parameters).  Verify that
+you get the correct STAXResult:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon20a.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Using script elements to define Python variables</title>
+
+<para>
+This next STAX job is similar to the previous job, but in this job we will
+add a <command>script</command> element to define some Python variables:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;script>
+7:       jstafJar = '{STAF/Config/STAFRoot}/bin/JSTAF.jar'
+8:       staxmonJar = '{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'
+9:       machine = 'local'
+10:      java_command = 'java'
+11:      java_class = 'com.ibm.staf.service.stax.TestProcess'
+12:      loopCount = '10'
+13:      incSeconds = '3'
+14:      returnCode = '50'
+15:      parms = '%s %s %s' % (loopCount, incSeconds, returnCode)
+16:      cp = 'CLASSPATH=%s;%s' % (jstafJar, staxmonJar)
+17:    &lt;/script>
+18:
+19:    &lt;defaultcall function="main"/>
+20:
+21:    &lt;function name="main">
+22:
+23:      &lt;sequence>
+24:
+25:        &lt;process name="'My Test Process'">
+26:          &lt;location>machine&lt;/location>
+27:          &lt;command>java_command&lt;/command>
+28:          &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+29:          &lt;env>cp&lt;/env>
+30:          &lt;stderr mode="'stdout'"/>
+31:          &lt;returnstdout/>
+32:        &lt;/process>
+33:
+34:        &lt;if expr="RC != 0">
+35:          &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+36:          &lt;else>
+37:            &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+38:          &lt;/else>
+39:        &lt;/if>
+40:
+41:      &lt;/sequence>
+42:
+43:    &lt;/function>
+44:
+45:  &lt;/stax>
+</screen>
+
+<para>
+On line 6 we have a <command>script</command> element to define 10 variables,
+some of which reference other variables using %s, and on lines 26-29 we use
+these variables for <command>location</command>,
+<command>command</command>, and <command>env</command>.  Note that we don't
+use single quotes for <command>location</command> and 
+<command>env</command> elements, since we are just using the variables instead
+of literal strings.  For <command>command</command>, we use the single quotes
+to build up the string, using the %s substitution.
+</para>
+
+<para>
+Since this <command>script</command> element has been defined in the root
+<command>stax</command> element, it will be executed at the beginning of the
+STAX job, prior to calling the "main" function.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-45
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as UsingScripts.xml.  Go to the main STAX
+Monitor panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the UsingScripts.xml file.  Next, click on
+the "Test" button to check the STAX job for XML and Python errors.  You should
+see a "Validation Successful" popup.  Next, click on the "Submit New Job"
+button.  You should see a new STAX Monitor window for this STAX job.  Your STAX
+Monitor window should look like the following (click on "My Test Process" in the
+Active Job Elements tree to get the details about the process):
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon21.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the job completes, click on the Messages tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon22.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Specifying scripts in the STAX Monitor</title>
+
+<para>
+When starting a job via the STAX Monitor (or from the command line), you can
+specify any numbers of scripts.  These scripts override any
+<command>script</command> elements that are defined in the root
+<command>stax</command> element.  So, if we use the exact same job as the
+last example:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;script>
+7:       jstafJar = '{STAF/Config/STAFRoot}/bin/JSTAF.jar'
+8:       staxmonJar = '{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'
+9:       machine = 'local'
+10:      java_command = 'java'
+11:      java_class = 'com.ibm.staf.service.stax.TestProcess'
+12:      loopCount = '10'
+13:      incSeconds = '3'
+14:      returnCode = '50'
+15:      parms = '%s %s %s' % (loopCount, incSeconds, returnCode)
+16:      cp = 'CLASSPATH=%s;%s' % (jstafJar, staxmonJar)
+17:    &lt;/script>
+18:
+19:    &lt;defaultcall function="main"/>
+20:
+21:    &lt;function name="main">
+22:
+23:      &lt;sequence>
+24:
+25:        &lt;process name="'My Test Process'">
+26:          &lt;location>machine&lt;/location>
+27:          &lt;command>java_command&lt;/command>
+28:          &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+29:          &lt;env>cp&lt;/env>
+30:          &lt;stderr mode="'stdout'"/>
+31:          &lt;returnstdout/>
+32:        &lt;/process>
+33:
+34:        &lt;if expr="RC != 0">
+35:          &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+36:          &lt;else>
+37:            &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+38:          &lt;/else>
+39:        &lt;/if>
+40:
+41:      &lt;/sequence>
+42:
+43:    &lt;/function>
+44:
+45:  &lt;/stax>
+</screen>
+
+<para>
+But let's say that we want to override the parameters, and specify parameters
+"30 1 10" (30 loops, 1 second per loop, return code 10).  In the main STAX
+Monitor window, click on the "Submit New Job..." button, and leave
+UsingScripts.xml as the "Filename:".  Click on the "Scripts" tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon23.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Then click on the "Add" button:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon24.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+In the "Enter script here" field, enter:
+</para>
+
+<screen>
+parms = '30 1 10'
+</screen>
+
+<para>
+and click on the "Add" button:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon25.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  Your STAX Monitor window should look like the following
+(click on "My Test Process" in the Active Job Elements tree to get the details
+about the process):
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon26.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that the parameters that you specified in the "Scripts" tab in the STAX
+Monitor are being used.  When the job starts executing, the
+<command>script</command> element in the root <command>stax</command>
+element is executed, and the parms variable has the value of
+'com.ibm.staf.service.stax.TestProcess 10 3 50'.  Next, any scripts that were
+specified in the STAX Monitor are executed, so the parms variable now has the
+value of 'com.ibm.staf.service.stax.TestProcess 30 1 10'.  Next, the "main"
+function is called and the process is executed.  When the job is complete,
+click on the "Messages" tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon27.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+In the main STAX Monitor window, click on the "Submit New Job..." button, and
+click on the "Scripts" tab.  Select the "parms = '30 1 10'" entry, and click
+on the "Delete" button, and then click on the "Close" button.
+</para>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Adding parameters to a function</title>
+
+<para>
+In this next STAX job, we will now pass the "machine", "java_command", "parms",
+and "classpath" values as parameters to the function, rather than defining
+them in a <command>script</command> element or in the STAX Monitor "Scripts"
+tab.
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:
+10:      &lt;function-prolog>
+11:        This function is used as an example in the "Getting Started with STAX"
+12:        document.  It starts the TestProcess, and allows the parms, machine,
+13:        java_command, java_class, processName, and classpath to be passed as
+14:        arguments to the function.
+15:      &lt;/function-prolog>
+16:
+17:      &lt;function-map-args>
+18:        &lt;function-required-arg name="parms">
+19:          The three parameters to pass to the process.
+20:        &lt;/function-required-arg>
+21:        &lt;function-optional-arg name="machine" default="'local'">
+22:          The name of machine where the test process should run.
+23:        &lt;/function-optional-arg>
+24:        &lt;function-optional-arg name="java_command" default="'java'">
+25:          The name of java executable that should be used to execute the test
+26:          process.
+27:        &lt;/function-optional-arg>
+28:        &lt;function-optional-arg name="java_class"
+29:            default="'com.ibm.staf.service.stax.TestProcess'">
+30:          The name of java class for the test process.
+31:        &lt;/function-optional-arg>
+32:        &lt;function-optional-arg name="processName" default="'My Test Process'">
+33:          The name of the process.
+34:        &lt;/function-optional-arg>
+35:        &lt;function-optional-arg name="classpath"
+36:            default="'{STAF/Config/STAFRoot}/bin/JSTAF.jar;{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'">
+37:          The CLASSPATH that should be used when the test process is started..
+38:        &lt;/function-optional-arg>
+39:      &lt;/function-map-args>
+40:
+41:      &lt;sequence>
+42:
+43:        &lt;process name="processName">
+44:          &lt;location>machine&lt;/location>
+45:          &lt;command>java_command&lt;/command>
+46:          &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+47:          &lt;env>'CLASSPATH=%s' % classpath&lt;/env>
+48:          &lt;stderr mode="'stdout'"/>
+49:          &lt;returnstdout/>
+50:        &lt;/process>
+51:
+52:        &lt;if expr="RC != 0">
+53:          &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+54:          &lt;else>
+55:            &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+56:          &lt;/else>
+57:        &lt;/if>
+58:
+59:      &lt;/sequence>
+60:
+61:    &lt;/function>
+62:
+63:  &lt;/stax>
+</screen>
+
+<para>
+Notice that after the <command>function</command> opening tag, on line 10
+we have added a <command>function-prolog</command> element.  This is where you
+specify any plain text or HTML that describes the function.  Note that this text
+is not evaluated as Python code, and so we do not enclose it in quotes.
+</para>
+
+<para>
+Next, on line 17 we have a <command>function-map-args</command> element that
+indicates that you can pass a Python map for the arguments to the function.  You
+can pass 6 arguments to the function; 1 is required, and 5 are optional, with
+default values.  Within the <command>function-map-args</command> element we
+have one <command>function-required-arg</command> and five
+<command>function-optional-arg</command>.  All six have a "name" attribute
+that is the name of the Python variable for the argument.  For the
+<command>function-optional-arg</command> elements, you must specify a
+"default" argument, which is the value of the argument if it is not specified
+by the caller.  For the character data for all six, you can specify plain text
+or HTML that describes the argument.  Note that this text is not evaluated as
+Python code, and so we do not enclose it in quotes.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-63
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as FunctionParameters.xml.  Go to the main
+STAX Monitor panel, and click on the "Submit New Job..." button.  For "XML Job
+File" "Filename:", enter the full path to the FunctionParameters.xml file.
+</para>
+
+<para>
+Next click on the "Job Wizard..." button.  You should see the following dialog:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon28.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+The STAX Job Wizard reads in the STAX job, and displays information about the
+functions in the STAX job.  Since we have only defined one function with this
+STAX job, we only see the "main" function in the "Functions" list.
+</para>
+
+<para>
+In the "Description for function main" section, we see the text that we
+specified for <command>function-prolog</command>.
+</para>
+
+<para>
+In the "Arguments for function main" section, we see that the function accepts
+a Map of arguments, and the six arguments are shown in the table.  Arguments
+with a light red background are required, while arguments with a light green
+background are optional, and the default value is shown.
+</para>
+
+<para>
+Next, click in the "Value" column for the "parms" argument and
+type the string (and then press enter to commit the changes):
+</para>
+
+<screen>
+'20 1 25'
+</screen>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon29.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that after you fill in the argument for "parms", it now has a light green
+background.  Click on the "Preview XML" button, which displays the
+<command>call</command> information for the function:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon29a.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Click on the "Close" button.  Now you are ready to save the arguments, so click
+on the "Save" button, and then click on the "Yes" button in the confirmation
+dialog.  Next, click on the "Function" tab, and note that these are the
+arguments that will be passed to the "main" function:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon30.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Next, click on the "Test" button to check the STAX job for XML and Python
+errors.  You should see a "Validation Successful" popup.  Next, click on the
+"Submit New Job" button.  You should see a new STAX Monitor window for this STAX
+job.  Your STAX Monitor window should look like the following (click on "My Test
+Process" in the Active Job Elements tree to get the details about the process):
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon31.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the job completes, click on the Messages tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon32.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Adding logging to the STAX job</title>
+
+<para>
+Next let's add logging to the STAX job.  At the same time we'll add more
+information to the messages and logs, so that we can more easily distinguish
+between the processes.
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="main"/>
+7:
+8:     &lt;function name="main">
+9:
+10:      &lt;function-prolog>
+11:        This function is used as an example in the "Getting Started with STAX"
+12:        document.  It starts the TestProcess, and allows the parms, machine,
+13:        java_command, java_class, processName, and classpath to be passed as
+14:        arguments to the function.
+15:      &lt;/function-prolog>
+16:
+17:      &lt;function-map-args>
+18:        &lt;function-required-arg name="parms">
+19:          The three parameters to pass to the process.
+20:        &lt;/function-required-arg>
+21:        &lt;function-optional-arg name="machine" default="'local'">
+22:          The name of machine where the test process should run.
+23:        &lt;/function-optional-arg>
+24:        &lt;function-optional-arg name="java_command" default="'java'">
+25:          The name of java executable that should be used to execute the test
+26:          process.
+27:        &lt;/function-optional-arg>
+28:        &lt;function-optional-arg name="java_class"
+29:            default="'com.ibm.staf.service.stax.TestProcess'">
+30:          The name of java class for the test process.
+31:        &lt;/function-optional-arg>
+32:        &lt;function-optional-arg name="processName" default="'My Test Process'">
+33:          The name of the process.
+34:        &lt;/function-optional-arg>
+35:        &lt;function-optional-arg name="classpath"
+36:            default="'{STAF/Config/STAFRoot}/bin/JSTAF.jar;{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'">
+37:          The CLASSPATH that should be used when the test process is started..
+38:        &lt;/function-optional-arg>
+39:      &lt;/function-map-args>
+40:
+41:      &lt;sequence>
+42:
+43:        &lt;process name="'%s with parms %s' % (processName, parms)">
+44:          &lt;location>machine&lt;/location>
+45:          &lt;command>java_command&lt;/command>
+46:          &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+47:          &lt;env>'CLASSPATH=%s' % classpath&lt;/env>
+48:          &lt;stderr mode="'stdout'"/>
+49:          &lt;returnstdout/>
+50:        &lt;/process>
+51:
+52:        &lt;if expr="RC != 0">
+53:          &lt;message log="1" level="'Error'">
+54:            '%s with parms %s Error: RC=%s, STAXResult=%s' % \
+55:              (processName, parms, RC, STAXResult)
+56:          &lt;/message>
+57:          &lt;else>
+58:            &lt;message log="1">
+59:              'SUCCESS: %s with parms %s\nSTAXResult=%s' % \
+60:                (processName, parms, STAXResult)
+61:            &lt;/message>
+62:          &lt;/else>
+63:        &lt;/if>
+64:
+65:        &lt;return>RC&lt;/return>
+66:
+67:      &lt;/sequence>
+68:
+69:    &lt;/function>
+70:
+71:  &lt;/stax>
+</screen>
+
+<para>
+Notice on lines 53 and 58, we have added the "log" attribute, and set the value
+to 1 (true).  This means that the message will also be written to the STAX job
+user log.
+</para>
+
+<para>
+Each time you run a STAX job, there are 2 log associated with it.  The first is
+the STAX job log, and it is only written to by the STAX service itself.  It
+contains information such as start and stop messages, signals, and a summary of
+testcase passes/fails when the job completes.  The second is the STAX job user
+log, and this is where you get to log information.  Note that there is a
+separate <command>log</command> element that you can use, but if you want the
+information to be written to the STAX Monitor and the STAX job user log, it is
+simpler to just use the "log" attribute with the <command>message</command>
+element.
+</para>
+
+<para>
+Also notice on line 65 we have added a <command>return</command> element,
+which will return the RC to the caller.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-71
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as FunctionParametersLogging.xml.  Go to the
+main STAX Monitor panel, and click on the "Submit New Job..." button.  For "XML
+Job File" "Filename:", enter the full path to the FunctionParametersLogging.xml
+file.
+</para>
+
+<para>
+Next click on the "Job Wizard..." button.  The parms value should still be
+'20 1 25'.  Click in the text area and change the value to '5 5 0' and
+press enter to commit the changes.
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon33.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Click on the "Save" button, and then click on the "Yes" button in the
+confirmation dialog.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  Your STAX Monitor window should look like the following
+(click on "My Test Process with parms 5 5 0" in the Active Job Elements tree to
+get the details about the process):
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon34.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the job completes, click on the Messages tab:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon35.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice in the title bar that the Result is included.  This is because we added
+the <command>return</command> to the job.  The RC, returned from the
+<command>process</command>, is a Python Long object, which is why it is
+displayed as "0L".  We could simply convert it to a string object, but we will
+leave it as it is since we will be calling this function from another STAX job.
+</para>
+
+<para>
+To view the STAX job user log, you can click on "Display" in the menu bar, and
+then "Display Job User Log".  You should see the following dialog:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon36.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+To view the STAX job log, you can click on "Display" in the menu bar, and
+then "Display Job Log".  You should see the following dialog:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon37.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Importing and calling a STAX function</title>
+
+<para>
+Now we will create a STAX job that imports FunctionParametersLogging.xml (the
+previous example) and calls the "main" function several times:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="begin_tests"/>
+7:
+8:     &lt;script>
+9:       ImportMachine = 'local'
+10:      ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+11:    &lt;/script>
+12:
+13:    &lt;function name="begin_tests">
+14:
+15:      &lt;sequence>
+16:
+17:        &lt;import machine="ImportMachine"
+18:          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+19:
+20:        &lt;call function="'main'">{ 'parms' : '9 2 7' }&lt;/call>
+21:
+22:        &lt;call function="'main'">{ 'parms' : '2 9 15' }&lt;/call>
+23:
+24:      &lt;/sequence>
+25:
+26:    &lt;/function>
+27:
+28:  &lt;/stax>
+</screen>
+
+<para>
+On line 17 we have an <command>import</command> element which is used to
+import functions from other STAX xml files.  In this example we are importing
+all of the functions from file
+{STAF/Config/STAFRoot}/services/stax/FunctionParametersLogging.xml (on the local
+machine).
+</para>
+
+<para>
+On line 20 we have a <command>call</command> element which calls the "main"
+function, and passes '9 2 7' as the 'parms' argument.
+</para>
+
+<para>
+On line 22 we have a <command>call</command> element which calls the "main"
+function, and passes '2 9 15' as the 'parms' argument.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-28
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as ImportFunction.xml.  Go to the main STAX
+Monitor panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the ImportFunction.xml file.  In the
+"Functions" tab, click on the "Default" radio button, and click on the
+"Arguments:" "Clear" button.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  Your STAX Monitor window should look like the following
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon38.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+First, the process with parms '9 2 7' is executed, and completes in 18 seconds.
+Next, the process with parms '2 9 15' is executed:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon39.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the second process completes the job is completed:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon40.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+To view the STAX job user log, you can click on "Display" in the menu bar, and
+then "Display Job User Log".  You should see the following dialog:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon41.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Adding execution control into a STAX job</title>
+
+<para>
+Now we will add execution control to this STAX job:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="begin_tests"/>
+7:
+8:     &lt;script>
+9:       ImportMachine = 'local'
+10:      ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+11:    &lt;/script>
+12:
+13:    &lt;function name="begin_tests">
+14:
+15:      &lt;block name="'SVT_Regression'">
+16:
+17:        &lt;sequence>
+18:
+19:          &lt;import machine="ImportMachine"
+20:            file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+21:
+22:          &lt;call function="'main'">{ 'parms' : '30 1 0' }&lt;/call>
+23:
+24:          &lt;call function="'main'">{ 'parms' : '15 2 0' }&lt;/call>
+25:
+26:        &lt;/sequence>
+27:
+28:      &lt;/block>
+29:
+30:    &lt;/function>
+31:
+32:  &lt;/stax>
+</screen>
+
+<para>
+On line 15 we have defined a <command>block</command> element named
+"SVT_Regression".  This will be a child block of the "main" block, which every
+STAX job will have.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-32
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as Block.xml.  Go to the main STAX Monitor
+panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the Block.xml file.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  Your STAX Monitor window should look like the following
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon42.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that you see the "SVT_Regression" block in the tree view.  The first
+process will execute for 30 seconds.  At around 15-20 seconds into its
+execution, right click on the "SVT_Regression" block and select "Hold":
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon43.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that the "SVT_Regression" block now is red, indicated that it is blocked.
+But also notice that the first process is still executing.  This demonstrates
+that when a block is held, any currently running processes of stafcmds will
+complete, but nothing new will begin after they have completed.  After 30
+seconds of execution, the first process will complete:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon44.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Now close this STAX Monitor window.  Back in the main STAX Monitor panel,
+right click on the job, and select "Start Monitoring".  You should see that
+the job is still held:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon45.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Right click on the "SVT_Regression" block and select "Release".  Notice that the
+second process is now executing:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon46.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the second process completes, the job is complete:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon47.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Running tasks in parallel</title>
+
+<para>
+So far we have only executed tasks sequentially, so now let's look at how you
+can run tasks in parallel in STAX jobs:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="begin_tests"/>
+7:
+8:     &lt;script>
+9:       ImportMachine = 'local'
+10:      ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+11:    &lt;/script>
+12:
+13:    &lt;function name="begin_tests">
+14:
+15:      &lt;sequence>
+16:
+17:        &lt;import machine="ImportMachine"
+18:          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+19:
+20:        &lt;block name="'Run Processes in Parallel'">
+21:
+22:          &lt;parallel>
+23:
+24:            &lt;call function="'main'">{ 'parms' : '40 1 0' }&lt;/call>
+25:            &lt;call function="'main'">{ 'parms' : '15 2 0' }&lt;/call>
+26:            &lt;call function="'main'">{ 'parms' : '10 2 0' }&lt;/call>
+27:
+28:          &lt;/parallel>
+29:
+30:        &lt;/block>
+31:
+32:        &lt;call function="'main'">{ 'parms' : '5 3 0' }&lt;/call>
+33:
+34:      &lt;/sequence>
+35:
+36:    &lt;/function>
+37:
+38:  &lt;/stax>
+</screen>
+
+<para>
+On line 15 we have defined a <command>sequence</command> that will first
+execute an <command>import</command>, then execute a
+<command>block</command>, and then execute a <command>call</command>.
+</para>
+
+<para>
+In the "Run Processes in Parallel" block, at line 20 we have a
+<command>parallel</command> element.  It contains three
+<command>call</command> elements that will be executed in parallel.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-38
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as Parallel.xml.  Go to the main STAX Monitor
+panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the Parallel.xml file.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  Your STAX Monitor window should look like the following
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon48.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that in the "Run Processes in Parallel" block, the 3 processes are
+running in parallel.  The "10 2 0" process will complete first:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon49.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+The "15 2 0" process will complete next:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon50.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the "40 1 0" process completes, the <command>parallel</command> will be
+complete, and then the third item in the sequence is executed:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon51.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+After the "5 3 0" process completes, the job is complete:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon52.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Looping in a STAX job</title>
+
+<para>
+Now let's look at a STAX job that demonstrates how you can use loops within
+STAX jobs:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="begin_tests"/>
+7:
+8:     &lt;script>
+9:       ImportMachine = 'local'
+10:      ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+11:    &lt;/script>
+12:
+13:    &lt;function name="begin_tests">
+14:
+15:      &lt;sequence>
+16:
+17:        &lt;import machine="ImportMachine"
+18:          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+19:
+20:        &lt;loop from="1" to="3" var="index">
+21:
+22:          &lt;block name="'Block #%s' % index">
+23:
+24:            &lt;call function="'main'">{ 'parms' : '10 %s 0' % index }&lt;/call>
+25:
+26:          &lt;/block>
+27:
+28:        &lt;/loop>
+29:
+30:      &lt;/sequence>
+31:
+32:    &lt;/function>
+33:
+34:  &lt;/stax>
+</screen>
+
+<para>
+Notice on line 20 that we have a <command>loop</command> element.  It is used
+when you want to repeatedly execute a STAX element.  We have specified the
+"from" attribute as 1 and to the "to" attribute as 3.  Notice that we do not use
+single quotes here, because these are Python integers (not literal strings).
+This means that the STAX element contained with the <command>loop</command>
+will be executed 3 times.  We have also specified the "var" attribute, so that
+we can use the variable "index" to refer to the loop index.  On line 22 we
+use this variable to create the name of the <command>block</command>, and on
+line 24 it is used as the second parameter to the TestProcess.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-34
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as Loop.xml.  Go to the main STAX Monitor
+panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the Loop.xml file.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  Your STAX Monitor window should look like the following
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon53.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Notice that the block name is "Block #1" and the second parameter for the
+TestProcess is 1, the current loop index.  This process will execute for 10
+seconds, and then the loop index variable will be incremented by one (the
+default):
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon54.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Next the block name is "Block #2" and the second parameter for the
+TestProcess is 2, the current loop index.  This process will execute for 20
+seconds, and then the loop index variable will be incremented by one:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon55.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Next the block name is "Block #3" and the second parameter for the
+TestProcess is 3, the current loop index.  This process will execute for 30
+seconds, and then the loop index variable will be incremented by one.  Since
+the loop index variable now equals 4, which is greater than the value specified
+for the "to" attribute, the <command>loop</command> is complete, and so the
+job completes:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon56.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Adding testcases into a STAX job</title>
+
+<para>
+Now let's look at a STAX job that demonstrates how you can define testcases
+within your STAX jobs:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="begin_tests"/>
+7:
+8:     &lt;script>
+9:       ImportMachine = 'local'
+10:      ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+11:      from random import randint
+12:    &lt;/script>
+13:
+14:    &lt;function name="begin_tests">
+15:
+16:      &lt;sequence>
+17:
+18:        &lt;import machine="ImportMachine"
+19:          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+20:
+21:        &lt;loop from="1" to="10">
+22:
+23:          &lt;testcase name="'Test Process'">
+24:
+25:            &lt;sequence>
+26:
+27:              &lt;script>r = randint(1, 100)&lt;/script>
+28:
+29:              &lt;call function="'main'">{ 'parms' : '1 1 %s' % r }&lt;/call>
+30:
+31:              &lt;if expr="STAXResult &amp;lt;= 50">
+32:                &lt;tcstatus result="'pass'"/>
+33:                &lt;else>
+34:                  &lt;tcstatus result="'fail'"/>
+35:                &lt;/else>
+36:              &lt;/if>
+37:
+38:            &lt;/sequence>
+39:
+40:          &lt;/testcase>
+41:
+42:        &lt;/loop>
+43:
+44:      &lt;/sequence>
+45:
+46:    &lt;/function>
+47:
+48:  &lt;/stax>
+</screen>
+
+<para>
+This example also demonstrates how you can call Python libraries within your
+STAX job.  In this case we will be using the Python "random" library to
+generate a random number between 1 and 100, which will be passed to the
+TestProcess as the return code that it should return.  On line 8 we have a
+<command>script</command> element in which we import the "randint" function
+from the "random" library.
+</para>
+
+<para>
+On line 23 we have a <command>testcase</command> element named "Test Process".
+Within this <command>testcase</command> element, we can have as many
+<command>tcstatus</command> elements that we need.  Each
+<command>tcstatus</command> will increase the testcase's pass/fail count by
+1.  
+</para>
+
+<para>
+On line 27 we have another <command>script</command> that creates a random
+number and stores the value in variable "r".  On line 29, we pass this variable
+as the third parameter to the TestProcess.  When the function returns the
+return code, it will be available as the "STAXResult" variable.
+</para>
+
+<para>
+On line 31 we have an <command>if</command> element to check if the return
+code is less than or equal to 50.  If it is, then the
+<command>tcstatus</command> element on line 32 will be executed to increment
+the testcase's pass count.  If the return code is greater than 50, then the
+<command>tcstatus</command> element on line 34 will be executed to increment
+the testcase's fail count.
+</para>
+
+<para>
+Notice on line 31, for the "expr" attribute we did not specify
+"STAXResult &lt;= 50".  Since the &lt; character denotes an opening tag
+for XML, that would be invalid XML syntax.  Instead we need to use the special
+string "&amp;lt;" in place of the &lt;: "STAXResult &amp;lt;= 50".
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-48
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as Testcase.xml.  Go to the main STAX Monitor
+panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the Testcase.xml file.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  After the STAX job completes, your STAX Monitor window
+should look like the following:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon57.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+In the "Testcase Info" tab we see that the testcase named "Test Process", and
+we see how many passes and fails were recorded.  Note that since the return
+codes were randomly generated, you will not always have 5 passes and 5 fails.
+</para>
+
+<para>
+Click on the "Display" in the menu bar, and then select "Display Job Log".  You
+should see something similar to:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon58.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Note that the testcase information is stored in the Job Log (so that it will
+still be available after the STAX job completes and the STAX Monitor is closed).
+Close the Job Log, and click on "File" in the menu bar, and then select
+"Exit and Resubmit Job".  This will close the current STAX Monitor window, and
+submit a new job with the same options.  Run this job a few times and note the
+testcase passes/fails based on the random return codes:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon59.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Adding time constraints into a STAX job</title>
+
+<para>
+Now let's look at a STAX job that demonstrates how you can add time constraints
+to your STAX jobs:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;defaultcall function="begin_tests"/>
+7:
+8:     &lt;script>
+9:       ImportMachine = 'local'
+10:      ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+11:      test_process_times = ['30', '10', '25']
+12:    &lt;/script>
+13:
+14:    &lt;function name="begin_tests">
+15:
+16:      &lt;sequence>
+17:
+18:        &lt;import machine="ImportMachine"
+19:          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+20:
+21:        &lt;iterate var="parm1" in="test_process_times" indexvar="index">
+22:
+23:          &lt;sequence>
+24:
+25:            &lt;timer duration="'20s'">
+26:
+27:              &lt;call function="'main'">{ 'parms' : '%s 1 0' % parm1 }&lt;/call>
+28:
+29:            &lt;/timer>
+30:
+31:            &lt;if expr="RC == 1">
+32:              &lt;message log="1">
+33:                'Test # %s still running after timer the expired' % index
+34:              &lt;/message>
+35:              &lt;elseif expr="RC == 0">
+36:                &lt;message log="1">
+37:                  'Test # %s ended before the timer expired' % index
+38:                &lt;/message>
+39:              &lt;/elseif>
+40:            &lt;/if>
+41:
+42:          &lt;/sequence>
+43:
+44:        &lt;/iterate>
+45:
+46:      &lt;/sequence>
+47:
+48:    &lt;/function>
+49:
+50:  &lt;/stax>
+</screen>
+
+<para>
+Notice on line 25 that we have a <command>timer</command> element, and we
+have specified the "duration" attribute as '20s' to indicate that we want the
+contents of the <command>timer</command> to be executed up to 20 seconds.
+If the contents of the <command>timer</command> were still executing after 20
+seconds, then they will be terminated and the RC variable will be set to 1.  If
+the contents finished before 20 seconds, then the RC variable will be set to 0.
+This gives you control over how to gauge whether the contents of the
+<command>timer</command> were successful or not.
+</para>
+
+<para>
+Also notice that on line 21 we have an <command>iterate</command> element.
+It is used to execute its contents while iterating over a list of data.  On line
+8 we have a <command>script</command> element that defines the variable
+test_process_times, which is set to a list of 3 strings ('30', '10', and '25').
+These values represent the first parameter that will be passed to the
+TestProcess (the number of loops it should execute).  In the
+<command>iterate</command> element on line 21, we are specifying the
+test_process_times variable as the value for the "in" attribute.  This means
+that we will execute the contents of the <command>iterate</command> 3 times
+(because the test_process_times list contains 3 items).  We have also specified
+the "indexvar" attribute to be "index", so that we can refer to the current
+index number (0-based).  We have also specified the "var" attribute as "parm1".
+This allows us to refer to the current item in the list over which we are
+iterating. On line 27, when we call the function, we pass it parm1 as the first
+parameter.
+</para>
+
+<para>
+So, first we will call the function with parameters "30 1 0".  Since the
+<command>timer</command> duration is 20 seconds, the timer will expire and
+the process will be termianted, and RC will be set to 1.  Next, we will then
+call the function with parameters "10 1 0", and when it is complete (even
+though the timer's duration of 20 seconds has not been reached, the 
+<command>timer</command> will complete and RC will be set to 0.  Lastly, we
+ will call the function with parameters "25 1 0", and since the
+ <command>timer</command> duration is 20 seconds the timer will expire and
+the process will be termianted, and RC will be set to 1.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-50
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), and save the file as Timer.xml.  Go to the main STAX Monitor
+panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the Timer.xml file.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  After the STAX job completes, your STAX Monitor window
+should look like the following:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon61.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+<screen></screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Sending email in a STAX job</title>
+
+<para>
+Now let's look at how you can send email in STAX jobs:
+</para>
+
+<screen>
+1:   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+2:   &lt;!DOCTYPE stax SYSTEM "stax.dtd">
+3:
+4:   &lt;stax>
+5:
+6:     &lt;script>
+7:       from com.ibm.staf import STAFUtil
+8:       emailTo = 'user@company.com'
+9:       emailSubject = 'This is a test of STAX and the email service'
+10:      emailMessage = ('Hello\n\nSTAX Job ID %s Email test ' % STAXJobID +
+11:                     'successful!\n\nCheers!')
+12:    &lt;/script>
+13:
+14:    &lt;defaultcall function="email_example"/>
+15:
+16:    &lt;function name="email_example">
+17:
+18:      &lt;sequence>
+19:
+20:        &lt;stafcmd name="'Sending email'">
+21:          &lt;location>'local'&lt;/location>
+22:          &lt;service>'email'&lt;/service>
+23:          &lt;request>
+24:            'send to %s subject %s message %s' % (emailTo, \
+25:              STAFUtil.wrapData(emailSubject), STAFUtil.wrapData(emailMessage))
+26:          &lt;/request>
+27:        &lt;/stafcmd>
+28:
+29:        &lt;message log="1">'Email RC=%s, Result=%s' % (RC, STAFResult)&lt;/message>
+30:
+31:      &lt;/sequence>
+32:
+33:    &lt;/function>
+34:
+35:  &lt;/stax>
+</screen>
+
+<para>
+In this example, on line 20 we have a <command>stafcmd</command> that calls
+the Email service with a SEND request.  On line 6 we have a
+<command>script</command> that defines some variables for the email.  In this
+example, we are actually going to call some Java classes.  On line 7, we are
+importing the STAFUtil class (so that we can later call one of its methods).
+Line 10 demonstrates one way to continue a Python statement on multiple lines.
+You can enclose the statement with paranthesis.
+</para>
+
+<para>
+Line 24 demonstrates another way to continue a Python statement on multiple
+lines.  You can use place the "\" character at the end of line you wish to
+continue on the next line.  On line 25 we are calling the STAFUtil.wrapData
+method twice, and passing the emailSubject and emailMessage variables.  This
+method converts the string into a known format for STAF, so that you don't need
+to worry about embedded spaces or special characters.  It is quite useful when
+sending requests to STAF services.
+</para>
+
+<para>
+Open your favorite text editor, or use an XML editor such as
+<ulink url="http://www.xmlcooktop.com/">Cooktop</ulink>, copy/paste lines 1-35
+(delete the first five characters on each line, to get rid of the line numbers
+and whitespace), change line 8 to be your email address instead of
+"user@company.com", and save the file as Email.xml.  Go to the main STAX Monitor
+panel, and click on the "Submit New Job..." button.  For "XML Job File"
+"Filename:", enter the full path to the Email.xml file.
+</para>
+
+<para>Next, click on the "Test" button to check the STAX job for
+XML and Python errors.  You should see a "Validation Successful" popup.  Next,
+click on the "Submit New Job" button.  You should see a new STAX Monitor window
+for this STAX job.  After the STAX job completes, your STAX Monitor window
+should look like the following:
+</para>
+
+<figure>
+<mediaobject>
+<imageobject><imagedata fileref="mon62.gif" format="GIF"/></imageobject>
+</mediaobject>
+</figure>
+
+<para>
+Now check your email inbox and you should see an email similar to:
+</para>
+
+<screen>
+Subject: This is a test of STAX and the email service
+
+******************************************************************
+* DO NOT RESPOND TO THE SERVICE MACHINE THAT GENERATED THIS NOTE *
+******************************************************************
+
+Hello
+
+STAX Job ID 71 Email test successful!
+
+Cheers!
+</screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Starting STAX jobs via EventManager</title>
+
+<para>
+Now let's look at how you automatically start STAX jobs via the EventManager
+service.  Here is the command line request to execute the email STAX job from
+the previous section:
+</para>
+
+<screen>
+staf local stax execute file c:/STAF/services/stax/Email.xml
+</screen>
+
+<para>
+Execute this from the command line, and verify that you receive the email.
+</para>
+
+<para>
+Now let's register the same STAX request with the EventManager service, and
+then generate the event:
+</para>
+
+<screen>
+staf local eventmanager register machine local service stax request "execute file c:/STAF/services/stax/Email.xml" type abc subtype xyz
+staf local event generate type abc subtype xyz
+</screen>
+
+<para>
+The first command will return the EventManager ID associated with that request
+(most likely 1 since this is the first EventManager registration you have
+submitted).  The second command will generate an event with type "abc" and
+subtype "xyz", and will trigger the EventManager service to execute the STAX
+job.  Verify that you receive the email.  This is how you can automatically
+start your STAX jobs based on events (such as a product build event).
+</para>
+
+<para>
+Also note that the EventManager registrations are persistent (they will still
+be registered even after your restart STAF or reboot the machine).  So, let's
+run the following command to unregister this request:
+</para>
+
+<screen>
+staf local eventmanager unregister id 1
+</screen>
+
+</qandadiv>
+
+<qandadiv>
+<title>Starting STAX jobs via Cron</title>
+
+<para>
+You can use the Cron service start your STAX jobs at certain times (12:00AM, for
+example).  In this sample we will execute the email STAX job every minute.
+</para>
+
+<para>
+Run the following command to register with the Cron service:
+</para>
+
+<screen>
+staf local cron register minute ANY machine local service stax request "execute file c:/STAF/services/stax/Email.xml"
+</screen>
+
+<para>
+Since we have specified "minute ANY", the Cron service will execute the STAX job
+every minute.  In addition to MINUTE, the other options you can specify are
+HOUR, DAY, MONTH, and WEEKDAY.
+</para>
+
+<para>
+Verify that you are now receiving the email every minute.
+</para>
+
+<para>
+Also note that the Cron registrations are persistent (they will still
+be registered even after your restart STAF or reboot the machine).  So, let's
+run the following command to unregister this request:
+</para>
+
+<screen>
+staf local cron unregister id 1
+</screen>
+
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>Appendix: Sample STAX jobs</title>
+
+<qandadiv>
+<title>DoesNothing.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+    &lt;nop/>
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>RunNotepadProcess.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;process>
+      &lt;location>'local'&lt;/location>
+      &lt;command>'notepad'&lt;/command>
+    &lt;/process>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>RunDelayRequest.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;stafcmd>
+      &lt;location>'local'&lt;/location>
+      &lt;service>'delay'&lt;/service>
+      &lt;request>'delay 30000'&lt;/request>
+    &lt;/stafcmd>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>CheckSTAFCmdRC.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;sequence>
+
+      &lt;stafcmd>
+        &lt;location>'local'&lt;/location>
+        &lt;service>'var'&lt;/service>
+        &lt;request>'resolve string {STAF/Config/OS/Name}'&lt;/request>
+      &lt;/stafcmd>
+
+      &lt;if expr="RC != 0">
+        &lt;message>'Oops, RC = %s, Result = %s' % (RC, STAFResult)&lt;/message>
+        &lt;else>
+          &lt;message>'Great!  STAF/Config/OS/Name = %s' % (STAFResult)&lt;/message>
+        &lt;/else>
+      &lt;/if>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>RunTestProcess.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;sequence>
+
+      &lt;process name="'My Test Process'">
+        &lt;location>'local'&lt;/location>
+        &lt;command>'java'&lt;/command>
+        &lt;parms>'com.ibm.staf.service.stax.TestProcess 10 3 99'&lt;/parms>
+        &lt;env>
+          'CLASSPATH=C:/STAF/bin/JSTAF.jar;C:/STAF/services/stax/STAXMon.jar'
+        &lt;/env>
+        &lt;stderr mode="'stdout'"/>
+        &lt;returnstdout/>
+      &lt;/process>
+
+      &lt;if expr="RC != 0">
+        &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+        &lt;else>
+          &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+        &lt;/else>
+      &lt;/if>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>UsingScripts.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;script>
+    jstafJar = '{STAF/Config/STAFRoot}/bin/JSTAF.jar'
+    staxmonJar = '{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'
+    machine = 'local'
+    java_command = 'java'
+    java_class = 'com.ibm.staf.service.stax.TestProcess'
+    loopCount = 10
+    incSeconds = 3
+    returnCode = 50
+    parms = '%s %s %s' % (loopCount, incSeconds, returnCode)
+    cp = 'CLASSPATH=%s;%s' % (jstafJar, staxmonJar)
+  &lt;/script>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;sequence>
+
+      &lt;process name="'My Test Process'">
+        &lt;location>machine&lt;/location>
+        &lt;command>java_command&lt;/command>
+        &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+        &lt;env>cp&lt;/env>
+        &lt;stderr mode="'stdout'"/>
+        &lt;returnstdout/>
+      &lt;/process>
+
+      &lt;if expr="RC != 0">
+        &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+        &lt;else>
+          &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+        &lt;/else>
+      &lt;/if>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>FunctionParameters.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;function-prolog>
+      This function is used as an example in the "Getting Started with STAX"
+      document.  It starts the TestProcess, and allows the parms, machine,
+      java_command, java_class, processName, and classpath to be passed as
+      arguments to the function.
+    &lt;/function-prolog>
+
+    &lt;function-map-args>
+      &lt;function-required-arg name="parms">
+        The three parameters to pass to the process.
+      &lt;/function-required-arg>
+      &lt;function-optional-arg name="machine" default="'local'">
+        The name of machine where the test process should run.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="java_command" default="'java'">
+        The name of java executable that should be used to execute the test
+        process.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="java_class"
+          default="'com.ibm.staf.service.stax.TestProcess'">
+        The name of java class for the test process.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="processName" default="'My Test Process'">
+        The name of the process.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="classpath"
+          default="'{STAF/Config/STAFRoot}/bin/JSTAF.jar;{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'">
+        The CLASSPATH that should be used when the test process is started..
+      &lt;/function-optional-arg>
+    &lt;/function-map-args>
+
+    &lt;sequence>
+
+      &lt;process name="processName">
+        &lt;location>machine&lt;/location>
+        &lt;command>java_command&lt;/command>
+        &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+        &lt;env>'CLASSPATH=%s' % classpath&lt;/env>
+        &lt;stderr mode="'stdout'"/>
+        &lt;returnstdout/>
+      &lt;/process>
+
+      &lt;if expr="RC != 0">
+        &lt;message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)&lt;/message>
+        &lt;else>
+          &lt;message>'Process RC was 0.  STAXResult=%s' % STAXResult&lt;/message>
+        &lt;/else>
+      &lt;/if>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>FunctionParametersLogging.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="main"/>
+
+  &lt;function name="main">
+
+    &lt;function-prolog>
+      This function is used as an example in the "Getting Started with STAX"
+      document.  It starts the TestProcess, and allows the parms, machine,
+      java_command, java_class, processName, and classpath to be passed as
+      arguments to the function.
+    &lt;/function-prolog>
+
+    &lt;function-map-args>
+      &lt;function-required-arg name="parms">
+        The three parameters to pass to the process.
+      &lt;/function-required-arg>
+      &lt;function-optional-arg name="machine" default="'local'">
+        The name of machine where the test process should run.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="java_command" default="'java'">
+        The name of java executable that should be used to execute the test
+        process.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="java_class"
+          default="'com.ibm.staf.service.stax.TestProcess'">
+        The name of java class for the test process.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="processName" default="'My Test Process'">
+        The name of the process.
+      &lt;/function-optional-arg>
+      &lt;function-optional-arg name="classpath"
+          default="'{STAF/Config/STAFRoot}/bin/JSTAF.jar;{STAF/Config/STAFRoot}/services/stax/STAXMon.jar'">
+        The CLASSPATH that should be used when the test process is started..
+      &lt;/function-optional-arg>
+    &lt;/function-map-args>
+
+    &lt;sequence>
+
+      &lt;process name="'%s with parms %s' % (processName, parms)">
+        &lt;location>machine&lt;/location>
+        &lt;command>java_command&lt;/command>
+        &lt;parms>'%s %s' % (java_class, parms)&lt;/parms>
+        &lt;env>'CLASSPATH=%s' % classpath&lt;/env>
+        &lt;stderr mode="'stdout'"/>
+        &lt;returnstdout/>
+      &lt;/process>
+
+      &lt;if expr="RC != 0">
+        &lt;message log="1" level="'Error'">
+          '%s with parms %s Error: RC=%s, STAXResult=%s' % \
+            (processName, parms, RC, STAXResult)
+        &lt;/message>
+        &lt;else>
+          &lt;message log="1">
+            'SUCCESS %s with parms %s\nSTAXResult=%s' % \
+              (processName, parms, STAXResult)
+          &lt;/message>
+        &lt;/else>
+      &lt;/if>
+
+      &lt;return>RC&lt;/return>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>ImportFunction.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="begin_tests"/>
+
+  &lt;script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  &lt;/script>
+
+  &lt;function name="begin_tests">
+
+    &lt;sequence>
+
+      &lt;import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      &lt;call function="'main'">{ 'parms' : '9 2 7' }&lt;/call>
+
+      &lt;call function="'main'">{ 'parms' : '2 9 15' }&lt;/call>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>Block.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="begin_tests"/>
+
+  &lt;script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  &lt;/script>
+
+  &lt;function name="begin_tests">
+
+    &lt;block name="'SVT_Regression'">
+
+      &lt;sequence>
+
+        &lt;import machine="ImportMachine"
+          file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+        &lt;call function="'main'">{ 'parms' : '30 1 0' }&lt;/call>
+
+        &lt;call function="'main'">{ 'parms' : '15 2 0' }&lt;/call>
+
+      &lt;/sequence>
+
+    &lt;/block>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>Parallel.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="begin_tests"/>
+
+  &lt;script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  &lt;/script>
+
+  &lt;function name="begin_tests">
+
+    &lt;sequence>
+
+      &lt;import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      &lt;block name="'Run Processes in Parallel'">
+
+        &lt;parallel>
+
+          &lt;call function="'main'">{ 'parms' : '40 1 0' }&lt;/call>
+          &lt;call function="'main'">{ 'parms' : '15 2 0' }&lt;/call>
+          &lt;call function="'main'">{ 'parms' : '10 2 0' }&lt;/call>
+
+        &lt;/parallel>
+
+      &lt;/block>
+
+      &lt;call function="'main'">{ 'parms' : '5 3 0' }&lt;/call>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>Loop.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="begin_tests"/>
+
+  &lt;script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+  &lt;/script>
+
+  &lt;function name="begin_tests">
+
+    &lt;sequence>
+
+      &lt;import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      &lt;loop from="1" to="3" var="index">
+
+        &lt;block name="'Block #%s' % index">
+
+          &lt;call function="'main'">{ 'parms' : '10 %s 0' % index }&lt;/call>
+
+        &lt;/block>
+
+      &lt;/loop>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>Testcase.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="begin_tests"/>
+
+  &lt;script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+    from random import randint
+  &lt;/script>
+
+  &lt;function name="begin_tests">
+
+    &lt;sequence>
+
+      &lt;import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      &lt;loop from="1" to="10">
+
+        &lt;testcase name="'Test Process'">
+
+          &lt;sequence>
+
+            &lt;script>r = randint(1, 100)&lt;/script>
+
+            &lt;call function="'main'">{ 'parms' : '1 1 %s' % r }&lt;/call>
+
+            &lt;if expr="STAXResult &amp;lt;= 50">
+              &lt;tcstatus result="'pass'"/>
+              &lt;else>
+                &lt;tcstatus result="'fail'"/>
+              &lt;/else>
+            &lt;/if>
+
+          &lt;/sequence>
+
+        &lt;/testcase>
+
+      &lt;/loop>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>Timer.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="begin_tests"/>
+
+  &lt;script>
+    ImportMachine = 'local'
+    ImportDirectory = '{STAF/Config/STAFRoot}/services/stax'
+    test_process_times = ['30', '10', '25']
+  &lt;/script>
+
+  &lt;function name="begin_tests">
+
+    &lt;sequence>
+
+      &lt;import machine="ImportMachine"
+        file="'%s/FunctionParametersLogging.xml' % ImportDirectory"/>
+
+      &lt;iterate var="parm1" in="test_process_times" indexvar="index">
+
+        &lt;sequence>
+
+          &lt;timer duration="'20s'">
+
+            &lt;call function="'main'">{ 'parms' : '%s 1 0' % parm1 }&lt;/call>
+
+          &lt;/timer>
+
+          &lt;if expr="RC == 1">
+            &lt;message log="1">
+              'Test # %s still running after timer the expired' % index
+            &lt;/message>
+            &lt;elseif expr="RC == 0">
+              &lt;message log="1">
+                'Test # %s ended before the timer expired' % index
+              &lt;/message>
+            &lt;/elseif>
+          &lt;/if>
+
+        &lt;/sequence>
+
+      &lt;/iterate>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+<qandadiv>
+<title>Email.xml</title>
+<screen>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">
+
+&lt;stax>
+
+  &lt;script>
+    from com.ibm.staf import STAFUtil
+    emailTo = 'user@company.com'
+    emailSubject = 'This is a test of STAX and the email service'
+    emailMessage = ('Hello\n\nSTAX Job ID %s Email test ' % STAXJobID +
+                   'successful!\n\nCheers!')
+  &lt;/script>
+
+  &lt;defaultcall function="email_example"/>
+
+  &lt;function name="email_example">
+
+    &lt;sequence>
+
+      &lt;stafcmd name="'Sending email'">
+        &lt;location>'local'&lt;/location>
+        &lt;service>'email'&lt;/service>
+        &lt;request>
+          'send to %s subject %s message %s' % (emailTo, \
+           STAFUtil.wrapData(emailSubject), STAFUtil.wrapData(emailMessage))
+        &lt;/request>
+      &lt;/stafcmd>
+
+      &lt;message log="1">'Email RC=%s, Result=%s' % (RC, STAFResult)&lt;/message>
+
+    &lt;/sequence>
+
+  &lt;/function>
+
+&lt;/stax>
+</screen>
+</qandadiv>
+
+</qandadiv>
+
+<qandadiv>
+<title>End of Document</title>
+</qandadiv>
+ 
+</qandaset>
+
+</article>

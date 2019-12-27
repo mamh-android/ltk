@@ -1,0 +1,1533 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="ImportTests"/>
+
+  <script>machName = "local"</script>
+  
+  <script>xmlFileDir = "c:\\dev\\sf\\src\\staf\\services\\stax\\test\\"</script>
+  
+  <script>
+    scenarioList = ['Scenario01','Scenario02','Scenario03','Scenario04',
+                    'Scenario05','Scenario06','Scenario07','Scenario08',
+                    'Scenario09','Scenario10','Scenario11','Scenario12',
+                    'Scenario13','Scenario14','Scenario15','Scenario16',
+                    'Scenario17','Scenario18','Scenario19','Scenario20',
+                    'Scenario21','Scenario22','Scenario23','Scenario24',
+                    'Scenario25','Scenario26','Scenario27','Scenario28',
+                    'Scenario29','Scenario30','Scenario31','Scenario32',
+                    'Scenario33','Scenario34','Scenario35']
+  </script>
+
+  <script>RC = 0</script>
+  <script>currentFunction = "importtests"</script>
+  <script>expectedFunctionNotFoundMsg = ""</script>
+  <script>expectedSTAXSignalDataType = ""</script>
+  <script>expectedSTAXSignalDataText = ""</script>
+  <script>expectedSTAXResult = ""</script>
+    
+  <function name="ImportTests"> 
+        
+    <block name = "'Import Element Tests '">    
+    
+      <sequence>
+      
+        <message>
+          'Starting import test'
+        </message>
+
+        <script>import string</script>
+
+        <iterate var="scenarioName" in="scenarioList" indexvar="i">
+        
+          <testcase name='scenarioName'>        
+          
+            <call function='scenarioName'/>              
+            
+          </testcase>
+          
+        </iterate>
+
+        <message>
+          'Finishing import test'
+        </message>
+        
+        <message>
+          'There should be 131 passes, 0 fails'
+        </message>
+      
+      </sequence>
+          
+    </block>
+    
+  </function>
+  
+  <function name="ExistingFunction">
+  
+    <sequence>
+    
+        <message>"ExistingFunction is executing from file import.xml"</message>
+        
+        <script>currentFunction = "ExistingFunction"</script>
+        
+    </sequence>
+    
+  </function>
+  
+  <function name="AnotherExistingFunction">
+  
+    <sequence>
+    
+        <message>"AnotherExistingFunction is executing from file import.xml"</message>
+        
+        <script>currentFunction = "AnotherExistingFunction"</script>
+        
+    </sequence>
+    
+  </function>
+
+  <function name="Scenario01">
+
+    <block name="'Scenario1Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary1.xml" % xmlFileDir</script>
+
+        <message>"Scenario1\n&lt;import machine=local file=%s>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+        </import>
+
+        <script>expectedSTAXResult = "[None, ['FunctionA1', 'FunctionB1', 'FunctionC1', 'FunctionD1'], [], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>callFunction = "FunctionA1"</script>                
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionB1"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionC1"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD1"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+ <function name="Scenario02">
+
+    <block name="'Scenario2Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary2.xml" % xmlFileDir</script>
+
+        <message>"Scenario2\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionC2\",\"FunctionD2\"&lt;import-include>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-include>["FunctionC2","FunctionD2"]</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC2', 'FunctionD2'], [], [], [], ['FunctionA2', 'FunctionB2'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC2"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD2"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "Function does not exist: FunctionA2"</script>
+        <script>callFunction = "FunctionA2"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB2\"/>"</script>
+        <script>callFunction = "FunctionB2"</script>
+        <call function='callFunction'/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario03">
+
+    <block name="'Scenario3Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary3.xml" % xmlFileDir</script>
+
+        <message>"Scenario3\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionC3\",\"FunctionD3\">&lt;import-include>\n    &lt;import-exclude>\"FunctionA3\"&lt;import-exclude>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>
+          <import-include>["FunctionC3","FunctionD3"]</import-include>
+          <import-exclude>"FunctionA3"</import-exclude>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC3', 'FunctionD3'], [], [], [], ['FunctionA3', 'FunctionB3'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC3"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD3"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA3\"/>"</script>
+        <script>callFunction = "FunctionA3"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB3\"/>"</script>
+        <script>callFunction = "FunctionB3"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario04">
+
+    <block name="'Scenario4Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary4.xml" % xmlFileDir</script>
+
+        <message>"Scenario4\n&lt;import machine=local file=%s/>" % file
+        </message>
+                
+        <import machine="'local'" file='file'/>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA4', 'FunctionB4', 'FunctionC4', 'FunctionD4'], [], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionA4"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionB4"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionC4"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD4"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+ 
+  <function name="Scenario05">
+
+    <block name="'Scenario5Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary5.xml" % xmlFileDir</script>
+
+        <message>"Scenario2\n&lt;import machine=local file=%s>\n    &lt;import-include>[\"FunctionC5\",\"FunctionD5\"]&lt;import-include>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-include>["FunctionC5","FunctionD5"]</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC5', 'FunctionD5'], [], [], [], ['FunctionA5', 'FunctionB5'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC5"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD5"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA5\"/>"</script>
+        <script>callFunction = "FunctionA5"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB5\"/>"</script>
+        <script>callFunction = "FunctionB5"</script>
+        <call function='callFunction'/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+ 
+  <function name="Scenario06">
+
+    <block name="'Scenario6Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary6.xml" % xmlFileDir</script>
+
+        <message>"Scenario3\n&lt;import machine=local file=%s>\n    &lt;import-include>[\"FunctionC6\",\"FunctionD6\"]>&lt;import-include>\n    &lt;import-exclude>[\"FunctionD6\"]&lt;import-exclude>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>
+          <import-include>["FunctionC6","FunctionD6"]</import-include>
+          <import-exclude>["FunctionD6"]</import-exclude>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC6'], [], [], [], ['FunctionA6', 'FunctionB6', 'FunctionD6'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC6"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionD6\"/>"</script>
+        <script>callFunction = "FunctionD6"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA6\"/>"</script>
+        <script>callFunction = "FunctionA6"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB6\"/>"</script>
+        <script>callFunction = "FunctionB6"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+ 
+  <function name="Scenario07">
+
+    <block name="'Scenario7Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary7.xml" % xmlFileDir</script>
+
+        <message>"Scenario7\n&lt;import machine=local file=%s>\n    &lt;import-exclude>\"FunctionA7\",\"FunctionB7\"&lt;import-exclude>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-exclude>["FunctionA7","FunctionB7"]</import-exclude>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC7', 'FunctionD7'], [], [], [], ['FunctionA7', 'FunctionB7'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA7\"/>"</script>
+        <script>callFunction = "FunctionA7"</script>
+        <call function='callFunction'/> 
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB7\"/>"</script>
+        <script>callFunction = "FunctionB7"</script>
+        <call function='callFunction'/>
+        
+        <script>callFunction = "FunctionC7"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD7"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario08">
+
+    <block name="'Scenario8Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary8.xml" % xmlFileDir</script>
+
+        <message>"Scenario8\n&lt;import machine=local file=%s>\n    &lt;import-include/>\n    &lt;import-exclude/>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include/>
+          <import-exclude/>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA8', 'FunctionB8', 'FunctionC8', 'FunctionD8'], [], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionA8"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionB8"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionC8"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD8"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario09">
+
+    <block name="'Scenario9Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary9.xml" % xmlFileDir</script>
+
+        <message>"Scenario9\n&lt;import machine=local file=%s>\n    &lt;import-include>&lt;/import-include>\n    &lt;import-exclude>&lt;/import-exclude>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include></import-include>
+          <import-exclude></import-exclude>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA9', 'FunctionB9', 'FunctionC9', 'FunctionD9'], [], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionA9"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionB9"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionC9"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD9"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario10">
+
+    <block name="'Scenario10Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary10.xml" % xmlFileDir</script>
+
+        <message>"Scenario10\n&lt;import machine=local file=%s>\n    &lt;import-include/>\n    &lt;import-exclude>\"FunctionA10\",\"FunctionB10\"&lt;/import-exclude>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include/>
+          <import-exclude>["FunctionA10","FunctionB10"]</import-exclude>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC10', 'FunctionD10'], [], [], [], ['FunctionA10', 'FunctionB10'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA10\"/>"</script>
+        <script>callFunction = "FunctionA10"</script>
+        <call function='callFunction'/> 
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB10\"/>"</script>
+        <script>callFunction = "FunctionB10"</script>
+        <call function='callFunction'/>
+        
+        <script>callFunction = "FunctionC10"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD10"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario11">
+
+    <block name="'Scenario11Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary1.xml" % xmlFileDir</script>
+
+        <message>"Scenario11\n&lt;import machine=unknown file=%s/>" % file
+        </message>
+       
+        <script>expectedSTAXSignalDataType = STAXNoResponseFromMachine</script>
+        <script>
+          expectedSTAXSignalDataText = "Error submitting a STAF request to machine unknown to get file %s" % (file) + \
+              ", RC: 16, Result: STAFConnectionProviderConnect: Timed out connecting to endpoint: select() " + \
+              "timeout: 22, Endpoint: ssl://unknown"
+        </script>
+         
+        <import machine="'unknown'" file='file'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario12">
+
+    <block name="'Scenario12Block'"> 
+
+     <sequence>      
+
+        <script>file = "%sunknown.xml" % xmlFileDir</script>
+
+        <message>"Scenario12\n&lt;import machine=local file=%s/>" % file
+        </message>
+       
+        <script>expectedSTAXSignalDataType = STAXFileCopyError</script>
+        <script>expectedSTAXSignalDataText = "FS GET request to import file \"%s\" from machine \"local\" failed, RC: 48, Result: File %s does not exist" % (file, file)</script>
+         
+        <import machine="'local'" file='file'/>
+      
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario13">
+
+    <block name="'Scenario13Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary1.xml" % xmlFileDir</script>
+
+        <message>"Scenario13\n&lt;import machine=local file=%s>\n    &lt;import-include>\"UnknownFunction\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"UnknownFunction"</import-include>
+        </import>
+       
+        <script>expectedSTAXResult = "[None, [], [], [], [], ['FunctionA1', 'FunctionB1', 'FunctionC1', 'FunctionD1'], ['UnknownFunction']]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"UnknownFunction\"/>"</script>
+        <script>callFunction = "UnknownFunction"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+ 
+  <function name="Scenario14">
+
+    <block name="'Scenario14Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary11.xml" % xmlFileDir</script>
+
+        <message>"Scenario14\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionC11\",\"FunctionD11\",\"ExistingFunction\",\"FunctionA11\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-include>["FunctionC11","FunctionD11","ExistingFunction","FunctionA11"]</import-include>
+        </import>
+       
+        <script>expectedSTAXResult = "[None, ['FunctionA11', 'FunctionC11', 'FunctionD11'], [], ['ExistingFunction'], [], ['FunctionB11'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC11"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD11"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "ExistingFunction"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+        <script>callFunction = "FunctionA11"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario15">
+
+    <block name="'Scenario15Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary12.xml" % xmlFileDir</script>
+
+        <message>"Scenario15\n&lt;import machine=local file=%s mode=ignore>\n    &lt;import-include>\"FunctionC12\",\"FunctionD12\",\"ExistingFunction\",\"FunctionA12\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file' mode="'ignore'">            
+          <import-include>["FunctionC12","FunctionD12","ExistingFunction","FunctionA12"]</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA12', 'FunctionC12', 'FunctionD12'], [], ['ExistingFunction'], [], ['FunctionB12'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC12"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD12"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "ExistingFunction"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+        <script>callFunction = "FunctionA12"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario16">
+  
+    <block name="'Scenario16Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary13.xml" % xmlFileDir</script>
+
+        <message>"Scenario16\n&lt;import machine=local file=%s mode=error>\n    &lt;import-include>\"FunctionC13\",\"FunctionD13\",\"ExistingFunction\",\"FunctionA13\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+
+        <script>expectedSTAXSignalData = "&lt;import machine=\"local\" file=\"%s\" mode=\"error\">[[\"FunctionC13\",\"FunctionD13\",\"ExistingFunction\",\"FunctionA13\"]]\n&lt;/import> Functions already exist: [ExistingFunction]" % file</script>
+        
+        <import machine="'local'" file='file' mode="'error'">            
+          <import-include>["FunctionC13","FunctionD13","ExistingFunction","FunctionA13"]</import-include>
+        </import>
+       
+        <script>expectedSTAXResult = "[None, ['FunctionA13', 'FunctionC13', 'FunctionD13'], [], ['ExistingFunction'], [], ['FunctionB13'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC13"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD13"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "ExistingFunction"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+        <script>callFunction = "FunctionA13"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario17">
+  
+    <block name="'Scenario17Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary14.xml" % xmlFileDir</script>
+
+        <message>"Scenario17\n&lt;import machine=local file=%s mode=error>\n    &lt;import-include>\"ExistingFunction\",\"FunctionA14\",\"AnotherExistingFunction\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+
+        <script>expectedSTAXSignalData = "&lt;import machine=\"local\" file=\"%s\" mode=\"error\">[[\"ExistingFunction\",\"FunctionA14\",\"AnotherExistingFunction\"]]\n&lt;/import> Functions already exist: [ExistingFunction,AnotherExistingFunction]" % file</script>
+        
+        <import machine="'local'" file='file' mode="'error'">            
+          <import-include>["ExistingFunction","FunctionA14","AnotherExistingFunction"]</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA14'], [], ['AnotherExistingFunction', 'ExistingFunction'], [], ['FunctionB14', 'FunctionC14', 'FunctionD14'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "ExistingFunction"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+        <script>callFunction = "FunctionA14"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "AnotherExistingFunction"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario18">
+
+    <block name="'Scenario18Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary15.xml" % xmlFileDir</script>
+
+        <message>"Scenario18\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionA15*\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-include>"FunctionA15*"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA15A', 'FunctionA15B'], [], [], [], ['FunctionB15A', 'FunctionB15B'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionA15A"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionA15B"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB15A\"/>"</script>
+        <script>callFunction = "FunctionB15A"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB15B\"/>"</script>
+        <script>callFunction = "FunctionB15B"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario19">
+
+    <block name="'Scenario19Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary16.xml" % xmlFileDir</script>
+
+        <message>"Scenario19\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionA16.*\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-include>"FunctionA16.*"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA16A', 'FunctionA16B'], [], [], [], ['FunctionB16A', 'FunctionB16B'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionA16A"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionA16B"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB16A\"/>"</script>
+        <script>callFunction = "FunctionB16A"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB16B\"/>"</script>
+        <script>callFunction = "FunctionB16B"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario20">
+
+    <block name="'Scenario20Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary17.xml" % xmlFileDir</script>
+
+        <message>"Scenario20\n&lt;import machine=local file=%s>\n    &lt;import-exclude>\"FunctionA17.*\"&lt;/import-exclude>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-exclude>"FunctionA17.*"</import-exclude>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionB17A', 'FunctionB17B'], [], [], [], ['FunctionA17A', 'FunctionA17B'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionB17A"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionB17B"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA17A\"/>"</script>
+        <script>callFunction = "FunctionA17A"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA17B\"/>"</script>
+        <script>callFunction = "FunctionA17B"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario21">
+
+    <block name="'Scenario21Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary18.xml" % xmlFileDir</script>
+
+        <message>"Scenario21\n&lt;import machine=local file=%s>\n    &lt;import-exclude>\"FunctionA18*\"&lt;/import-exclude>\n&lt;/import>" % file
+        </message>
+        
+        <import machine="'local'" file='file'>            
+          <import-exclude>"FunctionA18*"</import-exclude>
+        </import>
+       
+        <script>expectedSTAXResult = "[None, ['FunctionB18A', 'FunctionB18B'], [], [], [], ['FunctionA18A', 'FunctionA18B'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionB18A"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionB18B"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA18A\"/>"</script>
+        <script>callFunction = "FunctionA18A"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA18B\"/>"</script>
+        <script>callFunction = "FunctionA18B"</script>
+        <call function='callFunction'/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario22">
+
+    <block name="'Scenario22Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary19.xml" % xmlFileDir</script>
+
+        <message>"Scenario22\n&lt;import machine=local file=%s>\n    &lt;import-include>FunctionA19&lt;/import-exclude>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"FunctionA19"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA19'], ['FunctionC19', 'FunctionD19'], [], [], ['FunctionB19'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>callFunction = "FunctionA19"</script>                
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD19"</script>                
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionC19"</script>                
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB19\"/>"</script>
+        <script>callFunction = "FunctionB19"</script>
+        <call function='callFunction'/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario23">
+
+    <block name="'Scenario23Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary20.xml" % xmlFileDir</script>
+
+        <message>"Scenario23\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionA20\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+
+        <script>
+          expectedSTAXSignalDataType = STAXXMLParseError
+        
+          expectedSTAXSignalDataText = """Cause: com.ibm.staf.service.stax.STAXXMLParseException
+          
+          File: %s, Machine: local
+          
+          Line 62: An element with the identifier \"FunctionXYZ\" must appear in the document.""" % (file)
+        </script>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"FunctionA20"</import-include>
+        </import>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario24">
+
+    <block name="'Scenario24Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary21.xml" % xmlFileDir</script>
+
+        <message>"Scenario24\n&lt;import machine=local file=%s>\n    &lt;import-include>FunctionA21&lt;/import-include>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"FunctionA21"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA21'], ['FunctionD21'], [], [], ['FunctionB21', 'FunctionC21'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>callFunction = "FunctionD21"</script>                
+        <call function="'FunctionA21'"/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario25">
+
+    <block name="'Scenario25Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary22.xml" % xmlFileDir</script>
+
+        <message>"Scenario25\n&lt;import machine=local file=%s>\n    &lt;import-include>FunctionA22&lt;/import-include>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"FunctionA22"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA22'], ['FunctionB22', 'FunctionC22', 'FunctionD22'], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>callFunction = "FunctionD22"</script>                
+        <call function="'FunctionA22'"/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario26">
+
+    <block name="'Scenario26Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary23.xml" % xmlFileDir</script>
+
+        <message>"Scenario26\n&lt;import machine=local file=%s>\n    &lt;import-include>FunctionA23&lt;/import-include>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"FunctionA23"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA23'], ['FunctionB23', 'FunctionC23', 'FunctionD23'], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>callFunction = "FunctionD23"</script>                
+        <call function="'FunctionA23'"/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario27">
+
+    <block name="'Scenario27Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary24.xml" % xmlFileDir</script>
+
+        <message>"Scenario27\n&lt;import machine=local file=%s>\n    &lt;import-include>FunctionA24&lt;/import-include>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+          <import-include>"FunctionA24"</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionA24'], ['FunctionB24', 'FunctionC24', 'FunctionD24'], [], [], [], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+       
+        <script>callFunction = "FunctionD24"</script>                
+        <call function="'FunctionA24'"/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario28">
+
+    <block name="'Scenario28Block'"> 
+
+     <sequence>
+
+        <message>"Scenario28\nfunctionExists('ExistingFunction')"
+        </message>                        
+        
+        <script>result = STAXPythonFunction_FunctionExists('ExistingFunction')</script> 
+       
+        <message>"Result = %s" % result</message>
+        
+        <if expr="result == 1">
+          <tcstatus result="'pass'"/>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect functionExists result'</message>               
+            </sequence>
+          </else>
+        </if>
+
+        <if expr="STAXPythonFunction_FunctionExists('ExistingFunction')">
+          <tcstatus result="'pass'"/>
+          <else>
+            <tcstatus result="'fail'"/>
+          </else>
+        </if>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario29">
+
+    <block name="'Scenario29Block'"> 
+
+     <sequence>
+
+        <message>"Scenario29\nfunctionExists('NonExistingFunction')"
+        </message>                        
+        
+        <script>result = STAXPythonFunction_FunctionExists('NonExistingFunction')</script> 
+       
+        <message>"Result = %s" % result</message>
+        
+        <if expr="result == 0">
+          <tcstatus result="'pass'"/>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect functionExists result'</message>               
+            </sequence>
+          </else>
+        </if>
+         
+        <if expr="STAXPythonFunction_FunctionExists('NonExistingFunction')">
+          <tcstatus result="'fail'"/>
+          <else>
+            <tcstatus result="'pass'"/>
+          </else>
+        </if>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario30">
+
+    <block name="'Scenario30Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary25.xml" % xmlFileDir</script>
+
+        <message>"Scenario30\n&lt;import machine=local file=%s>\n&lt;/import>" % file
+        </message>
+                
+        <import machine="'local'" file='file'>
+        </import>
+        
+        <message>'STAXResult = %s' % STAXResult</message>
+        
+        <if expr="STAXResult[0] == None">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[0]'</message>               
+            </sequence>
+          </else>
+        </if>
+
+        <if expr="STAXResult[1] == ['FunctionA25']">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[1]'</message>               
+            </sequence>
+          </else>
+        </if>
+        
+        <if expr="STAXResult[2] == []">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[2]'</message>               
+            </sequence>
+          </else>
+        </if>
+        
+        <if expr="STAXResult[3] == []">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[3]'</message>               
+            </sequence>
+          </else>
+        </if>
+        
+        <if expr="STAXResult[4] == []">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[4]'</message>               
+            </sequence>
+          </else>
+        </if>
+        
+        <if expr="STAXResult[5] == []">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[5]'</message>               
+            </sequence>
+          </else>
+        </if>
+
+        <if expr="STAXResult[6] == []">
+          <sequence>
+            <tcstatus result="'pass'"/>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[6]'</message>               
+            </sequence>
+          </else>
+        </if>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario31">
+
+    <block name="'Scenario31Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary26.xml" % xmlFileDir</script>
+
+        <message>"Scenario31\n&lt;import machine=local file=%s>\n&lt;/import>" % file
+        </message>
+        <message>"Testing nested imports"</message>
+        <message>"importing library26.xml, \nwhich imports library27.xml, \nwhich imports library28.xml"</message>
+                
+        <import machine="'local'" file='file'>
+        </import>
+        
+        <message>'STAXResult = %s' % STAXResult</message>
+        
+        <script>callFunction = "FunctionA28"</script>
+        
+        <call function="'FunctionA26'"/>                
+        
+        <call function="'PASS-if-correct-currentFunction'"/>       
+ 
+      </sequence>
+      
+    </block>
+    
+  </function> 
+
+  <function name="Scenario32">
+
+    <block name="'Scenario32Block'"> 
+
+      <sequence>      
+
+        <script>file = "%slibrary1.xml" % xmlFileDir</script>
+
+        <message>"Scenario32\n&lt;import machine=unknown file=%s mode=\"'ignore'\">\n    [None,None]\n&lt;/import>" % file
+        </message>
+       
+        <script>
+          filex = file.replace("\\", "\\\\")
+          expectedSTAXResult = "[[STAXUnique(STAXNoResponseFromMachine), 'Error submitting a STAF request to machine unknown to get file %s" % (filex) + \
+              ", RC: 16, Result: STAFConnectionProviderConnect: Timed out connecting to endpoint: select() " + \
+              "timeout: 22, Endpoint: ssl://unknown'], [], [], [], [], [], []]"
+        </script>
+         
+        <import machine="'unknown'" file='file' mode="'ignore'"/>
+        
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario33">
+
+    <block name="'Scenario33Block'"> 
+
+     <sequence>      
+
+        <script>file = "%sunknown.xml" % xmlFileDir</script>
+
+        <message>"Scenario33\n&lt;import machine=local file=%s mode=\"'ignore'\">\n    [None,None]\n&lt;/import>" % file
+        </message>
+
+        <script>expectedSTAXResult = "FS GET request to import file \"%s\" from machine \"local\" failed, RC: 48, Result: File %s does not exist" % (file, file)</script>
+         
+        <import machine="'local'" file='file' mode="'ignore'"/>
+   
+        <if expr="STAXResult[0][0] is STAXFileCopyError">
+          <sequence>
+            <tcstatus result="'pass'"/>          
+            <message>'Received expected error type: %s' % STAXResult[0][0]</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[0][0]:\n%s\n\nExpected:\n%s' % (STAXResult[0][0],"STAXFileCopyError")</message>               
+            </sequence>
+          </else>
+        </if>
+        
+        <if expr="STAXResult[0][1] == expectedSTAXResult">
+          <sequence>
+            <tcstatus result="'pass'"/>          
+            <message>'Received expected error message: %s' % STAXResult[0][1]</message>
+          </sequence>
+          <else>
+            <sequence>
+              <tcstatus result="'fail'"></tcstatus>
+              <message>'ERROR: Incorrect STAXResult[0][1]:\n%s\n\nExpected:\n%s' % (STAXResult[0][1],expectedSTAXResult)</message>               
+            </sequence>
+          </else>
+        </if>        
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+  
+  <function name="Scenario34">
+
+    <block name="'Scenario34Block'"> 
+
+     <sequence>      
+
+        <script>file = "%slibrary20.xml" % xmlFileDir</script>
+
+        <message>"Scenario34\n&lt;import machine=local file=%s mode="'ignore'">\n    &lt;import-include>\"FunctionA20\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+        
+        <script>
+          filex = file.replace('\\', '\\\\')
+          expectedSTAXResult = "[[STAXUnique(STAXXMLParseError), 'Cause: com.ibm.staf.service.stax.STAXXMLParseException\\n\\nFile: %s, Machine: local\\n\\nLine 62: An element with the identifier \"FunctionXYZ\" must appear in the document.'], [], [], [], [], [], []]" % (filex)
+        </script>
+
+        <import machine="'local'" file='file' mode="'ignore'">
+          <import-include>"FunctionA20"</import-include>
+        </import>
+
+        <call function="'PASS-if-correct-STAXResult'"/>        
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <function name="Scenario35">
+    <block name="'Scenario35Block'"> 
+
+     <sequence>
+
+        <script>file = "%slibrary29.xml" % xmlFileDir</script>
+
+        <message>"Scenario35\n&lt;import machine=local file=%s>\n    &lt;import-include>\"FunctionC29\",\"FunctionD29\"&lt;/import-include>\n&lt;/import>" % file
+        </message>
+
+        <script>importData = ["FunctionC29","FunctionD29"]</script>
+        
+        <import machine="'local'" file='file'>            
+          <import-include>importData</import-include>
+        </import>
+        
+        <script>expectedSTAXResult = "[None, ['FunctionC29', 'FunctionD29'], [], [], [], ['FunctionA29', 'FunctionB29'], []]"</script>
+        <call function="'PASS-if-correct-STAXResult'"/>
+        
+        <script>callFunction = "FunctionC29"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>callFunction = "FunctionD29"</script>        
+        <call function='callFunction'/>        
+        <call function="'PASS-if-correct-currentFunction'"/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionA29\"/>"</script>
+        <script>callFunction = "FunctionA29"</script>
+        <call function='callFunction'/>
+        
+        <script>expectedFunctionNotFoundMsg = "&lt;call function=\"FunctionB29\"/>"</script>
+        <script>callFunction = "FunctionB29"</script>
+        <call function='callFunction'/>
+
+      </sequence>
+      
+    </block>
+    
+  </function>
+
+  <signalhandler signal="'STAXFunctionDoesNotExist'">
+    <sequence>
+      <script>
+        # Get the name of the function from the STAXFunctionDoesNotExist message
+        findString = 'Function does not exist: '
+        fName = ''
+        splitList1 = string.split(STAXFunctionDoesNotExistMsg, "\n")
+        for line in splitList1:
+          if string.find(line, 'Function does not exist: ') >= 0:
+            splitList2 = string.split(line, ": ")
+            if len(splitList2) > 1:
+              fName = splitList2[1].strip()
+              break
+      </script>
+      <if expr="fName == callFunction">
+        <sequence>        
+          <tcstatus result="'pass'"/>
+          <message>'Received expected STAXFunctionDoesNotExist signal.'</message>
+        </sequence>
+        <else>
+          <sequence>
+            <message>STAXFunctionDoesNotExistMsg</message>
+            <tcstatus result="'fail'"></tcstatus>
+            <message>'ERROR: Incorrect STAXFunctionDoesNotExistMsg:\n%s\n\nExpected:\nFunction does not exist: %s' % (string.strip(STAXFunctionDoesNotExistMsg), fName)</message>
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+  </signalhandler>
+  
+  <signalhandler signal="'STAXImportError'">
+    <sequence>
+      <message>'STAXImportErrorMsg: %s' % STAXImportErrorMsg</message>
+      <message>'STAXSignalData: %s' % STAXSignalData</message>
+      <if expr="STAXSignalData[0] is expectedSTAXSignalDataType">
+        <sequence>
+          <tcstatus result="'pass'"/>          
+          <message>'Received expected STAXSignalData[0].'</message>
+        </sequence>
+        <else>
+          <sequence>
+            <tcstatus result="'fail'"></tcstatus>
+            <message>'ERROR: Incorrect STAXSignalData[0]:\n%s\n\nExpected:\n%s' % (STAXSignalData[0],expectedSTAXSignalDataType)</message>               
+          </sequence>
+        </else>
+      </if>
+      <if expr="STAXSignalData[1] == expectedSTAXSignalDataText">
+        <sequence>
+          <tcstatus result="'pass'"/>          
+          <message>'Received expected STAXSignalData[1].'</message>
+        </sequence>
+        <else>
+          <sequence>
+            <tcstatus result="'fail'"></tcstatus>
+            <message>'ERROR: Incorrect STAXSignalData[1]:\n%s\n\nExpected:\n%s' % (STAXSignalData[1],expectedSTAXSignalDataText)</message>               
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+  </signalhandler>
+
+  <function name="PASS-if-correct-STAXResult">
+    
+    <sequence>
+      <script>
+        newSTAXResult = []
+        for i in range(7):
+          if STAXResult[i]:
+            STAXResult[i].sort()
+          newSTAXResult.append(STAXResult[i])
+        STAXResult = newSTAXResult
+      </script>
+      <if expr="str(STAXResult) == expectedSTAXResult">
+        <sequence>
+          <tcstatus result="'pass'"/>
+          <message>'STAXResult = %s' % STAXResult</message>
+        </sequence>
+        <else>
+          <sequence>
+            <tcstatus result="'fail'"></tcstatus>
+            <message>'ERROR: Incorrect STAXResult:\n%s\n\nExpected:\n%s' % (STAXResult,expectedSTAXResult)</message>               
+          </sequence>
+        </else>
+      </if>
+    </sequence>
+ 
+  </function>
+
+  <function name="PASS-if-RC-0">
+    <if expr="RC == 0">
+      <tcstatus result="'pass'"/>
+      <else>
+        <tcstatus result="'fail'">'RC=%d' % RC</tcstatus>
+      </else>
+    </if>
+  </function>
+
+  <function name="PASS-if-correct-currentFunction">
+    <if expr="currentFunction == callFunction">
+      <tcstatus result="'pass'"/>
+      <else>
+        <sequence>
+          <tcstatus result="'fail'"></tcstatus>
+          <message>'ERROR: Incorrect currentFunction: %s\n\nExpected:\n%s' % (currentFunction,callFunction)</message>               
+        </sequence>
+      </else>
+    </if>
+  </function>
+
+</stax>

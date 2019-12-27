@@ -1,0 +1,447 @@
+Feature ID  : 3082388
+Title       : Have STAX EXECUTE WAIT RETURNRESULT return error info
+
+Description
+-----------
+
+Change the result from the STAX service's EXECUTE WAIT RETURNRESULT
+and GET JOB RESULT requests to include any error messages logged in
+the STAX Job Log.
+
+
+Problem(s) Solved
+-----------------
+
+Currently, if a job terminates, you get no information on what
+caused the job to terminate (e.g. a STAXPythonEvaluationError,
+STAXImportError, etc) from a STAX EXECUTE RETURNRESULT request
+or from a STAX GET JOB RESULT request.  You have to submit a
+QUERY request to the LOG service to query the STAX job log.
+This feature puts a list of any messages logged with level
+"Error" in the STAX Job Log in the result for these requests,
+eliminating the need to submit a LOG QUERY request.
+
+
+Related Features
+----------------
+
+- #3083827: Change STAXEmptyList default signal handler to not
+            log errors
+
+  Wanted this feature to be implemented so that an error would
+  no longer be logged if iterating/paralleliterating an empty
+  list since this isn't really an error and it just cluttered
+  up the job log errors that this feature adds to the job's
+  result.
+
+
+External Changes
+----------------
+
+a) Added a "Job Log Errors" field to the result from the STAX
+   service's EXECUTE WAIT RETURNRESULT request (with or without
+   the DETAILS option) and to its GET JOG RESULT request.
+   This will contain a list of any message in the STAX Job Log
+   with level "Error".
+
+   Description of new key added to the result map for these
+   requests:
+
+   Key Name     Display Name   Type
+   ------------ -------------- ------------------------------- 
+   jobLogErrors Job Log Errors <List> of <Map:STAF/Service/Log/LogRecord>
+
+   Note:  The "Job Log Errors" value is a list of any errors
+   logged in the STAX Job Log. If the DEFAULTMAXQUERYRECORDS
+   setting for the LOG service on the STAX service machine is
+   set to a non-zero number (the default is 100), then the
+   maximum number of errors logged will be limited to this
+   number (e.g. equivalent to specifying LAST <Number> on the
+   LOG QUERY request).
+
+   The STAF/Service/Log/LogRecord map class is defined as
+   follows:
+
+   Definition of map class STAF/Service/Log/LogRecord
+   Description: This map class represents information about a
+                record logged in the STAX Job Log.
+   Key Name   Display Name  Type       Format / Value
+   ---------  ------------  ---------  ------------------
+   timestamp  Date-Time     <String>   <YYYYMMDD-HH:MM:SS> 	
+   level      Level         <String> 	
+   message    Message       <String> 	
+
+   Examples:
+
+   1) Execute a job defined by an XML file named C:\stax\job1.xml
+      and wait indefinitely for the job to complete before
+      returning the completion results for the job in the result
+      buffer.
+
+   Output: If the request is submitted from the command line
+   and the job is started successfully with job ID 1 and the
+   job completes normally, returning 0, and runs 1 testcase
+   with a total of 1 pass and 0 fails, then the result could
+   look like:
+
+   C:\>STAF local STAX EXECUTE FILE C:\stax\job1.xml WAIT RETURNRESULT
+   Response
+   --------
+   {
+     Job ID         : 1
+     Start Date-Time: 20101008-14:30:27
+     Stop Date-Time : 20101008-14:32:29
+     Status         : Normal
+     Result         : 0
+     Job Log Errors : []
+     Testcase Totals: {
+       Tests : 1
+       Passes: 1
+       Fails : 0
+     }
+   }
+
+   Or, if the job was terminated due to a STAXPythonEvaluationError
+   signal being raised because an undefined Python variable
+   (e.g. myVar) was referenced, the result could look like:
+
+   C:\>STAF local STAX EXECUTE FILE C:\stax\job1.xml WAIT RETURNRESULT
+   Response
+   --------
+   {
+     Job ID         : 1
+     Start Date-Time: 20101008-14:30:27
+     Stop Date-Time : 20101008-14:30:29
+     Status         : Terminated
+     Result         : None
+     Job Log Errors : [
+       {
+         Date-Time: 20101008-14:30:28
+         Level    : Error
+         Message  : STAXPythonEvaluationError signal raised. Terminating job.
+
+   ===== XML Information =====
+   
+   File: D:\stax\xml\JobA.xml, Machine: local://local
+   Line 32: Error in element type "script".
+
+   ===== Python Error Information =====
+
+   com.ibm.staf.service.stax.STAXPythonEvaluationException:
+   Traceback (innermost last):
+     File "", line 1, in ?
+   NameError: myVar
+
+   ===== Call Stack for STAX Thread 1 =====
+
+   [
+     function: main (Line: 8, File: C:\job1.xml, Machine: local://local)
+     sequence: 2/2 (Line: 13, File: C:\job1.xml, Machine: local://local)
+   ]
+       }
+     ]
+     Testcase Totals: {
+       Tests : 1
+       Passes: 1
+       Fails : 0
+     }
+   }
+
+   Or, if the DETAILS option was specified and the job completed
+   normally and no errors were logged, the result, could look like:
+
+   C:\>STAF local STAX EXECUTE FILE C:\stax\job1.xml WAIT RETURNRESULT DETAILS
+   Response
+   --------
+   {
+     Job ID         : 1
+     Start Date-Time: 20101008-14:30:27
+     Stop Date-Time : 20101008-14:32:29
+     Status         : Normal
+     Result         : 0
+     Job Log Errors : []
+     Testcase Totals: {
+       Tests : 1
+       Passes: 1
+       Fails : 0
+     }
+     Testcases      : [
+       {
+         Testcase Name   : client1.Test1
+         Passes          : 15
+         Fails           : 0
+         Start Date-Time : 20101008-14:30:49
+         Elapsed Time    : 00:00:19
+         Starts          : 1
+         Status Date-Time: 20101008-14:30:01
+         Last Status     : pass
+         Information     :
+         Testcase Stack  : [
+           client1
+           Test1
+         ]
+       }
+     ]
+   }
+
+   2) Get the results for job 1 after it has finished executing
+      using the GET RESULT request.
+
+   Output: If the job completed normally, returning 0, and ran
+   1 testcase with a total of 1 pass and 0 fails, then the result
+   could look like:
+
+   C:\>STAF local STAX GET RESULT JOB 1
+   Response
+   --------
+   {
+     Job Name       : My Job
+     Start Date-Time: 20101011-12:51:32
+     End Date-Time  : 20101011-12:51:34
+     Status         : Terminated
+     Result         : None
+     Job Log Errors : []
+     Testcase Totals: {
+       Tests : 0
+       Passes: 0
+       Fails : 0
+     }
+     XML File Name  : c:\stax\job1.xml
+     File Machine   : local://local
+     Function       : main
+     Arguments      : <None>
+     Scripts        : []
+     Script Files   : []
+     Script Machine : <None>
+   }
+
+   Or, if the job was terminated due to a STAXImportError
+   signal being raised because of a STAXXMLParseException
+   in the imported file, the result could look like:
+
+   C:\>STAF local STAX GET RESULT JOB 1
+   Response
+   --------
+   {
+     Job Name       : My Job
+     Start Date-Time: 20101011-12:51:32
+     End Date-Time  : 20101011-12:51:34
+     Status         : Terminated
+     Result         : None
+     Job Log Errors : [
+       {
+         Date-Time: 20101011-12:51:34
+         Level    : Error
+         Message  : STAXImportError signal raised. Terminating job.
+
+   ===== XML Information =====
+
+   File: c:\stax\commonFunctions.xml, Machine: local://local
+   com.ibm.staf.service.stax.STAXXMLParseException:
+
+   Line 11: The end-tag for element type "return" must end with a '>' delimiter.
+
+   ===== Call Stack for STAX Thread 1 =====
+
+   [
+     function: main (Line: 8, File: c:\stax\job1.xml, Machine: local://local)
+     sequence: 1/3 (Line: 9, File: c:\stax\job1.xml, Machine: local://local)
+     import: local://local:c:\stax\commonFunctions.xml:false:error: (Line: 11, File: c:\stax\job1.xml, Machine: local://local)
+   ]
+       }
+     ]
+     Testcase Totals: {
+       Tests : 0
+       Passes: 0
+       Fails : 0
+     }
+     XML File Name  : c:\stax\job1.xml
+     File Machine   : local://local
+     Function       : main
+     Arguments      : <None>
+     Scripts        : []
+     Script Files   : []
+     Script Machine : <None>
+   }
+
+   Or, if the DETAILS option was specified and the job completed
+   normally and no errors were logged, the result, could look like:
+
+   C:\>STAF local STAX GET RESULT JOB 1 DETAILS
+   Response
+   --------
+   {
+     Job Name       : My Job
+     Start Date-Time: 20101011-12:51:32
+     End Date-Time  : 20101011-12:53:34
+     Status         : Terminated
+     Result         : None
+     Job Log Errors : []
+     Testcase Totals: {
+       Tests : 0
+       Passes: 0
+       Fails : 0
+     }
+     Testcases      : [
+       {
+         Testcase Name   : client1.Test1
+         Passes          : 15
+         Fails           : 0
+         Start Date-Time : 20101011-12:51:39
+         Elapsed Time    : 00:01:02
+         Starts          : 1
+         Status Date-Time: 20101008-12:52:41
+         Last Status     : pass
+         Information     :
+         Testcase Stack  : [
+           client1
+           Test1
+         ]
+       }
+     ]
+     XML File Name  : c:\stax\job1.xml
+     File Machine   : local://local
+     Function       : main
+     Arguments      : <None>
+     Scripts        : []
+     Script Files   : []
+     Script Machine : <None>
+   }
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+services/stax/service/STAXJob.java
+services/stax/service/STAX.java
+services/stax/docs/userguide/staxug.html
+test/STAFTest.xml
+
+1) Changes to services/stax/service/STAXJob.java:
+
+   a) Added a new member variable named fJobLogErrorsMC
+      to contain the STAFMarshallingContext object
+      returned by a LOG QUERY request that queries for
+      error messages in the STAX Job Log:
+
+      private STAFMarshallingContext fJobLogErrorsMC =
+          new STAFMarshallingContext();
+
+   b) Added a getJobLogErrorsMC() method that returns
+      fJobLogErrorsMC:
+
+      public STAFMarshallingContext getJobLogErrorsMC()
+      {
+          return fJobLogErrorsMC;
+      }
+
+   c) In the addCommonFieldsToResultMap() method, which is
+      called by the writeJobResultsToFile() method, assigned
+      fJobLogErrorsMC to the value for the new "jobLogErrors"
+      key:
+
+      resultMap.put("jobLogErrors", fJobLogErrorsMC);
+
+   d) In the threadComplete() method, after logging the job
+      "Stop" message in the STAX Job Log, called the new
+      getJobLogErrors() method before calling the
+      writeJobResultsToFile() method that writes the job
+      result information to files in the STAX job directory.
+       
+      // Query its job log for any messages with level "Error".
+      // Save the result's marshalling context so it's available when
+      // writing the job result to a file and when the RETURNRESULT
+      // option is specified on a STAX EXECUTE request
+
+      fJobLogErrorsMC = getJobLogErrors();
+
+   e) Added a new private getJobLogErrors() method to query
+      the STAX Job Log for errors:
+
+      /**
+       * Query the STAX Job Log to get any messages with level "Error" that
+       * were logged for this job.
+       *
+       * @return STAFMarshallingContext Return a marshalling context for the
+       * result from the LOG QUERY request whose root object is a list of
+       * error messages.
+       */
+      private STAFMarshallingContext getJobLogErrors()
+      {
+          String jobLogName = fSTAX.getServiceName().toUpperCase() + "_Job_" +
+              getJobNumber();
+ 
+          String request = "QUERY MACHINE " + fSTAX.getLocalMachineNickname() +
+              " LOGNAME " + STAFUtil.wrapData(jobLogName) +
+              " LEVELMASK Error" +
+              " FROM " + getStartTimestamp().getTimestampString();
+ 
+          STAFResult result = fHandle.submit2("local", "LOG", request);
+ 
+          // RC 4010 from the LOG QUERY request means exceeded the default
+          // maximum query records
+ 
+          if ((result.rc == STAFResult.Ok) || (result.rc == 4010))
+              return result.resultContext;
+ 
+          // Ignore the following errors from the LOG QUERY request:
+          // - UnknownService (2) in case the LOG service is not registered
+          // - HandleDoesNotExist (5) in case the STAX job's handle has been
+          //   unregistered indicating the job has completed
+ 
+          if ((result.rc != STAFResult.UnknownService) &&
+              (result.rc != STAFResult.HandleDoesNotExist))
+          {
+              // Log an error in the JVM log
+ 
+              STAXTimestamp currentTimestamp = new STAXTimestamp();
+ 
+              System.out.println(
+                  currentTimestamp.getTimestampString() + " " +
+                  "STAXJob::getJobLogErrors() failed for Job ID: " +
+                  getJobNumber() + "\nSTAF local LOG " + request +
+                  "  RC=" + result.rc + ", Result=" + result.result);
+          }
+ 
+          return null;
+      }
+
+2) Changes to services/stax/service/STAX.java:
+
+   a) In the init() method, added a new "jobLogErrors" key to
+      the map-class for job result information:
+
+      - Added the new key to the job result returned by a
+        EXECUTE RETURNRESULT request:
+
+      fJobResultMapClass.addKey("jobLogErrors", "Job Log Errors");
+
+      - Added the new key to the detailed job result returned
+        by a EXECUTE RETURNRESULT DETAILS request:
+
+      fJobDetailedResultMapClass.addKey("jobLogErrors",
+                                        "Job Log Errors");
+
+      - Added the new key to the job result returnd by a
+        GET RESULT request:
+      
+      fResultMapClass.addKey("jobLogErrors", "Job Log Errors");
+
+      - Added to the new key to the job result returned by a
+        GET RESULT DETAILS request:
+
+      fDetailedResultMapClass.addKey("jobLogErrors", "Job Log Errors");
+
+   b) In the execute() method when handling a STAX EXECUTE WAIT
+      RETURNRESULTS [DETAILS] request, assigned the value for the
+      "jobLogErrors" key by calling job.getJobLogErrorsMC():
+
+      jobResultMap.put("jobLogErrors", job.getJobLogErrorsMC());
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

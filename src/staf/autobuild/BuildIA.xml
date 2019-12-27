@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+  <defaultcall function="BuildIAInstaller"/>
+
+  <function name="BuildIAInstaller">
+
+    <function-map-args>
+
+      <function-arg-def name="platform"
+                        type="required">
+        <function-arg-description>
+           The platform for the IA build (i.e. 'win32').
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="version"
+                        type="required">
+        <function-arg-description>
+           The STAF version (i.e. '331').
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="IAMachine"
+                        type="optional"
+                        default="'local'">
+        <function-arg-description>
+           The IA build machine.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="IARoot"
+                        type="optional"
+                        default="'C:/IA2011'">
+        <function-arg-description>
+           The IA root directory on the IA build machine.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="IAInputRoot"
+                        type="optional"
+                        default="'C:/IA_Input_Files'">
+        <function-arg-description>
+           The IA payload (input) root directory on the IA build machine.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="IAOutputRoot"
+                        type="optional"
+                        default="'C:/IA_Output_Files'">
+        <function-arg-description>
+           The IA root directory on the IA build machine.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="cygwinBashShell"
+                        type="optional"
+                        default="'c:/cygwin/bin/bash'">
+        <function-arg-description>
+           The Cygwin root directory on the IA build machine.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="cygwinBinPath"
+                        type="optional"
+                        default="'c:/cygwin/bin'">
+        <function-arg-description>
+           The Cygwin bin path on the IA build machine.
+        </function-arg-description>
+      </function-arg-def>
+
+      <function-arg-def name="ftpMachine"
+                        type="optional"
+                        default="'staf4g.austin.ibm.com'">
+        <function-arg-description>
+           The ftp machine where the installers will be copied.
+        </function-arg-description>
+      </function-arg-def>
+
+    </function-map-args>
+
+
+    <sequence>
+
+      <log  message="1">"[%s] Starting InstallAnywhere build" % (platform)</log>
+
+      <!-- For the MacOSX builds, we need to run a "BuildUNIXAll" IA build so
+           that a .bin installer is created (which supports command line
+           arguments for console/silent installs).  This means that it will
+           include all of the payload files, so we must clear out the
+           non-MacOSX directories from the payload directory prior to running
+           the MacOSX IA build.
+      -->
+      <if expr="platform == 'macosx-i386' or platform == 'macosx-ppc'">
+
+        <sequence>
+
+          <script>
+            payloadPlatforms = ['win32', 'linux', 'aix', 'solaris', 'hpux']
+          </script>
+
+          <iterate var="payLoadPlatform" in="payloadPlatforms">
+
+            <sequence>
+
+              <script>
+                deleteEntry = '%s/%s/staf' % (IAInputRoot, payLoadPlatform)
+              </script>
+
+              <stafcmd name="'DELETE ENTRY %s RECURSE CONFIRM' % deleteEntry">
+                <location>IAMachine</location>
+                <service>'FS'</service>
+                <request>'DELETE ENTRY %s RECURSE CONFIRM' % (deleteEntry)</request>
+              </stafcmd>
+
+              <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+            </sequence>
+
+          </iterate>
+
+        </sequence>
+
+      </if>
+
+      <script>
+        process = "-c 'ant'"
+        antWorkdir = "%s/projects/STAF/ant/%s" % (IARoot, platform)
+      </script>
+
+      <log message="1">'[%s] %s %s %s Workdir=%s' % (platform, IAMachine, cygwinBashShell, process, antWorkdir)</log>
+
+      <process name="'IA Ant task for %s' % (platform)">
+        <location>IAMachine</location>
+        <command>cygwinBashShell</command>
+        <parms>process</parms>
+        <workdir>antWorkdir</workdir>
+        <env>'Path=%s;{STAF/Env/Path}' % cygwinBinPath</env>
+        <stderr mode="'stdout'"/>
+        <returnstdout/>
+      </process>
+
+      <log message="1">'[%s] RC=%s, STAXResult=%s, Process=%s %s %s Workdir=%s' % (platform, RC, STAXResult[0][1], IAMachine, cygwinBashShell, process, antWorkdir)</log>
+
+      <if expr="RC != 0">
+        <return>RC</return>
+      </if>
+
+      <if expr="platform == 'win32' or platform == 'win64' or platform == 'winamd64'">
+        <script>
+          sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Windows/VM/STAF%ssetup.exe' % (IARoot, version)
+          sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Windows/NoVM/STAF%ssetup.exe' % (IARoot, version)
+
+          targetJVMFile = '%s/%s/STAF%s-setup-%s.exe' % (IAOutputRoot, platform, version, platform)
+          targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.exe' % (IAOutputRoot, platform, version, platform)
+
+          ftpJVMFile = '/root/build/%s/STAF%s-setup-%s.exe' % (platform, version, platform)
+          ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.exe' % (platform, version, platform)
+        </script>
+        <elseif expr="platform == 'linux' or platform == 'linux-ia64' or platform == 'linux-amd64' or platform == 'linux-ppc64-32' or platform == 'linux-ppc64-64' or platform == 'zlinux-32' or platform == 'zlinux-64'">
+          <script>
+            sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Linux/VM/STAF%ssetup.bin' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Linux/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetJVMFile = '%s/%s/STAF%s-setup-%s.bin' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpJVMFile = '/root/build/%s/STAF%s-setup-%s.bin' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'freebsd'">
+          <script>
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Linux/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'aix' or platform == 'aix64'">
+          <script>
+            sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/AIX/VM/STAF%ssetup.bin' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/AIX/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetJVMFile = '%s/%s/STAF%s-setup-%s.bin' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpJVMFile = '/root/build/%s/STAF%s-setup-%s.bin' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'solaris'">
+          <script>
+            sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Solaris/VM/STAF%ssetup.bin' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Solaris/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetJVMFile = '%s/%s/STAF%s-setup-%s-sparc.bin' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-sparc-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpJVMFile = '/root/build/%s/STAF%s-setup-%s-sparc.bin' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-sparc-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'solaris-x64' or platform == 'solaris-x64-64' or platform == 'solaris-sparc64' or platform == 'solaris-x86'">
+          <script>
+            sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Solaris/VM/STAF%ssetup.bin' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/Solaris/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetJVMFile = '%s/%s/STAF%s-setup-%s.bin' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpJVMFile = '/root/build/%s/STAF%s-setup-%s.bin' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'hpux' or platform == 'hpux-parisc64'">
+          <script>
+            sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/HPUX/VM/STAF%ssetup.bin' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/HPUX/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetJVMFile = '%s/%s/STAF%s-setup-%s.bin' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpJVMFile = '/root/build/%s/STAF%s-setup-%s.bin' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'hpux-ia64-32' or platform == 'hpux-ia64-64'">
+          <script>
+            sourceJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/HPUX/VM/STAF%ssetup.bin' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/HPUX/NoVM/STAF%ssetup.bin' % (IARoot, version)
+
+            targetJVMFile = '%s/%s/STAF%s-setup-%s.bin' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s-NoJVM.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpJVMFile = '/root/build/%s/STAF%s-setup-%s.bin' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s-NoJVM.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+        <elseif expr="platform == 'macosx-i386' or platform == 'macosx-ppc' or platform == 'macosx-universal'">
+          <script>
+            sourceZipFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/MacOSX/STAF%ssetup.zip' % (IARoot, version)
+            sourceNoJVMFile = '%s/projects/STAF/STAF_Build_Output/Web_Installers/InstData/GenericUnix/STAF%ssetup.bin' % (IARoot, version)
+
+            targetZipFile = '%s/%s/STAF%s-setup-%s.zip' % (IAOutputRoot, platform, version, platform)
+            targetNoJVMFile = '%s/%s/STAF%s-setup-%s.bin' % (IAOutputRoot, platform, version, platform)
+
+            ftpZipFile = '/root/build/%s/STAF%s-setup-%s.zip' % (platform, version, platform)
+            ftpNoJVMFile = '/root/build/%s/STAF%s-setup-%s.bin' % (platform, version, platform)
+          </script>
+        </elseif>
+      </if>
+
+      <if expr="platform == 'macosx-i386' or platform == 'macosx-ppc' or platform == 'macosx-universal'">
+        <sequence>
+
+          <stafcmd name="'Copying Zip File to %s' % targetZipFile">
+            <location>IAMachine</location>
+            <service>'FS'</service>
+            <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceZipFile, IAMachine, targetZipFile)</request>
+          </stafcmd>
+
+          <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+          <stafcmd name="'Copying Zip File to ftp machine as %s' % ftpZipFile">
+            <location>IAMachine</location>
+            <service>'FS'</service>
+            <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceZipFile, ftpMachine, ftpZipFile)</request>
+          </stafcmd>
+
+          <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+          <stafcmd name="'Copying NoJVM File to %s' % targetNoJVMFile">
+            <location>IAMachine</location>
+            <service>'FS'</service>
+            <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceNoJVMFile, IAMachine, targetNoJVMFile)</request>
+          </stafcmd>
+
+          <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+          <stafcmd name="'Copying NoJVM File to ftp machine as %s' % ftpNoJVMFile">
+            <location>IAMachine</location>
+            <service>'FS'</service>
+            <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceNoJVMFile, ftpMachine, ftpNoJVMFile)</request>
+          </stafcmd>
+
+          <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+        </sequence>
+        <elseif expr="platform == 'freebsd'">
+          <sequence>
+
+            <stafcmd name="'Copying NoJVM File to %s' % targetNoJVMFile">
+              <location>IAMachine</location>
+              <service>'FS'</service>
+              <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceNoJVMFile, IAMachine, targetNoJVMFile)</request>
+            </stafcmd>
+
+            <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+            <stafcmd name="'Copying NoJVM File to ftp machine as %s' % ftpNoJVMFile">
+              <location>IAMachine</location>
+              <service>'FS'</service>
+              <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceNoJVMFile, ftpMachine, ftpNoJVMFile)</request>
+            </stafcmd>
+
+            <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+          </sequence>
+        </elseif>
+        <else>
+          <sequence>
+
+            <stafcmd name="'Copying JVM File to %s' % targetJVMFile">
+              <location>IAMachine</location>
+              <service>'FS'</service>
+              <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceJVMFile, IAMachine, targetJVMFile)</request>
+            </stafcmd>
+
+            <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+            <stafcmd name="'Copying NoJVM File to %s' % targetNoJVMFile">
+              <location>IAMachine</location>
+              <service>'FS'</service>
+              <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceNoJVMFile, IAMachine, targetNoJVMFile)</request>
+            </stafcmd>
+
+            <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+            <stafcmd name="'Copying JVM File to ftp machine as %s' % ftpJVMFile">
+              <location>IAMachine</location>
+              <service>'FS'</service>
+              <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceJVMFile, ftpMachine, ftpJVMFile)</request>
+            </stafcmd>
+
+            <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+            <stafcmd name="'Copying NoJVM File to ftp machine as %s' % ftpNoJVMFile">
+              <location>IAMachine</location>
+              <service>'FS'</service>
+              <request>'COPY FILE %s TOMACHINE %s TOFILE %s' % (sourceNoJVMFile, ftpMachine, ftpNoJVMFile)</request>
+            </stafcmd>
+
+            <log message="1">'[%s] RC=%s, STAFResult=%s' % (platform, RC, STAFResult)</log>
+
+          </sequence>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+</stax>

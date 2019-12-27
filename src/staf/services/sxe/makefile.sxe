@@ -1,0 +1,47 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+sxe_class_targets =\
+  $(O)/services/sxe/STAF-INF/classes/com/ibm/staf/service/sxe/STAFSXE.class \
+  $(O)/services/sxe/MANIFEST.MF
+  
+sxe_targets += $(sxe_class_targets)\
+                $(REL)/lib/STAFSXE.jar
+                
+Targets += $(sxe_targets)
+CleanupTargets += cleanup_sxe
+
+$(sxe_targets): SUBSYS_REL := services/sxe
+SUBSYS_REL := services/sxe
+
+# Include inference rules
+include $(InferenceRules)
+
+$(sxe_targets): $(REL)/lib/JSTAF.zip
+
+SXE_CLASSPATH = $(OS_O)/services/sxe$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define SXE_JAVA_COMPILE_IT
+   @echo "*** Compiling SXE Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/sxe/STAF-INF/classes -classpath '$(SXE_CLASSPATH)' $(OS_SRC)/services/sxe/*.java
+endef
+
+$(O)/services/sxe/STAF-INF/classes/com/ibm/staf/service/sxe/%.class: $(SRC)/services/sxe/%.java
+	$(SXE_JAVA_COMPILE_IT)
+
+# SXE Java targets
+
+$(O)/services/sxe/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(REL)/lib/STAFSXE.jar: $(sxe_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/sxe; $(JAR) cfm '$(OS_@)' MANIFEST.MF `find . -name "*.class" -print`
+
+cleanup_sxe:
+	-@$(DEL) $(O)/services/sxe/* $(OUT_ERR_TO_DEV_NULL)

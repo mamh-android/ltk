@@ -1,0 +1,4915 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Charles Rankin">
+   <meta name="GENERATOR" content="Mozilla/4.73 [en] (Windows NT 5.0; U) [Netscape]">
+   <title>STAF Perl User's Guide</title>
+</head>
+<body>
+
+<h1>Perl User's Guide for STAF Version 3</h1>
+<p>
+Last Updated: September 12, 2012
+<p>
+
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Intro" href="#Header_Intro"><b>1.0 Introduction</b></a>
+<p><a name="ToC_PlatformsVersions" href="#Header_PlatformsVersions"><b>2.0 Supported Platforms and Perl Versions</b></a>
+  <menu compact>
+  <a name="ToC_Win32" href="#Header_Win32">2.1 Windows (Intel 32-bit)</a>
+  <br><a name="ToC_WinAMD64" href="#Header_WinAMD64">2.2 Windows (AMD64, aka x64)</a>
+  <br><a name="ToC_Linux32" href="#Header_Linux32">2.3 Linux (Intel 32-bit, aka i386 or x86-32)</a>
+  <br><a name="ToC_LinuxAMD64" href="#Header_LinuxAMD64">2.4 Linux (AMD64, aka x86-64)</a>
+  <br><a name="ToC_LinuxIA64" href="#Header_LinuxIA64">2.5 Linux (IA64)</a>
+  <br><a name="ToC_AIX32" href="#Header_AIX32">2.6 AIX (32-bit)</a>
+  <br><a name="ToC_SolarisSparc32" href="#Header_SolarisSparc32">2.7 Solaris 10+ (Sparc 32-bit)</a>
+  <br><a name="ToC_SolarisSparc64" href="#Header_SolarisSparc64">2.8 Solaris 10+ (Sparc 64-bit)</a>
+  <br><a name="ToC_MacOSX_Universal" href="#Header_MacOSX_Universal">2.9 Mac OS X 10.6+ (Universal binary with support for i386, x86_64, and ppc)</a>
+  </menu>
+<p><a name="ToC_Install" href="#Header_Install"><b>3.0 Installation</b></a>
+<p><a name="ToC_PLSTAF" href="#Header_PLSTAF"><b>4.0 Package PLSTAF</b></a>
+  <menu compact>
+  <a name="ToC_Primary" href="#Header_Primary">4.1 Primary STAF APIs</a>
+    <menu compact>
+    <a name="ToC_ProcStyle" href="#Header_ProcStyle">4.1.1 Procedural Style</a>
+      <menu compact>
+      <a name="ToC_Register1" href="#Header_Register1">4.1.1.1 STAF::Register</a>
+      <br><a name="ToC_Submit1" href="#Header_Submit1">4.1.1.2 STAF::Submit</a>
+      <br><a name="ToC_Submit2" href="#Header_Submit2">4.1.1.3 STAF::Submit2</a>
+      <br><a name="ToC_Unregister1" href="#Header_Unregister1">4.1.1.4 STAF::UnRegister</a>
+      </menu>
+    <a name="ToC_OOStyle" href="#Header_OOStyle">4.1.2 Object-Oriented Style</a>
+      <menu compact>
+      <a name="ToC_Register2" href="#Header_Register2">4.1.2.1 STAF::STAFHandle::new</a>
+      <br><a name="ToC_SubmitOO" href="#Header_SubmitOO">4.1.2.2 STAF::STAFHandle::submit</a>
+      <br><a name="ToC_Submit2OO" href="#Header_Submit2OO">4.1.2.3 STAF::STAFHandle::submit2</a>
+      <br><a name="ToC_Unregister2" href="#Header_Unregister2">4.1.2.4 STAF::STAFHandle::unRegister</a>
+      <br><a name="ToC_setDoUnmarshallResult" href="#Header_setDoUnmarshallResult">4.1.2.5 STAF::STAFHandle::setDoUnmarshallResult</a>
+      <br><a name="ToC_getDoUnmarshallResult" href="#Header_getDoUnmarshallResult">4.1.2.6 STAF::STAFHandle::getDoUnmarshallResult</a>
+      </menu>
+    <a name="Toc_ResultNew" href="#Header_ResultNew">4.1.3 Class STAF::STAFResult</a>
+    <br><a name="ToC_wrapData"   href="#Header_wrapData">4.1.4 Function STAF::WrapData (or STAF::STAFUtil::WrapData)</a>
+    </menu>
+  <br><a name="ToC_Marshalling" href="#Header_Marshalling">4.2 Marshalling APIs</a>
+    <menu compact>
+    <a name="ToC_STAFMCDef"  href="#Header_STAFMCDef">4.2.1 Class STAF::STAFMapClassDefinition</a>
+    <br><a name="ToC_STAFMC"     href="#Header_STAFMC">4.2.2 Class STAF::STAFMarshallingContext</a>
+    <br><a name="ToC_isMarshalled" href="#Header_isMarshalled">4.2.3 Function STAF::STAFIsMarshalledData</a>
+    <br><a name="ToC_marshall" href="#Header_marshall">4.2.4 Function STAF::STAFMarshall</a>
+    <br><a name="ToC_unmarshall" href="#Header_unmarshall">4.2.5 Function STAF::STAFUnmarshall</a>
+    <br><a name="ToC_formatObject" href="#Header_formatObject">4.2.6 Function STAF::STAFFormatObject</a>
+    </menu>
+  <br><a name="ToC_PrivateData" href="#Header_PrivateData">4.3 Private Data Manipulation APIs</a>
+    <menu compact>
+    <a name="Toc_addPrivacyDelimiters"   href="#Header_addPrivacyDelimiters">4.3.1 Function STAF::AddPrivacyDelimiters</a>
+    <br><a name="Toc_escapePrivacyDelimiters"   href="#Header_escapePrivacyDelimiters">4.3.2 Function STAF::EscapePrivacyDelimiters</a>
+    <br><a name="Toc_removePrivacyDelimiters"   href="#Header_removePrivacyDelimiters">4.3.3 Function STAF::RemovePrivacyDelimiters</a>
+    <br><a name="Toc_maskPrivateData"   href="#Header_maskPrivateData">4.3.4 Function STAF::MaskPrivateData</a>
+    </menu>
+  <br><a name="ToC_ReturnCodes" href="#Header_ReturnCodes">4.4 STAF Return Codes</a>
+  <br><a name="ToC_Constants" href="#Header_Constants">4.5 STAF Constants</a>
+  </menu>
+<a name="ToC_STAFMon" href="#Header_STAFMon"><b>5.0 Package STAFMon</b></a>
+  <menu compact>
+  <a name="ToC_MonVars" href="#Header_MonVars">5.1 Monitor Service Variables</a>
+  <br><a name="ToC_MonProcStyle" href="#Header_MonProcStyle">5.2 Procedural Style</a>
+    <menu compact>
+    <a name="ToC_MonitorLog" href="#Header_MonitorLog">5.2.1 STAF::Monitor::Log</a>
+    </menu>
+  <a name="ToC_MonOOStyle" href="#Header_MonOOStyle">5.3 Object-Oriented Style</a>
+    <menu compact>
+    <a name="ToC_MonOONew" href="#Header_MonOONew">5.3.1 STAF::STAFMonitor::new</a>
+    <br><a name="ToC_MonOOLog" href="#Header_MonOOLog">5.3.2 STAF::STAFMonitor::log</a>
+    <br><a name="ToC_MonOOGetSystem" href="#Header_MonOOGetSystem">5.3.3 STAF::STAFMonitor::getSystemName</a>
+    <br><a name="ToC_MonOOGetService" href="#Header_MonOOGetService">5.3.4 STAF::STAFMonitor::getServiceName</a>
+    </menu>
+  </menu>
+<a name="ToC_STAFLog" href="#Header_STAFLog"><b>6.0 Package STAFLog</b></a>
+  <menu compact>
+  <a name="ToC_LogRCs" href="#Header_LogRCs">6.1 Log Service Return Codes</a>
+  <br><a name="ToC_LogProcStyle" href="#Header_LogProcStyle">6.2 Procedural Style</a>
+    <menu compact>
+    <a name="ToC_LogInit" href="#Header_LogInit">6.2.1 STAF::Log::Init</a>
+    <br><a name="ToC_LogLog" href="#Header_LogLog">6.2.2 STAF::Log::Log</a>
+    </menu>
+  <a name="ToC_LogOOStyle" href="#Header_LogOOStyle">6.3 Object-Oriented Style</a>
+    <menu compact>
+    <a name="ToC_LogOONew" href="#Header_LogOONew">6.3.1 STAF::STAFLog::new</a>
+    <br><a name="ToC_LogOOLog" href="#Header_LogOOLog">6.3.2 STAF::STAFLog::log</a>
+    <br><a name="ToC_LogOOGetName" href="#Header_LogOOGetName">6.3.3 STAF::STAFLog::getName</a>
+    <br><a name="ToC_LogOOGetLogType" href="#Header_LogOOGetLogType">6.3.4 STAF::STAFLog::getLogType</a>
+    <br><a name="ToC_LogOOGetMonMask" href="#Header_LogOOGetMonMask">6.3.5 STAF::STAFLog::getMonitorMask</a>
+    <br><a name="ToC_LogOOGetSystem" href="#Header_LogOOGetSystem">6.3.6 STAF::STAFLog::getSystemName</a>
+    <br><a name="ToC_LogOOGetService" href="#Header_LogOOGetService">6.3.7 STAF::STAFLog::getServiceName</a>
+    </menu>
+  </menu>
+<a name="ToC_Examples" href="#Header_Examples"><b>7.0 Perl Program Examples</b></a>
+  <menu compact>
+  <a name="ToC_Example1" href="#Header_Example1">7.1 Example 1</a>
+  <br><a name="ToC_Example2" href="#Header_Example2">7.2 Example 2</a>
+  </menu>
+
+<p>
+<hr>
+<p>
+<h1><a name="Header_Intro" href="#ToC_Intro">1.0 Introduction</a></h1>
+
+This document describes STAF's V3 support for the Perl language.&nbsp; It
+includes information on the core STAF Perl APIs as well as the wrappers
+provided for the Monitor and Log services.
+<p>
+STAF Perl support must be installed in order to submit requests to STAF
+via a Perl program.
+<p>
+<b>Note:</b>
+All of STAF's Perl APIs are provided in the STAF namespace.
+<p>
+STAF Perl support is only provided in the STAF installer files for
+the platforms listed below.
+STAF Perl support is not provided in the STAF installer files
+for other operating systems.
+<p>
+The version of Perl used to build the STAF Perl libraries is usually
+the only Perl version that will work with those STAF Perl libraries.  STAF
+currently provides STAF Perl support on the following platforms:
+<ul compact>
+<li>Windows (Intel 32-bit)
+<li>Windows (AMD64, aka x64)
+<li>Linux (Intel 32-bit, aka i386 or x86-32)
+<li>Linux (AMD64, aka x86-64)
+<li>Linux (IA64)
+<li>AIX (32-bit)
+<li>Solaris 10+ (Sparc 32-bit)
+<li>Solaris 10+ (Sparc 64-bit)
+<li>Mac OS X 10.6+ (Universal binary with support for i386, x86_64, and ppc)
+</ul>
+<p>
+Section 2.0 provides details about the STAF Perl support by platform.
+<p>
+If you want to use a different version of Perl or if you want STAF Perl
+support for a different operating system, you can either:
+<p>
+<ul>
+<li>Build STAF Perl support yourself.  See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm">STAF Developer's Guide</a>
+for more information on how to build the STAF perl project.
+<p>
+If you build STAF Perl support for a different operating system
+and/or different Perl version, please contribute it to the STAF project.
+To contribute it, browse the STAF Support Requests to see if someone else
+has already provided STAF Perl support for this operating system and
+Perl version combination.  If not, open a STAF Support Request with
+the "Summary" containing "STAF V3 Support for Perl x.x.x (Platform)",
+replacing x.x.x with the Perl version and replacing Platform with the
+operating system on which you built the support.  Attach the necessary
+files to the Support Request.
+<p>
+<li>Or, you can submit a 
+<a href="http://sourceforge.net/tracker/?func=browse&group_id=33142&atid=407382">
+Support Request</a> for us to build it for you (but it may take a while until we get a
+chance to implement your request).
+Be sure to check the existing STAF Support Requests as we may have already
+provided STAF Perl support for the Perl version and operating system
+that you want and attached it to an existing STAF Support Request.
+</ul>
+
+<p>
+<hr>
+<p>
+<h1><a name="Header_PlatformsVersions" href="#ToC_PlatformsVersions">2.0 Supported Platforms and Perl Versions</a></h1>
+<a name="Header_Win32" href="#ToC_Win32"><b>2.1 Windows (Intel 32-bit)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.6.x
+<td>5.6.1 (ActiveState)
+<td>bin/perl56/PLSTAF.dll
+<td>Not supported
+<tr>
+<td>5.8.x (default)
+<td>5.8.3 (ActiveState)
+<td>bin/perl58/PLSTAF.dll
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>bin/perl510/PLSTAF.dll
+<td>Supported
+<tr>
+<td>5.12.x
+<td>5.12.4 (ActiveState)
+<td>bin/perl512/PLSTAF.dll
+<td>Supported
+<tr>
+<td>5.14.x
+<td>5.14.2 (ActiveState)
+<td>bin/perl514/PLSTAF.dll
+<td>Supported
+</tbody>
+</table>
+<br>
+
+<a name="Header_WinAMD64" href="#ToC_WinAMD64"><b>2.2 Windows (AMD64, aka x64)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.8 (ActiveState)
+<td>bin/perl58/PLSTAF.dll
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>bin/perl510/PLSTAF.dll
+<td>Supported
+<tr>
+<td>5.12.x
+<td>5.12.4 (ActiveState)
+<td>bin/perl512/PLSTAF.dll
+<td>Supported
+<tr>
+<td>5.14.x
+<td>5.14.2 (ActiveState)
+<td>bin/perl514/PLSTAF.dll
+<td>Supported
+</tbody>
+</table>
+<br>
+
+<a name="Header_Linux32" href="#ToC_Linux32"><b>2.3 Linux (Intel 32-bit, aka i386 or x86-32)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.6.x
+<td>5.6.1 (ActiveState)
+<td>lib/perl56/libPLSTAF.so
+<td>Not supported
+<tr>
+<td>5.8.x (default)
+<td>5.8.8 (distro)
+<td>lib/perl58/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>lib/perl510/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.12.x
+<td>5.12.4 (ActiveState)
+<td>lib/perl512/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.14.x
+<td>5.14.2 (ActiveState)
+<td>lib/perl514/libPLSTAF.so
+<td>Supported
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>When using the STAF Perl library, if you get an error such as "libperl.so:
+cannot open shared object file", then you need to make sure the operating system
+can find the "libperl.so" file for the version of Perl you are using.  There are
+two ways to resolve the problem (select which one is more suitable for
+your environment):
+<ul>
+<br>
+<li>Update environment variable LD_LIBRARY_PATH to include the directory
+containing "libperl.so" file for the version of Perl you are using (i.e.
+<tt>export LD_LIBRARY_PATH=/opt/ActivePerl-5.8/lib/CORE:$LD_LIBRARY_PATH</tt>)
+<br><br>
+<li>Create a /usr/lib/libperl.so link to the libperl.so file for the version of
+Perl you are using (i.e
+<tt>ln -s /opt/ActivePerl-5.8/lib/CORE/libperl.so /usr/lib/libperl.so</tt>)
+</ul>
+<br>
+<li>When using the STAF Perl library, if you get an error such as "Can't locate
+strict.pm in @INC", you need to make sure the operating system can find the
+"strict.pm" file for the version of Perl you are using.  You can resolve the
+problem by updating environment variable PERLLIB to include the directory
+containing the "strict.pm" file for the version of Perl you are using (i.e.
+<tt>export PERLLIB=/opt/ActivePerl-5.12/lib:$PERLLIB</tt>).
+<p>
+<li>When loading Perl services, if you get an error such as
+"/opt/ActivePerl-5.8/lib/auto/threads/threads.so: undefined symbol:
+PL_no_mem at /opt/ActivePerl-5.8/lib/XSLoader.pm", you need to set environment
+variable LD_PRELOAD to the libperl.so file prior to starting STAFProc (i.e.
+<tt>export LD_PRELOAD=/opt/ActivePerl-5.8/lib/CORE/libperl.so</tt>).
+<br>
+This will force the linker to pre-load libperl.so before loading anything else
+at start up time.
+<br>
+If you do not want to set LD_PRELOAD before starting STAFProc (as this
+can cause incompatibility issues for processes started via STAFProc), you can
+load your Perl service via STAFEXECPROXY, and use OPTION PROXYENV to specify
+the LD_PRELOAD environment variable for the STAFEXECPROXY executable, without
+having it set for STAFProc's environment.
+See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREGCFG">
+STAF Users's Guide</a>
+"STAFEXECPROXY service proxy library" section for more information on using
+STAFEXECPROXY.
+</ol>
+</tr>
+</tfoot>
+</table>
+<br>
+
+
+<a name="Header_LinuxAMD64" href="#ToC_LinuxAMD64"><b>2.4 Linux (AMD64, aka x86-64)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.8 (ActiveState)
+<td>lib/perl58/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>lib/perl510/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.12.x
+<td>5.12.4 (ActiveState)
+<td>lib/perl512/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.14.x
+<td>5.14.2 (ActiveState)
+<td>lib/perl514/libPLSTAF.so
+<td>Supported
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>When using the STAF Perl library, if you get an error such as "libperl.so:
+cannot open shared object file", then you need to make sure the operating system
+can find the "libperl.so" file for the version of Perl you are using.  There are
+two ways to resolve the problem (select which one is more suitable for
+your environment):
+<ul>
+<br>
+<li>Update environment variable LD_LIBRARY_PATH to include the directory
+containing "libperl.so" file for the version of Perl you are using (i.e.
+<tt>export LD_LIBRARY_PATH=/opt/ActivePerl-5.10/lib/CORE:$LD_LIBRARY_PATH</tt>)
+<br><br>
+<li>Create a /usr/lib/libperl.so link to the libperl.so file for the version of
+Perl you are using (i.e
+<tt>ln -s /opt/ActivePerl-5.10/lib/CORE/libperl.so /usr/lib/libperl.so</tt>)
+</ul>
+<br>
+<li>When using the STAF Perl library, if you get an error such as "Can't locate
+strict.pm in @INC", you need to make sure the operating system can find the
+"strict.pm" file for the version of Perl you are using.  You can resolve the
+problem by updating environment variable PERLLIB to include the directory
+containing the "strict.pm" file for the version of Perl you are using (i.e.
+<tt>export PERLLIB=/opt/ActivePerl-5.12/lib:$PERLLIB</tt>).
+<p>
+<li>When loading Perl services, if you get an error such as
+"/opt/ActivePerl-5.10/lib/auto/threads/threads.so: undefined symbol:
+PL_no_mem at /opt/ActivePerl-5.10/lib/XSLoader.pm", you need to set environment
+variable LD_PRELOAD to the libperl.so file prior to starting STAFProc (i.e.
+<tt>export LD_PRELOAD=/opt/ActivePerl-5.10/lib/CORE/libperl.so</tt>).
+<br>
+This will force the linker to pre-load libperl.so before loading anything else
+at start up time.
+<br>
+If you do not want to set LD_PRELOAD before starting STAFProc (as this
+can cause incompatibility issues for processes started via STAFProc), you can
+load your Perl service via STAFEXECPROXY, and use OPTION PROXYENV to specify
+the LD_PRELOAD environment variable for the STAFEXECPROXY executable, without
+having it set for STAFProc's environment.
+See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREGCFG">
+STAF Users's Guide</a>
+"STAFEXECPROXY service proxy library" section for more information on using
+STAFEXECPROXY.
+</ol>
+</tr>
+</tfoot>
+</table>
+<br>
+
+
+<a name="Header_LinuxIA64" href="#ToC_LinuxIA64"><b>2.5 Linux (IA64)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.0 (distro)
+<td>lib/perl58/libPLSTAF.so
+<td>Supported
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>When using the STAF Perl library, if you get an error such as "libperl.so:
+cannot open shared object file", then you need to make sure the operating system
+can find the "libperl.so" file for the version of Perl you are using.  There are
+two ways to resolve the problem (select which one is more suitable for
+your environment):
+<ul>
+<br>
+<li>Update environment variable LD_LIBRARY_PATH to include the directory
+containing "libperl.so" file for the version of Perl you are using (i.e.
+<tt>export LD_LIBRARY_PATH=/usr/lib/perl5/5.8.0/ia64-linux-thread-multi/CORE:$LD_LIBRARY_PATH</tt>)
+<br><br>
+<li>Create a /usr/lib/libperl.so link to the libperl.so file for the version of
+Perl you are using (i.e
+<tt>ln -s /usr/lib/perl5/5.8.0/ia64-linux-thread-multi/CORE /usr/lib/libperl.so</tt>)
+</ul>
+<br>
+<li>When loading Perl services, if you get an error such as
+"relocation error: /usr/lib/perl5/5.8.0/ia64-linux-thread-multi/auto/threads/threads.so:
+undefined symbol: Perl_Tstack_sp_ptr", you need to set environment
+variable LD_PRELOAD to the libperl.so file prior to starting STAFProc (i.e.
+<tt>export LD_PRELOAD=/usr/lib/perl5/5.8.0/ia64-linux-thread-multi/CORE/libperl.so</tt>).
+<br>
+This will force the linker to pre-load libperl.so before loading anything else
+at start up time.
+<br>
+If you do not want to set LD_PRELOAD before starting STAFProc (as this
+can cause incompatibility issues for processes started via STAFProc), you can
+load your Perl service via STAFEXECPROXY, and use OPTION PROXYENV to specify
+the LD_PRELOAD environment variable for the STAFEXECPROXY executable, without
+having it set for STAFProc's environment.
+See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREGCFG">
+STAF Users's Guide</a>
+"STAFEXECPROXY service proxy library" section for more information on using
+STAFEXECPROXY.
+</ol>
+</tr>
+</tfoot>
+</table>
+<br>
+
+
+<a name="Header_AIX32" href="#ToC_AIX32"><b>2.6 AIX (32-bit)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.8 (ActiveState)
+<td>lib/perl58/libPLSTAF.so
+<td>Not supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>lib/perl510/libPLSTAF.so
+<td>Not supported
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>Attempting to load STAF Perl services will result in the following
+error:
+<tt>
+Error: Can't load '/opt/ActivePerl-5.8/lib/auto/threads/threads.so' for module t
+hreads: rtld: 0712-001 Symbol Perl_Tstack_sp_ptr was referenced
+</tt>
+There is no workaround.
+</ol>
+</tr>
+</tfoot>
+</table>
+<br>
+
+
+<a name="Header_SolarisSparc32" href="#ToC_SolarisSparc32"><b>2.7 Solaris 10+ (Sparc 32-bit)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.8 (ActiveState)
+<td>lib/perl58/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>lib/perl510/libPLSTAF.so
+<td>Supported
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>When using the STAF Perl library, if you get an error such as "libperl.so:
+cannot open shared object file", then you need to make sure the operating system
+can find the "libperl.so" file for the version of Perl you are using.  There are
+two ways to resolve the problem (select which one is more suitable for
+your environment):
+<ul>
+<br>
+<li>Update environment variable LD_LIBRARY_PATH to include the directory
+containing "libperl.so" file for the version of Perl you are using (i.e.
+<tt>export LD_LIBRARY_PATH=/opt/ActivePerl-5.8/lib/CORE:$LD_LIBRARY_PATH</tt>)
+<br><br>
+<li>Create a /usr/lib/libperl.so link to the libperl.so file for the version of
+Perl you are using (i.e
+<tt>ln -s /opt/ActivePerl-5.8/lib/CORE/libperl.so /usr/lib/libperl.so</tt>)
+</ul>
+<br>
+<li>When loading Perl services, if you get an error such as
+"/opt/ActivePerl-5.8/lib/auto/threads/threads.so: undefined symbol:
+PL_no_mem at /opt/ActivePerl-5.8/lib/XSLoader.pm", you need to set environment
+variable LD_PRELOAD to the libperl.so file prior to starting STAFProc (i.e.
+<tt>export LD_PRELOAD=/opt/ActivePerl-5.8/lib/CORE/libperl.so</tt>).
+<br>
+This will force the linker to pre-load libperl.so before loading anything else
+at start up time.
+<br>
+If you do not want to set LD_PRELOAD before starting STAFProc (as this
+can cause incompatibility issues for processes started via STAFProc), you can
+load your Perl service via STAFEXECPROXY, and use OPTION PROXYENV to specify
+the LD_PRELOAD environment variable for the STAFEXECPROXY executable, without
+having it set for STAFProc's environment.
+See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREGCFG">
+STAF Users's Guide</a>
+"STAFEXECPROXY service proxy library" section for more information on using
+STAFEXECPROXY.
+</ol>
+</tr>
+</tfoot>
+</table>
+<br>
+
+
+<a name="Header_SolarisSparc64" href="#ToC_SolarisSparc64"><b>2.8 Solaris 10+ (Sparc 64-bit)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.8 (ActiveState)
+<td>lib/perl58/libPLSTAF.so
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0 (ActiveState)
+<td>lib/perl510/libPLSTAF.so
+<td>Supported
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>When using the STAF Perl library, if you get an error such as "libperl.so:
+cannot open shared object file", then you need to make sure the operating system
+can find the "libperl.so" file for the version of Perl you are using.  There are
+two ways to resolve the problem (select which one is more suitable for
+your environment):
+<ul>
+<br>
+<li>Update environment variable LD_LIBRARY_PATH to include the directory
+containing "libperl.so" file for the version of Perl you are using (i.e.
+<tt>export LD_LIBRARY_PATH=/opt/ActivePerl-5.8/lib/CORE:$LD_LIBRARY_PATH</tt>)
+<br><br>
+<li>Create a /usr/lib/libperl.so link to the libperl.so file for the version of
+Perl you are using (i.e
+<tt>ln -s /opt/ActivePerl-5.8/lib/CORE/libperl.so /usr/lib/libperl.so</tt>)
+</ul>
+<br>
+<li>When loading Perl services, if you get an error such as
+"/opt/ActivePerl-5.8/lib/auto/threads/threads.so: undefined symbol:
+PL_no_mem at /opt/ActivePerl-5.8/lib/XSLoader.pm", you need to set environment
+variable LD_PRELOAD to the libperl.so file prior to starting STAFProc (i.e.
+<tt>export LD_PRELOAD=/opt/ActivePerl-5.8/lib/CORE/libperl.so</tt>).
+<br>
+This will force the linker to pre-load libperl.so before loading anything else
+at start up time.
+<br>
+If you do not want to set LD_PRELOAD before starting STAFProc (as this
+can cause incompatibility issues for processes started via STAFProc), you can
+load your Perl service via STAFEXECPROXY, and use OPTION PROXYENV to specify
+the LD_PRELOAD environment variable for the STAFEXECPROXY executable, without
+having it set for STAFProc's environment.
+See the
+<a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRSERVICEREGCFG">
+STAF Users's Guide</a>
+"STAFEXECPROXY service proxy library" section for more information on using
+STAFEXECPROXY.
+</ol>
+</tr>
+</tfoot>
+</table>
+<br>
+
+<a name="Header_MacOSX_Universal" href="#ToC_MacOSX_Universal"><b>2.9 Mac OS X 10.6+ (Universal binary with support for i386, x86_64, and ppc)</b></a><br><br>
+<table border>
+<thead>
+<tr>
+<th width=25%>Supported Perl Version
+<th width=25%>Built with
+<th width=25%>PLSTAF library
+<th width=25%>Perl Services
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.8.x (default)
+<td>5.8.9
+<td>lib/perl58/libPLSTAF.dylib
+<td>Supported
+<tr>
+<td>5.10.x
+<td>5.10.0
+<td>lib/perl510/libPLSTAF.dylib
+<td>Supported
+</tbody>
+</table>
+<br>
+
+
+<p>
+<hr>
+<p>
+<h1><a name="Header_Install" href="#ToC_Install">3.0 Installation</a></h1>
+
+To install and configure STAF Perl support, perform the following steps:
+<p>
+<ol>
+<li>Install STAF's Perl support by selecting to install "Perl support" during the
+    install.  It is installed by default for a "typical" install of STAF if
+    using a STAF installer for
+    Windows (Intel 32-bit),
+    Windows (AMD64, aka x64),
+    Linux (Intel 32-bit, aka i386 or x86-32),
+    Linux (AMD64, aka x86-64),
+    Linux (IA64),
+    AIX (32-bit),
+    Solaris 10+ (Sparc 32-bit),
+    Solaris 10+ (Sparc 64-bit),
+    or Mac OS X (Universal).
+    Currently, STAF Perl support is not provided in the STAF installer files
+    for other operating systems (though you can build STAF Perl support
+    yourself).  See section <a href="#Header_Intro">1.0 Introduction</a> above for
+    more information on how to build STAF Perl support yourself.
+    <p>     
+    Once STAF Perl support is installed, verify that the following STAF Perl files
+    exist:
+    <p>
+    <ul>
+    <li>Windows:<pre>
+    {STAF/Config/STAFRoot}/bin/PLSTAF.pm
+    {STAF/Config/STAFRoot}/bin/STAF.pl
+    {STAF/Config/STAFRoot}/bin/STAF2.pl
+    {STAF/Config/STAFRoot}/bin/STAFMon.pm
+    {STAF/Config/STAFRoot}/bin/STAFLog.pm
+    {STAF/Config/STAFRoot}/docs/STAFPerl.htm
+    {STAF/Config/STAFRoot}/bin/perl56/PLSTAF.dll   (On Windows Intel 32-bit)
+    {STAF/Config/STAFRoot}/bin/perl58/PLSTAF.dll
+    {STAF/Config/STAFRoot}/bin/perl510/PLSTAF.dll
+    {STAF/Config/STAFRoot}/bin/perl512/PLSTAF.dll
+    {STAF/Config/STAFRoot}/bin/perl514/PLSTAF.dll
+</pre>
+    <li>Unix:<pre>
+    {STAF/Config/STAFRoot}/bin/PLSTAF.pm
+    {STAF/Config/STAFRoot}/bin/STAF.pl
+    {STAF/Config/STAFRoot}/bin/STAF2.pl
+    {STAF/Config/STAFRoot}/bin/STAFMon.pm
+    {STAF/Config/STAFRoot}/bin/STAFLog.pm
+    {STAF/Config/STAFRoot}/docs/STAFPerl.htm
+    {STAF/Config/STAFRoot}/lib/perl56/libPLSTAF.so     (Only on provided if build Perl 5.6, which pre-built Linux 32-bit does)
+    {STAF/Config/STAFRoot}/lib/perl58/libPLSTAF.so     (On Linux and other Unix platforms that use .so extension)
+    {STAF/Config/STAFRoot}/lib/perl510/libPLSTAF.so    (On Linux and other Unix platforms that use .so extension)
+    {STAF/Config/STAFRoot}/lib/perl512/libPLSTAF.so    (On Linux and other Unix platforms that use .so extension)
+    {STAF/Config/STAFRoot}/lib/perl514/libPLSTAF.so    (On Linux and other Unix platforms that use .so extension)
+    {STAF/Config/STAFRoot}/lib/perl58/libPLSTAF.dylib  (On Mac OS X which uses .dylib extension)
+    {STAF/Config/STAFRoot}/lib/perl510/libPLSTAF.dylib (On Mac OS X which uses .dylib extension)
+</pre>    
+    </ul>
+<p>
+The library file for the version of Perl that was selected as the default 
+Perl version during the STAF installation (when using the Installshield
+installer) will either have a link in {STAF/Config/STAFRoot}/lib (on Linux)
+or a copy in {STAF/Config/STAFRoot}/bin on Windows.  
+<p>
+<li>In order to have your Perl script find the specified module,
+you may need to follow one, and only one, of these steps:
+<ul>
+<li>Set environment variable PERLLIB to the directory containing the STAF Perl
+modules (PLSTAF.pm, STAFMon.pm, STAFLog.pm).  For example: C:\STAF\bin on
+Windows or /usr/local/staf/bin for Unix.  Also, set PERLLIB to the
+directory containing the PLSTAF library file (PLSTAF.dll on Windows,
+libPLSTAF.so on Unix, or libPLSTAF.dylib on Mac OS X) for
+the version of Perl support that you're using.  For example:
+<pre>
+On Windows (if using Perl 5.10):
+  set PERLLIB=C:\STAF\bin;C:\STAF\bin\perl510
+
+On Unix (if using Perl 5.8):
+  export PERLLIB=/usr/local/staf/bin:/usr/local/staf/lib/perl58
+</pre>    
+</li>
+<li>Copy your modules (PLSTAF.pm, STAFMon.pm, STAFLog.pm) to a standard Perl 
+directory such as <b>/usr/local/lib/perl5</b> or 
+<b>/usr/local/lib/perl5/site_perl</b>.</li>
+<li>Run your Perl script using the <b>-I &lt;path/to/module&gt;</b> option 
+(e.g. perl -I /usr/local/staf/lib MyTest.pl)</li>
+<li>Add the line <b>use lib 'path/to/module'</b> before using the desired 
+module.</li>
+<li>Run your Perl script from the directory where your modules where installed
+(e.g. from /usr/local/staf/lib or C:\STAF\bin)</li> 
+</ul>
+<p>
+<li>Finally, you need to add a "use" or "require" statement in your Perl scripts
+for any of the STAF packages (e.g. PLSTAF, STAFMon, STAFLog) that your
+Perl script uses.  For example, if you want to use the PLSTAF package in your
+Perl script, add the following line at the beginning:
+<pre>
+  use PLSTAF;
+</pre>
+Note that <b>use</b> loads modules at compile time whereas <b>require</b>
+loads modules at run time.
+</ol>
+<p>
+<hr>
+<p>
+<h1><a name="Header_PLSTAF" href="#ToC_PLSTAF">4.0 Package PLSTAF</a></h1>
+
+The PLSTAF package provides the based level of support for Perl scripts
+to call into STAF in two different programming styles, procedural or
+object-oriented.  This package externalizes the following classes,
+functions, and constants.
+<p>
+The procedural style of communicating with STAF uses the following methods:
+<ul>
+<li><tt><b>STAF::Register</b></tt> - Allows you to register with STAF
+(procedural)</li>
+<li><tt><b>STAF::Submit</b></tt> - Allows you to submit synchronous
+requests to STAF (procedural)</li>
+<li><tt><b>STAF::Submit2</b></tt> - Allows you to submit
+synchronous/asynchronous requests to STAF (procedural)</li>
+<li><tt><b>STAF::UnRegister</b></tt> - Allows you to unregister with STAF
+(procedural)</li>
+</ul>
+<p>
+The object-oriented style of communicating with STAF uses the following
+class:
+<ul>
+<li><tt><b>STAF::STAFHandle</b></tt> - The primary class for communicating
+with STAF (object-oriented)</li>
+  <ul>
+  <li><tt><b>new</b></tt> - Creates a STAFHandle object so you can submit
+      service requests to STAF</li>
+  <li><tt><b>submit</b></tt> - Same as STAF::Submit but different calling convention</li>
+  <li><tt><b>submit2</b></tt> - Same as STAF::Submit2 but different calling convention</li>
+  <li><tt><b>unRegister</b></tt> - Same as STAF::UnRegister but different calling convention</li>
+  <li><tt><b>setDoUnmarshallResult</b></tt> - Sets the doUnmarshallResult flag for the handle which
+      indicates if auto-unmarshalling results will be performed when the handle submits a
+      STAF service request</li>
+  <li><tt><b>getDoUnmarshallResult</b></tt> - Gets the doUnmarshallResult flag for the handle</li>
+  </ul>
+</ul>
+<p>
+Other STAF Perl classes that it externalizes are:
+<ul>
+<li><tt><b>STAF::STAFResult</b></tt> - A class representing the result
+of a STAF request</li>
+<li><tt><b>STAF::STAFMapClassDefinition</b></tt> - A class representing a map class definition
+that can be used by STAF marshalling contexts</li>
+<li><tt><b>STAF::STAFMarshallingContext</b></tt> - A class representing a STAF marshalling
+context which is used to define structured data</li>
+</ul>
+<p>
+Other STAF Perl functions that it externalizes are:
+<ul>
+<li><tt><b>STAF::WrapData</b></tt> (aka <tt><b>STAF::STAFUtil::WrapData</b></tt>)
+- A method for creating colon-length-colon delimited strings for use in 
+STAF requests</li>
+<li><tt><b>STAF::AddPrivacyDelimiters</b></tt>) - 
+A utility function for adding privacy delimiters to a string for use in
+protecting private data specified in a STAF command option that supports
+handling private data</li>
+<li><tt><b>STAF::EscapePrivacyDelimiters</b></tt> - 
+A utility function for escaping privacy delimiters in a string</li>
+<li><tt><b>STAF::RemovePrivacyDelimiters</b></tt>) - 
+A utility function for removing privacy delimiters from a string</li>
+<li><tt><b>STAF::MaskPrivateData</b></tt> - 
+A utility function for masking private data</li>
+<li><tt><b>STAF::STAFIsMarshalledData</b></tt> - A method that tests if a string
+is a marshalled data string</li>
+<li><tt><b>STAF::STAFMarshall</b></tt> - A utility function for converting a data structure into
+a string-based representation.</li>
+<li><tt><b>STAF::STAFUnmarshall</b></tt> - A method for converting the string-based
+marshalled representation back into a data structure.  It returns a marshalling context.</li>
+<li><tt><b>STAF::STAFFormatObject</b></tt> - A utility function for "pretty printing"
+ an object such that it returns a string containing a verbose hierarchical format.</li>
+</ul>
+
+
+<h2><a name="Header_Primary" href="#ToC_Primary">4.1 Primary STAF APIs</a></h2>
+
+These APIs allow you to register/unregister with STAF, submit STAF service requests,
+and to wrap the values of options used in STAF service requests.
+
+<h3><a name="Header_ProcStyle" href="#ToC_ProcStyle">4.1.1 Procedural Style</a></h3>
+
+<h3><a name="Header_Register1" href="#ToC_Register1">4.1.1.1 STAF::Register</a></h3>
+
+<h4>Description</h4>
+
+This function allows you to register with STAF.&nbsp; You must register
+with STAF before you can use any of the other STAF related APIs. After
+calling this function, 2 magic variables, <tt>$STAF::Handle</tt> and <tt>$STAF::RC</tt>
+are created and set. These variables should not be modified directly. <tt>$STAF::Handle</tt>
+contains the handle that will allow your program to interact with STAF.
+<tt>$STAF::RC</tt>
+is equivalent to the value returned by the API itself.
+
+<h4>Syntax</h4>
+
+<tt>STAF::Register(PROCESSNAME)</tt>
+<p>where,
+<p><tt>PROCESSNAME</tt> is the name by which your Perl program will be
+known
+
+<h4>Result</h4>
+
+The function returns a numeric return code.&nbsp; Zero indicates that you
+registered successfully.&nbsp; Non-zero return codes are documented in
+the STAF User's Guide.
+
+<h4>Examples</h4>
+
+<ul>
+<font color="darkblue">
+<tt>$rc = STAF::Register("My program");</tt>
+<p><tt>if ($rc != $STAF::kOk) {</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; print "Error registering with STAF, RC: $STAF::RC\n";</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; exit $rc;</tt>
+<br><tt>}</tt>
+<p><tt>print "My STAF handle: $STAF::Handle\n";</tt>
+</font>
+</ul>
+
+<h3><a name="Header_Submit1" href="#ToC_Submit1">4.1.1.2 STAF::Submit</a></h3>
+
+<h4>Description</h4>
+
+This function allows you to submit requests to STAF.&nbsp; This is the
+primary API that you will use when working with STAF. After calling this
+function, 2 magic variables, <tt>$STAF::Result</tt> and <tt>$STAF::RC</tt>
+are created and set. These variables should not be modified directly. <tt>$STAF::Result</tt>
+contains the string-based result for this request. <tt>$STAF::RC</tt> is
+equivalent to the value returned by the API itself.
+
+<h4>Syntax</h4>
+
+<tt>STAF::Submit(LOCATION, SERVICE, REQUEST)</tt>
+<p>where,
+<p><tt>LOCATION</tt> is the system to which the request should be submitted.&nbsp;
+"Local" may be used to represent the local system, i.e., the system on
+which the Perl program is running.
+<p><tt>SERVICE</tt> is the name of the service to which the request should
+be submitted.
+<p><tt>REQUEST</tt> is the actual request string itself.
+
+<h4>Result</h4>
+
+The function returns a numeric return code.&nbsp; Return codes are documented
+in the STAF User's Guide.
+
+<h4>Examples</h4>
+
+<ol>
+<li>The following example shows submitting a request to a STAF service that
+returns a single string result.
+<ul>
+<font color="darkblue">
+<pre>
+$rc = STAF::Submit("local", "ping", "ping");
+
+if ($rc != $STAF::kOk) {
+    print "Error submitting ping request, RC: $STAF::RC\n";
+    if (length($STAF::Result) != 0) {
+        print "Additional info: $STAF::Result\n";
+    }
+    exit $rc;
+}
+
+print "STAF Ping result: $STAF::Result\n";
+</pre>
+</font>
+</ul>
+<p>
+<li>This example submits a request to the FS service to query information
+about a file.  The request returns a marshalled string so it needs to be
+unmarshalled in order to access the marshalling context's root object which
+is a map that contains keys like 'type', 'lowerSize', and
+'lastModifiedTimestamp'.  (Note that the STAF User's Guide defines
+the results for each request submitted to an internal STAF service.)
+<ul>
+<font color="darkblue">
+<pre>
+my $fileName = '{STAF/Config/STAFRoot}/bin/STAFProc.exe';
+my $request = "QUERY ENTRY $fileName";
+print "STAF local FS $request\n\n";
+
+my $rc = STAF::Submit("local", "FS", $request);
+
+if ($rc != $STAF::kOk) {
+    print "Request failed:  STAF local FS $request\n";
+    print "RC=$STAF::RC Result=$STAF::Result\n";
+    exit $rc; 
+}
+
+my $mc = STAF::STAFUnmarshall($STAF::Result);
+my $entryMap = $mc->getRootObject();
+
+if ($entryMap->{type} eq 'F') {
+    print "File Name    : $fileName\n";
+    print "File Size    : $entryMap->{lowerSize}\n";
+    print "Last Modified: $entryMap->{lastModifiedTimestamp}\n";
+}
+else {
+    print "$fileName is not a file.  Type=$entryMap->{type}\n";
+}
+</pre>
+</font>
+</ul>
+<p>
+<li>This example submits a request to the FS service to list the names of the
+entries in a directory.  The request returns a marshalled string so you need
+to unmarshall the result string in order to get the marshalling context whose
+root object is a list of strings, where each string in the list contains the
+name of an entry in the directory.  (Note that the STAF User's Guide defines
+the results for each request submitted to an internal STAF service.)
+<ul>
+<font color="darkblue">
+<pre>
+# Set $dir to a directory name whose contents will be listed
+my $dir = "C:/tmp";
+my $request = "LIST DIRECTORY $dir";
+print "STAF local FS $request\n\n";
+ 
+my $rc = STAF::Submit("local", "FS", $request); 
+ 
+if ($rc != $STAF::kOk) { 
+    print "Error on STAF local FS request\n"; 
+    print "Expected RC: $STAF::kOk\n"; 
+    print "Received RC: $rc, Result: $STAF::Result\n";
+    exit $rc; 
+} 
+ 
+my $mc = STAF::STAFUnmarshall($STAF::Result);
+
+# Get a "reference" to an array (which is the root object)
+my $rootObject = $mc->getRootObject();
+
+# Each item in the array is a "reference" to a string which
+# contains the name of an entry in the directory
+
+for my $item (@{$rootObject}) {
+    print "$item\n";
+}
+</pre>
+</font>
+</ul>
+<p>
+This example could print the following when run:
+<ul>
+<font color="darkblue">
+<pre>
+STAF local FS LIST DIRECTORY C:/tmp
+
+test1
+AutoFVT.bsh
+tmp2
+testA.exe
+test
+temp2
+test2
+openssl
+myfile.txt
+</pre>
+</font>
+</ul>
+
+</ol>
+
+<h3><a name="Header_Submit2" href="#ToC_Submit2">4.1.1.3 STAF::Submit2</a></h3>
+
+<h4>Description</h4>
+
+This function allows you to submit requests to STAF.&nbsp; This is the
+primary API that you will use when working with STAF. After calling this
+function, 2 magic variables, <tt>$STAF::Result</tt> and <tt>$STAF::RC</tt>
+are created and set. These variables should not be modified directly. <tt>$STAF::Result</tt>
+contains the string-based result for this request. <tt>$STAF::RC</tt> is
+equivalent to the value returned by the API itself.
+
+The <tt>STAF::Submit2</tt> method is identical to the <tt>STAF:Submit</tt>
+method except that it has an additional parameter, <tt>SYNCTOPTION</tt>,
+which allows submission of asynchronous requests.
+
+<h4>Syntax</h4>
+
+<tt>STAF::Submit2(SYNCOPTION, LOCATION, SERVICE, REQUEST)</tt>
+<p>where,
+<p><tt>SYNCOPTION</tt> can be any of the following: 
+<p>
+<ul>
+<li><tt>STAF::STAFHandle::kReqSync</tt> - This indicates the request should be submitted synchronously.
+This is equivalent to calling the <tt>STAF::STAFHandle::submit</tt> API. 
+<p>
+<li><tt>STAF::STAFHandle::kReqFireAndForget</tt> - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+The request's results will not be sent to the submitter's queue nor will they be retained
+by the Service service. 
+<p>
+<li><tt>STAF::STAFHandle::kReqQueue</tt> - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be placed on the submitter's queue
+(the format of this queued message is described in the STAF User's Guide).
+The format of this message is described in the STAF User's Guide. 
+<p>
+<li><tt>STAF::STAFHandle::kReqRetain</tt> - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be retained by the Service service.
+The submitter can determine the results of the request by submitting a QUERY
+REQUEST &lt;request-number> command to the Service service, or by submitting a
+FREE REQUEST &lt;request-number> command to the Service service.  Note that the
+submitter should always free the results of the request by submitting the FREE
+command to the Service service.
+<p>
+<li><tt>STAF::STAFHandle::kReqQueueRetain</tt> - This indicates the request should be
+submitted asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be placed on the submitter's queue
+(the format of this queued message is described in the STAF User's Guide), and
+the results will be retained by the Service service.
+The submitter can determine the results of the request by examining the contents
+of the queued message, by submitting a QUERY REQUEST &lt;request-number>
+command to the Service serviceor, or by submitting a FREE REQUEST
+&lt;request-number> command to the Service service.  Note that the
+submitter should always free the results of the request by submitting the FREE
+command to the Service service.
+</ul>
+<p><tt>LOCATION</tt> is the system to which the request should be submitted.&nbsp;
+"Local" may be used to represent the local system, i.e., the system on
+which the Perl program is running.
+<p><tt>SERVICE</tt> is the name of the service to which the request should
+be submitted.
+<p><tt>REQUEST</tt> is the actual request string itself.
+
+<h4>Result</h4>
+
+The function returns a numeric return code.&nbsp; Return codes are documented
+in the STAF User's Guide.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt>$rc = STAF::Submit2($STAF::STAFHandle::kReqQueue, "local", "PING", "PING");</tt>
+<p><tt>if ($rc != $STAF::kOk) {</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; print "Error submitting ping request, RC: $STAF::RC\n";</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; if (length($STAF::Result) != 0) {</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print "Additional info:
+$STAF::Result\n";</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; }</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; exit $rc;</tt>
+<br><tt>}</tt>
+<p><tt>print "STAF Ping result: $STAF::Result\n";</tt>
+<br>&nbsp;
+</font>
+</ul>
+
+<h3><a name="Header_Unregister1" href="#ToC_Unregister1">4.1.1.4 STAF::UnRegister</a></h3>
+
+<h4>Description</h4>
+
+This function allows you to unregister with STAF.&nbsp; This allows STAF
+to free up the information associated with your handle.&nbsp; This should
+be the last STAF related API that you call in your program.&nbsp; After
+calling this function, 1 magic variable, <tt>$STAF::RC</tt> is created
+and set. This variables should not be modified directly. <tt>$STAF::RC</tt>
+is equivalent to the value returned by the API itself.
+
+<h4>Syntax</h4>
+
+<tt>STAF::UnRegister()</tt>
+
+<h4>Result</h4>
+
+This function returns a numeric return code.&nbsp; Zero indicates that
+you unregistered successfully.&nbsp; Non-zero return codes are documented
+in the STAF User's Guide.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt>$rc = STAF::UnRegister();</tt>
+<p><tt>if ($rc != $STAF::kOk) {</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; print "Error unregistering with STAF, RC: $STAF::RC\n";</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; exit $rc;</tt>
+<br><tt>}</tt>
+<br>&nbsp;
+</font>
+</ul>
+
+<h3><a name="Header_OOStyle" href="#ToC_OOStyle">4.1.2 Object-Oriented Style</a></h3>
+
+<h3><a name="Header_Register2" href="#ToC_Register2">4.1.2.1 STAF::STAFHandle::new</a></h3>
+
+<h4>Description</h4>
+
+This method constructs a STAF::STAFHandle object that allows you to call
+into STAF.  You must create a STAF::STAFHandle object before you can
+use any of its STAF related methods.
+<p>
+There are two ways to create a STAF::STAFHandle object:
+<ul compact>
+<li>The first (and standard) way allows you to specify a string containing
+    the name by which your handle should be known.  It creates a new STAF
+    handle and returns an instance of a STAFHandle object referencing this
+    new STAF handle.</li>
+<li>The second way allows you to specify an integer which is the number of
+    an existing STAF static handle.  It returns an instance of a STAFHandle
+    object referencing this existing static handle.</li>
+</ul>
+<p>
+Once you have a valid STAFHandle object, you can begin submitting requests
+to STAF services.  To do this, you use the STAFHandle's submit() or submit2()
+method.
+<p>
+STAFHandle defines the following member variables.  They are initialized
+by the constructor, and should not be modified directly.
+<p>
+<ul>
+<dl>
+  <dt><b><tt>handle</tt></b></dt>
+  <dd>An integer containing the number of the STAF handle.</dd>
+  <p>
+  <dt><b><tt>handleType</tt></b></dt>
+  <dd>The type of handle (<tt>$STAF::STAFHandle::kStandard</tt> or
+      <tt>$STAF::STAFHandle::kStatic</tt>)</dd>
+  <p>
+  <dt><b><tt>doUnmarshallResult</tt></b></dt>
+  <dd>An integer containing 1 or 0.  It is set to 1 by default when a
+      STAFHandle is created, but can be changed using the setDoUnmarshallResult()
+      method.  When set to 1, this causes STAF results to be automatically
+      unmarshalled when the handle's submit method returns a STAFResult (meaning
+      the STAFResult's resultContext and resultObj fields will be set).</dd>
+  <p>
+  <dt><b><tt>rc</tt></b></dt>
+  <dd>An integer containing the return code from registering with STAF if
+      a standard handle type was specified, or 0 if a static handle type
+      was specified.
+</dl>
+</ul>
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFHandle->new(HANDLENAMEORNUMBER, [HANDLETYPE])</tt>
+<p>where,
+<p><tt>HANDLENAMEORNUMBER</tt> is a required argument that specifies a
+handle name or number.  If you specify a standard handle type (the default),
+this argument must be a string containing a name for the STAF handle to be
+created.  If you specify a static handle type for the second argument, this
+argument must be an integer containing the handle number for an existing
+static STAF handle.
+<p><tt>HANDLETYPE</tt> is an optional argument that specifies the type of
+handle.  The valid handle types are:
+<ul compact>
+<li><tt>$STAF::STAFHandle::kStandard</tt>: specifies the standard handle type.
+    This is the default if the handle type is not specified.
+<li><tt>$STAF::STAFHandle::kStatic</tt>: specifies the static handle type.
+</ul>
+<p>
+The <tt>HANDLETYPE</tt> argument was added in STAF V3.3.3.
+
+<h4>Result</h4>
+
+The method returns a <tt>STAF::STAFHandle</tt> object that contains a numeric
+return code, and a numeric handle, a numeric handle type, and a numeric
+doUnmarshallResult (all scalars).  These fields should not
+not be manipulated directly.  A return code of zero indicates that you registered
+successfully.  Non-zero return codes are documented in the STAF User's Guide.
+
+<h4>Example</h4>
+
+The following is an example of Perl code which registers with STAF using
+a standard handle type and specifying handle name "My program".  Then it uses
+the handle to submit a STAF ping request to the local machine, and unregisters
+the handle.
+
+<ul>
+<font color="darkblue">
+<pre>
+use PLSTAF;
+
+$handle = STAF::STAFHandle->new("My program");
+
+if ($handle->{rc} != $STAF::kOk) {
+    print "Error registering with STAF, RC: $handle->{rc}\n";
+    exit $handle->{rc};
+}
+
+print "My STAF handle: $handle->{handle}\n";
+
+$result = $handle->submit("local", "ping", "ping");
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} != "PONG")) {
+    print "Error on ping request.\n";
+    print "Expected RC: 0, Result: PONG\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "\nUnregistering handle $handle->{handle}\n";
+
+$rc = $handle->unRegister();
+if ($rc != $STAF::kOk) {
+    print "Error unregistering with STAF, RC: $STAF::RC\n";
+    exit $rc;
+}
+</pre>
+</font>
+</ul>
+
+The following is an example of Perl code which registers with STAF using a
+static STAF handle and then submits a STAF ping request to the local machine.
+Note that a static handle is a handle which can be shared by several processes
+on the same system.  See the STAF User's Guide for more information on static
+handles.  Generally, you don't need to use a static STAF handle.
+Then it uses the handle to submit a STAF ping request to the local machine.
+
+<ul>
+<font color="darkblue">
+<pre>
+# First, need to obtain an existing static handle number from somewhere.
+# This example assumes that the Perl script containing this code will be
+# run by submitting a START request to the STAF PROCESS service using the
+# STATICHANDLENAME option.  This allows it to obtain the STAF static handle
+# number from environment variable STAF_STATIC_HANDLE.
+#
+# Note:  Another way a static handle could have been obtained is if it
+# is passed to the Perl program as an argument.  The static handle
+# could have been created by another program (which submitted a CREATE
+# HANDLE request to the HANDLE service).  Or, the Perl program could have
+# created a non-static handle and used it to submit a CREATE HANDLE request
+# to the HANDLE service to create a static handle.
+
+use PLSTAF;
+
+$staticHandleNumber = $ENV{'STAF_STATIC_HANDLE'};
+
+if ($staticHandleNumber == undef) {
+    print "STAF_STATIC_HANDLE is undefined";
+    exit 1;
+}
+
+print "Using STAF static handle $staticHandleNumber\n";
+
+# Register with STAF using a static handle that already exists
+
+$handle = STAF::STAFHandle->new($staticHandleNumber, $STAF::STAFHandle::kStatic);
+
+print "Static STAF handle: $handle->{handle}\n";
+
+$result = $handle->submit("local", "ping", "ping");
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} != "PONG")) {
+    print "Error on ping request.\n";
+    print "Expected RC: 0, Result: PONG\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_SubmitOO" href="#ToC_SubmitOO">4.1.2.2 STAF::STAFHandle::submit</a></h3>
+
+<h4>Description</h4>
+
+This method allows you to submit requests to STAF.&nbsp; This is the primary
+method that you will use when working with STAF.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFHandle->submit(LOCATION, SERVICE, REQUEST)</tt>
+<p>where,
+<p><tt>LOCATION</tt> is the system to which the request should be submitted.&nbsp;
+"Local" may be used to represent the local system, i.e., the system on
+which the Perl program is running.
+<p><tt>SERVICE</tt> is the name of the service to which the request should
+be submitted.
+<p><tt>REQUEST</tt> is the actual request string itself.
+
+<h4>Result</h4>
+
+The function returns a <tt>STAF::STAFResult</tt> object that contains a
+numeric return code and a string-based result.
+Return codes are documented in the STAF User's Guide.
+The string-based result will contain the textual result buffer from
+this request.  See the individual service documentation for information
+on the contents of this buffer.
+<p>
+In addition, if auto-unmarshalling is enabled for the handle that called the
+submit() method (e.g. if the handle's doUnmarshallResult field is set to 1),
+the <tt>STAF::STAFResult</tt> object also contains the marshalling context
+for the result (e.g. the unmarshalled result) and the result object (e.g.
+the root object of the marshalling context) so that you don't have to call
+the handle's unmarshall method to unmarshall results.
+Otherwise, if auto-unmarshalling is disabled, the resultContext and
+resultObj fields in the <tt>STAF::STAFResult</tt> object will be set to undef.
+
+<h4>Examples</h4>
+
+<ol>
+<li>The following example shows submitting a request to a STAF service
+    that returns a single string result.
+<ul>
+<font color="darkblue">
+<pre>
+$result = $handle->submit("local", "ping", "ping");</tt>
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error submitting ping request, RC: $result->{rc}\n";
+    if (length($result->{result}) != 0) {
+        print "Additional info: $result->{result}\n";
+    }
+    exit $result->{rc};</tt>
+}
+print "STAF Ping result: $result->{result}\n";
+</pre>
+</font>
+</ul>
+<p>
+<li>The following example shows the use of the STAFResult class when submitting
+a request to a STAF service (using a handle that has auto-unmarshalling results
+enabled) that returns a marshalled result string whose
+root object is a Map.
+<ul>
+<font color="darkblue">
+<pre>
+$result = $handle->submit("local", "misc", "whoami");</tt>
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error submitting MISC WHOAMI request, RC: $result->{rc}\n";
+    if (length($result->{result}) != 0) {
+        print "Additional info: $result->{result}\n";
+    }
+    exit $result->{rc};</tt>
+}
+
+print "MISC WHOAMI result: $result->{resultContext}\n";
+print "UUID: $result->{resultObj}->{instanceUUID}\n";
+</pre>
+</font>
+</ul>
+<p>
+<li>This example submits a request to the PROCESS service to run a command
+on a machine and to wait for the command to complete.  It shows the use of
+the STAFResult class when submitting a request to a STAF service using a
+handle that has auto-unmarshalling results enabled.  The request returns
+marshalled data whose root object is a map that contains keys like 'rc' and
+'fileList'.  The value for 'fileList' is a list of the returned files.
+Each entry in the list consists of a map that contains keys 'rc' and
+'data'.  In our PROCESS START request, we returned one file, stdout,
+and returned stderr to this same file.
+(Note that the STAF User's Guide defines the results for each
+request submitted to an internal STAF service.)
+<ul>
+<font color="darkblue">
+<pre>
+# Submit a PROCESS START request and wait for it to complete
+
+my $command = 'dir {STAF/Config/STAFRoot}';
+my $request = "START SHELL COMMAND ".STAF::WrapData($command).
+              " RETURNSTDOUT STDERRTOSTDOUT WAIT";
+
+print "\nSTAF local PROCESS $request\n";
+
+my $result = $handle->submit("local", "PROCESS", $request);
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on STAF local PROCESS $request\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+# The result is a marshalling context whose root object is a
+# map containing keys 'rc', and 'fileList'.  The value for
+# 'fileList' is a list of the returned files.  Each entry in the
+# list consists of a map that contains keys 'rc' and 'data'.
+# In our PROCESS START request, we returned one file, stdout (and
+# returned stderr to this same file).
+
+# Get process RC
+
+my $processRC = $result->{resultObj}->{rc};
+
+# Verify that the rc is 0 for returning data for the Stdout file 
+
+my $stdoutRC = $result->{resultObj}->{fileList}[0]{rc};
+
+if ($stdoutRC != $STAF::kOk) {
+    print "Error on retrieving process's stdout data.\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $stdoutRC\n";
+    exit $stdoutRC; 
+}
+
+# Print the data in the stdout file created by the process
+
+my $stdoutData = $result->{resultObj}->{fileList}[0]{data};
+
+print "\nProcess Stdout File Contains:\n";
+print "$stdoutData\n";
+
+# Verify that the process rc is 0
+
+if ($processRC != $STAF::kOk) {
+    print "Process RC: $processRC\n";
+    print "Expected Process RC: 0\n";
+    exit $processRC;
+}
+</pre>
+</font>
+</ul>
+<p>
+This example could print the following when run:
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+STAF local PROCESS START SHELL COMMAND :26:dir {STAF/Config/STAFRoot} RETURNSTDOUT STDERRTOSTDOUT WAIT
+
+Process Stdout File Contains:
+ Volume in drive C has no label.
+ Volume Serial Number is B0B7-F95A
+
+ Directory of C:\STAF
+
+01/26/2006  02:56p      &lt;DIR>          .
+01/26/2006  02:56p      &lt;DIR>          ..
+01/26/2006  02:56p      &lt;DIR>          lib
+01/26/2006  02:56p      &lt;DIR>          codepage
+01/26/2006  02:56p      &lt;DIR>          samples
+01/26/2006  02:57p      &lt;DIR>          include
+01/26/2006  02:57p      &lt;DIR>          bin
+02/25/2008  01:30p              17,029 LICENSE.htm
+01/26/2006  03:04p      &lt;DIR>          docs
+01/26/2006  03:11p      &lt;DIR>          data
+02/12/2008  05:05p                  25 STAFReg.inf
+06/05/2008  10:17a               8,729 NOTICES.htm
+06/24/2008  04:34p                  77 install.properties
+               4 File(s)         72,601 bytes
+               9 Dir(s)   8,199,012,352 bytes free
+</pre>
+</font>
+</ul>
+<p>
+<li>This example submits a request to the FS service to list entries in a directory
+in the long format.  The request returns marshalled data whose root object is a
+list of map class objects, where each map class object in the list contains
+keys like 'type', 'size', and 'name'.  (Note that the STAF User's Guide defines
+the results for each request submitted to an internal STAF service.)
+<p>
+This example shows the use of the STAFResult class when submitting a request
+to a STAF service using a handle that has auto-unmarshalling results enabled.
+<ul>
+<font color="darkblue">
+<pre>
+# Set $dir to a directory name whose contents will be listed
+my $dir = "C:/tmp";
+my $request = "LIST DIRECTORY $dir LONG";
+print "STAF local FS $request\n\n";
+ 
+my $result = $handle->submit("local", "FS", $request);
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on STAF local FS $request\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+# The result is a marshalling context whose root object is a "reference"
+# to an array.  Each item in the array is a "reference" to a hash/map.
+
+for my $itemMap (@{$result->{resultObj}) {
+    print "Type: $itemMap->{type}  Size: $itemMap->{size}  Name: $itemMap->{name}\n";
+}
+</pre>
+</font>
+</ul>
+<p>
+This example could print the following when run:
+<ul>
+<font color="darkblue">
+<pre>
+STAF local FS LIST DIRECTORY C:/tmp LONG
+
+Type: D  Size: 0  Name: test1
+Type: F  Size: 44  Name: AutoFVT.bsh
+Type: D  Size: 0  Name: tmp2
+Type: F  Size: 12505  Name: testA.exe
+Type: D  Size: 0  Name: test
+Type: D  Size: 0  Name: temp2
+Type: D  Size: 0  Name: test2
+Type: D  Size: 0  Name: openssl
+Type: F  Size: 36  Name: myfile.txt
+</pre>
+</font>
+</ul>
+
+</ol>
+
+<h3><a name="Header_Submit2OO" href="#ToC_Submit2OO">4.1.2.3 STAF::STAFHandle::submit2</a></h3>
+
+<h4>Description</h4>
+
+This method allows you to submit requests to STAF.&nbsp; This is the primary
+method that you will use when working with STAF.
+The <tt>STAF::STAFHandle::submit2</tt> method is identical to the <tt>STAF::STAFHandle:submit</tt>
+method except that it has an additional parameter, <tt>SYNCTOPTION</tt>,
+which allows submission of asynchronous requests.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFHandle->submit2(SYNCOPTION, LOCATION, SERVICE, REQUEST)</tt>
+<p>where,
+<p><tt>SYNCOPTION</tt> can be any of the following:
+<p>
+<ul>
+<li><tt>STAF::STAFHandle::kReqSync</tt> - This indicates the request should be submitted synchronously.
+This is equivalent to calling the <tt>STAF::STAFHandle::submit</tt> API.
+<p>
+<li><tt>STAF::STAFHandle::kReqFireAndForget</tt> - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+The request's results will not be sent to the submitter's queue nor will they be retained
+by the Service service.
+<p>
+<li><tt>STAF::STAFHandle::kReqQueue</tt> - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be placed on the submitter's queue
+(the format of this queued message is described in the STAF User's Guide).
+The format of this message is described in the STAF User's Guide.
+<p>
+<li><tt>STAF::STAFHandle::kReqRetain</tt> - This indicates the request should be submitted
+asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be retained by the Service service.
+The submitter can determine the results of the request by submitting a QUERY
+REQUEST &lt;request-number> command to the Service service, or by submitting a
+FREE REQUEST &lt;request-number> command to the Service service.  Note that the
+submitter should always free the results of the request by submitting the FREE
+command to the Service service.
+<p>
+<li><tt>STAF::STAFHandle::kReqQueueRetain</tt> - This indicates the request should be
+submitted asynchronously. The request number will be passed back in the result buffer.
+When the request completes, the results will be placed on the submitter's queue
+(the format of this queued message is described in the STAF User's Guide), and
+the results will be retained by the Service service.
+The submitter can determine the results of the request by examining the contents
+of the queued message, by submitting a QUERY REQUEST &lt;request-number>
+command to the Service serviceor, or by submitting a FREE REQUEST
+&lt;request-number> command to the Service service.  Note that the
+submitter should always free the results of the request by submitting the FREE
+command to the Service service.
+</ul>
+<p>
+<tt>LOCATION</tt> is the system to which the request should be submitted.&nbsp;
+"Local" may be used to represent the local system, i.e., the system on
+which the Perl program is running.
+<p>
+<tt>SERVICE</tt> is the name of the service to which the request should
+be submitted.
+<p>
+<tt>REQUEST</tt> is the actual request string itself.
+
+<h4>Result</h4>
+
+The function returns a <tt>STAF::STAFResult</tt> object that contains a
+numeric return code and a string-based result.
+Return codes are documented in the STAF User's Guide.
+The string-based result will contain the textual result buffer from
+this request.  See the individual service documentation for information
+on the contents of this buffer.
+<p>
+In addition, if auto-unmarshalling is enabled for the handle that called the
+submit() method (e.g. if the handle's doUnmarshallResult field is set to 1),
+the <tt>STAF::STAFResult</tt> object also contains the marshalling context
+for the result (e.g. the unmarshalled result) and the result object (e.g.
+the root object of the marshalling context) so that you don't have to call
+the handle's unmarshall method to unmarshall results.
+Otherwise, if auto-unmarshalling is disabled, the resultContext and
+resultObj fields in the <tt>STAF::STAFResult</tt> object will be set to undef.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+$result = $handle->submit2(
+    $STAF::STAFHandle::kReqQueue, "local", "PING", "PING");
+
+if ($result->{rc} != $STAF::kOk) { 
+    print "Error submitting ping request, RC: $result->{rc}\n"; 
+    if (length($result->{result}) != 0) { 
+        print "Additional info: $result->{result}\n"; 
+    } 
+    exit $result->{rc}; 
+}
+print "Request Number: $result->{result}\n";
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_Unregister2" href="#ToC_Unregister2">4.1.2.4 STAF::STAFHandle::unRegister</a></h3>
+
+<h4>Description</h4>
+
+This method allows you to unregister with STAF.&nbsp; This allows STAF
+to free up the information associated with your handle.&nbsp; This should
+be the last STAF related API that you call in your program.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFHandle->unRegister()</tt>
+
+<h4>Result</h4>
+
+This method returns a numeric return code.&nbsp; Zero indicates that you
+unregistered successfully.&nbsp; Non-zero return codes are documented in
+the STAF User's Guide.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt>$rc = $handle->unRegister();</tt>
+<p><tt>if ($rc != $STAF::kOk) {</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; print "Error unregistering with STAF, RC: $rc\n";</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; exit $rc;</tt>
+<br><tt>}</tt>
+</font>
+</ul>
+
+<h3><a name="Header_setDoUnmarshallResult" href="#ToC_setDoUnmarshallResult">
+3.1.2.5 STAF::STAFHandle::setDoUnmarshallResult</a></h3>
+
+<h4>Description</h4>
+
+This method allows you to set the doUnmarshallResult flag which indicates
+if auto-unmarshalling results will be performed when the handle submits a
+STAF service request.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFHandle->setDoUnmarshallResult(doUnmarshallResult)</tt>
+<p>where,
+<p><tt>doUnmarshallResult</tt> should be 0 to disable auto-unmarshalling results
+or 1 to enabling auto-unmarshalling results when the handle submits a STAF
+service request.
+<p><b>Since:</b> STAF V3.3.1
+
+<h4>Result</h4>
+
+This method doesn't return anything.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+$handle->setDoUnmarshallResult(0);
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_getDoUnmarshallResult" href="#ToC_getDoUnmarshallResult">
+3.1.2.6 STAF::STAFHandle::getDoUnmarshallResult</a></h3>
+
+<h4>Description</h4>
+
+This method allows you to get the doUnmarshallResult flag which indicates
+if auto-unmarshalling results will be performed when the handle submits a
+STAF service request.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFHandle->getDoUnmarshallResult()</tt>
+
+<h4>Result</h4>
+
+This method returns the doUnmarshallResult flag which indicates if
+auto-unmarshalling results will be performed when the handle submits
+a STAF service request.
+
+<p><b>Since:</b> STAF V3.3.1
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+$doUnmarshallResultFlag = $handle->getDoUnmarshallResult();
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_ResultNew" href="#ToC_ResultNew">4.1.3 Class STAF::STAFResult</a></h3>
+
+<h4>Definition</h4>
+
+<dl>
+<dt><b><font size="+1">class</font> <tt>STAF::STAFResult</tt></b></dt>
+<dd>This class encapsulates the result of a STAF service request (made via
+the STAFHandle.submit() method).  This class also contains a set of
+constants representing the various common STAF return codes.</dd>
+</dl>
+<p>
+Class <tt>STAF::STAFResult</tt> defines the following methods:
+<ul>
+<dl>
+<dt><b><tt>new</tt></b>(<i>rc</i>, <i>result</i>, [<i>doUnmarshallResult</i>])</dt>
+<dd>Creates a new <tt>STAF::STAFResult</tt> object.
+<p>
+The required argument <i>rc</i> specifies the numeric return code
+of the service request.
+<br>
+The required argument <i>result</i> specifies a string result buffer
+returned from the service request.
+<br>
+The optional argument <i>doUnmarshallResult</i> specifies whether
+auto-unmarshalling results should be performed.  It should be 0 or 1.
+<p><b>Note:</b> The <i>doUnmarshallResult</i> argument was added in STAF V3.3.1.
+</dd>
+</dl>
+</ul>
+<p>
+Class <tt>STAF::STAFResult</tt> defines the following member variables.  They are
+initialized by the constructor, and should not be modified directly.
+<p>
+<ul>
+<dl>
+<dt><b><tt>rc</tt></b>
+<dd>An integer identifying the return code of the service request.
+<p>
+<dt><b><tt>result</tt></b>
+<dd>A string containing the result buffer returned from the service request.
+<p>
+<dt><b><tt>resultContext</tt></b>
+<dd>If the doUnmarshallResult argument is a true value (e.g. 1), this
+variable will contain the marshalling context for the result (e.g. the
+unmarshalled result).  Otherwise, this variable will be set to <tt>undef</tt>.
+<br><b>Note:</b> This variable was added in STAF V3.3.1.
+<p>
+<dt><b><tt>resultObj</tt></b>
+<dd>If the doUnmarshallResult argument is a true value (e.g. 1), this
+variable will contain the root object of the result's marshalling context.
+Otherwise, this variable will be set to <tt>undef</tt>.
+<br><b>Note:</b> This variable was added in STAF V3.3.1.
+</dd>
+</dt>
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+You can create a new <tt>STAF::STAFResult</tt> object with an RC of 0 and
+a result of "Successful" as follows:
+<ul>
+<font color="darkblue">
+<pre>
+my $result = STAF::STAFResult->new(0, 'Successful');
+print "RC: $result->{rc}, Result: $result->{result}\n";
+</pre>
+</font>
+</ul>
+<p>
+The following example shows the use of the STAFResult class in calling
+a STAF service that returns a simple string result.
+<ul>
+<font color="darkblue">
+<pre>
+# The variable "handle" is an instance of the STAFHandle class that was
+# previously instantiated
+
+$result = $handle->submit("local", "ping", "ping");
+
+print "Ping request RC: $handle->{rc}\n";
+print "Ping request result buffer: $result->{result}\n";
+</pre>
+</font>
+</ul>
+<p>
+The following example shows the use of the STAFResult class in calling
+a STAF service that returns a marshalled map result.
+<ul>
+<font color="darkblue">
+<pre>
+# The variable "handle" is an instance of the STAFHandle class that was
+# previously instantiated
+
+$result = $handle->submit("local", "misc", "whoami");
+
+print "MISC WHOAMI request RC: $handle->{rc}\n";
+print "MISC WHOAMI request result buffer: $result->{resultContext}\n";
+print "UUID: $result->{resultObj}->{instanceUUID}\n";
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_wrapData"   href="#ToC_wrapData">4.1.4 Function STAF::WrapData (or STAF::STAFUtil::WrapData)</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::WrapData</tt></b>(<i>inputString</i>)
+<dd>Returns a colon-length-colon delimited version of the input string.
+This function is widely used to pass the values of options in STAF requests.
+</dl>
+<p>
+Note that <tt>STAF::STAFUtil::WrapData</tt> is an alias for the
+<tt>STAF::wrapData</tt> function and can be used instead to call this
+function.
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+This function returns a string in colon-length-colon delimited format.
+</ul>
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+my $message = "Hello World";
+$result = $handle->submit(
+    "local", "monitor", "log message ".STAF::WrapData($message));
+
+if ($result->{rc} == $STAF::kOk) { 
+    print "Error logging message to Monitor,".
+          " RC: $result->{rc} Result: $result->{result}\n"; 
+    exit $result->{rc}; 
+} 
+</pre>
+</font>
+</ul>
+
+<h2><a name="Header_Marshalling" href="#ToC_Marshalling">4.2 Marshalling APIs</a></h2>
+<p>
+These APIs allow you to define, manipulate, and (un)marshall data structures, and
+print marshalled data in human-readable ("pretty" print) format.
+<p>
+STAF supports the automatic marshalling and unmarshalling of structured data. 
+The act of marshalling takes a data structure and converts it into a
+string-based representation. The act of unmarshalling reverses this and
+converts the string-based representation back into a data structure. 
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRMARSHALL">
+Section 6.1, "Marshalling Structured Data"</a> in the STAF User's Guide for
+more information.
+
+<h3><a name="Header_STAFMCDef" href="#ToC_STAFMCDef">4.2.1 Class STAF::STAFMapClassDefinition</a></h3>
+
+<h4>Definition</h4>
+
+<dl>
+<dt>
+<b><font size="+1">class</font> <tt>STAF::STAFMapClassDefinition</tt></b>
+<dd>A class which provides the metadata associated with a map class.
+In particular, it defines the keys associated with the map class. 
+This class is used to create and/or access a STAF map class definition which can
+be useful if you want to generate a STAF marshalling context with map classes.
+The map class definition is used to reduce the size of a
+marshalling map class in comparison to a map containing the same data.
+It also contains information about how to display instances of the map class,
+such as the order in which to display the keys and the display names to
+use for the keys.  You get and set map class definitions using the 
+<tt>STAF::STAFMarshallingContext</tt> class <tt>setMapClassDefinition</tt> and 
+<tt>getMapClassDefinition</tt> methods.
+</dl>
+<p>
+Class <tt>STAF::STAFMapClassDefinition</tt> defines the following methods:
+<p>
+<ul>
+<dl>
+<dt><b><tt>new</tt></b>(<b><font size="+1">[</font></b><i>name</i><b><font size="+1">]</font></b></font></b>)
+<dd>Creates a new <tt>STAF::STAFMapClassDefinition</tt> object.
+<p>
+The optional keyword argument <i>name</i> specifies the name of the STAF
+map class definition.  The default is an empty string.
+<p>
+<dt><b><tt>createInstance</tt></b>()
+<dd>Returns a map containing one entry with a key name of <tt>'staf-map-class-name'</tt>
+with a value set to the name of the map class definition.
+<p><b>Since:</b> STAF V3.2.4
+<p>
+<dt><b><tt>addKey</tt></b>(<i>keyName</i><b><font size="+1">[</font></b>,
+    <i>displayName</i><b><font size="+1">]</font></b></i>)
+<dd>Adds a key to the map class definition.
+<p>The required keyword argument <i>keyName</i> specifies the name of a key.
+<p>The optional keyword argument <i>displayName</i> specifies a string to
+use when displaying the key.  The default is <tt>None</tt> which indicates to
+use the actual key name when displaying the key.
+<p>
+<dt><b><tt>setKeyProperty</tt></b>(<i>keyName</i>, <i>property</i>, <i>value</i>)
+<dd>Sets a property such as a short display name ("display-short-name")
+for a key in the map class definition.
+<p>The required keyword argument <i>keyName</i> specifies the name of
+a key for which this property is being set.
+<p>The required keyword argument <i>property</i> specifies the name of
+the property being set.  The only property name currently recognized isropery name currently recognized is
+<tt>'display-short-name'</tt>.
+<p>The required keyword argument <i>value</i> specifies the value for
+the property being set.
+<p>
+<dt><b><tt>keys</tt></b>()
+<dd>Returns a list of all of the keys.  Each entry in the list is a
+map containing a key named <tt>'key'</tt>, and optionally, a key named
+<tt>'display-name'</tt>, and optionally, any key property names such as 
+<tt>'display-short-name'</tt>.
+<p>
+<dt><b><tt>name</tt></b>()
+<dd>Returns the name for the map class definition.
+</dl>
+</ul>
+
+<h4>Example</h4>
+
+The following is an example of how to create a map class definition
+named 'Test/MyMap' containing four keys, each with a display name,
+and one with a short display name.
+<ul>
+<font color="darkblue">
+<pre>
+my $myMapClassDef = STAF::STAFMapClassDefinition->new('Test/MyMap');
+$myMapClassDef->addKey('name', 'Name');
+$myMapClassDef->addKey('exec', "Executable");
+$myMapClassDef->addKey('testType', 'Test Type');
+$myMapClassDef->setKeyProperty('testType', 'display-short-name', 'Test');
+$myMapClassDef->addKey('outputList', 'Outputs');
+my $myMapClassName = $myMapClassDef->name();
+
+print "The keys in map class definition '$myMapClassName' are:\n";
+my @classDefKeys = $myMapClassDef->keys();
+my $classDefKeys_ref = \@classDefKeys;
+print STAF::STAFFormatObject($classDefKeys_ref), "\n";
+</pre>
+</font>
+</ul>
+
+This example prints the following:
+<ul>
+<font color="darkblue">
+<pre>
+The keys in map class definition 'Test/MyMap' are:
+[
+  {
+    display-name: Name
+    key         : name
+  }
+  {
+    display-name: Executable
+    key         : exec
+  }
+  {
+    display-short-name: Test
+    display-name      : Test Type
+    key               : testType
+  }
+  {
+    display-name: Outputs
+    key         : outputList
+  }
+]
+    </pre>
+</font>
+</ul>
+
+
+<h3><a name="Header_STAFMC" href="#ToC_STAFMC">4.2.2 Class STAF::STAFMarshallingContext</a></h3>
+
+<h4>Definition</h4>
+
+<dl>
+<dt>
+<b><font size="+1">class</font> <tt>STAF::STAFMarshallingContext</tt></b>
+<dd>A class is used to create and/or access a STAF marshalling context which
+is used by STAF to help in marshalling and unmarshalling data.
+A marshalling context is simply a container for map class definitions
+and a data structure that uses (or is defined in terms of) them.
+<p>
+In order to use a map class when marshalling data, you must add the
+map class definition to the marshalling context, set the root object
+of the marshalling context to the object you want to marshall,
+and then marshall the marshalling context itself.
+When you unmarshall a data structure, you will always receive a
+marshalling context. Any map class definitions referenced by map
+classes within the data structure will be present in the marshalling context. 
+<p>
+The primary use of this class is to represent multi-valued results
+that consist of a data structure (e.g. results from a QUERY/LIST
+service request, etc.) as a string that can also
+be converted back into the data structure.  This string can be
+assigned to the string result buffer returned from the service request.
+</dl>
+<p>
+Class <tt>STAFMarshallingContext</tt> defines the following methods:
+<p>
+<ul>
+<dl>
+<dt>
+<dt><b><tt>new</tt></b>(<b><font size="+1">[</font></b><i>obj</i><b><font size="+1">]</font></b>)
+<dd>Creates a new <tt>STAF::STAFMarshallingContext</tt> object.
+<p>
+The optional keyword argument <i>obj</i> specifies the root object to be marshalled.
+The default is an empty string.
+<p>
+<dt><b><tt>setMapClassDefinition</tt></b>(<i>mapClassDef</i>)
+<dd>Called to add a map class definition to the marshalling context.
+<p>
+<dt><b><tt>getMapClassDefinition</tt></b>(<i>mapClassName</i>)
+<dd>Returns the map class definition for the specified map class name.
+<p>
+<dt><b><tt>hasMapClassDefinition</tt></b>(<i>mapClassName</i>)
+<dd>Called to determine whether the marshalling context contains
+the specified map class definition.
+<p>
+<dt><b><tt>getMapClassMap</tt></b>()
+<dd>Returns a map of the map class definitions for the marshalling context
+    where each key in the map is the name of a map class definition and
+    each value is a map class definition object.
+    <p><b>Since:</b> STAF V3.2.4
+<p>
+<dt><b><tt>mapClassDefinitionList</tt></b>()
+<dd>Returns a map of the names of the map class definitions.
+<p>
+<dt><b><tt>setRootObject</tt></b>(<i>rootObject</i>)
+<dd>Sets the root object for the marshalling context.
+<p>
+<dt><b><tt>getRootObject</tt></b>()
+<dd>Returns the root object for the marshalling context.
+<p>
+<dt><b><tt>getPrimaryObject</tt></b>()
+<dd>Returns the primary object for the marshalling context which is
+    the marshalling context object itself if the marshalling context
+    contains one or more map class definitions.  Otherwise, it returns
+    the root object.
+<p>
+<dt><b><tt>marshall</tt></b>()
+<dd>This is the marshalling function that creates marshalled data for
+the marshalling context.  Returns a string containing the marshalled data.
+<p><b>Since:</b> STAF V3.2.4
+<p>
+<dt><b><tt>formatObject</tt></b>()
+<dd>This function is used to convert a data structure into a verbose
+formatted hierarchical string that can be used when you want a "pretty print"
+representation of an object.  Returns a string containing the formatted data.
+<p><b>Since:</b> STAF V3.2.4
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+The following is an example of how to create a marshalling context
+containing one map class definition named 'Test/MyMap' and a root object
+which is a list of maps defined by the map class definition.
+Then it shows how to marshall and unmarshall and marshalling context.
+
+<ul>
+<font color="darkblue">
+<pre>
+# Create a map class definition
+
+my $myMapClassDef = STAF::STAFMapClassDefinition->new('Test/MyMap');
+$myMapClassDef->addKey('name', 'Name');
+$myMapClassDef->addKey('exec', 'Executable');
+
+# Create an array (aka list) of hashes (aka maps)
+my @testList = (
+    {name => 'TestA', exec => '/tests/TestA.py'},
+    {name => 'TestB', exec => '/tests/TestB.sh'},
+    {name => 'TestC', exec => '/tests/TestC.cmd'}
+  );
+
+# Create a reference to the array (aka list)
+my $testList_ref = \@testList;
+
+# Create a marshalling context with one map class definition
+
+my $mc = STAF::STAFMarshallingContext->new();
+$mc->setMapClassDefinition($myMapClassDef);
+
+# Create an array (aka list) of map class map data
+
+my @myTestList;
+
+foreach my $test (@$testList_ref) {
+    my $testMap = $myMapClassDef->createInstance();
+    $testMap->{'name'} = $test->{'name'};
+    $testMap->{'exec'} = $test->{'exec'};
+    push @myTestList, $testMap;
+}
+
+# Assign a reference to the array (aka list) as the root object
+# for the marshalling context
+$mc->setRootObject(\@myTestList);
+
+print "Test List:\n", $mc->formatObject(), "\n";
+
+# Create a string from the marshalling context
+# This string could be a message that you log or send to a queue, etc.
+
+my $stringResult = $mc->marshall();
+
+# Convert the marshalled string representation back into an array (aka list)
+
+my $mc2 = STAF::STAFUnmarshall($stringResult);
+my $theTestList = $mc2->getRootObject();
+</pre>
+</font>
+</ul>
+
+This example prints the following:
+<ul>
+<font color="darkblue">
+<pre>
+Test List:
+[
+  {
+    Name      : TestA
+    Executable: /tests/TestA.py
+  }
+  {
+    Name      : TestB
+    Executable: /tests/TestB.sh
+  }
+  {
+    Name      : TestC
+    Executable: /tests/TestC.cmd
+  }
+]
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_isMarshalled" href="#ToC_isMarshalled">4.2.3 Function STAF::STAFIsMarshalledData</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::STAFIsMarshalledData</tt></b>(<i>someData</i>)
+<dd>A function used to test if the keyword argument <i>someData</i>
+is a string-based marshalled representation.
+Returns a true value if it is a marshalled string.
+</dl>
+</ul>
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<pre>
+if (STAF::STAFIsMarshalledData($result->{result})) {
+    my $mc = STAF::STAFUnmarshall($result->{result});
+}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_marshall" href="#ToC_marshall">4.2.4 Function STAF::STAFMarshall</a></h3>
+
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::STAFMarshall</tt></b>(<i>object</i><b><font size="+1">[</font></b>, <i>context</i><b><font size="+1">]</font></b>)
+<dd>A function used to create a string-based marshalled representation
+of the object specified by the keyword argument <i>object</i>.
+Returns a marshalled string.
+<p>
+The default for optional keyword argument <i>context</i> is <tt>None</tt>.
+<p>
+Note, normally you would use a <tt>STAFMarshallingContext</tt> object's <tt>marshall()</tt>
+method instead of this function.
+<p><b>Since:</b> STAF V3.2.4
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+<ol>
+<li>This example converts a Perl hash (aka map) into a string-based marshalled
+representation.  It also shows how to convert this marshalled string back
+into the original Perl hash.
+<ul>
+<font color="darkblue">
+<pre>
+my $myTestMap = {
+  'name' => 'TestA',
+  'exec' => '/tests/TestA.py',
+  'testType' => 'FVT',
+  'outputs' => [ 'TestA.out', 'TestA.err' ]
+  };
+
+my $message = STAF::STAFMarshall($myTestMap);
+
+my $rc = STAF::Submit('local', 'QUEUE', "QUEUE MESSAGE $message");
+
+if ($rc != $STAF::kOk) {
+    print "QUEUE MESSAGE failed with RC=$STAF::RC Result=$STAF::Result\n";
+    exit $rc; 
+}
+
+# Another process could obtain the message from the queue and unmarshall
+# it to get the original hash (map) object
+
+my $rc = STAF::Submit('local', 'QUEUE', 'GET');
+
+if ($rc == $STAF::kOk) {
+    my $mc = STAF::STAFUnmarshall($STAF::Result);
+    my $yourTestMap = $mc->getRootObject();
+    print "Received following message:\n", $mc->formatObject(), "\n";
+}
+else {
+    print "QUEUE GET failed with RC=$STAF::RC Result=$STAF::Result\n";
+    exit $rc;
+}
+</pre>
+</font>
+</ul>
+This example could print the following:
+<ul>
+<font color="darkblue">
+<pre>
+Received following message:
+{
+  Priority   : 5
+  Date-Time  : 20071022-14:42:15
+  Machine    : local://local
+  Handle Name: Lang/Perl/Test/Basic
+  Handle     : 126
+  User       : none://anonymous
+  Type       : <None>
+  Message    : {
+    testType: FVT
+    outputs : [
+      TestA.out
+      TestA.err
+    ]
+    name    : TestA
+    exec    : /tests/TestA.py
+  }
+}
+</pre>
+</font>
+</ul>
+<p>
+<li>This example creates a marshalling context with one map class definition
+and a Perl array (aka list) where each entry is a hash (aka map).
+It then creates a string-based marshalled representation of it.
+<ul>
+<font color="darkblue">
+<pre>
+# Create a map class definition
+
+my $myMapClassDef = STAF::STAFMapClassDefinition->new('Test/MyMap');
+$myMapClassDef->addKey('name', 'Name');
+$myMapClassDef->addKey('exec', 'Executable');
+
+# Create a Perl array (aka list) where each entry is a hash (aka map)
+
+my @testList = (
+    {name => 'TestA', exec => '/tests/TestA.py'},
+    {name => 'TestB', exec => '/tests/TestB.sh'},
+    {name => 'TestC', exec => '/tests/TestC.cmd'}
+  );
+
+# Create a marshalling context with testList and one map class definition
+
+my $mc = STAF::STAFMarshallingContext->new();
+$mc->setMapClassDefinition($myMapClassDef);
+
+my @myTestList;
+my $testList_ref = \@testList;
+
+foreach my $test (@$testList_ref) {
+    my $testMap = $myMapClassDef->createInstance();
+    $testMap->{'name'} = $test->{'name'};
+    $testMap->{'exec'} = $test->{'exec'};
+    push @myTestList, $testMap;
+}
+
+# Assign a reference to the array (aka list)
+my $myTestList_ref = \@myTestList;
+
+print "Test List:\n"
+print STAF::STAFFormatObject($myTestList_ref, $mc), "\n";
+
+my $marshalledString = STAF::STAFMarshall($myTestList_ref, $mc);
+</pre>
+</font>
+</ul>
+</ol>
+
+<h3><a name="Header_unmarshall" href="#ToC_unmarshall">4.2.5 Function STAF::STAFUnmarshall</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::STAFUnmarshall</tt></b>(<i>data</i><b><font size="+1">[</font></b>,
+     <i>context</i><b><font size="+1">][</font></b>,
+     <i>flags</i><b><font size="+1">]</font></b>)
+<dd>A function used to convert a string-based marshalled representation
+specified by the keyword argument <i>data</i> back into a data structure.
+It returns a marshalling context (from which you can get the data structure
+via the <tt>STAF::STAFMarshallingContext</tt> class <tt>getRootObject()</tt>
+function).
+<p>
+The required keyword argument <i>data</i> is a string to be unmarshalled.
+<p>
+The optional keyword argument <i>context</i> specifies the
+<tt>STAF::STAFMarshallingContext</tt> object that should be used when
+generating when unmarshalling the string. The default is <tt>None</tt>.
+<p>
+The optional keyword argument <i>flags</i> can be used to control
+how to unmarshall the string.
+When a string is unmarshalled into a data structure, it is possible
+that one of the string objects that is unmarshalled is itself the
+string form of another marshalled data structure.
+The default when no flags are specified is to recursively unmarshall these
+nested objects.
+To disable this additional processing, specify <tt>IGNORE_INDIRECT_OBJECTS=>1</tt>
+for the flags argument.
+</dl>
+</ul>
+
+<h4>Example</h4>
+
+This example shows how to unmarshall the result from a QUEUE GET request.
+The result is a marshalled string representing a marshalling context
+whose root object is a Perl hash (aka map) object.
+<ul>
+<font color="darkblue">
+<pre>
+my $rc = STAF::Submit('local', 'QUEUE', 'GET');
+
+if ($rc == $STAF::kOk) {
+    my $mc = STAF::STAFUnmarshall($STAF::Result);
+    my $yourTestMap = $mc->getRootObject();
+    print "Received following message:\n", $mc->formatObject(), "\n";
+}
+else {
+    print "QUEUE GET failed with RC=$STAF::RC Result=$STAF::Result\n";
+    exit $rc;
+}
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_formatObject" href="#ToC_formatObject">4.2.6 Function STAF::STAFFormatObject</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>formatObject</tt></b>(<i>obj</i><b><font size="+1">[</font></b>,
+ <i>context</i><font size="+1">]</font><b><font size="+1">[</font></b>)
+<dd>A function used to convert a data structure into a verbose formatted
+hierarchical string that can be used when you want a "pretty print"
+representation of an object.
+<p>
+The required keyword argument <i>obj</i> specifies the object to
+be formatted in a verbose, more readable format.
+<p>
+The optional keyword argument <i>context</i> specifies the
+<tt>STAF::STAFMarshallingContext</tt> object that should be used when
+generating the "pretty print" output. The default is <tt>None</tt>.
+<p>
+<b>Since:</b> STAF V3.2.4
+</dl>
+</ul>
+
+<h4>Examples</h4>
+
+<ol>
+<li>This example that prints a Perl hash in a "pretty" verbose format:
+<ul>
+<font color="darkblue">
+<pre>
+my $myTestMap = {
+  'name' => 'TestA',
+  'exec' => '/tests/TestA.py',
+  'testType' => 'FVT',
+  'outputs' => [ 'TestA.out', 'TestA.err' ]
+  };
+
+print STAF::STAFFormatObject($myTestMap);
+</pre>
+</font>
+</ul>
+
+This could result in the following output printed:
+<ul>
+<font color="darkblue">
+<pre>
+{
+  testType: FVT
+  outputs : [
+    TestA.out
+    TestA.err
+  ]
+  name    : TestA
+  exec    : /tests/TestA.py
+}
+</pre>
+</font>
+</ul>
+<p>
+<li>This example prints the result from a FS QUERY ENTRY request in a "pretty" verbose format:
+<ul>
+<font color="darkblue">
+<pre>
+my $fileName = '{STAF/Config/ConfigFile}';
+my $request = "QUERY ENTRY $fileName";
+my $result = $handle->submit('local', 'FS', $request);
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Request failed: STAF local FS $request\n";
+    print "RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+my $mc = STAF::STAFUnmarshall($result->{result});
+print "Formatted output:\n"
+print STAF::STAFFormatObject($result->{resultObject}, $result->{resultContext});
+</pre>
+</font>
+</ul>
+
+If successful, this could result in the following output printed:
+<ul>
+<font color="darkblue">
+<pre>
+Formatted output:
+{
+  Name              : c:\staf\bin\STAF.cfg
+  Type              : F
+  Upper 32-bit Size : 0
+  Lower 32-bit Size : 243
+  Modified Date-Time: 20071011-13:16:36
+}
+</pre>
+</font>
+</ul>
+
+However, note that specifying instead of using the <tt>STAF::STAFFormatObject</tt>
+function to print the formatted output for the marshalled context, you could
+simply call the marshalling context's <tt>formatObject</tt> function to get
+the same output.  For example:
+<ul>
+<font color="darkblue">
+<pre>
+print "Formatted output:\n", $result->{resultContext}, "\n";
+</pre>
+</font>
+</ul>
+</ol>
+
+
+<h2><a name="Header_PrivateData" href="#ToC_PrivateData">4.3 Private Data Manipulation APIs</a></h2>
+<p>
+These APIs allow you to handle private data.
+See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+information about handling private data.
+
+<h3><a name="Header_addPrivacyDelimiters" href="#ToC_addPrivacyDelimiters">4.3.1 Function STAF::AddPrivacyDelimiters</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::AddPrivacyDelimiters</tt></b>(<i>data</i>)
+<dd>Adds privacy delimiters to a string and returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    This method should be used by anyone who wants to protect private
+    data specified in a STAF command option that supports handling
+    private data.
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt> that contains
+    data you want to protect. 
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a <tt>String</tt> object containing the string with opening and
+    closing privacy delimiters added and escapes any privacy delimiters
+    already contained in the string with a caret (^).
+    If the string has length 0 or already has an unescaped opening privacy
+    delimiter at the beginning and an unescaped closing privacy delimiter
+    at the end, privacy delimiters are not added.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <i>data</i> is <tt>"passw0rd"</tt>, this method
+        would return string <tt>"!!@passw0rd@!!"</tt>.
+    <li>If the <i>data</i> is <tt>"Password: !!@secret@!!"</tt>, this
+        method would return <tt>"!!@Password: ^!!@secret^@!!@!!"</tt>.
+    </ul>
+</ul>
+
+<h4>Examples</h4>
+
+This example adds privacy delimiters to "passw0rd" used in the
+<tt>PASSWORD</tt> option when starting a process as another user.
+<ul>
+<font color="darkblue">
+<pre>
+my $password = "passw0rd";
+$result = $handle->submit(
+    "local", "PROCESS",
+    "START SHELL COMMAND C:/tests/TestA USERNAME Test1 PASSWORD".STAF::AddPrivacyDelimiters($password));
+</pre>
+</font>
+</ul>
+
+This example adds privacy delimiters to password "secret" used in the
+<tt>COMMAND</tt> option when starting a process.
+<ul>
+<font color="darkblue">
+<pre>
+my $password = "secret";
+my $command = "C:/tests/admin -password ".STAF::AddPrivacyDelimiters($password);
+my $request = "START SHELL COMMAND ".STAF::WrapData($command);
+$result = $handle->submit("local", "PROCESS", request);
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_escapePrivacyDelimiters" href="#ToC_escapePrivacyDelimiters">4.3.2 Function STAF::EscapePrivacyDelimiters</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::EscapePrivacyDelimiters</tt></b>(<i>data</i>)
+<dd>Escapes all privacy delimiters (<tt>!!@</tt> and <tt>@!!</tt>)
+    found in the data with a caret (<tt>^</tt>) and returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    This method should be used before calling the <tt>addPrivacyDelimiters</tt>
+    method for data that needs to be protected but may contain
+    substrings <tt>!!@</tt> and/or <tt>@!!</tt> that should not be
+    mistaken for privacy delimiters .
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt>. 
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a <tt>String</tt> object containing the string with privacy
+    delimiters, if any, escaped.
+    <p>
+    For example, if the <i>data</i> is <tt>"passw@!!d"</tt>, this method
+    would return <tt>"passw^@!!d"</tt>.
+</ul>
+
+<h4>Examples</h4>
+
+This example escapes privacy delimiters in password <tt>"passw@!!d"</tt>
+before adding privacy delimiters to it and then uses the password
+in the <tt>PASSWORD</tt> option when starting a process as another user.
+<ul>
+<font color="darkblue">
+<pre>
+my $password = "passw@!!d";
+my $request = "START SHELL COMMAND C:/tests/TestA USERNAME Test1 PASSWORD".STAF::AddPrivacyDelimiters(STAF::EscapePrivacyDelimiters($password));
+$result = $handle->submit("local", "PROCESS", request);
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_removePrivacyDelimiters" href="#ToC_removePrivacyDelimiters">4.3.3 Function STAF::RemovePrivacyDelimiters</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>removePrivacyDelimiters</tt></b>(<i>data</i><b><font size=+1>[</font></b>,
+       <i>numLevels</i><b><font size="+1">]</font></b>)
+<dd>Removes privacy delimiters found in the data and returns the updated string.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt> that may contain
+    privacy delimiters (e.g. <tt>!!@</tt>, <tt>@!!</tt>). 
+    <p>
+    Optional argument <i>numLevels</i> in an <tt>int</tt> that specifies
+    the number of levels of privacy data to remove.  The default is 0
+    which indicates to remove all levels of privacy data.
+    Note that, generally, you'll want to remove all levels of privacy
+    delimiters.
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a <tt>String</tt> object containing the string with privacy
+    delimiters, if any, removed.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <i>data</i> is <tt>"!!@passw0rd@!!"</tt>, this method
+        would return <tt>"passw0rd"</tt>.
+    <li>If the <i>data</i> is <tt>"!!@passw^@!!d@!!"</tt>, this method
+        would return <tt>"passw@!!d"</tt>.
+    <li>If the <i>data</i> is <tt>"!!@Password=^!!@secret^@!!.@!!"</tt> and
+        the <i>numLevels</i> is 0, this method would return
+        <tt>"Password=secret"</tt>.
+    <li>If the <i>data</i> is <tt>"!!@Password=^!!@secret^@!!.@!!"</tt> and
+        the <i>numLevels</i> is 1, this method would return
+        <tt>"Password=!!@secret@!!"</tt>.
+    </ul>
+</ul>
+
+<h4>Examples</h4>
+
+This example removes privacy delimiters from protected password
+<tt>'!!@secret@!!'</tt> and assigns <tt>'secret'</tt> as the password.
+<ul>
+<font color="darkblue">
+<pre>
+my $protectedPw = "!!@secret@!!";
+my $password = STAF::RemovePrivacyDelimiters($protectedPw);
+</pre>
+</font>
+</ul>
+
+<h3><a name="Header_maskPrivateData" href="#ToC_maskPrivateData">4.3.4 Function STAF::MaskPrivateData</a></h3>
+
+<h4>Definition</h4>
+
+<ul>
+<dl>
+<dt><b><tt>STAF::MaskPrivateData</tt></b>(<i>data</i>)
+<dd>Masks any private data (enclosed between opening, <tt>!!@</tt>,
+    and closing, <tt>@!!</tt>, privacy delimiters) by replacing the
+    private data with asterisks.
+    See <a href="http://staf.sourceforge.net/current/STAFUG.htm#HDRPRIVATEDATA">
+    Section 7.3, "Private Data"</a> in the STAF User's Guide for more
+    information about handling private data.
+    <p>
+    Required argument <i>data</i> is a <tt>String</tt> that may contain
+    privacy delimiters (e.g. <tt>!!@</tt>, <tt>@!!</tt>). 
+    <p>
+    <b>Since:</b> STAF V3.1.0
+</dl>
+</ul>
+
+<h4>Result</h4>
+
+<ul>
+    Returns a String object containing the string with any private
+    data masked.
+    <p>
+    Examples:
+    <ul>
+    <li>If the <i>data</i> is <tt>"!!@passw0rd@!!"</tt>, this method
+        would return <tt>"**************"</tt>.
+    <li>If the <i>data</i> is <tt>"testA -password !!@secret@!!"</tt>,
+        this method would return <tt>"testA -password ************"</tt>.
+    </ul>
+</ul>
+
+<h4>Examples</h4>
+
+This example masks any private data indicated by privacy delimiters
+in a request string before displaying it.
+This example prints:
+<br><tt> START COMMAND C:/tests/TestA.exe USERNAME Test1 PASSWORD **************</tt>
+<ul>
+<font color="darkblue">
+<pre>
+my $password = "passw0rd";
+my $request = "START COMMAND C:/tests/TestA.exe USERNAME Test1 PASSWORD".STAF::AddPrivacyDelimiters($password);
+print " STAF::MaskPrivateData($request)";
+</pre>
+</font>
+</ul>
+
+
+<h2><a name="Header_ReturnCodes" href="#ToC_ReturnCodes">4.4 STAF Return Codes</a></h2>
+
+In addition to the described APIs, the following variables are defined,
+which represent the numeric return codes generated by STAF.
+<ul>
+<li>STAF::kOk</li>
+<li>STAF::kInvalidAPI</li>
+<li>STAF::kUnknownService</li>
+<li>STAF::kInvalidHandle</li>
+<li>STAF::kHandleAlreadyExists</li>
+<li>STAF::kHandleDoesNotExist</li>
+<li>STAF::kUnknownError</li>
+<li>STAF::kInvalidRequestString</li>
+<li>STAF::kInvalidServiceResult</li>
+<li>STAF::kREXXError</li>
+<li>STAF::kBaseOSError</li>
+<li>STAF::kProcessAlreadyComplete</li>
+<li>STAF::kProcessNotComplete</li>
+<li>STAF::kVariableDoesNotExist</li>
+<li>STAF::kUnResolvableString</li>
+<li>STAF::kInvalidResolveString</li>
+<li>STAF::kNoPathToMachine</li>
+<li>STAF::kFileOpenError</li>
+<li>STAF::kFileReadError</li>
+<li>STAF::kFileWriteError</li>
+<li>STAF::kFileDeleteError</li>
+<li>STAF::kSTAFNotRunning</li>
+<li>STAF::kCommunicationError</li>
+<li>STAF::kTrusteeDoesNotExist</li>
+<li>STAF::kInvalidTrustLevel</li>
+<li>STAF::kAccessDenied</li>
+<li>STAF::kSTAFRegistrationError</li>
+<li>STAF::kServiceConfigurationError</li>
+<li>STAF::kQueueFull</li>
+<li>STAF::kNoQueueElement</li>
+<li>STAF::kNotifieeDoesNotExist</li>
+<li>STAF::kInvalidAPILevel</li>
+<li>STAF::kServiceNotUnregisterable</li>
+<li>STAF::kServiceNotAvailable</li>
+<li>STAF::kSemaphoreDoesNotExist</li>
+<li>STAF::kNotSemaphoreOwner</li>
+<li>STAF::kSemaphoreHasPendingRequests</li>
+<li>STAF::kTimeout</li>
+<li>STAF::kJavaError</li>
+<li>STAF::kConverterError</li>
+<li>STAF::kInvalidObject</li>
+<li>STAF::kInvalidParm</li>
+<li>STAF::kRequestNumberNotFound</li>
+<li>STAF::kInvalidAsynchOption</li>
+<li>STAF::kRequestNotComplete</li>
+<li>STAF::kProcessAuthenticationDenied</li>
+<li>STAF::kInvalidValue</li>
+<li>STAF::kDoesNotExist</li>
+<li>STAF::kAlreadyExists</li>
+<li>STAF::kDirectoryNotEmpty</li>
+<li>STAF::kDirectoryCopyError</li>
+<li>STAF::kDiagnosticsNotEnabled</li>
+<li>STAF::kHandleAuthenticationDenied</li>
+<li>STAF::kHandleAlreadyAuthenticated</li>
+<li>STAF::kInvalidSTAFVersion</li>
+<li>STAF::kRequestCancelled</li>
+<li>STAF::kCreateThreadError</li>
+<li>STAF::kMaximumSizeExceeded</li>
+</ul>
+For a complete description of these return codes and their meaning, please
+see the <a href="http://staf.sourceforge.net/current/STAFUG.htm">STAF User's Guide</a>.
+
+<h2><a name="Header_Constants" href="#ToC_Constants">4.5 STAF Constants</a></h2>
+
+The following variables are defined which represent the sync options that can
+be specified for Submit2/submit2.  These variables were added in STAF V3.2.1.
+<ul>
+<li>$STAF::STAFHandle::kReqSync
+<li>$STAF::STAFHandle::kReqFireAndForget
+<li>$STAF::STAFHandle::kReqQueue
+<li>$STAF::STAFHandle::kReqRetain
+<li>$STAF::STAFHandle::kReqQueueRetain
+</ul>
+<p>
+The following variables are defined which represent the handle types that
+can be specified for the STAF::STAFHandle->new() function.
+These variables were added in STAF V3.3.3.
+<ul>
+<li>$STAF::STAFHandle::kStandard
+<li>$STAF::STAFHandle::kStatic
+</ul>
+<p>
+<hr>
+<p>
+<h1><a name="Header_STAFMon" href="#ToC_STAFMon">5.0 Package STAFMon</a></h1>
+
+<font size=+0>The STAFMon package provides a function to ease the use of
+the Monitor service, as well as, variables which define the return codes
+from the Monitor service and variables which affect the operation of the
+utility function provided.</font>
+
+<h3><a name="Header_MonVars" href="#ToC_MonVars">5.1 Monitor Service Variables</a></h3>
+
+<p>The following variables affect the behavior of the STAFMon package.
+These variable values may be changed to alter the behavior of the STAFMon
+package.
+<blockquote>
+<li>
+STAF::Monitor::SystemName - The system name to which Monitor service requests
+should be sent (default = local)</li>
+
+<li>
+STAF::Monitor::ServiceName - The service name to which Monitor service
+requests should be sent (default = monitor)</li>
+</blockquote>
+
+
+<h3><a name="Header_MonProcStyle" href="#ToC_MonProcStyle">5.2 Procedural Style</a></h3>
+
+<h3><a name="Header_MonitorLog" href="#ToC_MonitorLog">5.2.1 STAF::Monitor::Log</a></h3>
+
+<h4>Description</h4>
+
+This function logs a message to the Monitor service.
+
+<h4>Syntax</h4>
+
+<tt>STAF::Monitor::Log(MESSAGE, [OPTIONS])</tt>
+<p>where,
+<p><tt>MESSAGE </tt>is the message to log.
+<p><tt>OPTIONS</tt> are any additional options that should be passed on
+the LOG request, e.g., RESOLVEMESSAGE. The default is "".
+
+<h4>Result</h4>
+
+This function returns a numeric return code. Return codes are documented
+in the STAF User's Guide.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$rc = STAF::Monitor::Log("Hello World");</font></tt>
+<p><tt><font size=+0>if ($rc != $STAF::kOk) {</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; print "Error logging message to
+Monitor, RC: $rc\n";</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; exit $rc;</font></tt>
+<br><tt><font size=+0>}</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_MonOOStyle" href="#ToC_MonOOStyle">5.3 Object-Oriented Style</a></h3>
+
+<h3><a name="Header_MonOONew" href="#ToC_MonOONew">5.3.1 STAF::STAFMonitor::new</a></h3>
+
+<h4>Description</h4>
+
+This method constructs a new STAF::STAFMonitor object to log messages to
+the Monitor service.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFMonitor->new(HANDLE, [SYSTEMNAME], [SERVICENAME])</tt>
+<p>where,
+<p><tt>HANDLE </tt>is a STAF::STAFHandle object obtained at registration
+time.
+<p><tt>SYSTEMNAME</tt> is the name of the system where the Monitor service
+is installed. The default is "LOCAL".
+<p><tt>SERVICENAME</tt> is the name by which the Monitor service is identified.
+The default is "MONITOR".
+
+<h4>Result</h4>
+
+This method returns STAF::Monitor object to log messages to the Monitor
+service.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$mon = STAF::STAFMonitor->new($handle);</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_MonOOLog" href="#ToC_MonOOLog">5.3.2 STAF::STAFMonitor::log</a></h3>
+
+<h4>Description</h4>
+
+This method logs a message to the Monitor service.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFMonitor->log(MESSAGE, [OPTIONS])</tt>
+<p>where,
+<p><tt>MESSAGE </tt>is the message to log.
+<p><tt>OPTIONS</tt> are any additional options that should be passed on
+the LOG request, e.g., RESOLVEMESSAGE. The default is "".
+
+<h4>Result</h4>
+
+This function returns a STAF::STAFResult object that contains a numeric
+return code and a string-based result.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$result = $mon->log("Hello World");</font></tt>
+<p><tt><font size=+0>if ($result->{rc} != $STAF::kOk) {</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; print "Error logging message to
+Monitor, RC: $result->{rc}\n";</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; exit $result->{rc};</font></tt>
+<br><tt><font size=+0>}</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_MonOOGetSystem" href="#ToC_MonOOGetSystem">5.3.3 STAF::STAFMonitor::getSystemName</a></h3>
+
+<h4>Description</h4>
+
+This method returns the name of the system where the Monitor resides (defaults
+to "LOCAL"). This value can be changed at construction time.
+See <a href="#Header_MonOONew">5.3.1 STAF::STAFMonitor::new</a>.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFMonitor->getSystemName()</tt>
+
+<h4>Result</h4>
+
+This function returns a string containing the name of the system where
+the Monitor service resides.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$system = $mon->getSystemName();</font></tt>
+<br><tt><font size=+0>print "Monitor Service System Name: $system\n";</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_MonOOGetService" href="#ToC_MonOOGetService">5.3.4 STAF::STAFMonitor::getServiceName</a></h3>
+
+<h4>Description</h4>
+
+This method returns the name that the Monitor service used when it registered
+with STAF (defaults to "MONITOR"). This value can be changed at construction
+time.  See <a href="#Header_MonOONew">5.3.1 STAF::STAFMonitor::new</a>.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFMonitor->getServiceName()</tt>
+
+<h4>Result</h4>
+
+This function returns a string containing the name that the Monitor service
+used when it registered.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$service = $mon->getServiceName();</font></tt>
+<br><tt><font size=+0>print "Monitor Service Name: $service\n";</font></tt>
+</font>
+</ul>
+<p>
+<hr>
+<p>
+<h1><a name="Header_STAFLog" href="#ToC_STAFLog">6.0 Package STAFLog</a></h1>
+
+<font size=+0>The STAFLog package provides a set of functions to ease the
+use of the Log service, as well as, variables which define the return codes
+from the Log service and variables which affect the operation of the utility
+functions provided. These functions also interface with the Monitor service
+to allow messages which are logged to also be monitored.</font>
+
+<h3><a name="Header_LogRCs" href="#ToC_LogRCs">6.1 Log Service Return Codes</a></h3>
+
+The following variables are defined, which represent the numeric return
+codes generated by the STAF Monitor service.
+<blockquote>
+<li>STAF::Log::kInvalidLevel</li>
+<li>STAF::Log::kInvalidLogFileFormat</li>
+<li>STAF::Log::kPurgeFailure</li>
+</blockquote>
+For a complete description of these return codes and their meaning, please
+see the <a href="http://staf.sourceforge.net/current/STAFUG.htm">STAF User's Guide</a>.
+<p>The following variables affect the behavior of the STAFLog package.
+These variable values may be changed to alter the behavior of the STAFLog
+package.
+<blockquote>
+<li>
+STAF::Log::SystemName - The system name to which Log service requests should
+be sent (default = local)</li>
+
+<li>
+STAF::Log::ServiceName - The service name to which Log service requests
+should be sent (default = log)</li>
+</blockquote>
+
+<h3><a name="Header_LogProcStyle" href="#ToC_LogProcStyle">6.2 Procedural Style</a></h3>
+
+<h3><a name="Header_LogInit" href="#ToC_LogInit">6.2.1 STAF::Log::Init</a></h3>
+
+<h4>Description</h4>
+
+This function initializes the utility functions for a specific log file.
+
+<h4>Syntax</h4>
+
+<tt>STAF::Log::Init(LOGNAME, [LOGTYPE], [MONITORMASK])</tt>
+<p>where,
+<p><tt>LOGNAME </tt>is the name of the log.
+<p><tt>LOGTYPE</tt> is the type of log to be created, "GLOBAL", "MACHINE",
+or "HANDLE". The default is "MACHINE".
+<p><tt>MONITORMASK</tt> is the set of logging levels which will also be
+sent to the Monitor service. The default is "FATAL ERROR WARNING INFO STATUS".
+
+<h4>Result</h4>
+
+This function returns a numeric return code. Return codes are documented
+in the STAF User's Guide.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$rc = STAF::Log::Init("TestCase1", "GLOBAL", "FATAL ERROR");</font></tt>
+<br>&nbsp;
+</font>
+</ul>
+
+
+<h3><a name="Header_LogLog" href="#ToC_LogLog">6.2.2 STAF::Log::Log</a></h3>
+
+<h4>Description</h4>
+
+This function logs a message to the Log service. This function will also
+log the message to the Monitor service if the specified logging level is
+one of the levels defined in the Monitor Mask (set in STAF::Log::Init,
+above).
+
+<h4>Syntax</h4>
+
+<tt>STAF::Log::Log(LEVEL, MESSAGE, [OPTIONS])</tt>
+<p>where,
+<p><tt>LEVEL </tt>is the level of the message to log, e.g., "WARNING" or
+"DEBUG".
+<p><tt>MESSAGE</tt> is the message to log.
+<p><tt>OPTIONS </tt>are any additional options that should be passed on
+the LOG request, e.g., "RESOLVEMESSAGE". The default is "".
+
+<h4>Result</h4>
+
+This function returns a numeric return code. Return codes are documented
+in the STAF User's Guide.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$rc = STAF::Log::Log("WARNING", "Unable to find specified
+file");</font></tt>
+<p><tt><font size=+0>if ($rc != $STAF::kOk) {</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; print "Error logging message to
+Log, RC: $rc\n";</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; exit $rc;</font></tt>
+<br><tt><font size=+0>}</font></tt>
+</font>
+</ul>
+
+
+<h3><a name="Header_LogOOStyle" href="#ToC_LogOOStyle">6.3 Object-Oriented Style</a></h3>
+
+<h3><a name="Header_LogOONew" href="#ToC_LogOONew">6.3.1 STAF::STAFLog::new</a></h3>
+
+<h4>Description</h4>
+
+This method constructs a STAF::STAFLog object to log messages to the Log
+service.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->new(HANDLE, LOGNAME, [LOGTYPE], [MONITORMASK], [SYSTEMNAME],
+[SERVICENAME])</tt>
+<p>where,
+<p><tt>HANDLE </tt>is a STAF::STAFHandle object obtained at registration
+time.
+<p><tt>LOGNAME </tt>is the name of the log.
+<p><tt>LOGTYPE</tt> is the type of log to be created, "GLOBAL", "MACHINE",
+or "HANDLE". The default is "MACHINE".
+<p><tt>MONITORMASK</tt> is the set of logging levels which will also be
+sent to the Monitor service. The default is "FATAL ERROR WARNING INFO STATUS".
+<p><tt>SYSTEMNAME</tt> is the name of the system where the Log service
+is installed. The default is "LOCAL".
+<p><tt>SERVICENAME</tt> is the name by which the Log service is identified.
+The default is "LOG".
+
+<h4>Result</h4>
+
+This method returns STAF::Log object to log messages to the Log service.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$log = STAF::STAFLog->new($handle, "TestCase1", "GLOBAL", "FATAL
+ERROR");</font></tt>
+<br>&nbsp;
+</font>
+</ul>
+
+<h3><a name="Header_LogOOLog" href="#ToC_LogOOLog">6.3.2 STAF::STAFLog::log</a></h3>
+
+<h4>Description</h4>
+
+This method logs a message to the Log service. This method will also log
+the message to the Monitor service if the specified logging level is one
+of the levels defined in the Monitor Mask (set in STAF::STAFLog::new, above).
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->log(LEVEL, MESSAGE, [OPTIONS])</tt>
+<p>where,
+<p><tt>LEVEL </tt>is the level of the message to log, e.g., "WARNING" or
+"DEBUG".
+<p><tt>MESSAGE</tt> is the message to log.
+<p><tt>OPTIONS </tt>are any additional options that should be passed on
+the LOG request, e.g., "RESOLVEMESSAGE". The default is "".
+
+<h4>Result</h4>
+
+This function returns a STAF::STAFResult object that contains a numeric
+return code and a string-based result.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$result = $log->log("WARNING", "Unable to find specified
+file");</font></tt>
+<p><tt><font size=+0>if ($result->{rc} != $STAF::kOk) {</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; print "Error logging message to
+Log, RC: $result->{rc}\n";</font></tt>
+<br><tt><font size=+0>&nbsp;&nbsp;&nbsp; exit $result->{rc};</font></tt>
+<br><tt><font size=+0>}</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_LogOOGetName" href="#ToC_LogOOGetName">6.3.3 STAF::STAFLog::getName</a></h3>
+
+<h4>Description</h4>
+
+This method returns the name that uniquely identifies your constructed
+log.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->getName()</tt>
+
+<h4>Result</h4>
+
+This function returns a string containing the name of the log being used.
+This value is set at construction time.
+See <a href="#Header_LogOONew">6.3.1 STAF::STAFLog::new</a>.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$logname = $log->getName();</font></tt>
+<br><tt><font size=+0>print "Log Name: $logname\n";</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_LogOOGetLogType" href="#ToC_LogOOGetLogType">6.3.4 STAF::STAFLog::getLogType</a></h3>
+
+<h4>Description</h4>
+
+This method returns the log type (either "MACHINE", "HANDLE", or "GLOBAL").
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->getLogType()</tt>
+
+<h4>Result</h4>
+
+This function returns a string representing the log type. This value is
+set at constructions time, and is one of "MACHINE", "GLOBAL", or "HANDLE".
+See <a href="#Header_LogOONew">6.3.1 STAF::STAFLog::new</a>.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$logtype = $log->getLogType();</font></tt>
+<br><tt><font size=+0>print "Log Type: $logtype\n";</font></tt>
+<br>&nbsp;
+</font>
+</ul>
+
+<h3><a name="Header_LogOOGetMonMask" href="#ToC_LogOOGetMonMask">6.3.5 STAF::STAFLog::getMonitorMask</a></h3>
+
+<h4>Description</h4>
+
+This method returns the monitor mask.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->getMonitorMask()</tt>
+
+<h4>Result</h4>
+
+This function returns a string containing the monitor mask. This value
+is set at construction time.
+See <a href="#Header_LogOONew">6.3.1 STAF::STAFLog::new</a>.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$logmask = $log->getMonitorMask();</font></tt>
+<br><tt><font size=+0>print "Log's Monitor Mask: $logmask\n";</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_LogOOGetSystem" href="#ToC_LogOOGetSystem">6.3.6 STAF::STAFLog::getSystemName</a></h3>
+
+<h4>Description</h4>
+
+This method returns the name of the system where the Log resides (defaults
+to "LOCAL"). This value can be changed at construction time.
+See <a href="#Header_LogOONew">6.3.1 STAF::STAFLog::new</a>.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->getSystemName()</tt>
+
+<h4>Result</h4>
+
+This function returns a string containing the name of the system where
+the Log service resides.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$system = $log->getSystemName();</font></tt>
+<br><tt><font size=+0>print "Log Service System Name: $system\n";</font></tt>
+</font>
+</ul>
+
+<h3><a name="Header_LogOOGetService" href="#ToC_LogOOGetService">6.3.7 STAF::STAFLog::getServiceName</a></h3>
+
+<h4>Description</h4>
+
+This method returns the name that the Log service used when it registered
+with STAF (defaults to "LOG"). This value can be changed at construction
+time.  See <a href="#Header_LogOONew">6.3.1 STAF::STAFLog::new</a>.
+
+<h4>Syntax</h4>
+
+<tt>STAF::STAFLog->getServiceName()</tt>
+
+<h4>Result</h4>
+
+This function returns a string containing the name that the Log service
+used when it registered.
+
+<h4>Example</h4>
+
+<ul>
+<font color="darkblue">
+<tt><font size=+0>$service = $log->getServiceName();</font></tt>
+<br><tt><font size=+0>print "Log Service Name: $service\n";</font></tt>
+<br>&nbsp;
+</font>
+</ul>
+
+<hr>
+<p>
+<h1><a name="Header_Examples" href="#ToC_Examples">7.0 Perl Program Examples</a></h1>
+
+<h2><a name="Header_Example1" href="#ToC_Example1">7.1 Example 1</a></h2>
+<p>
+This example demonstrates using the procedural-style APIs to register with STAF,
+submit requests to STAF, and unregister with STAF.  This example submits several
+different requests to the DIAG service and demonstrates how to use the
+<tt>STAF::wrapData</tt> API to "wrap" an option value that may contain spaces, etc.
+This example also shows how to unmarshall the data in the result returned by a
+<tt>DIAG LIST</tt> request.  The result buffer for a <tt>DIAG LIST</tt> request
+contains a marshalled <tt>&lt;Map:STAF/Service/Diag/AllDiagInfo></tt> representing all of the
+unique trigger/source combinations.  The <tt>comboList</tt> field in this map
+contains a marshalled <tt>&lt;List> of &lt;Map:STAF/Service/Diag></tt> and this
+example shows how to iterate through this list of trigger/source combinations.
+The STAF User's Guide defines the results for each request submitted
+to an internal STAF service, including definitions of maps returned in a result.
+<p>
+The source code for this program is provided in the STAF source
+code directory tree at <tt>src/staf/lang/perl/TestDiagList.pl</tt>.
+See section "Obtaining the STAF Source Code" in the
+<a href="http://staf.sourceforge.net/current/stafdg.html#Header_getsource">
+STAF Developer's Guide</a> for instructions on how to download STAF source code.
+<p>
+<ul>
+<font color="darkblue">
+<pre>
+use PLSTAF;
+
+$rc = STAF::Register("My program");
+
+if ($rc != $STAF::kOk) {
+    print "Error registering with STAF, RC: $STAF::RC\n";
+    exit $rc;
+}
+
+my $machine = "local";
+my $service = "DIAG";
+my $request = "RESET FORCE";
+my $stafCmd = "STAF $machine $service $request";
+print "$stafCmd\n";
+$rc = STAF::Submit($machine, $service, $request);
+
+if ($rc != $STAF::kOk) {
+    print "Error on $stafCmd\nRC: $rc, Result: $STAF::Result\n";
+}
+
+my $request = "ENABLE";
+my $stafCmd = "STAF $machine $service $request";
+print "$stafCmd\n";
+$rc = STAF::Submit($machine, $service, $request);
+
+if ($rc != $STAF::kOk) {
+    print "Error on $stafCmd\nRC: $rc, Result: $STAF::Result\n";
+    STAF::UnRegister();
+    exit $rc;
+}
+
+my $trigger = "PROCESS QUERY";
+my $source = "My program;client1.company.com";
+my $request = "RECORD TRIGGER ".STAF::WrapData($trigger)." SOURCE ".STAF::WrapData($source);
+my $stafCmd = "STAF $machine $service $request";
+print "$stafCmd\n";
+$rc = STAF::Submit($machine, $service, $request);
+
+if ($rc != $STAF::kOk) {
+   print "Error on $stafCmd\nRC: $rc, Result: $STAF::Result\n";
+}
+
+my $trigger = "PROCESS LIST";
+my $request = "RECORD TRIGGER ".STAF::WrapData($trigger)." SOURCE ".STAF::WrapData($source);
+my $stafCmd = "STAF $machine $service $request";
+print "$stafCmd\n";
+$rc = STAF::Submit($machine, $service, $request);
+
+if ($rc != $STAF::kOk) {
+   print "Error on $stafCmd\nRC: $rc, Result: $STAF::Result\n";
+}
+
+my $request = "LIST";
+my $stafCmd = "STAF $machine $service $request";
+print "$stafCmd\n";
+$rc = STAF::Submit($machine, $service, $request);
+
+if ($rc != $STAF::kOk) {
+   print "Error on $stafCmd\nRC: $rc, Result: $STAF::Result\n";
+}
+
+my $mc = STAF::STAFUnmarshall($STAF::Result);
+my $rootObject = $mc->getRootObject();
+print "\nFormatted Output:\n", $mc->formatObject(), "\n";
+
+print "\nOutput obtained from fields in rootObject:\n";
+print "  From Date-Time    : $rootObject->{fromTimestamp}\n";
+print "  To Date-Time      : $rootObject->{toTimestamp}\n";
+print "  Elapsed Time      : $rootObject->{elapsedTime}\n";
+print "  Number of Triggers: $rootObject->{numberOfTriggers}\n";
+print "  Number of Sources : $rootObject->{numberOfSources}\n";
+print "  Trigger/Source Combinations List:\n";
+
+# Each item in the array is a "reference" to a hash/map
+
+for $itemMap (@{$rootObject->{comboList}}) {
+    print "\n    Trigger:  $itemMap->{trigger}\n";
+    print "    Source :  $itemMap->{source}\n";
+    print "    Count  :  $itemMap->{count}\n";
+}
+print "\n";
+
+my $request = "DISABLE";
+my $stafCmd = "STAF $machine $service $request";
+print "$stafCmd\n";
+$rc = STAF::Submit($machine, $service, $request);
+
+if ($rc != $STAF::kOk) {
+   print "Error on $stafCmd\nRC: $rc, Result: $STAF::Result\n";
+}
+
+STAF::UnRegister(); 
+
+</pre>
+</font>
+</ul>
+<p>
+This example could print the following when run:
+<ul>
+<font color="darkblue">
+<pre>
+STAF local DIAG RESET FORCE
+STAF local DIAG ENABLE
+STAF local DIAG RECORD TRIGGER :13:PROCESS QUERY SOURCE :30:My program;client1.c
+ompany.com
+STAF local DIAG RECORD TRIGGER :12:PROCESS LIST SOURCE :30:My program;client1.co
+mpany.com
+STAF local DIAG LIST
+
+Formatted Output:
+{
+  From Date-Time             : 20071023-15:07:11
+  To Date-Time               : 20071023-15:07:11
+  Elapsed Time               : 00:00:00
+  Number of Triggers         : 2
+  Number of Sources          : 1
+  Trigger/Source Combinations: [
+    {
+      Trigger: PROCESS LIST
+      Source : My program;client1.company.com
+      Count  : 1
+    }
+    {
+      Trigger: PROCESS QUERY
+      Source : My program;client1.company.com
+      Count  : 1
+    }
+  ]
+}
+
+Output obtained from fields in rootObject:
+  From Date-Time    : 20071023-15:07:11
+  To Date-Time      : 20071023-15:07:11
+  Elapsed Time      : 00:00:00
+  Number of Triggers: 2
+  Number of Sources : 1
+  Trigger/Source Combinations List:
+
+    Trigger:  PROCESS LIST
+    Source :  My program;client1.company.com
+    Count  :  1
+
+    Trigger:  PROCESS QUERY
+    Source :  My program;client1.company.com
+    Count  :  1
+
+STAF local DIAG DISABLE
+
+</pre>
+</font>
+</ul>
+<p>
+
+<h2><a name="Header_Example2" href="#ToC_Example2">7.2 Example 2</a></h2>
+<p>
+This example shows a Perl program that tests most of the STAF Perl APIs.
+<p>
+The source code for this program is provided in the STAF source
+code directory tree at <tt>src/staf/lang/perl/TestPerl.pl</tt>.
+See section "Obtaining the STAF Source Code" in the
+<a href="http://staf.sourceforge.net/current/stafdg.html#Header_getsource">
+STAF Developer's Guide</a> for instructions on how to download STAF source code.
+<ul>
+<font color="darkblue">
+<pre>
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+use PLSTAF;
+use STAFMon;
+use STAFLog;
+
+# Register with STAF and get a STAF handle
+
+$handle = STAF::STAFHandle->new("Lang/Perl/Test/Basic"); 
+
+if ($handle->{rc} != $STAF::kOk) { 
+    print "Error registering with STAF, RC: $handle->{rc}\n"; 
+    exit $handle->{rc};
+} 
+
+print "Using handle: $handle->{handle}\n";
+
+print "\nTesting Class STAFHandle Methods...\n";
+
+# Test the STAFHandle->submit API
+
+$result = $handle->submit("local", "ping", "ping");
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} != "PONG")) {
+    print "Error on ping request.\n";
+    print "Expected RC: 0, Result: PONG\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+$result = $handle->submit("local", "var", "resolve string {STAF/Config/Machine}");
+
+if ($result->{rc} != $STAF::kOk) { 
+    print "Error resolving machine, RC: $result->{rc}, Result: $result->{result}\n"; 
+    exit $result->{rc};
+}
+
+print "  Verify that auto-unmarshalling result is turned on by default\n";
+
+# Test the STAFHandle->getDoUnmarshallResult API
+
+if ($handle->getDoUnmarshallResult() != 1) {
+    print "ERROR: handle->getDoUnmarshallResult() != 1\n";
+    print "Found: ", $handle->getDoUnmarshallResult(), "\n";
+    exit 1;
+}
+
+$result = $handle->submit("local", "MISC", "WHOAMI");
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on MISC WHOAMI request, RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc};
+}
+
+# Make sure that the resultContext and resultObj variables in the
+# STAFResult class were set correctly since auto-unmarshalling result is on
+
+my $mc = STAF::STAFUnmarshall($result->{result});
+my $entryMap = $mc->getRootObject();
+
+if ($result->{resultContext} == undef) {
+    print "ERROR:  result->{resultContext} is undef\n";
+    exit 1;
+}
+elsif ($result->{resultContext}->getRootObject()->{instanceUUID} != $entryMap->{instanceUUID}) {
+    print "STAFResult resultContext variable is not set correctly.\n";
+    print "Expected: $mc\n";
+    print "Found: $result->{resultContext}\n";
+    exit 1;
+}
+
+if ($result->{resultObj} == undef) {
+    print "ERROR:  result->{resultObj} is undef\n";
+    exit 1;
+}
+elsif ($result->{resultObj}->{instanceUUID} != $entryMap->{instanceUUID}) {
+    print "STAFResult resultObj variable is not set correctly.\n";
+    print "Expected: $entryMap\n";
+    print "Found: $result->{resultObj}\n";
+    exit 1;
+}
+
+# Make sure that if turn off auto-unmarshalling result that the
+# resultContext and resultObj variables are set to None since
+# auto-unmarshalling result is off
+
+# Test the STAFHandle.setDoUnmarshallResult API
+
+print "  Turn off auto-unmarshalling result";
+$handle->setDoUnmarshallResult(0);
+
+if ($handle->getDoUnmarshallResult() != 0) {
+    print "ERROR: handle->getDoUnmarshallResult() != 0\n";
+    print "Found: ", $handle->getDoUnmarshallResult(), "\n";
+    exit 1;
+}
+
+$result = $handle->submit("local", "MISC", "WHOAMI");
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on MISC WHOAMI request, RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc};
+}
+
+if ($result->{resultContext} != undef) {
+    print "ERROR:  result->{resultContext} != undef\n";
+    print "Found: $result->{resultContext}\n";
+    exit 1;
+}
+
+if ($result->{resultObj} != undef) {
+    print "ERROR:  result->{resultObj} != undef\n";
+    print "Found: $result->{resultObj}\n";
+    exit 1;
+}
+
+# Make sure that if turn on auto-unmarshalling result that the
+# resultContext and resultObj variables are set correctly since
+# auto-unmarshalling result is on
+
+print "  Turn on auto-unmarshalling result";
+$handle->setDoUnmarshallResult(1);
+
+if ($handle->getDoUnmarshallResult() != 1) {
+    print "ERROR: handle->getDoUnmarshallResult() != 1\n";
+    print "Found: ", $handle->getDoUnmarshallResult(), "\n";
+    exit 1;
+}
+
+$result = $handle->submit("local", "MISC", "WHOAMI");
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on MISC WHOAMI request, RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc};
+}
+
+# Make sure that the resultContext and resultObj variables in the
+# STAFResult class were set correctly since auto-unmarshalling result is on
+
+my $mc = STAF::STAFUnmarshall($result->{result});
+my $entryMap = $mc->getRootObject();
+
+if ($result->{resultContext} == undef) {
+    print "ERROR:  result->{resultContext} is undef\n";
+    exit 1;
+}
+elsif ($result->{resultContext}->getRootObject()->{instanceUUID} != $entryMap->{instanceUUID}) {
+    print "STAFResult resultContext variable is not set correctly.\n";
+    print "Expected: $mc\n";
+    print "Found: $result->{resultContext}\n";
+    exit 1;
+}
+
+if ($result->{resultObj} == undef) {
+    print "ERROR:  result->{resultObj} is undef\n";
+    exit 1;
+}
+elsif ($result->{resultObj}->{instanceUUID} != $entryMap->{instanceUUID}) {
+    print "STAFResult resultObj variable is not set correctly.\n";
+    print "Expected: $entryMap\n";
+    print "Found: $result->{resultObj}\n";
+    exit 1;
+}
+
+# Test the STAF::Submit2 API
+
+print "\nTesting STAF::Submit2 API with \"local PING PING\"\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqSync\n";
+
+$rc = STAF::Submit2($STAF::STAFHandle::kReqSync, "local", "PING", "PING");
+
+if (($rc != $STAF::kOk) or ($STAF::Result ne "PONG")) {
+    print "  Error submitting \"local PING PING\", expected PONG\n";
+    print "  Received RC: $STAF::RC, Result: $STAF::Result\n";
+    exit $rc;
+}
+
+print "  Result: $STAF::Result\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqFireAndForget\n";
+
+$rc = STAF::Submit2($STAF::STAFHandle::kReqFireAndForget, "local", "PING", "PING");
+
+if (($rc != $STAF::kOk) or ($STAF::Result eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $STAF::RC, Result: $STAF::Result\n";
+    exit $rc;
+}
+
+print "  Result: $STAF::Result\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqQueue\n";
+
+$rc = STAF::Submit2($STAF::STAFHandle::kReqQueue, "local", "PING", "PING");
+
+if (($rc != $STAF::kOk) or ($STAF::Result eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $STAF::RC, Result: $STAF::Result\n";
+    exit $rc;
+}
+
+print "  Result: $STAF::Result\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqRetain\n";
+
+$rc = STAF::Submit2($STAF::STAFHandle::kReqRetain, "local", "PING", "PING");
+
+if (($rc != $STAF::kOk) or ($STAF::Result eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $STAF::RC, Result: $STAF::Result\n";
+    exit $rc;
+}
+
+print "  Result: $STAF::Result\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqQueueRetain\n";
+
+$rc = STAF::Submit2($STAF::STAFHandle::kReqQueueRetain, "local", "PING", "PING");
+
+if (($rc != $STAF::kOk) or ($STAF::Result eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $STAF::RC, Result: $STAF::Result\n";
+    exit $rc;
+}
+
+print "  Result: $STAF::Result\n";
+
+# Test the STAFHandle->submit2 API
+
+print "\nTesting STAFHandle->submit2 API with \"local PING PING\"\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqSync\n";
+
+$result = $handle->submit2($STAF::STAFHandle::kReqSync, "local", "PING", "PING"); 
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} ne "PONG")) {
+    print "  Error submitting \"local PING PING\", expected PONG\n";
+    print "  Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "  Result: $result->{result}\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqFireAndForget\n";
+
+$result = $handle->submit2($STAF::STAFHandle::kReqFireAndForget, "local", "PING", "PING"); 
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "  Result: $result->{result}\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqQueue\n";
+
+$result = $handle->submit2($STAF::STAFHandle::kReqQueue, "local", "PING", "PING"); 
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "  Result: $result->{result}\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqRetain\n";
+
+$result = $handle->submit2($STAF::STAFHandle::kReqRetain, "local", "PING", "PING"); 
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "  Result: $result->{result}\n";
+
+print "\nTesting \$STAF::STAFHandle::kReqQueueRetain\n";
+
+$result = $handle->submit2($STAF::STAFHandle::kReqQueueRetain, "local", "PING", "PING"); 
+
+if (($result->{rc} != $STAF::kOk) or ($result->{result} eq "PONG")) {
+    print "  Error submitting \"local PING PING\", expected Request Number\n";
+    print "  Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "  Result: $result->{result}\n";
+
+# Test the privacy APIs
+
+print "\nTesting Privacy APIs...\n";
+
+my $pw = "secret";
+my $pwWithPD = STAF::AddPrivacyDelimiters($pw);
+my $expectedResult = "!!@secret@!!";
+print "  STAF::AddPrivacyDelimiters($pw): $pwWithPD\n";
+if ($pwWithPD != $expectedResult) {
+    print "Error: STAF::AddPrivacyDelimiters($pw): $pwWithPD\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $outString = STAF::EscapePrivacyDelimiters($pwWithPD);
+my $expectedResult = "^!!@secret^@!!";
+print "  STAF::EscapePrivacyDelimiters($pwWithPD): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::EscapePrivacyDelimiters($pwWithPD): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $outString = STAF::MaskPrivateData($pwWithPD);
+my $expectedResult = "************";
+print "  STAF::MaskPrivateData($pwWithPD): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::MaskPrivateData($pwWithPD): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $outString = STAF::RemovePrivacyDelimiters($pwWithPD);
+my $expectedResult = "secret";
+print "  STAF::RemovePrivacyDelimiters($pwWithPD): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($pwWithPD): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $dataWith3LevelsPD = '!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!';
+my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD);
+my $expectedResult = "Msg: Pw is !!@secret!!@";
+print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 0);
+print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 0): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 0): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 3);
+print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 3): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 3): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $expectedResult = 'Msg: !!@Pw is ^^!!@secret^^@!!.@!!';
+my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1);
+print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $expectedResult = 'Msg: Pw is !!@secret@!!.';
+my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 2);
+print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 2): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 2): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $expectedResult = 'Msg: !!@Pw is ^^!!@secret^^@!!.@!!';
+my $outString = STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1);
+print "  STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($dataWith3LevelsPD, 1): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+my $expectedResult = 'Msg: Pw is !!@secret@!!.';
+my $outString = STAF::RemovePrivacyDelimiters($outString, 1);
+print "  STAF::RemovePrivacyDelimiters($outString, 1): $outString\n";
+if ($outString != $expectedResult) {
+    print "Error: STAF::RemovePrivacyDelimiters($outString, 1): $outString\n";
+    print "       Should return the following instead: $expectedResult";
+    exit 1;
+}
+
+# Test private methods passing in an empty string
+my $data = '';
+my $expectedResult = '';
+my $outString = STAF::AddPrivacyDelimiters($data);
+print "  STAF::AddPrivacyDelimiters($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::AddPrivacyDelimiters($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+my $outString = STAF::EscapePrivacyDelimiters($data);
+print "  STAF::EscapePrivacyDelimiters($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::EscapePrivacyDelimiters($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+my $outString = STAF::MaskPrivateData($data);
+print "  STAF::MaskPrivateData($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::MaskPrivateData($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+my $outString = STAF::RemovePrivacyDelimiters($data);
+print "  STAF::RemovePrivacyDelimiters($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::RemovePrivacyDelimiters($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+# Test private methods passing in non-English data
+
+my $data = "‰¥";
+my $expectedResult = "!!@‰¥@!!";
+my $outString = STAF::AddPrivacyDelimiters($data);
+print "  STAF::AddPrivacyDelimiters($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::AddPrivacyDelimiters($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+my $data = "!!@‰¥@!!";
+my $expectedResult = "^!!@‰¥!@!!";
+my $outString = STAF::EscapePrivacyDelimiters($data);
+print "  STAF::EscapePrivacyDelimiters($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::EscapePrivacyDelimiters($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+my $outString = STAF::MaskPrivateData($data);
+my $expectedResult = "********";
+print "  STAF::MaskPrivateData($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::MaskPrivateData($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+my $outString = STAF::RemovePrivacyDelimiters($data);
+my $expectedResult = "‰¥";
+print "  STAF::RemovePrivacyDelimiters($data, 1): $outString\n";
+if ($outString != $expectedResult) {
+   print "Error: STAF::RemovePrivacyDelimiters($data): $outString\n";
+   print "       Should return the following instead: $expectedResult";
+   exit 1;
+}
+
+# Test the Monitor wrapper APIs
+
+print "\nTesting Monitor Service Wrapper...\n";
+
+my $machine = $result->{result};
+print "  STAF/Config/Machine=$machine\n";
+
+print "  Log a message to the monitor service\n";
+$rc = STAF::Monitor::Log("Hello World"); 
+if ($rc != $STAF::kOk) { 
+    print "Error logging message to Monitor, RC: $rc\n"; 
+    exit $rc; 
+}
+
+$mon = STAF::STAFMonitor->new($handle); 
+$result = $mon->log("Hello World Again"); 
+if ($result->{rc} != $STAF::kOk) { 
+    print "Error logging message to Monitor, RC: $result->{rc}\n"; 
+    exit $rc; 
+} 
+
+print "\nTesting Log Service Wrapper...\n";
+
+print "  Init Log\n";
+$rc = STAF::Log::Init("TestCase1", "GLOBAL", "FATAL ERROR"); 
+print "  Log a message\n";
+$rc = STAF::Log::Log("WARNING", "Unable to find specified file"); 
+if ($rc != $STAF::kOk) { 
+    print "Error logging message to Log, RC: $rc\n"; 
+    exit $rc; 
+}
+
+print "  Init TestCase2 log\n";
+$log = STAF::STAFLog->new($handle, "TestCase2", "GLOBAL", "FATAL ERROR"); 
+$result = $log->log("WARNING", "Unable to find specified file"); 
+if ($result->{rc} != $STAF::kOk) { 
+    print "Error logging message to Log, RC: $result->{rc}\n"; 
+    exit $result->{rc}; 
+}
+
+$logtype = $log->getLogType(); 
+print "  Log Type: $logtype\n"; 
+$logmask = $log->getMonitorMask(); 
+print "  Log's Monitor Mask: $logmask\n"; 
+$system = $log->getSystemName(); 
+print "  Log Service System Name: $system\n"; 
+$service = $log->getServiceName(); 
+print "  Log Service Name: $service\n"; 
+
+print "\nTesting Class STAFMapClassDefinition's methods...\n";
+
+print "  Testing STAFMapClassDefinition new() method...\n";
+my $myMapClassDef = STAF::STAFMapClassDefinition->new('Test/MyMap');
+
+print "  Testing STAFMapClassDefinition addKey() method...\n";
+$myMapClassDef->addKey('name', 'Name');
+$myMapClassDef->addKey('exec', "Executable");
+$myMapClassDef->addKey('testType', 'Test Type');
+
+print "  Testing STAFMapClassDefinition setKeyProperty() method...\n";
+$myMapClassDef->setKeyProperty('testType', 'display-short-name', 'Test');
+$myMapClassDef->addKey('outputs', 'Outputs');
+ 
+print "  Testing STAFMapClassDefinition name() method...\n";
+my $myMapClassName = $myMapClassDef->name();
+
+my $foundKeys = 0;
+
+print "  Testing STAFMapClassDefinition keys() method...\n";
+for my $key ($myMapClassDef->keys()) {
+    if ($key->{'key'} eq "name") {
+        $foundKeys = $foundKeys + 1;
+    }
+    elsif ($key->{'key'} eq "exec") {
+        $foundKeys = $foundKeys + 1;
+    }
+    elsif (($key->{'key'} eq "testType") && ($key->{'display-short-name'} eq "Test")) {
+        $foundKeys = $foundKeys + 1;
+        print "  key=$key->{'key'} display-name=$key->{'display-name'}".
+              "  display-short-name=$key->{'display-short-name'}\n";
+    }
+    elsif ($key->{'key'} eq "outputs") {
+        $foundKeys = $foundKeys + 1;
+    }
+}
+
+if ($foundKeys != 4) {
+    print "ERROR: Map Class Definition does not contain the correct 4 keys.\n".
+          "Contains $foundKeys keys.\n";
+    exit 1;
+}
+
+print "  Testing STAFMapClassDefinition createInstance() method...\n";
+my $myMapClass = $myMapClassDef->createInstance();
+
+# Create a marshalling context and assign a map class definition to it
+
+print "\nTesting Class STAFMarshallingContext Methods...\n";
+
+print "  Testing STAFMarshallingContext new() method...\n";
+my $mc = STAF::STAFMarshallingContext->new();
+
+print "  Testing STAFMarshallingContext setMapClassDefinition() method...\n";
+$mc->setMapClassDefinition($myMapClassDef);
+
+print "  Testing STAFMarshallingContext hasMapClassDefinition() method...\n";
+if (!$mc->hasMapClassDefinition('Test/MyMap'))
+{
+    print "Oops, map class 'Test/MyMap' doesn't exist\n";
+    exit 1;
+}
+
+# Get the map class definition from the marshalling context
+
+print "  Testing STAFMarshallingContext getMapClassDefinition() method...\n";
+my $mapClassDef = $mc->getMapClassDefinition('Test/MyMap');
+
+# Set the root object for a marshalling context to be a string
+# and get the root object.
+
+$data = "This is a string";
+$mc->setRootObject($data);
+my $rootObj = $mc->getRootObject();
+
+# Set the root object for a marshalling context to be a hash (aka map)
+
+print "  Testing STAFMarshallingContext getRootObject() method...\n";
+
+my $myTestMap = {
+  'name' => 'TestA',
+  'exec' => '/tests/TestA.py',
+  'testType' => 'FVT',
+  'outputs' => [ 'TestA.out', 'TestA.err' ]
+  };
+
+$mc->setRootObject($myTestMap);
+my $rootObj = $mc->getRootObject();
+
+print "  Testing STAFMarshallingContext getPrimaryObject() method...\n";
+my $priObj = $mc->getPrimaryObject();
+
+if (!($priObj eq $mc)) {
+    print 'Error: $mc->getPrimaryObject() != $mc', "\n";
+    print "mc->getPrimaryObject()=$priObj\n";
+    print "mc-$mc\n";
+    exit 1;
+}
+
+print "  Testing STAFMarshallingContext formatObject() method...\n";
+my $formattedOutput1 = $mc->formatObject();
+my $formattedOutput2 = STAF::STAFFormatObject($mc->getRootObject(), $mc);
+
+if (!($formattedOutput1 eq $formattedOutput2)) {
+    print "Error in mc->formatObject() or STAF::STAFFormatObject function\n";
+    print "formattedOutput1:\n$formattedOutput1\n";
+    print "formattedOutput2:\n$formattedOutput2\n";
+    exit 1;
+}
+
+print "  Testing STAFMarshallingContext marshall() method...\n";
+
+# Test the marshall function using a MapClassDefinition
+
+my $expectedResult2 = 
+    '@SDT/*:558:@SDT/{:398::13:map-class-map@SDT/{:370::10:Test/MyMap' .
+    '@SDT/{:345::4:keys@SDT/[4:298:@SDT/{:50::12:display-name' .
+    '@SDT/$S:4:Name:3:key@SDT/$S:4:name@SDT/{:57::12:display-name' .
+    '@SDT/$S:10:Executable:3:key@SDT/$S:4:exec@SDT/{:95::12:display-name' .
+    '@SDT/$S:9:Test Type:3:key@SDT/$S:8:testType:18:display-short-name' .
+    '@SDT/$S:4:test@SDT/{:56::12:display-name@SDT/$S:7:Outputs:3:key' .
+    '@SDT/$S:7:outputs:4:name@SDT/$S:10:Test/MyMap@SDT/{:138::7:outputs' .
+    '@SDT/[2:38:@SDT/$S:9:TestA.out@SDT/$S:9:TestA.err:8:testType' .
+    '@SDT/$S:3:FVT:4:name@SDT/$S:5:TestA:4:exec@SDT/$S:15:/tests/TestA.py';
+
+my $marshalledResult2 = STAF::STAFMarshall($mc, $mc);
+
+if (length($marshalledResult2) != length($expectedResult2)) {
+    print "Error: Wrong output for marshall function\n";
+    print "Expected to find:\n$expectedResult2\n";
+    print "Found:\n$marshalledResult2\n";
+    exit 1;
+}
+
+my $marshalledResult3 = $mc->marshall();
+
+if (length($marshalledResult3) != length($expectedResult2)) {
+    print "Error: Wrong output for marshall function\n";
+    print "Expected to find:\n$expectedResult2\n";
+    print "Found:\n$marshalledResult3\n";
+    exit 1;
+}
+
+# Create a map class definition without a name
+
+my $myDef = STAF::STAFMapClassDefinition->new();
+$myDef->addKey('key1', 'Key 1');
+my $myDefName = $myDef->name();
+
+############################################
+# Next, test the STAFUnmarshall function     #
+############################################
+print "\nTesting STAFUnmarshall()...\n";
+
+# Submit a FS QUERY ENTRY request and unmarshall it's result (a map)
+
+print "\n  STAF local FS QUERY ENTRY {STAF/Config/ConfigFile}\n\n";
+$result = $handle->submit("local", "FS", "QUERY ENTRY {STAF/Config/ConfigFile}");
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on FS QUERY ENTRY request.\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+if (!STAF::STAFIsMarshalledData($result->{result})) {
+    print "ERROR: Not marshalled data:  Result: $result->{result}\n";
+}
+
+my $mc = STAF::STAFUnmarshall($result->{result});
+my $entryMap = $mc->getRootObject();
+
+if ($entryMap->{type} eq "F") {
+    print "  File Name         : $entryMap->{name}\n";
+    print "  Size              : $entryMap->{lowerSize}\n";
+    print "  Date Last Modified: $entryMap->{lastModifiedTimestamp}\n";
+}
+else {
+    print "Error on FS QUERY ENTRY result.\n";
+    print "$fileName is not a file.  Type=$entryMap->{type}\n";
+    exit 1;
+}
+
+# Determine if running test on a Windows or Unix machine
+
+my $request = "RESOLVE STRING {STAF/Config/OS/Name}";
+print "\n  STAF local VAR $request\n";
+
+$result = $handle->submit("local", "VAR", $request);
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on STAF local VAR $request\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+my $osName = $result->{result};
+print "\n  STAF/Config/OS/Name: $osName\n";
+
+# Use command "dir" if on Windows or use "ls" if on Unix
+
+my $command = "dir {STAF/Config/STAFRoot}";
+
+if (($osName eq "Linux") ||
+    ($osName eq "HP-UX") ||
+    ($osName eq "AIX") ||
+    ($osName eq "SunOS") ||
+    ($osName eq "OS/400") ||
+    ($osName eq "OS/390") ||
+    ($osName eq "FreeBSD") ||
+    ($osName eq "Darwin")) {
+    $command = "ls {STAF/Config/STAFRoot}";
+}
+
+# Submit a PROCESS START request without a WAIT option
+
+my $request = "START SHELL COMMAND ".STAF::WrapData($command).
+              " RETURNSTDOUT STDERRTOSTDOUT";
+
+print "\n  STAF local PROCESS $request\n";
+
+$result = $handle->submit("local", "PROCESS", $request);
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on STAF local PROCESS $request\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+print "\n  Process Handle: $result->{result}\n";
+
+# Submit a PROCESS START request and wait for it to complete
+
+my $request = "START SHELL COMMAND ".STAF::WrapData($command).
+              " RETURNSTDOUT STDERRTOSTDOUT WAIT";
+
+print "\n  STAF local PROCESS $request\n";
+
+$result = $handle->submit("local", "PROCESS", $request);
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on STAF local PROCESS $request\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+# Unmarshall the result which is a marshalling context whose 
+# root object is a map containing keys 'rc', and 'fileList'.
+# The value for 'fileList' is a list of the returned files.
+# Each entry in the list consists of a map that contains keys
+# 'rc' and 'data'.  In our PROCESS START request, we returned
+# one file, stdout (and returned stderr to this same file).
+
+my $mc = STAF::STAFUnmarshall($result->{result});
+my $mcRootObject = $mc->getRootObject();
+
+# Verify that the process rc is 0
+
+my $processRC = $mcRootObject->{rc};
+
+if ($processRC != $STAF::kOk) {
+    print "  Process RC: $processRC\n";
+    exit $processRC;
+}
+
+# Verify that the rc is 0 for returning data for the Stdout file 
+
+my $stdoutRC = $mcRootObject->{fileList}[0]{rc};
+
+if ($stdoutRC != $STAF::kOk) {
+    print "Error on retrieving process's stdout data.\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $stdoutRC\n";
+    exit $stdoutRC; 
+}
+
+# Print the data in the stdout file created by the process
+
+my $stdoutData = $mcRootObject->{fileList}[0]{data};
+
+print "\n  Process Stdout File Contains:\n";
+print "$stdoutData\n";
+
+# Test unmarshalling data that contains indirect marshalled data
+
+print "Test unmarshalling data that contains indirect marshalled data\n\n";
+
+# Create an array (aka list) of hashes (aka maps)
+my @testList = (
+    {name => 'TestA', exec => '/tests/TestA.py'},
+    {name => 'TestB', exec => '/tests/TestB.sh'},
+    {name => 'TestC', exec => '/tests/TestC.cmd'}
+  );
+
+$result = $handle->submit("local", "FS", "QUERY ENTRY {STAF/Config/ConfigFile}");
+
+if ($result->{rc} != $STAF::kOk) {
+    print "Error on FS QUERY ENTRY request.\n";
+    print "Expected RC: 0\n";
+    print "Received RC: $result->{rc}, Result: $result->{result}\n";
+    exit $result->{rc}; 
+}
+
+# Add some marshalled data as an entry to the list
+push @testList, $result->{result};
+
+my $mcWithIndirectObjects = $mc;
+$mcWithIndirectObjects->setRootObject(\@testList);
+my $marshalledData = $mcWithIndirectObjects->marshall();
+print "Unmarshall using IGNORE_INDIRECT_OBJECTS=>0 flag\n";
+my $mc2 = STAF::STAFUnmarshall($marshalledData, IGNORE_INDIRECT_OBJECTS=>0);
+my $formattedData2 = STAF::STAFFormatObject($mc2->getRootObject(), $mc2);
+print $formattedData2, "\n";
+
+print "Unmarshall using IGNORE_INDIRECT_OBJECTS=>1 flag\n";
+my $mc3 = STAF::STAFUnmarshall($marshalledData, $mc2, IGNORE_INDIRECT_OBJECTS=>1);
+my $formattedData3 = STAF::STAFFormatObject($mc3->getRootObject(), $mc3);
+print $formattedData3, "\n";
+
+if ($formattedData2 eq $formattedData3) {
+    print "formattedData2 eq formattedData3\n";
+}
+
+if (!($formattedData2 eq $formattedData3) &&
+    (index($formattedData2, '@SDT/*') == -1) &&
+    (index($formattedData3, '@SDT/*') > 0)) {
+    # Success
+}
+else
+{
+    print "Error using IGNORE_INDIRECT_OBJECTS flag on unmarshall\n";
+    print "\nFormatted output using IGNORE_INDIRECT_OBJECTS=>0 flag:\n";
+    print $formattedData2, "\n";
+    print "\nFormatted output using IGNORE_INDIRECT_OBJECTS=>1 flag:\n";
+    print $formattedData3, "\n";
+    exit 1;
+}
+
+############################################
+# Next, test the STAFMarshall function     #
+############################################
+
+print "\nTesting STAFMarshall()...\n\n";
+
+# Test marshalling a scalar (e.g. a string)
+
+my $marshalledResult = STAF::STAFMarshall("This is a string");
+print "Marshalled result from marshalling a string:\n$marshalledResult\n\n";
+my $expectedLength = 27;
+if (length($marshalledResult) != $expectedLength) {
+    print "ERROR: Incorrect marshalled data.  Length is ", 
+          length($marshalledResult), " but should be $expectedLength\n\n";
+}
+
+# Test marshalling a None scalar
+
+my $data = undef;
+my $marshalledResult = STAF::STAFMarshall($data);
+print "Marshalled result from marshalling a None scalar:\n$marshalledResult\n\n";
+if (!($marshalledResult eq '@SDT/$0:0:')) {
+    print 'ERROR: Incorrect marshalled data. Expected: @SDT/$0:0:', "\n\n";
+}
+my $mc = STAF::STAFUnmarshall($marshalledResult);
+if (!($mc->formatObject() eq "&lt;None>")) {
+    print "ERROR: FormatObject for a None scalar isn't &lt;None>\n";
+    print "       Result: $mc->formatObject()\n\n";
+}
+
+# Test marshalling a hash
+
+my $myTestMap = {
+  'name' => 'TestA',
+  'exec' => '/tests/TestA.py',
+  'testType' => 'FVT',
+  'outputs' => [ 'TestA.out', 'TestA.err' ]
+  };
+my $marshalledResult = STAF::STAFMarshall($myTestMap);
+print "Marshalled result from marshalling a hash:\n$marshalledResult\n\n";
+my $expectedLength = 149;
+if (length($marshalledResult) != $expectedLength) {
+    print "ERROR: Incorrect marshalled data.  Length is ", 
+          length($marshalledResult), " but should be $expectedLength\n\n";
+}
+
+# Test marshalling an array
+
+my @testList = (
+    {name => 'TestA', exec => '/tests/TestA.py'},
+    {name => 'TestB', exec => '/tests/TestB.sh'},
+    {name => 'TestC', exec => '/tests/TestC.cmd'}
+  );
+my $marshalledResult = STAF::STAFMarshall(\@testList);
+print "Marshalled result from marshalling an array:\n$marshalledResult\n\n";
+my $expectedLength = 208;
+if (length($marshalledResult) != $expectedLength) {
+    print "ERROR: Incorrect marshalled data.  Length is ", 
+          length($marshalledResult), " but should be $expectedLength\n\n";
+}
+
+# Test marshalling data using a marshalling context
+
+# Create a marshalling context and marshall it, and unmarshall it
+
+# Create a map class definition
+my $myMapClassDef = STAF::STAFMapClassDefinition->new('Test/MyMap');
+$myMapClassDef->addKey('name', 'Name');
+$myMapClassDef->addKey('exec', 'Executable');
+
+# Create an array (aka list) of hashes (aka maps)
+my @testList = (
+    {name => 'TestA', exec => '/tests/TestA.py'},
+    {name => 'TestB', exec => '/tests/TestB.sh'},
+    {name => 'TestC', exec => '/tests/TestC.cmd'}
+  );
+
+# Create a reference to the array (aka list)
+my $testList_ref = \@testList;
+
+# Create a marshalling context with one map class definition
+
+my $mc = STAF::STAFMarshallingContext->new();
+$mc->setMapClassDefinition($myMapClassDef);
+
+# Create an array (aka list) of map class map data
+
+my @myTestList;
+
+foreach my $test (@$testList_ref) {
+    my $testMap = $myMapClassDef->createInstance();
+    $testMap->{'name'} = $test->{'name'};
+    $testMap->{'exec'} = $test->{'exec'};
+    push @myTestList, $testMap;
+}
+
+# Assign a reference to the array (aka list) as the root object
+# for the marshalling context
+$mc->setRootObject(\@myTestList);
+
+# Create a string from the marshalling context
+# This string could be a message that you log or send to a queue, etc.
+
+my $marshalledResult = $mc->marshall();
+print "Marshalled result from marshalling a marshalling context:\n$marshalledResult\n\n";
+my $expectedLength = 457;
+if (length($marshalledResult) != $expectedLength) {
+    print "ERROR: Incorrect marshalled data.  Length is ", 
+          length($marshalledResult), " but should be $expectedLength\n\n";
+}
+
+# Convert the marshalled string representation back into an array (aka list)
+
+my $mc2 = STAF::STAFUnmarshall($marshalledResult);
+my $message2 = $mc2->marshall();
+my $theTestList = $mc2->getRootObject();
+
+if (length($marshalledResult) != length($message2)) {
+    print 'Error: length($marshalledResult) != length($message2)', "\n";
+    print "Message:\n$marshalledResult\n";
+    print "Message2:\n$message2\n";
+    exit 1;
+}
+
+
+############################################
+# Next, test the STAFFormatObject function #
+############################################
+
+print "Testing STAFFormatObject()...";
+
+print "\n\nPrinting formatted output for a scalar (e.g. a string):\n";
+print STAF::STAFFormatObject("This is a string");
+
+print "\n\nPrinting formatted output for None scalar (e.g. undef):\n";
+print STAF::STAFFormatObject(undef);
+
+if (!(STAF::STAFFormatObject(undef) eq '&lt;None>')) {
+    print "ERROR: Wrong FormatObject for a None scalar\n";
+    print "       Result: ", STAF::STAFFormatObject(undef), "\n\n";
+}
+
+print "\n\nPrinting formatted output for an array:\n";
+my @testList = (
+    {name => 'TestA', exec => '/tests/TestA.py'},
+    {name => 'TestB', exec => '/tests/TestB.sh'},
+    {name => 'TestC', exec => '/tests/TestC.cmd'}
+  );
+print STAF::STAFFormatObject(\@testList);
+
+print "\n\nPrinting formatted output for a hash:\n";
+print STAF::STAFFormatObject($myTestMap);
+
+my $fileName = '{STAF/Config/ConfigFile}';
+
+my $result = $handle->submit('local', 'FS', "QUERY ENTRY $fileName");
+
+if (result->{rc} != STAFResult.Ok) {
+    print "FS QUERY ENTRY $fileName failed";
+    print "RC=$result->{rc}, Result=$result->{result}";
+    exit 1;
+}
+
+my $mc = STAF::STAFUnmarshall($result->{result});
+print "\n\nPrinting formatted output for FS QUERY ENTRY using STAFFormatObject\n";
+print STAF::STAFFormatObject($mc->getRootObject(), $mc);
+print "\n\nPrinting formatted output for FS QUERY ENTRY using formatObject\n";
+print $mc->formatObject();
+
+# Test STAFResult->new
+
+print "\n\nTesting STAFResult->new()...\n";
+
+my $result = STAF::STAFResult->new(0, 'Successful');
+if (($result->{rc} != $STAF::kOk) or
+    (!$result->{result} eq 'Successful')) {
+    print "ERROR: Wrong STAFResult.".
+          "RC: $result->{rc} Result: $result->{result}\n";
+    exit $result->{rc};
+}
+
+# Test STAF::WrapData function
+
+print "\nTesting STAF::WrapData()...\n";
+
+my $message = "Hello World";
+$result = $handle->submit(
+    "local", "monitor", "log message ".STAF::WrapData($message));
+
+if ($result->{rc} != $STAF::kOk) { 
+    print "Error logging message to Monitor,".
+          " RC: $result->{rc} Result: $result->{result}\n"; 
+    exit $result->{rc}; 
+} 
+
+# Unregister the handle
+
+print "\nUnregistering handle $handle->{handle}\n";
+
+$rc = $handle->unRegister();
+if ($rc != $STAF::kOk) {
+    print "Error unregistering with STAF, RC: $STAF::RC\n";
+    exit $rc;
+}
+
+print "\n *** All tests successful ***\n";
+</pre>
+</font>
+</ul>
+<p>
+This example could print the following when run:
+
+<ul>
+<font color="darkblue">
+<pre>
+Using handle: 31
+
+Testing Class STAFHandle Methods...
+  Verify that auto-unmarshalling result is turned on by default
+  Turn off auto-unmarshalling result  Turn on auto-unmarshalling result
+Testing STAF::Submit2 API with "local PING PING"
+
+Testing $STAF::STAFHandle::kReqSync
+  Result: PONG
+
+Testing $STAF::STAFHandle::kReqFireAndForget
+  Result: 211
+
+Testing $STAF::STAFHandle::kReqQueue
+  Result: 212
+
+Testing $STAF::STAFHandle::kReqRetain
+  Result: 213
+
+Testing $STAF::STAFHandle::kReqQueueRetain
+  Result: 214
+
+Testing STAFHandle->submit2 API with "local PING PING"
+
+Testing $STAF::STAFHandle::kReqSync
+  Result: PONG
+
+Testing $STAF::STAFHandle::kReqFireAndForget
+  Result: 217
+
+Testing $STAF::STAFHandle::kReqQueue
+  Result: 219
+
+Testing $STAF::STAFHandle::kReqRetain
+  Result: 220
+
+Testing $STAF::STAFHandle::kReqQueueRetain
+  Result: 221
+
+Testing Privacy APIs...
+  STAF::AddPrivacyDelimiters(secret): !!@secret@!!
+  STAF::EscapePrivacyDelimiters(!!@secret@!!): ^!!@secret^@!!
+  STAF::MaskPrivateData(!!@secret@!!): ************
+  STAF::RemovePrivacyDelimiters(!!@secret@!!): secret
+  STAF::RemovePrivacyDelimiters(!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!): Msg: Pw is !!@secret@!!.
+  STAF::RemovePrivacyDelimiters(!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!, 0): Msg: Pw is !!@secret@!!.
+  STAF::RemovePrivacyDelimiters(!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!, 3): Msg: Pw is !!@secret@!!.
+  STAF::RemovePrivacyDelimiters(!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!, 1): Msg: !!@Pw is ^^!!@secret^^@!!.@!!
+  STAF::RemovePrivacyDelimiters(!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!, 2): Msg: Pw is !!@secret@!!.
+  STAF::RemovePrivacyDelimiters(!!@Msg: ^!!@Pw is ^^^!!@secret^^^@!!.^@!!@!!, 1): Msg: !!@Pw is ^^!!@secret^^@!!.@!!
+  STAF::RemovePrivacyDelimiters(Msg: Pw is !!@secret@!!., 1): Msg: Pw is !!@secret@!!.
+  STAF::AddPrivacyDelimiters(, 1): 
+  STAF::EscapePrivacyDelimiters(, 1): 
+  STAF::MaskPrivateData(, 1): 
+  STAF::RemovePrivacyDelimiters(, 1): 
+  STAF::AddPrivacyDelimiters(‰¥, 1): !!@‰¥@!!
+  STAF::EscapePrivacyDelimiters(!!@‰¥@!!, 1): ^!!@‰¥^@!!
+  STAF::MaskPrivateData(!!@‰¥@!!, 1): **********
+  STAF::RemovePrivacyDelimiters(!!@‰¥@!!, 1): ‰¥
+
+Testing Monitor Service Wrapper...
+  STAF/Config/Machine=221
+  Log a message to the monitor service
+
+Testing Log Service Wrapper...
+  Init Log
+  Log a message
+  Init TestCase2 log
+  Log Type: GLOBAL
+  Log's Monitor Mask: FATAL ERROR
+  Log Service System Name: LOCAL
+  Log Service Name: LOG
+
+Testing Class STAFMapClassDefinition's methods...
+  Testing STAFMapClassDefinition new() method...
+  Testing STAFMapClassDefinition addKey() method...
+  Testing STAFMapClassDefinition setKeyProperty() method...
+  Testing STAFMapClassDefinition name() method...
+  Testing STAFMapClassDefinition keys() method...
+  key=testType display-name=Test Type  display-short-name=Test
+  Testing STAFMapClassDefinition createInstance() method...
+
+Testing Class STAFMarshallingContext Methods...
+  Testing STAFMarshallingContext new() method...
+  Testing STAFMarshallingContext setMapClassDefinition() method...
+  Testing STAFMarshallingContext hasMapClassDefinition() method...
+  Testing STAFMarshallingContext getMapClassDefinition() method...
+  Testing STAFMarshallingContext getRootObject() method...
+  Testing STAFMarshallingContext getPrimaryObject() method...
+  Testing STAFMarshallingContext formatObject() method...
+  Testing STAFMarshallingContext marshall() method...
+
+Testing STAFUnmarshall()...
+
+  STAF local FS QUERY ENTRY {STAF/Config/ConfigFile}
+
+  File Name         : c:\staf\bin\staf3x.cfg
+  Size              : 8845
+  Date Last Modified: 20080721-17:33:22
+
+  STAF local VAR RESOLVE STRING {STAF/Config/OS/Name}
+
+  STAF/Config/OS/Name: Win2000
+
+  STAF local PROCESS START SHELL COMMAND :26:dir {STAF/Config/STAFRoot} RETURNSTDOUT STDERRTOSTDOUT
+
+  Process Handle: 32
+
+  STAF local PROCESS START SHELL COMMAND :26:dir {STAF/Config/STAFRoot} RETURNSTDOUT STDERRTOSTDOUT WAIT
+
+  Process Stdout File Contains:
+ Volume in drive C has no label.
+ Volume Serial Number is B0B7-F95A
+
+ Directory of c:\dev\sf\rel\win32\staf\retail
+
+01/26/2006  02:56p      &lt;DIR>          .
+01/26/2006  02:56p      &lt;DIR>          ..
+01/26/2006  02:56p      &lt;DIR>          lib
+01/26/2006  02:56p      &lt;DIR>          codepage
+08/13/2008  05:24p              38,938 STAFInst
+08/01/2008  01:21p               7,276 STAFInst.mfs
+01/26/2006  02:56p      &lt;DIR>          samples
+01/26/2006  02:57p      &lt;DIR>          include
+01/26/2006  02:57p      &lt;DIR>          bin
+02/25/2008  01:30p              17,029 LICENSE.htm
+01/26/2006  03:04p      &lt;DIR>          docs
+01/26/2006  03:11p      &lt;DIR>          data
+01/26/2006  03:15p      &lt;DIR>          services
+02/12/2008  05:05p                  25 STAFReg.inf
+06/05/2008  10:17a               8,729 NOTICES.htm
+06/24/2008  04:34p                  77 install.properties
+               6 File(s)         72,074 bytes
+              10 Dir(s)   8,451,129,344 bytes free
+
+Test unmarshalling data that contains indirect marshalled data
+
+Unmarshall using IGNORE_INDIRECT_OBJECTS=>0 flag
+[
+  {
+    name: TestA
+    exec: /tests/TestA.py
+  }
+  {
+    name: TestB
+    exec: /tests/TestB.sh
+  }
+  {
+    name: TestC
+    exec: /tests/TestC.cmd
+  }
+  {
+    Name              : c:\staf\bin\staf3x.cfg
+    Type              : F
+    Upper 32-bit Size : 0
+    Lower 32-bit Size : 8845
+    Modified Date-Time: 20080721-17:33:22
+  }
+]
+Unmarshall using IGNORE_INDIRECT_OBJECTS=>1 flag
+[
+  {
+    name: TestA
+    exec: /tests/TestA.py
+  }
+  {
+    name: TestB
+    exec: /tests/TestB.sh
+  }
+  {
+    name: TestC
+    exec: /tests/TestC.cmd
+  }
+  @SDT/*:649:@SDT/{:501::13:map-class-map@SDT/{:473::25:STAF/Service/FS/QueryInfo@SDT/{:433::4:keys@SDT/[5:371:@SDT/{:50::12:display-name@SDT/$S:4:Name:3:key@SDT/$S:4:name@SDT/{:50::12:display-name@SDT/$S:4:Type:3:key@SDT/$S:4:type@SDT/{:69::12:display-name@SDT/$S:17:Upper 32-bit Size:3:key@SDT/$S:9:upperSize@SDT/{:69::12:display-name@SDT/$S:17:Lower 32-bit Size:3:key@SDT/$S:9:lowerSize@SDT/{:83::12:display-name@SDT/$S:18:Modified Date-Time:3:key@SDT/$S:21:lastModifiedTimestamp:4:name@SDT/$S:25:STAF/Service/FS/QueryInfo@SDT/%:126::25:STAF/Service/FS/QueryInfo@SDT/$S:22:c:\staf\bin\staf3x.cfg@SDT/$S:1:F@SDT/$S:1:0@SDT/$S:4:8845@SDT/$S:17:20080721-17:33:22
+]
+
+Testing STAFMarshall()...
+
+Marshalled result from marshalling a string:
+@SDT/$S:16:This is a string
+
+Marshalled result from marshalling a None scalar:
+@SDT/$0:0:
+
+Marshalled result from marshalling a hash:
+@SDT/{:138::8:testType@SDT/$S:3:FVT:7:outputs@SDT/[2:38:@SDT/$S:9:TestA.out@SDT/$S:9:TestA.err:4:name@SDT/$S:5:TestA:4:exec@SDT/$S:15:/tests/TestA.py
+
+Marshalled result from marshalling an array:
+@SDT/[3:196:@SDT/{:55::4:name@SDT/$S:5:TestA:4:exec@SDT/$S:15:/tests/TestA.py@SDT/{:55::4:name@SDT/$S:5:TestB:4:exec@SDT/$S:15:/tests/TestB.sh@SDT/{:56::4:name@SDT/$S:5:TestC:4:exec@SDT/$S:16:/tests/TestC.cmd
+
+Marshalled result from marshalling a marshalling context:
+@SDT/*:446:@SDT/{:227::13:map-class-map@SDT/{:199::10:Test/MyMap@SDT/{:174::4:keys@SDT/[2:127:@SDT/{:50::12:display-name@SDT/$S:4:Name:3:key@SDT/$S:4:name@SDT/{:57::12:display-name@SDT/$S:10:Executable:3:key@SDT/$S:4:exec:4:name@SDT/$S:10:Test/MyMap@SDT/[3:196:@SDT/%:55::10:Test/MyMap@SDT/$S:5:TestA@SDT/$S:15:/tests/TestA.py@SDT/%:55::10:Test/MyMap@SDT/$S:5:TestB@SDT/$S:15:/tests/TestB.sh@SDT/%:56::10:Test/MyMap@SDT/$S:5:TestC@SDT/$S:16:/tests/TestC.cmd
+
+Testing STAFFormatObject()...
+
+Printing formatted output for a scalar (e.g. a string):
+This is a string
+
+Printing formatted output for None scalar (e.g. undef):
+&lt;None>
+
+Printing formatted output for an array:
+[
+  {
+    name: TestA
+    exec: /tests/TestA.py
+  }
+  {
+    name: TestB
+    exec: /tests/TestB.sh
+  }
+  {
+    name: TestC
+    exec: /tests/TestC.cmd
+  }
+]
+
+Printing formatted output for a hash:
+{
+  testType: FVT
+  outputs : [
+    TestA.out
+    TestA.err
+  ]
+  name    : TestA
+  exec    : /tests/TestA.py
+}
+
+Printing formatted output for FS QUERY ENTRY using STAFFormatObject
+{
+  Name              : c:\staf\bin\staf3x.cfg
+  Type              : F
+  Upper 32-bit Size : 0
+  Lower 32-bit Size : 8845
+  Modified Date-Time: 20080721-17:33:22
+}
+
+Printing formatted output for FS QUERY ENTRY using formatObject
+{
+  Name              : c:\staf\bin\staf3x.cfg
+  Type              : F
+  Upper 32-bit Size : 0
+  Lower 32-bit Size : 8845
+  Modified Date-Time: 20080721-17:33:22
+}
+
+Testing STAFResult->new()...
+
+Testing STAF::WrapData()...
+
+Unregistering handle 31
+
+ *** All tests successful ***
+</pre>
+</font>
+</ul>
+
+</ol>
+
+<p>*** End of Document ***
+
+</body>
+</html>

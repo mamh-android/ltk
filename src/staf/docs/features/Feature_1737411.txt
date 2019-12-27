@@ -1,0 +1,267 @@
+Feature ID  : 1737411
+Response Due: 08/22/2007
+Title       : Make the line number and STAX xml file/machine name
+              available to improve debugging
+
+Description
+-----------
+
+When an error occurs running a STAX job, for debugging purposes, the
+error should contain:
+1) The line number of the xml element in the STAX xml file in which
+   the error occurred
+2) The name of the STAX xml file in which the error occurred.
+3) The name of the machine where the STAX xml file resides.
+
+We need to do some pre-processing to transform the original STAX
+XML document using an XSL stylesheet into a new STAX XML document
+that includes a line number attribute for each element.  We're
+planning on using Xalan to perform this transformation as it
+provides the ability to get the line number for each element.
+
+
+Problem(s) Solved
+-----------------
+
+Currently, when a runtime error occurs running a STAX job, such as
+when STAX raises a signal like a STAXPythonEvaluationError signal,
+the error logged/displayed does not include the line number of the
+xml element which caused the error as this information is not
+provided by the DOM parser used by STAX.  In addition, the error
+message does not provide the name of the STAX xml file or the
+machine where the xml file resides which is needed particularly if
+multiple STAX xml files are imported.  The error message does
+provide other information about the element which caused the
+error, including a call stack, but you have to read through the
+call stack in order to find out where the error occurred.  Having
+the line number of the element in error and the name of the xml
+file and the machine where it resides will improve debugging and
+provide the groundwork for a STAX debugger.
+
+
+Related Features
+----------------
+
+1) Feature #1156247 "STAX Action re-design to simplify extension
+   creation".  It may be beneficial to introduce new abstract
+   classes for STAXAction and STAXActionFactory to help make the
+   linenumber, filename, and machine name available -- but these
+   changes must be backwards compatible in that they can't
+   adversely effect existing STAX service extensions
+
+2) Feature #1759808 "Caching of STAX Files".  This feature effects
+   some of the same code so will have to coordinate the changes.
+
+
+External Changes
+----------------
+
+1) Add an acknowledgement and license for Xalan to "Appendix G:
+   Licenses and Acknowledgements" in the STAX User's Guide.
+   Also, add Xalan to the table on the Licenses webpage at
+   http://staf.sourceforge.net/license.php and provide a link to
+   where you can download source code for Xalan.
+
+2) Update the "Building the STAX Service" section in the STAF
+   Developer's Guide to say that you need to have Xalan-Java
+   installed and that it can be downloaded via
+   http://xml.apache.org/xalan-j and to say you need to set
+   environment variable XALAN_ROOT to the directory where you
+   installed Xalan-Java (and that contains the xalan.jar filel)
+   in order to build STAX yourself.
+
+
+Internal Changes
+----------------
+
+1) Update the makefile for STAX to include the xalan.jar file as
+   a nested jar file within the STAX.jar file (in STAF-INF/jars),
+   along with other the other nested jar files that the STAX
+   service already provides (e.g. xercesImpl.jar, xmlParserAPIs.jar,
+   jython.jar)
+
+2) Update STAXParser.java to use Xalan and a XSL stylesheet to
+   convert the STAX XML document into a new STAX XML document where
+   each element has a new attribute named _ln that references
+   the line number of the element in the original STAX document.
+   The STAXParser will now have 3 steps:
+
+   Step 1: Parse with validation to be sure that the XML document
+           has valid syntax
+   Step 2: Transform the XML document to a new XML document that
+           includes debug information like a _ln attribute for
+           each element.  Don't do validation.
+   Step 3: Parse the new XML document without validation
+
+3) Instead of adding the name of the file being parsed and the name
+   of the machine where the file resides as attributes to each
+   element during pre-processing (like we're doing for linenumber),
+   we can change STAXJob.java so that it provides methods to set
+   and get the name of the file currently being parsed and the name
+   of the machine (e.g. get/setCurrentParsedFileName,
+   get/setCurrentParsedMachine).  This way, the file and machine
+   name information will be available to each element's
+   ActionFactory class.
+
+4) Create a new STAXActionDefaultImpl class that extends the
+   STAXAction class and provides new methods to get/set line number,
+   file name, machine name, and root element name.
+
+5) Update each element's ActionFactory to provide the lineNumber,
+   fileName, and machineName to it's corresponding element's Action
+   class where it can be stored.
+
+7) Each element's STAXAction class needs to be changed to extend
+   the new STAXActionDefaultImpl class so that the lineNumber,
+   fileName, and machineName will be available when raising a
+   signal (e.g. via the STAXThread's raiseSignal methods) so that
+   this information can be included in the signal error messages.
+
+
+Design Considerations
+---------------------
+
+1) Use a XSL stylesheet to convert a STAX XML document into a new
+   STAX XML document where each element has a new attribute named
+   _ln that references the line number of the element in the
+   original STAX document.
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsl:stylesheet version="1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:java="http://xml.apache.org/xslt/java"
+                exclude-result-prefixes="java">
+
+  <xsl:output method="xml" doctype-system="stax.dtd"/>
+
+  <xsl:template match="@* | node() | text() | comment() | processing-instruction()">
+    <xsl:copy>
+      <xsl:call-template name="processEachNodeAndAttribute"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template name="processEachNodeAndAttribute" match="@* | node()">
+    <xsl:copy>
+      <xsl:attribute name="_ln">
+        <xsl:value-of select="java:org.apache.xalan.lib.NodeInfo.lineNumber()"/>
+      </xsl:attribute>
+      <xsl:apply-templates select="@* | node()"/>
+    </xsl:copy>
+  </xsl:template>
+
+</xsl:stylesheet>
+
+   Change STAX to do some pre-processing so that to uses Xalan to
+   transform the original STAX XML document into a new STAX XML
+   document that includes the _ln attribute for elements and
+   then parses this new STAX XML document instead of the original
+   STAX XML document.
+
+import org.apache.xalan.processor.TransformerFactoryImpl;
+import org.apache.xalan.transformer.TransformerImpl;
+import org.apache.xalan.transformer.XalanProperties;
+import javax.xml.transform.*;
+import javax.xml.transform.stream.*;
+  
+import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+
+// Only works with IBM Java (1.4.2).  Does not work with Sun Java 1.5.0
+// unless put xalan.jar in the classpath.
+  
+public class TransformXalan
+{
+    /**
+     * Accept two command line arguments: the name of 
+     * an XML file, and the name of an XSLT stylesheet. 
+     * The result of the transformation
+     * is written to stdout.
+     */
+    public static void main(String[] args)
+        throws javax.xml.transform.TransformerException
+    {
+        if (args.length != 2)
+        {
+            System.err.println("Usage:");
+            System.err.println(" java " + TransformXalan.class.getName( )
+                + " xmlFileName xsltFileName");
+            System.exit(1);
+        }
+  
+        String xmlName = args[0];
+        String xsltName = args[1];
+        String outputName = "NodeInfo.output";
+
+        try
+        {
+            TransformerFactory factory = TransformerFactory.newInstance();
+            // Must set on both the factory impl..
+            TransformerFactoryImpl factoryImpl = (TransformerFactoryImpl)factory;
+            factoryImpl.setAttribute(XalanProperties.SOURCE_LOCATION, Boolean.TRUE);
+              
+            Transformer transformer = factory.newTransformer(new StreamSource(xsltName));
+            // ..and the transformer impl
+            TransformerImpl impl = ((TransformerImpl) transformer);
+            impl.setProperty(XalanProperties.SOURCE_LOCATION, Boolean.TRUE);
+            transformer.transform(new StreamSource(xmlName), 
+                                  new StreamResult(outputName));
+        } 
+        catch (Throwable t)
+        {
+            System.out.println("Catch error: " + t.toString());
+            return;
+        }    
+    }    
+}  // end of class TransformXalan
+
+2) Use a prefix such as "_" for the line number attribute to make
+   sure it's unique from any other attributes any element
+   (including extension elements) might have.  Also, we'll want to
+   keep it short, e.g. _ln.
+
+3) The line number, file, and machine information must be publicly
+   available for all STAX actions that support it because when we
+   start to build a STAX Debugger, we'll want to be able to dump
+   out a threads stack to be able to include this information in
+   the stack trace.  To faciliate this, we'll probably want to
+   "extend" the existing action interface with a new interface that
+   supports these methods.  This would go along nicely with the
+   abstract base class idea.  This way, as the stack trace is being
+   produced, you can readly check which interface an action
+   implements, and generate the appropriate data.
+
+   We may also want to add additional methods to handle this data
+   to some of the other "error" pieces in STAX, like signals and
+   conditions that the STAX service throws so that we know where
+   they were generated from.  Some of this might be able to be
+   handled automatically without (a lot of) action from the
+   actions.  For example, the raise signal method could
+   "automatically" get the trace data from the caller (we may have
+   to update the method to accept the caller if we don't already)
+   and add it to the signal.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+1) If new abstract classes for STAXAction and STAXActionFactory
+   are introduced (as per Feature #1156247 "STAX Action re-design
+   to simplify extension creation"), these changes must be
+   backwards compatible in that they can't adversely effect
+   existing STAX service extensions.
+
+2) To prevent breaking existing STAX service extensions written
+   by customers now that the STAX document is being transformed
+   via XSLT to add a _ln attribute to each element, need to
+   reparse the the transformed XML document without validation.
+
+   STAX Extensions that are doing extra unneeded checking in their
+   their STAXActionFactory's parseAction() method for attributes
+   that they don't support will be broken (e.g. MTS extension).
+   However, these documents can be easily fixed by removing this
+   unnecessary validation check.  We'll document this in the
+   STAX Extension Developer's Guide and in the release note.
+

@@ -1,0 +1,764 @@
+Feature ID  : 464832
+Response Due: 06/18/2004
+Title       : Add info on which interfaces are enabled
+
+
+Description
+-----------
+
+This feature will provide support to show which interfaces
+(aka connection providers) are enabled.
+
+
+Problem(s) Solved
+-----------------
+
+In STAF 2.x, there are only two possible interfaces: local or
+network. However, in STAF 3.0, there could be additional (multiple)
+network interfaces enabled (e.g. tcp1, tcp2, or a pluggable
+interface), but there's no way to tell which interfaces are enabled
+(except by looking at the STAF.cfg file, if you have sufficient
+trust access).
+
+With the addition of this feature, you can now issue a request to
+the MISC service to list and query enabled interfaces.
+
+
+Related Features
+----------------
+
+Feature #550251 "Communication Interface Enhancements" provides the
+ability to enable additional (multiple) interfaces, e.g. tcp1, tcp2,
+or some other pluggable interface such as serial ports, SNA, NetBIOS.
+
+Feature #740150 "New format for multi-valued result" will change
+the results for the new list and query requests to the MISC service.
+This format is not documented here yet as Feature #740150 is not
+yet complete.
+
+Feature #914310 "Need Support for IPV6" will be adding a new option
+named PROTOCOL that can be set to ipv4 to specify IPv4 support only.
+
+
+External Changes
+----------------
+
+1) MISC service changes
+
+Add requests to the MISC service to list and query interfaces.
+
+MISC service help
+
+VERSION
+MACHINE <Machine>
+WHOAMI
+LIST INTERFACES
+QUERY INTERFACE <Interface>
+HELP
+
+a) LIST
+
+Syntax:
+
+  LIST INTERFACES
+
+Security:
+
+  Trust level 2
+
+Result:
+
+  If successful, the result will contain a line for each interface
+  with the following format:
+
+  <Interface Name>;<Library>;<Options>
+
+  where <Options> is a semi-colon separated list of options for the
+  interface.
+
+Examples:
+
+  Goal:  List all interfaces
+  Request:  LIST INTERFACES
+  Result:
+    tcp;STAFTCP;PORT=6500;PROTOCOL=ipv6
+    alt-tcp;STAFTCP;PORT=6700;PROTOCOL=ipv4
+    local;STAFLIPC;IPCNAME=STAF
+
+b) QUERY
+
+Syntax:
+
+  QUERY INTERFACE <Name>
+
+  INTERFACE specifies the name of the interface to query.  
+  This option will resolve variables.
+
+Security:
+
+  Trust level 2
+
+Result:
+
+  If successful, the result will be of the following format:
+
+  Library    : <Implementation Library>
+  Option #n  : <Name[=value]>   
+  
+  where there is a line for each option provided by the
+  interface (e.g. Option #1, Option #2, etc.)
+
+Examples:
+
+  Goal:  List details about the interface named tcp:
+  Request:  QUERY INTERFACE tcp
+  Result:
+    Library    : STAFTCP
+    Option #1  : PORT=6500
+    Option #2  : PROTOCOL=ipv6
+
+  Goal:  List details about the interface named alt-tcp
+  Request:  QUERY INTERFACE alt-tcp
+  Result:
+    Library    : STAFTCP
+    Option #1  : PORT=6700
+    Option #2  : PROTOCOL=ipv4
+
+  Goal:  List details about the interface named local
+  Request:  QUERY INTERFACE local
+  Result:
+    Library    : STAFLIPC
+    Option #1  : IPCNAME=STAF
+
+
+Internal Changes
+----------------
+
+1) STAFMiscService.cpp/h:
+
+  a) Add a handleList method:
+
+  Use the STAFConnectionManager::getConnectionProviderListCopy()
+  method to get a list of all of the enabled interfaces and then
+  for each interface, use its getLibrary and getMyOptionList
+  methods to get its library name and its options.
+
+  Return detailed information about the interface in a string.
+
+  b) Add a handleQuery method:
+
+  Use the STAFConnectionManager::getConnectionProviderListCopy()
+  method to get a list of all of the enabled interfaces and then
+  iterate thru the list to find the specified interface.  Use
+  the interface's getLibrary and getMyOptionList methods to get
+  its library name and its options.
+
+  If the specified interface is not in the list, return
+  kSTAFDoesNotExist, otherwise return detailed information
+  about the interface in a string.
+
+2) Changes to Connection Providers:
+
+  a) stafif/STAFConnectionProvider.h:
+
+  - Defined a new getLibrary method which returns a STAFString
+    containing the name of the library for a connection provider.
+
+  - Defined new STAFConnectionGetOptions and GetOptions methods
+    to get the options defined for a connection provider.
+
+    Note:  Currently, the options are being provided in a string,
+    where multiple options are separated by a semi-colon.  Once
+    the C/C++ marshalling methods are complete, the options will
+    be provided in a STAF Data Type List format instead.
+    
+  b) LocalIPC and TCP Connection Providers:
+
+     connectionproviders/tcp/STAFTCPConnProvider.cpp
+     connectionproviders/localipc/win32/STAFLocalIPCConnProvider.cpp
+     connectionproviders/localipc/unix/STAFLocalIPCConnProvider.cpp
+
+  - Added the following fields to the STAFConnectionProviderImpl
+    struct for each connection provider:
+    
+      STAFStringConst_t logicalNetworkID;
+      STAFStringConst_t physicalNetworkID;
+
+      unsigned int numOptions;
+      STAFStringConst_t options;
+
+  - Added a STAFConnectionProviderGetOptions method to each
+    connection provider and implemented this method in each connection
+    provider so that the connection provider could provide its options.
+    This way, default values used for options will be provided in
+    addition to any options specified when the interface is registered
+    in the STAF configuration file.
+
+  - The options are assigned during the connection provider's 
+    STAFConnectionProviderConstruct() method.
+
+    Note:  Also, moved the assignment of the logical and physical
+    identifiers into the STAFConnectionProviderConstruct() method
+    as well so that they are just assigned once and changed the
+    getMyNetworkIdentifiers() method to return these values.
+
+  c) stafif/STAFConnectionProviderInlImpl.cpp:
+
+  - Added STAFString library as another parameter to the
+    STAFConnectionProvider constructor.
+   
+  - Added a STAFConnectionProvider::getLibrary() method to provide
+    the library name for a connection provider.
+    This method is called by the new handleList and handleQuery 
+    methods in STAFMiscService.cpp.
+
+  - Added a STAFConnectionProvider::getOptions() method to provide
+    the options for a connection provider.
+    This method is called by the new handleList and handleQuery 
+    methods in STAFMiscService.cpp.
+
+
+Design Considerations
+---------------------
+
+- Currently, the options for connection providers are being 
+  provided in a string, where multiple options are separated by a
+  semi-colon.  Once the C/C++ methods for the marshalling feature
+  are complete, the options will be provided in a STAF Data Type
+  List format instead.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None
+
+
+Here's the CVS diff of all the changes:
+
+Index: connproviders/localipc/STAFLIPC.def
+===================================================================
+RCS file: /cvsroot/staf/src/staf/connproviders/localipc/STAFLIPC.def,v
+retrieving revision 1.2
+diff -r1.2 STAFLIPC.def
+7a8
+> STAFConnectionProviderGetOptions
+Index: connproviders/localipc/unix/STAFLocalIPCConnProvider.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/connproviders/localipc/unix/STAFLocalIPCConnProvider.cpp,v
+retrieving revision 1.8
+diff -r1.8 STAFLocalIPCConnProvider.cpp
+110a111,115
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer);
+> 
+148a154
+>     STAFConnectionProviderGetOptions,
+165a172,177
+>     
+>     STAFStringConst_t logicalNetworkID;
+>     STAFStringConst_t physicalNetworkID;
+> 
+>     unsigned int numOptions;
+>     STAFStringConst_t options;
+350a363,376
+>         // Assign options (name[=value]) to a string, separating multiple
+>         // options using a semi-colon.
+>         // XXX: Change to create a STAF Data Type List (when available)
+>         //      instead of a string with options separated by a semi-colon
+>         lipcData.numOptions = 1;
+>         lipcData.options = STAFString("IPCNAME=" +
+>                                       lipcData.ipcName).adoptImpl();
+> 
+>         // Assign logical and physical identifiers
+>         lipcData.logicalNetworkID = STAFString("local").adoptImpl();
+>         lipcData.physicalNetworkID = STAFString("local").adoptImpl();
+> 
+>         *provider = new STAFConnectionProviderImpl(lipcData);
+> 
+658,659c684,685
+<         *logicalID = STAFString("local").adoptImpl();
+<         *physicalID = STAFString("local").adoptImpl();
+---
+>         *logicalID = provider->logicalNetworkID;
+>         *physicalID = provider->physicalNetworkID;
+668a695,714
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer)
+> {
+>     if (provider == 0) return kSTAFInvalidObject;
+>     if (options  == 0) return kSTAFInvalidParm;
+> 
+>     try
+>     {
+>         *numOptions = provider->numOptions;
+>         *options = provider->options;
+> 
+>         return kSTAFOk;
+>     }
+>     CATCH_STANDARD("STAFConnectionProviderGetOptions");
+> 
+>     return kSTAFUnknownError;
+> }
+> 
+Index: connproviders/localipc/win32/STAFLocalIPCConnProvider.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/connproviders/localipc/win32/STAFLocalIPCConnProvider.cpp,v
+retrieving revision 1.7
+diff -r1.7 STAFLocalIPCConnProvider.cpp
+100a101,105
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer);
+> 
+138a144
+>     STAFConnectionProviderGetOptions,
+159a166,171
+>     
+>     STAFStringConst_t logicalNetworkID;
+>     STAFStringConst_t physicalNetworkID;
+> 
+>     unsigned int numOptions;
+>     STAFStringConst_t options;
+593a606,617
+>         // Assign options (name[=value]) to a string, separating multiple
+>         // options using a semi-colon.
+>         // XXX: Change to create a STAF Data Type List (when available)
+>         //      instead of a string with options separated by a semi-colon
+>         lipcData.numOptions = 1;
+>         lipcData.options = STAFString("IPCNAME=" +
+>                                       lipcData.ipcName).adoptImpl();
+> 
+>         // Assign logical and physical identifiers
+>         lipcData.logicalNetworkID = STAFString("local").adoptImpl();
+>         lipcData.physicalNetworkID = STAFString("local").adoptImpl();
+> 
+850,851c874,875
+<         *logicalID = STAFString("local").adoptImpl();
+<         *physicalID = STAFString("local").adoptImpl();
+---
+>         *logicalID = provider->logicalNetworkID;
+>         *physicalID = provider->physicalNetworkID;
+860a885,904
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer)
+> {
+>     if (provider == 0) return kSTAFInvalidObject;
+>     if (options  == 0) return kSTAFInvalidParm;
+> 
+>     try
+>     {
+>         *numOptions = provider->numOptions;
+>         *options = provider->options;
+> 
+>         return kSTAFOk;
+>     }
+>     CATCH_STANDARD("STAFConnectionProviderGetOptions");
+> 
+>     return kSTAFUnknownError;
+> }
+> 
+Index: connproviders/tcp/STAFTCP.def
+===================================================================
+RCS file: /cvsroot/staf/src/staf/connproviders/tcp/STAFTCP.def,v
+retrieving revision 1.2
+diff -r1.2 STAFTCP.def
+7a8
+> STAFConnectionProviderGetOptions
+Index: connproviders/tcp/STAFTCPConnProvider.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/connproviders/tcp/STAFTCPConnProvider.cpp,v
+retrieving revision 1.4
+diff -r1.4 STAFTCPConnProvider.cpp
+109a110,114
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer);
+> 
+147a153
+>     STAFConnectionProviderGetOptions,
+164a171,176
+>     
+>     STAFStringConst_t logicalNetworkID;
+>     STAFStringConst_t physicalNetworkID;
+> 
+>     unsigned int numOptions;
+>     STAFStringConst_t options;
+399a412,429
+>         
+>         // Assign options (name[=value]) to a string, separating multiple
+>         // options using a semi-colon.
+>         // XXX: Change to create a STAF Data Type List (when available)
+>         //      instead of a string with options separated by a semi-colon
+> 
+>         tcpData.numOptions = 2;
+>         STAFString options = STAFString("PORT=" + STAFString(tcpData.port));
+> 
+>         // XXX: Change to use tcpData.protocol instead of hard-coding to
+>         //      "ipv4" when IPv6 additions are made
+>         options += STAFString(";PROTOCOL=" + STAFString("ipv4"));
+> 
+>         tcpData.options = options.adoptImpl();
+> 
+>         // XXX: Get real logical/physical identifiers; don't just assign "local"
+>         tcpData.logicalNetworkID = STAFString("local").adoptImpl();
+>         tcpData.physicalNetworkID = STAFString("local").adoptImpl();
+723,726c753,756
+< STAFRC_t STAFConnectionProviderGetMyNetworkIDs(STAFConnectionProvider_t provider,
+<                                                STAFStringConst_t *logicalID,
+<                                                STAFStringConst_t *physicalID,
+<                                                STAFString_t *errorBuffer)
+---
+> STAFRC_t STAFConnectionProviderGetMyNetworkIDs(
+>     STAFConnectionProvider_t provider,
+>     STAFStringConst_t *logicalID, STAFStringConst_t *physicalID,
+>     STAFString_t *errorBuffer)
+734,735c764,765
+<         *logicalID = STAFString("local").adoptImpl();
+<         *physicalID = STAFString("local").adoptImpl();
+---
+>         *logicalID = provider->logicalNetworkID;
+>         *physicalID = provider->physicalNetworkID;
+744a775,794
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer)
+> {
+>     if (provider == 0) return kSTAFInvalidObject;
+>     if (options  == 0) return kSTAFInvalidParm;
+>     
+>     try
+>     {
+>         *numOptions = provider->numOptions;
+>         *options = provider->options;
+> 
+>         return kSTAFOk;
+>     }
+>     CATCH_STANDARD("STAFConnectionProviderGetOptions");
+> 
+>     return kSTAFUnknownError;
+> }
+> 
+Index: stafif/STAFConnectionProvider.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFConnectionProvider.h,v
+retrieving revision 1.2
+diff -r1.2 STAFConnectionProvider.h
+211a212,232
+> /* STAFConnectionGetOptions - Get the options (name[=value]) for this         */
+> /*                              connection provider                           */
+> /*                                                                            */
+> /* Accepts: (In)  Connection                                                  */
+> /*          (Out) Pointer to the number of options for this connection        */
+> /*                provider                                                    */
+> /*          (Out) Pointer to a string containing the options for this         */
+> /*                connection provider.  Multiple options are separated by a   */
+> /*                semi-colon.  For example: PORT=6500;PROTOCOL=ipv4           */
+> /*          (Out) Pointer to error buffer                                     */
+> /*                                                                            */
+> /* Returns: kSTAFOk, on success                                               */
+> /*          other on error                                                    */
+> /******************************************************************************/
+> STAFRC_t STAFConnectionProviderGetOptions(
+>     STAFConnectionProvider_t provider,
+>     unsigned int *numOptions, STAFStringConst_t *options,
+>     STAFString_t *errorBuffer);
+> 
+> 
+> /******************************************************************************/
+383a405,408
+> typedef STAFRC_t (*STAFConnectionProviderGetOptionsFunc_t)(
+>     STAFConnectionProvider_t provider, unsigned int *numOptions,
+>     STAFStringConst_t *options, STAFString_t *errorBuffer);
+> 
+422a448
+>     STAFConnectionProviderGetOptionsFunc_t      provGetOptions;
+490c516
+< 
+---
+>     void getOptions(unsigned int &numOptions, STAFString &options);
+491a518
+>     const STAFString &getLibrary() const;
+503a531
+>                            const STAFString &library,
+514a543
+>     STAFString fLibrary;
+Index: stafif/STAFConnectionProviderCommon.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFConnectionProviderCommon.cpp,v
+retrieving revision 1.2
+diff -r1.2 STAFConnectionProviderCommon.cpp
+45a46
+>     GET_ADDRESS("STAFConnectionProviderGetOptions", &funcs->provGetOptions);
+Index: stafif/STAFConnectionProviderInlImpl.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafif/STAFConnectionProviderInlImpl.cpp,v
+retrieving revision 1.2
+diff -r1.2 STAFConnectionProviderInlImpl.cpp
+131c131,132
+<     return new STAFConnectionProvider(name, library, provider, funcTable);
+---
+>     return new STAFConnectionProvider(name, connLib, library,
+>                                       provider, funcTable);
+175a177,193
+> STAF_INLINE void STAFConnectionProvider::getOptions(
+>     unsigned int &numOptions, STAFString &options)
+> {
+>     unsigned int numOptionsImpl = 0;
+>     STAFStringConst_t optionsImpl = 0;
+>     STAFString_t errorBuffer = 0;
+> 
+>     STAFRC_t rc = fFuncTable.provGetOptions(fProvider, &numOptionsImpl,
+>                                             &optionsImpl, &errorBuffer);
+> 
+>     CHECK_FOR_PROV_EXCEPTIONS("STAFConnectionProviderGetOptions");
+> 
+>     numOptions = numOptionsImpl;
+>     options = optionsImpl;
+> }
+> 
+> 
+181a200,205
+> STAF_INLINE const STAFString &STAFConnectionProvider::getLibrary() const
+> {
+>     return fLibrary;
+> }
+> 
+> 
+209a234
+>     const STAFString &library,
+213c238,239
+<     : fName(name), fConnLib(connLib), fProvider(provider), fFuncTable(funcTable)
+---
+>     : fName(name), fLibrary(library), fConnLib(connLib),
+>       fProvider(provider), fFuncTable(funcTable)
+Index: stafproc/STAFMiscService.cpp
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFMiscService.cpp,v
+retrieving revision 1.11
+diff -r1.11 STAFMiscService.cpp
+27a28
+> #include "STAFConnectionManager.h"
+32a34,35
+> // LIST INTERFACES
+> // QUERY INTERFACE <Interface>
+55a59,79
+> 
+>     // list options
+>     
+>     fListParser.addOption("LIST", 1,
+>                           STAFCommandParser::kValueNotAllowed);
+>     fListParser.addOption("INTERFACES", 1,
+>                           STAFCommandParser::kValueNotAllowed);
+> 
+>     // list groups/needs
+> 
+>     fListParser.addOptionGroup("INTERFACES", 1, 1);
+> 
+>     // query options
+>     
+>     fQueryParser.addOption("QUERY", 1,
+>                            STAFCommandParser::kValueNotAllowed);
+>     fQueryParser.addOption("INTERFACE", 1,
+>                            STAFCommandParser::kValueRequired);
+>     // query groups/needs
+> 
+>     fQueryParser.addOptionGroup("INTERFACE", 1, 1);
+67a92,93
+>     else if (action == "list")    return handleList(requestInfo);
+>     else if (action == "query")   return handleQuery(requestInfo);
+79c105
+<                               fMachineParser.parse(requestInfo.fRequest);
+---
+>         fMachineParser.parse(requestInfo.fRequest);
+162a189,324
+> STAFServiceResult STAFMiscService::handleList(
+>     const STAFServiceRequest &requestInfo)
+> {
+>     if (requestInfo.fTrustLevel < 2) return kSTAFAccessDenied;
+>     
+>     STAFCommandParseResultPtr parsedResult =
+>         fListParser.parse(requestInfo.fRequest);
+> 
+>     if (parsedResult->rc != kSTAFOk)
+>     {
+>         return STAFServiceResult(kSTAFInvalidRequestString,
+>                                  parsedResult->errorBuffer, 0);
+>     }
+> 
+>     STAFString result("");
+> 
+>     STAFConnectionManager::ConnectionProviderList connProvList =
+>         gConnectionManagerPtr->getConnectionProviderListCopy();
+> 
+>     for (STAFConnectionManager::ConnectionProviderList::iterator
+>          iter = connProvList.begin(); iter != connProvList.end(); ++iter)
+>     {
+>         result += (*iter)->getName() + ";";
+>         result += (*iter)->getLibrary() + ";";
+> 
+>         // Get the options from the connection provider
+> 
+>         unsigned int numOptions = 0;
+>         STAFString options;
+> 
+>         (*iter)->getOptions(numOptions, options);
+> 
+>         // XXX: Change to handle options provided in a STAF Data Type List
+>         //      and iterate thru the list instead of a semi-colon separated
+>         //      string when available     
+>         result += options + *gLineSeparatorPtr;
+>     }
+> 
+>     // Get rid of connection provider references
+>     connProvList = STAFConnectionManager::ConnectionProviderList();
+> 
+>     return STAFServiceResult(kSTAFOk, result);
+> }
+> 
+> 
+> STAFServiceResult STAFMiscService::handleQuery(
+>     const STAFServiceRequest &requestInfo)
+> {
+>     if (requestInfo.fTrustLevel < 2) return kSTAFAccessDenied;
+>     
+>     STAFCommandParseResultPtr parsedResult =
+>         fQueryParser.parse(requestInfo.fRequest);
+> 
+>     if (parsedResult->rc != kSTAFOk)
+>     {
+>         return STAFServiceResult(kSTAFInvalidRequestString,
+>                                  parsedResult->errorBuffer, 0);
+>     }
+> 
+>     DEFINE_VAR_POOL_LIST(varPoolList, varPoolListSize, requestInfo);
+>     STAFString theInterface;
+>     STAFString errorBuffer;
+>     STAFRC_t rc = RESOLVE_STRING_OPTION("INTERFACE", theInterface);
+> 
+>     if (rc) return STAFServiceResult(rc, errorBuffer);
+> 
+>     STAFString result("");
+> 
+>     STAFConnectionManager::ConnectionProviderList connProvList =
+>         gConnectionManagerPtr->getConnectionProviderListCopy();
+> 
+>     for (STAFConnectionManager::ConnectionProviderList::iterator
+>          iter = connProvList.begin(); iter != connProvList.end(); ++iter)
+>     {
+>         if (theInterface == (*iter)->getName())
+>         {
+>             result += STAFString("Library    : ") +
+>                 (*iter)->getLibrary() + *gLineSeparatorPtr;
+> 
+>             // Get the options from the connection provider
+> 
+>             unsigned int numOptions = 0;
+>             STAFString options;
+>             
+>             (*iter)->getOptions(numOptions, options);
+> 
+>             for (int i = 1, index = 0; i <= numOptions; ++i)
+>             {
+>                 // XXX: Change to handle options provided in a STAF Data Type
+>                 //      List format when available     
+> 
+>                 // Separate options, indicated by ";" or end of string if
+>                 // last option.
+> 
+>                 unsigned int optionEndPos = options.find(";", index);
+>                 STAFString option;
+> 
+>                 if (optionEndPos != STAFString::kNPos)
+>                 {
+>                     option = options.subString(index, (optionEndPos - index));
+>                     index = optionEndPos + 1;
+>                 }
+>                 else
+>                 {
+>                     option = options.subString(index);
+>                 }
+> 
+>                 result += STAFString("Option #") + i;
+> 
+>                 if (i < 10)
+>                     result += STAFString("  : ");
+>                 else if (i < 100)
+>                     result += STAFString(" : ");
+>                 else
+>                     result += STAFString(": ");
+> 
+>                 result += option + *gLineSeparatorPtr;
+>             }
+> 
+>             // Found the interface so break out of the loop
+>             break;
+>         }
+>     }
+> 
+>     // Get rid of connection provider references
+>     connProvList = STAFConnectionManager::ConnectionProviderList();
+>     
+>     if (result == STAFString(""))
+>     {
+>         return STAFServiceResult(kSTAFDoesNotExist, theInterface);
+>     }
+> 
+>     return STAFServiceResult(kSTAFOk, result);
+> }
+> 
+> 
+173a336,337
+>     result += "LIST INTERFACES" + *gLineSeparatorPtr;
+>     result += "QUERY INTERFACE <Interface>" + *gLineSeparatorPtr;
+Index: stafproc/STAFMiscService.h
+===================================================================
+RCS file: /cvsroot/staf/src/staf/stafproc/STAFMiscService.h,v
+retrieving revision 1.4
+diff -r1.4 STAFMiscService.h
+48a49,50
+>     STAFServiceResult handleList(const STAFServiceRequest &requestInfo);
+>     STAFServiceResult handleQuery(const STAFServiceRequest &requestInfo);
+52a55,56
+>     STAFCommandParser fListParser;
+>     STAFCommandParser fQueryParser;
+Index: test/STAFTest.xml
+===================================================================
+RCS file: /cvsroot/staf/src/staf/test/STAFTest.xml,v
+retrieving revision 1.69
+diff -r1.69 STAFTest.xml
+765a766,790
+>         [ 'STD:MISC', 'MISC', 'LIST INTERFACES', [ STAFRC.Ok ],
+>           r"""(?mx)
+>               (^.*?;.*?;.*?\s*)*
+>               ^tcp;STAFTCP;PORT=\d+;PROTOCOL=.*?\s*
+>               (^.*?;.*?;.*?\s*)*
+>               ^local;STAFLIPC;IPCNAME=.*?\s*
+>               ^\s*""" ],
+> 
+>         [ 'STD:MISC', 'MISC', 'QUERY INTERFACE tcp', [ STAFRC.Ok ],
+>           r"""(?mx)
+>               ^Library\s*:\ STAFTCP\s*
+>               ^Option\ .*?1\s*:\ PORT=\d+\s*
+>               ^Option\ .*?2\s*:\ PROTOCOL=.*?\s*
+>               ^\s*""" ],
+> 
+>         [ 'STD:MISC', 'VAR',  'SET VAR STAFTest/interface=local', [ STAFRC.Ok ], r'^$' ],
+> 
+>         [ 'STD:MISC', 'MISC', 'QUERY INTERFACE {STAFTest/interface}', [ STAFRC.Ok ],
+>           r"""(?mx)
+>               ^Library\s*:\ STAFLIPC\s*
+>               ^Option\ .*?1\s*:\ IPCNAME=.*?\s*
+>               ^\s*""" ],
+> 
+>         [ 'STD:MISC', 'VAR', 'DELETE VAR STAFTest/interface', [ STAFRC.Ok ], r'^$' ],
+> 

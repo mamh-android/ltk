@@ -1,0 +1,1864 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001, 2004
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Configuration SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Configuration
+.*  Detail:
+.*
+.*     This file contains the STAF configuration options.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.configuration
+:i2.instructions
+:h1 id=config.Configuration
+:p.STAF is configured through a text file called the STAF Configuration File.
+This file may have any name you desire, but the default is STAF.cfg.  The
+STAF Configuration File is read and processed line by line.  Whitespace at
+the front of the line is removed before processing.  Blank lines, or
+lines containing only whitespace are ignored.  You may continue a configuration
+statement onto the next line by placing a "\" as the last character of the
+line.  The maximum length for a line in the STAF Configuration File is 2048
+characters.  The various configuration statements are described in the following
+sections.
+:p.You may use variables for all the values of configuration statement options,
+with the exception of the :xph.SET VAR:exph. configuration statement itself.
+However, these variables must be either predefined STAF variables (see
+:hdref refid=varcon.) or be previously defined in the STAF Configuration File
+via the :xph.SET VAR:exph. configuration statement (see below).
+.*
+.*---------------------------------------------------------------------
+.*
+:h2 id=commentscfg.Comments
+:h3.Description
+:p.You specify a comment by placing a pound sign, #, as the first character
+on the line.  Comment lines are ignored.
+:h4.Examples
+:xmp.
+# This is a comment line
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.machine name
+:ih1.configuration
+:i2.machine name
+:h2 id=machinecfg.Machine Nickname
+:h3.Description
+:p.You may specify a nickname for your machine using the
+MACHINENICKNAME configuration statement.
+:p.This allows you to override the machine nickname which is set to the
+value of the STAF/Config/Machine system variable by default.
+This primarily affects the data stored by services such as the Log and
+Monitor services, which store data based on the machine from which it came
+by using the STAF/Config/MachineNickname system variable as part of the
+directory path when creating logs and monitor data.
+By allowing the STAF/Config/MachineNickname system variable to be overridden,
+it allows you to better manage your data.
+:p.
+The machine nickname is not used to communicate with other systems and does
+not have any effect on trust.
+:p.This option is used in both connected and disconnected modes
+(e.g. disconnected mode is when you are not using a network interface).
+
+:h4.Syntax
+:xmp.
+MACHINENICKNAME <Nickname>
+:exmp.
+:p.:xph.<Nickname>:exph. is the nickname you wish to use for your machine.  It is
+case sensitive.
+:h4.Examples
+:xmp.
+MACHINENICKNAME testmachine1
+MACHINENICKNAME JohnDoe
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.network interfaces
+:i2.connection providers
+:i1.network interfaces
+:i1.connection providers
+:h2 id=networkcfg.Network Interfaces
+:h3.Description
+:p.You indicate that you wish to send and accept requests on a network
+interface using the INTERFACE configuration statement.
+The INTERFACE configuration statement registers
+connection providers (also called network interfaces, or interfaces
+for short).
+
+:h4.Notes:
+:ol.
+:li.Currently, STAF provides two network interfaces, secure TCP/IP and
+non-secure TCP/IP (except a secure TCP/IP interface is not yet provided
+for Windows IA64 or z/OS).
+The default STAF configuration file configures a secure ssl interface
+as the default interface and also configures a non-secure tcp interface
+(except on Windows IA64 and z/OS where only a non-secure tcp interface
+is configured).
+STAF also allows you to plug in network interfaces
+(aka connection providers) so that you can create your own
+connection provider which can communicate via any mechanism you
+choose (e.g. a Serial Line, NetBIOS, or SNA).
+Connection provider interfaces are C/C++ based so they are platform
+specific.  However, we haven't provided any documentation yet on how
+to do this.
+:li.An interface named local is also provided with STAF.  Requests
+coming from the local system will appear as though they came from an
+interface named "local" and a system identifier of "local".
+:eol.
+:h4.Syntax
+:xmp.
+INTERFACE <Name> LIBRARY <Implementation Library> [OPTION <Name[=value]>]...
+:exmp.
+:p.:xph.<Name>:exph. is the name by which this network interface
+(aka Connection Provider) will be known on this machine.
+:p.:xph.LIBRARY:exph. is the name of the shared library / DLL
+which implements the network interface (aka Connection Provider).
+STAF provides one implementation library called STAFTCP which
+provides support for both secure and non-secure TCP/IP communcation.
+:p.:xph.OPTION:exph. specifies a configuration option that will be passed on
+to the shared library / DLL which implements the connection provider.
+You may specify multiple :xph.OPTION:exph.s for a given connection provider.
+See :hdref refid=staftcp. for acceptable options for the STAFTCP shared
+library / DLL.
+:h4.Examples
+:xmp.
+INTERFACE ssl    LIBRARY STAFTCP OPTION SECURE=Yes OPTION PORT=6550
+INTERFACE tcp    LIBRARY STAFTCP OPTION SECURE=No  OPTION PORT=6500
+INTERFACE tcp2   LIBRARY STAFTCP 
+INTERFACE tcp3   LIBRARY STAFTCP OPTION PORT=6600
+INTERFACE serial LIBRARY STAFSER
+:exmp.
+.*
+.*---------------------------------------------------------------------
+:ih1.configuration
+:i2.STAFTCP network interface
+:i2.STAFTCP connection provider
+:i1.network interfaces
+:i1.connection providers
+:i1.STAFTCP
+:i1.TCP/IP
+:i1.port
+:i2.STAFTCP Connection Provider
+:h3 id=staftcp.STAFTCP Connection Provider
+:p.The STAFTCP connection provider shared library / DLL supports
+TCP/IP communication. STAF supports both secure and non-secure
+TCP/IP communication on most platforms.
+STAF supports both IPv4 and IPv6. IPv6 is supported in the IPv6 enabled version of STAF.
+:p.Each STAFTCP connection provider configured on a single machine must use a unique
+port number.  To communicate to a remote machine running STAF, your machine and the
+remote machine must both have a STAFTCP connection provider configured with the same
+SECURE option value and the same PORT option value.  A non-secure STAFTCP connection
+provider cannot communicate to a secure STAFTCP connection provider.  Also, a secure
+TCP connection provider can only communicate to another secure TCP connection provider
+if the same certificate is used.
+:p.The STAFTCP connection provider supports the following :xph.OPTIONs:exph.&colon.
+:p.:xph.CONNECTTIMEOUT=<Number>:exph. specifies the maximum time in milliseconds to wait
+for a connection attempt to a remote system to succeed.  The default is 5000
+(5 seconds).  You may need to increase this value if you are consistently
+receiving return code 16 when trying to communicate with distant STAF systems.
+Note that the total time to wait for a connection to a remote system to succeed
+is :xph.(CONNECTTIMEOUT * CONNECTATTEMPTS) + (CONNECTRETRYDELAY * (CONNECTATTEMPTS - 1)):exph..
+If using the defaults, the maximum total time to wait for a connection to a remote
+system to succeed is (5000 * 2) + (1000 * 1), which equals 11 seconds.
+The :xph.CONNECTATTEMPTS:exph. and :xph.CONNECTRETRYDELAY:exph. values are operational
+parameters that can be set in the STAF configuration file.
+:p.:xph.PORT=<Number>:exph. specifies the TCP/IP port on which this
+connection provider listens for connections.
+The default port is 6550 if option :xph.SECURE=Yes:exph..
+The default port is 6500 if option :xph.SECURE=No:exph..
+Each STAFTCP connection provider configured on a single machine
+must use a unique port number.
+:p.:xph.PROTOCOL=<IPv4 | IPv6 | IPv4_IPv6>:exph. specifies the communication protocol that this
+connection provider uses. The possible values are :xph.IPv4:exph., :xph.IPv6:exph.,
+or :xph.IPv4_IPv6:exph..  When this option is absent, the default is :xph.IPv4_IPv6:exph.
+which indicates to use both IPv4 and IPv6 protocols.
+This option is only valid for IPv6 enabled versions of STAF.
+:p.:xph.SECURE=<Yes | No>:exph. specifies whether to use secure or
+non-secure TCP/IP.  Secure TCP/IP uses OpenSSL.  This option is
+not available on Windows IA64 and z/OS where only non-secure TCP/IP
+is currently supported.  The default is No.
+:p.:xph.SSL/CACertificate:exph. specifies the fully qualified path to the
+file containing the STAF CA certificate list used for secure connections.
+This option is only valid if option :xph.SECURE=Yes:exph. is specified.
+The default is {STAF/Config/STAFRoot}/bin/CAList.crt which is a list
+of the default server certificate provided with STAF.
+:p.:xph.SSL/ServerCertificate:exph. specifies the fully qualified path to
+the file containing the STAF server certificate used for secure connections.
+This option is only valid if option :xph.SECURE=Yes:exph. is specified.
+The default is {STAF/Config/STAFRoot}/bin/STAFDefault.crt which is a
+self-signed x509 default certificate provided with STAF.
+:p.:xph.SSL/ServerKey:exph. specifies the fully qualifed path to the file
+containing the STAF server key used for secure connections.
+This option is only valid if option :xph.SECURE=Yes:exph. is specified.
+The default is {STAF/Config/STAFRoot}/bin/STAFDefault.key which is a
+default server key provided with STAF.
+:p.
+:h4.Examples
+:xmp.
+INTERFACE ssl  LIBRARY STAFTCP OPTION SECURE=Yes OPTION PORT=6550
+INTERFACE tcp  LIBRARY STAFTCP OPTION SECURE=No  OPTION PORT=6500
+INTERFACE tcp2 LIBRARY STAFTCP OPTION PORT=6501
+INTERFACE tcp3 LIBRARY STAFTCP OPTION PORT=6700 OPTION PROTOCOL=IPv6
+INTERFACE tcp4 LIBRARY STAFTCP OPTION CONNECTTIMEOUT=15000
+INTERFACE ssl2 LIBRARY STAFTCP OPTION SECURE=Yes OPTION PORT=6551 \
+               OPTION SSL/CACertificate={STAF/Config/STAFRoot}/bin/MyCAList.crt \
+               OPTION SSL/ServerCertificate={STAF/Config/STAFRoot}/bin/MySTAF.crt \
+               OPTION SSL/ServerKey={STAF/Config/STAFRoot}/bin/MySTAF.key 
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.Service registration
+:ih1.configuration
+:i2.Service registration
+:ih1.registration
+:i2.Service registration
+:h2 id=serviceregcfg.Service Registration
+:h3.Description
+:p.External services are registered with the SERVICE configuration statement.
+:h4.Syntax
+:xmp.
+SERVICE <Name> LIBRARY <Implementation library> &lbrk.EXECUTE <Executable>&rbrk.
+               &lbrk.OPTION <Name[=Value]>&rbrk.... &lbrk.PARMS <Parameters>&rbrk.
+:exmp.
+:p.or
+:xmp.
+SERVICE <Name> DELEGATE <Machine> &lbrk.TONAME <Remote Service Name>&rbrk.
+:exmp.
+
+:p.:xph.<Name>:exph. is the name by which this service will be known on this
+machine.
+:p.:xph.LIBRARY:exph. is the name of the shared library / DLL
+which implements the service or acts as a proxy for the service.  See the
+information for each external service to determine the appropriate value
+for this option.
+:p.:xph.EXECUTE:exph. is used by service proxy libraries / DLLs to specify what
+the proxy library should execute.  For example, for a Java service, this might
+be the name of the Java jar file which actually implements the service.  This
+option has no significance for non-proxy service libraries.  See below for
+information regarding the JSTAF service proxy library.
+Otherwise, see the documentation provided by the service proxy library.
+:p.:xph.OPTION:exph. specifies a configuration option that will be passed on
+to the service library / DLL.  This is typically used by service proxy
+libraries to further control the interface to the actual service
+implementation.  You may specify multiple :xph.OPTION:exph.s for a given
+service.  See below for acceptable options for the JSTAF
+service proxy library.  Otherwise, see the documentation provided with the
+service (proxy) library.
+:p.:xph.PARMS:exph. specifies optional parameters that will be passed to the
+service during initialization.
+:p.:xph.DELEGATE:exph. specifies the machine to which to delegate this service.
+This machine must be running STAF V3.0.0 or later.
+:note.From a trust perspective, the tcp interface names on the "delegated to"
+service machine and on the machine delegating service requests to it must match
+or the trust statement for the machine that is delegating service requests
+must use a wildcard to match any interface.
+:p.:xph.TONAME:exph. is the name of the service on :xph.<Machine>:exph. to
+which the delegated requests will be sent.  The default is the same name as
+specified with :xph.<Name>:exph..
+:h4.Examples
+:xmp.
+SERVICE MONITOR LIBRARY STAFMon PARMS "RESOLVEMESSAGE MAXRECORDSIZE 4096"
+SERVICE LOG     LIBRARY STAFLog
+.*SERVICE SAMPLER LIBRARY RXSTAF EXECUTE C:\STAF\bin\Sample.cmd PARMS "Sample Data"
+SERVICE STAX    LIBRARY JSTAF  EXECUTE C:\STAF\service\STAX.jar \
+                OPTION J2=-Xmx128m
+SERVICE SAMPLEJ LIBRARY JSTAF  EXECUTE C:\STAF\services\Sample.jar \
+                PARMS {STAF/Config/STAFRoot}\bin\sample.dft
+SERVICE MYLOG   DELEGATE TestSrv1
+SERVICE PAGER   DELEGATE pagesrv.austin.ibm.com
+SERVICE EVENT   DELEGATE EventSrv TONAME DB2EVENT
+SERVICE NOTIFY  LIBRARY Notify PARMS "24 Hours 7 Days"
+SERVICE ZIP     LIBRARY STAFEXECPROXY EXECUTE STAFZip
+:exmp.
+.*---------------------------------------------------------------------
+.* XXX: Commented out since don't support REXX services in STAF V3
+.*:h3 id=rxstaf.RXSTAF service proxy library
+.*:p.The library RXSTAF acts as a proxy for STAF services implemented in the
+.*REXX language.
+.*:p.The :xph.EXECUTE:exph. option for a Rexx service should specify the full
+.*path to the Rexx script that implements the service.
+.*:p.RXSTAF supports the following :xph.OPTION:exph.s&colon.
+.*:p.:xph.DEBUG:exph. specifies that Rexx service code should be re-read
+.*for every service request, thus, allowing debugging without stopping STAFProc.
+.*If this option is not specified, the Rexx service code is read in once at
+.*initialization time and a tokenized image is created.  This tokenized image
+.*is used for all service requests, and any changes to the Rexx service code
+.*will not be reflected until STAFProc is stopped and started again.
+.*:note text=Warning.Using the :xph.DEBUG:exph. option will degrade the
+.*service's performance.
+.*:h4.Examples
+.*:xmp.
+.*OPTION Debug
+.*:exmp.
+.*---------------------------------------------------------------------
+:i2.Java Service Registration
+:i2.JSTAF
+:ih1.configuration
+:i2.Java Virtual Machine
+:h3 id=jvmcfg.JSTAF service proxy library
+:p.The library JSTAF acts as a proxy for STAF services implemented in the
+Java language.  JSTAF works with Java 1.3 and above.
+:p.The :xph.EXECUTE:exph. option for a Java service should specify the
+fully-qualified name of the jar file that implements the service.  The
+jar file will be automatically added to the class path by JSTAF.
+:note.In versions of STAF prior to 2.4.0, the name of the Java class that
+implements the service was specified for the :xph.EXECUTE:exph. option and
+you had to make sure that the service's class files were in the class path.
+This is still supported, but this method is deprecated and will be removed
+in a future version of STAF.
+:p.JSTAF supports the following :xph.OPTION:exph.s&colon.
+:p.:xph.JVMName=<Name>:exph. specifies the name for the JVM you want the Java
+service to run in.  If the JVM does not already exist, it will be created.
+If no JVMName is specified, then the Java service will run in the default JVM,
+named STAFJVM1, which is created the first time a Java service is registered
+with no JVMName specified.
+This option allows JSTAF to run Java services in different JVMs.
+:p.:xph.JVM=<Executable>:exph. specifies the name of the desired Java
+executable.  The default is "java".  Note, this option is only valid for the
+first service created with a given :xph.JVMName:exph..
+:note.The HP-UX IA64 64-bit version of STAF requires Java 1.4.1 or later.
+:p.:xph.J2=<Java option>:exph. specifies one or more arbitrary Java option(s)
+that should be passed to the JVM.  You can find more information on these
+options by using the command "java" (for standard options) and "java -X"
+(for non-standard options), or by consulting your Java documentation.
+Note that -X options can vary depending on which Java implementation
+(e.g. Sun Java 1.5.0 vs IBM Java 1.4.2) you installed.  Note, this option
+is only valid for the first service created with a given :xph.JVMName:exph..
+:note.If you are using the HP-UX IA64 64-bit version of STAF, you must specify
+the -d64 option to the JVM.  This can be done by specifying :xph.J2=-d64:exph.
+:p.:xph.MAXLOGS=<Number>:exph. specifies the maximum number of log files
+for the JVM that should be saved.  The default is 5.
+The JVM log files are stored in the :xph.{STAF/DataDir}/lang/java/jvm/<JVMName>:exph.
+directory and contain JVM start information such as the date/time when the JVM
+was started, the JVM executable, and the J2 options used to start the JVM.
+In addition, it contains any other information logged by the JVM, including any
+errors that may have occurred while the JVM was running.
+The current JVM log file is named :xph.JVMLog.1:exph. and saved JVM log files, if any,
+are named :xph.JVMLog.2:exph. to :xph.JVMLog.<MAXLOGS>:exph..
+Note, this option is only valid for the first service created with a
+given :xph.JVMName:exph..
+:p.:xph.MAXLOGSIZE=<Number>:exph. specifies the maximum size, in bytes, for
+the JVM log file(s).  The default is 1048576 (1M).
+This option determines when to create a new JVM log file.  When the JVM is
+started, if the size of a JVM log file exceeds the maximum size specified
+by this option, a new JVM log file will be created.
+Note, this option is only valid for the first service created with a
+given :xph.JVMName:exph..
+:p.
+:note.You can view the JVM log for a Java service that is currently
+registered using the STAFJVMLogViewer utility.
+Section :hdref refid=STAFJVMLogViewer. provides more information on this utility.
+:p.
+:h4.Examples
+:xmp.
+OPTION J2=-verbose&colon.gc
+OPTION "J2=-cp {STAF/Config/BootDrive}/MyJava/Extra.jar{STAF/Config/Sep/Path}{STAF/Env/Classpath}"
+OPTION J2=-Xms128m
+OPTION J2=-Xmx512m
+OPTION J2=-d64
+OPTION "J2=-Xmx1024m -XX&colon.MaxPermSize=256m -XX&colon.PermSize=256m"
+OPTION JVMName=MyJVM1
+OPTION JVM=/opt/sunjdk1.4.0/jre/bin/java
+OPTION MAXLOGS=2
+OPTION MAXLOGSIZE=2048
+:exmp.
+:p.
+If you wanted to run the STAX Java service in a JVM, called MyJVM1, with a maximum heap
+size of 1024M, and wanted the Event and EventManager Java services to run in a
+different JVM, called MyJVM2, with a maximum heap size of 512M, you could specify
+the following service registration lines in the STAF.cfg file (or dynamically
+register the services in this order using the specified options).
+:xmp.
+SERVICE STAX  LIBRARY JSTAF  EXECUTE C:/STAF/service/STAX.jar \
+              OPTION JVMName=MyJVM1 OPTION J2=-Xmx1024m
+SERVICE Event LIBRARY JSTAF  EXECUTE C:/STAF/service/STAFEvent.jar \
+              OPTION JVMName=MyJVM2 OPTION J2=-Xmx512m
+SERVICE EventManager LIBRARY JSTAF  EXECUTE C:/STAF/services/EventManager.jar \
+              OPTION JVMName=MyJVM2
+:exmp.
+.*
+.*---------------------------------------------------------------------
+:i2.Perl Service Registration
+:i2.PLSTAF
+:ih1.configuration
+:i2.Perl Interpreter
+:h3 id=plstaf.PLSTAF service proxy library
+:p.The library PLSTAF acts as a proxy for STAF services implemented in the
+Perl language.  PLSTAF is currently supported on Windows (IA32), Linux (IA32),
+and Mac OS X.  On Linux IA32, PLSTAF is currently only supported with Perl 5.8.0.
+:p.The :xph.EXECUTE:exph. option for a Perl service should specify the  name of
+the .pm file (without the .pm extension) that implements the service.
+:p.PLSTAF supports the following :xph.OPTION:exph.s&colon.
+:p.:xph.USELIB=<Directory>:exph. specifies the directory containing the .pm file
+that implements the service.  You must use the USELIB option unless you have
+set (prior to starting STAFProc) environment variable PERLLIB to include the
+directory containing the .pm file that implements the service.
+:p.:xph.MAXLOGS=<Number>:exph. specifies the maximum number of log files
+for the Perl interpreter that should be saved.  The default is 5.
+The Perl interpreter log files are stored in the
+:xph.{STAF/DataDir}/lang/perl/<serviceName>:exph.
+directory and contain the Perl interpreter start information such as the
+date/time when the Perl interpreter was started and  the Perl service
+executable. In addition, it contains any other information logged by the Perl
+service and interpreter, including any errors that may have occurred while the
+Perl interpreter was running.
+The current Perl interpreter log file is named :xph.PerlInterpreter.1:exph.
+and saved Perl interpreter log files, if any,
+are named :xph.PerlInterpreter.2:exph. to :xph.PerlInterpreter.<MAXLOGS>:exph..
+:p.:xph.MAXLOGSIZE=<Number>:exph. specifies the maximum size, in bytes, for
+the Perl interpreter log file(s).  The default is 1048576 (1M).
+This option determines when to create a new Perl interpreter log file.  When the
+Perl interpreter is started, if the size of a Perl interpreter log file exceeds
+the maximum size specified by this option, a new Perl interpreter log file will
+be created.
+:Note.The PLSTAF service proxy library uses embedded Perl directly within the
+STAFProc executable.  This means that if a Perl service has a fatal error which
+terminates the Perl interpreter, the STAFProc executable will also be terminated.
+To prevent this, you can use the STAFEXECPROXY service proxy library when
+registering a Perl service.
+:Note.To configure Perl services, prior to starting STAFProc, environment
+variable PERLLIB must be set to include the directory containing the PLSTAF.pm
+and PLSTAFService.pm files (located in the "bin" directory in the STAF
+installation root directory).
+:Note.To configure Perl services, the directory containing the PLSTAF library
+(PLSTAF.dll on Windows, libPLSTAF.so on Linux, libPLSTAF.dylib on Mac OS X)
+must be in the operating system's library path (PATH on Windows, LD_LIBRARY_PATH
+on Linux, DYLD_LIBRARY_PATH on Mac OS X) prior to starting STAFProc.
+:Note.When configuring Perl services on Linux with Perl 5.8.0, the directory
+containing the Perl 5.8.0 libperl.so file must be included in environment
+variable LD_LIBRARY_PATH prior to starting STAFProc.
+:Note.When removing a Perl service (or when shutting down STAF if Perl
+services had been configured), you may see a message in the STAFProc output
+similar to: "Perl exited with active threads".  This message can be ignored.
+:p.
+:h4.Examples
+:p.
+:xmp.
+SERVICE Device1  LIBRARY PLSTAF EXECUTE DeviceService 
+SERVICE Device2  LIBRARY STAFEXECPROXY EXECUTE DeviceService \
+                 OPTION PROXYLIBRARY=PLSTAF
+SERVICE testA    LIBRARY STAFEXECPROXY EXECUTE myTestService \
+                 OPTION PROXYLIBRARY=PLSTAF OPTION USELIB=C:\MyServices
+:exmp.
+.*
+.*---------------------------------------------------------------------
+:i2.STAFEXECPROXY
+:i2.STAFEXECPROXY
+:ih1.configuration
+:h3 id=stafexecproxy.STAFEXECPROXY service proxy library
+:p.This library will allow you to execute an external STAF service within a
+new executable, rather than directly within the STAFProc executable.  For
+example, this library could be used to run the Zip service in a separate
+executable, or run a Perl service where the Perl interpreter will run in a
+separate executable.
+:p.Running an external STAF service in a separate executable will ensure
+that if the service has a fatal error, the error will not kill STAFProc.
+In addition, this allows monitoring of the external service's system
+resource utilization, since you can view the utilization for the new
+executable (otherwise, if the service was running within the STAFProc
+executable, then the service's resource utilization would be part of
+the STAFProc resource utilization).
+:p.Note that using the STAFEXECPROXY 
+library will introduce a level of IPC communication for all service
+requests to the service; rather than STAFProc sending the requests
+directly to the service, STAFProc will send the request to the
+STAFEXECPROXY library, which will then send the request to the new
+executable, which will then send the request to the service (processing
+the service result will have the same path in reverse).  So, for external
+STAF services where performance is critical, such as the Log and Monitor
+services, using the STAFEXECPROXY library is not recommended.
+:p.Note that since the JSTAF proxy library already runs the Java STAF service
+in a new executable (the JVM), using the STAFEXECPROXY library for Java STAF
+services is not supported (if you attempt to register a Java STAF service
+using the STAFEXECPROXY library, you will get an RC 27, Service
+configuration error).
+:p.The :xph.EXECUTE:exph. option is used to indicate the service library to 
+execute, or if the
+service will be executed by a proxy library, it will be used to indicate
+what service executable the proxy library should execute.  For example,
+for the Zip service, "STAFZip" would be used for the EXECUTE value.  For a
+Perl service, which uses the PLSTAF proxy library, the service .pm module
+would be used for the EXECUTE value.
+:p.STAFEXECPROXY supports the following :xph.OPTION:exph.s
+:xmp.
+    [OPTION PROXYLIBRARY=<ProxyLibrary>]
+    [OPTION PROXYENV=<Variable=Value>]...
+:exmp.
+(note that all other :xph.OPTION:exph.s will be passed to the service
+library / DLL)&colon.
+:p.:xph.OPTION PROXYLIBRARY=<ProxyLibrary>:exph. is used to indicate the proxy
+library to use for the
+external service.  For example, you would use OPTION PROXYLIBRARY=PLSTAF
+for a Perl service.  Note that this OPTION will not be passed on to the
+service library / DLL.
+:p.:xph.OPTION PROXYENV=<Variable=Value>:exph. allows you to specify
+environment variables that will be set for the STAFEXECPROXY executable (in
+addition to or replacing the environment variables that were set when STAFProc
+was started).  This allows you to set environment variables for the
+STAFEXECPROXY executable without requiring that these environment variables be
+set for STAFProc.
+This option is particularly useful for Perl STAF services, which on many
+Unix platforms require LD_PRELOAD to be set to the libperl library file
+location.  However, setting LD_PRELOAD prior to starting STAFProc can
+cause incompatibility issues for processes started via STAFProc.
+So, you can use OPTION PROXYENV to specify the LD_PRELOAD environment
+variable for the STAFEXECPROXY executable, without having it set for STAFProc's
+environment.  To "unset" an environment variable, you can set the <Value> to
+be blank.  You may specify any number of PROXYENV OPTIONs.
+:p.STAFExecProxy.exe (STAFExecProxy on Unix) is the separate executable for the 
+external service that will be displayed in the operating system's process
+list.  You can determine the PID for the STAFExecProxy executable by 
+running "HANDLE LIST HANDLES LONG".
+:p.You may only run a single external service within a single STAFExecProxy
+executable (multiple services that use the STAFEXECPROXY library will each
+have a unique STAFExecProxy executable).
+:p.
+:h4.Examples
+:xmp.
+SERVICE Zip LIBRARY STAFEXECPROXY EXECUTE STAFZip
+:exmp.
+:xmp.
+SERVICE Device LIBRARY STAFEXECPROXY EXECUTE DeviceService \
+               OPTION PROXYLIBRARY=PLSTAF
+:exmp.
+:xmp.
+SERVICE getenvvar LIBRARY STAFEXECPROXY EXECUTE \
+        GetEnvVar OPTION PROXYLIBRARY=PLSTAF OPTION USELIB=/usr/local/staf/services \
+        OPTION PROXYENV=LD_PRELOAD=/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE/libperl.so \
+        OPTION PROXYENV=TESTVAR=abcdef
+
+:exmp.
+:xmp.
+SERVICE getenvvar LIBRARY STAFEXECPROXY EXECUTE \
+        GetEnvVar OPTION PROXYLIBRARY=PLSTAF OPTION USELIB=/usr/local/staf/services \
+        OPTION PROXYENV=LD_PRELOAD=/opt/ActivePerl-5.8/lib/CORE/libperl.so \
+        OPTION PROXYENV=ANT_HOME= \
+        OPTION "PROXYENV=MESSAGE=This is a test message"
+
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.Service loader registration
+:ih1.configuration
+:i2.Service loader registration
+:ih1.registration
+:i2.Service loader registration
+:h2 id=serviceloadercfcg.Service Loader Registration
+:h3.Description
+:p.Service loaders are registered with the SERVICELOADER configuration statement.
+:h4.Syntax
+:xmp.
+SERVICELOADER LIBRARY <Implementation library> &lbrk.EXECUTE <Executable>&rbrk.
+              &lbrk.OPTION <Name[=Value]>&rbrk.... &lbrk.PARMS <Parameters>&rbrk.
+:exmp.
+
+:p.:xph.LIBRARY:exph. is the name of the shared library / DLL
+which implements the service loader or acts as a proxy for the service loader.  See the
+information for each service loader to determine the appropriate value
+for this option.
+:p.:xph.EXECUTE:exph. is used by service proxy libraries / DLLs to specify what
+the proxy library should execute.  For example, this might be the name of
+the Java jar file which actually implements the service loader.  This
+option has no significance for non-proxy service libraries.  See the Service Registration
+section for information regarding the JSTAF service proxy library.
+:p.:xph.OPTION:exph. specifes a configuration option that will be passed on
+to the service loader library / DLL.  This is typically used by service proxy
+libraries to further control the interface to the actual service loader
+implementation.  You may specify multiple :xph.OPTION:exph.s for a given
+service loader.  See the Service Registration section
+for acceptable options for the JSTAF
+service proxy library.  Otherwise, see the documentation provided with the
+service (proxy) library.
+:p.:xph.PARMS:exph. specifies optional parameters that will be passed to the
+service loader during initialization.
+:h4.Examples
+:xmp.
+# Default Service Loader Service for LOG, MONITOR, RESPOOL, and ZIP services
+SERVICELOADER LIBRARY STAFDSLS
+
+# HTTP Service Loader Service for Java services (for Windows)
+SERVICELOADER LIBRARY JSTAF EXECUTE C:/STAF/bin/STAFHTTPSLS.jar \
+              PARMS "CONFIGFILE http://server1.company.com/project/stafhttpsls.cfg"
+
+# HTTP Service Loader Service for Java services (for Unix)
+SERVICELOADER LIBRARY JSTAF EXECUTE /usr/local/staf/lib/STAFHTTPSLS.jar \
+              PARMS "CONFIGFILE http://server1.company.com/project/stafhttpsls.cfg"
+
+# Custom Service Loader Service written in Java
+SERVICELOADER LIBRARY JSTAF EXECUTE C:/STAF/services/CustomServiceLoader.jar
+:exmp.
+
+:ih1.Service Loaders
+:i2.Default Service Loader Service (STAFDSLS)
+:h3 id=STAFDSLS.Default Service Loader Service (STAFDSLS)
+:p.The default service loader service is implemented by library STAFDSLS and
+is written in C++.  It can dynamically load the Log, Zip, Monitor, and ResPool
+C++ services.  This service loader is configured automatically in the default
+STAF.cfg file as follows:
+:xmp.
+# Add default service loader
+serviceloader library STAFDSLS
+:exmp.
+
+:ih1.Service Loaders
+:i2.HTTP Service Loader Service (STAFHTTPSLS)
+:h3 id=STAFHTTPSLS.HTTP Service Loader Service (STAFHTTPSLS)
+:p.The HTTP service loader service is implemented by jar file STAFHTTPSLS.jar
+and is written in Java and is installed as part of STAF Java support in a typical
+installation of STAF.  It can dynamically load any STAF service written in Java.
+It can download the jar file for a STAF Java service (or a zip file that contains
+the jar file) from a web server or from a file on the local machine.  It uses a
+configuration file to determine what services it can load.  To use the HTTP
+service loader service, a Java runtime must be installed and you must add a
+:xph.SERVICELOADER:exph. configuration statement to the STAF configuration file
+including a :xph.CONFIGFILE:exph. parameter specifying the location of the
+HTTPSLS configuration file you created for it.
+:p.
+When STAF encounters a request for a service that isn't currently registered,
+it checks each service loader that is registered in the STAF configuration file
+to see if it handles this service.  The HTTP service loader service reads its
+HTTPSLS configuration file (first downloading it from a web server if needed)
+to see if it can handle this service.  If so, it downloads the service from the
+specified location to a temporary directory on the local machine (and unzips it 
+if necessary to access the STAF service jar file) and submits an :xph.ADD:exph.
+request to the :xph.SERVICE:exph. service to register the service.  This way,
+STAF is able to load whatever Java services you want.  Also, note that each
+time the HTTP service loader service attempts to load a service, it reads its
+HTTPSLS configuration file, so you can update the HTTPSLS configuration file
+and it will read it the next time it attempts to load a service (without
+restarting STAFProc).  Note that whenever STAF is restarted, the :xph.tmp:exph.
+directory in the STAF data directory is deleted which means the temporary jar
+files that the HTTP service loader service downloaded will be deleted since
+they are stored in the STAF :xph.tmp:exph. data directory's
+:xph.service/<Serviceloader Name>:exph. sub-directory.
+:p.
+The HTTP service loader service can reduce the maintenance for obtaining and
+managing STAF Java services by:
+:ul.
+:li.Obtaining specified versions of STAF Java services from a web server
+instead of having to manually download each service and manually configure the
+service in the STAF configuration file on all machines that require the service(s).
+:li.Providing the ability to specify a zip file on a web server that contains
+a jar file for a STAF Java services (e.g. STAF Java services are provided in
+zip files on the SourceForge website) and automatically unzipping the file to
+obtain the jar file for the STAF Java service.
+:li.Providing the ability to specify where to download STAF Java services from
+via a configuration file that resides on a web server as this file only needs
+to exist in one place and can be used by many machines.
+:eul.
+
+:h4.Syntax
+:xmp.
+SERVICELOADER LIBRARY JSTAF EXECUTE <Fully-qualified name of STAFHTTPSLS.jar>
+              [OPTION <Name[=Value]>]...
+              PARMS "CONFIGFILE <ConfigFileLocation>
+                     [DOWNLOADATTEMPTS <NumDownloadAttempts>]
+                     [DOWNLOADRETRYDELAY <DelayInSeconds>]"
+:exmp.                     
+:p.
+:xph.LIBRARY:exph. must always be :xph.JSTAF:exph. which is the STAF Java
+service proxy library (because the HTTP Service Loader is written in Java).
+:p.
+:xph.EXECUTE:exph. specifies the location of the jar file which implements
+the HTTP service loader service.  On Windows, specify
+:xph.{STAF/Config/STAFRoot}/bin/STAFHTTPSLS.jar:exph..
+On Unix, specify :xph.{STAF/Config/STAFRoot}/lib/STAFHTTPSLS.jar:exph..
+:p.
+:xph.OPTION:exph. specifies a configuration option that will be passed to JSTAF
+to further control the interface to the JVM where this service loader will be run.
+You may specify multiple :xph.OPTION:exph.s.  See section :hdref refid=jvmcfg.
+for acceptable options to the JSTAF service proxy library.
+For example, you can override the version of Java that you want the HTTP service
+loader service to use via the :xph.JVM=<Java Path>:exph. option when you create
+a new JVM by also using the :xph.JVMName=<JVM Name>:exph. option.
+:p.
+:xph.PARMS:exph. specifies the parameters that will be passed to the service
+loader during initialization where:
+:ul.
+:li.:xph.CONFIGFILE:exph. specifies the location of the configuration file
+used by the HTTP service loader service.  This can be a fully-qualified path
+to a file on the local machine or it can be a url to the location of the
+HTTPSLS configuration file on a web server.  The contents of this file must
+follow the syntax specified in section :hdref refid=HTTPSLSConfigFile. or the
+HTTP Service Loader Service registration will fail.  This parameter is required.
+This option will resolve STAF variables.
+:li.:xph.DOWNLOADATTEMPTS:exph. specifies the maximum number of attempts that the
+HTTP Service Loader will make to try to download a file.  The default is 3.
+This option will resolve STAF variables.
+:li.:xph.DOWNLOADRETRYDELAY:exph. specifies the number of seconds that the HTTP
+Service Loader will delay before retrying to download a file if the
+previous download attempt failed.  The default is 5.  This option will
+resolve STAF variables.
+:eul.
+
+:h4.Examples
+
+:xmp.
+# Add HTTP Service Loader Service on Windows using local HTTPSLS config file
+SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/bin/STAFHTTPSLS.jar \
+              PARMS "CONFIGFILE {STAF/Config/STAFRoot}/bin/httpsls.cfg"
+
+# Add HTTP Service Loader Service on Unix using HTTPSLS config file on SourceForge website
+SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/lib/STAFHTTPSLS.jar \
+              PARMS "CONFIGFILE http://staf.sourceforge.net/current/STAFHTTPSLS.cfg"
+              
+# Add HTTP Service Loader Service on Windows using HTTPSLS config file on a web server
+SERVICELOADER LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/bin/STAFHTTPSLS.jar \
+              OPTION JVMName=HTTPSLS OPTION JVM=C:/java1.5.0_12/bin/java \
+              PARMS "CONFIGFILE http://server.company.com/project/httpsls.cfg \
+                     DOWNLOADATTEMPTS 3 DOWNLOADRETRYDELAY 7"
+:exmp.
+:p.Note that you can register the HTTP service loader service multiple times
+specifying unique values for the :xph.CONFIGFILE:exph. parameter.
+For example, you may have one HTTP service loader service that downloads STAF
+Java services like STAX, Event, Cron, and Email from the SourceForge website
+and you may have a second HTTP service loader service that downloads your
+custom STAF Java services from your own web server.
+
+:h4 id=HTTPSLSConfigFile.HTTPSLS Configuration File
+
+:p.The HTTP service loader service is configured through a text file
+called the HTTPSLS configuration file.  This file may have any name you
+desire and can be located on a web server or on the local machine.  The
+HTTPSLS configuration file is read and processed line by line.  Whitespace
+at the front and end of each line is removed before processing.  Blank
+lines, or lines containing only whitespace, are ignored.  You may continue
+a configuration statement onto the next line by placing a "\" as the last
+character of the line.
+:p.Each service that you want the HTTP service loader service to load must
+have a :xph.SERVICE:exph. entry in the HTTPSLS configuration file.  The syntax
+for each service is similar to the :xph.SERVICE:exph. syntax used when
+registering a STAF service in the STAF configuration file.
+
+:h5.Comments
+
+:p.You specify a comment by placing a pound sign, #, as the first non-blank
+character in the line.  Comment lines are ignored.  For example:
+:xmp.
+# This is a comment line
+:exmp.
+
+:h5.Service Registration
+
+:p.External Java services are registered with the :xph.SERVICE:exph.
+configuration statement.  The syntax is:
+:xmp.
+SERVICE <Name> LIBRARY JSTAF EXECUTE <Location of Service Jar or Zip File>
+               [ZIPPATH <Path to Service Jar File>]
+               [OPTION <Name[=Value]>]...
+               [PARMS "<Service Parameters>"]
+:exmp.               
+
+:xph.SERVICE:exph. specifies the name of the STAF service to be
+registered.
+:p.  
+:xph.LIBRARY:exph. must always be JSTAF which is the STAF Java service
+proxy library as the HTTP Service Loader only supports loading Java
+services.
+:p.
+:xph.EXECUTE:exph. specifies the url for the Java jar file which
+implements the service.  Or, it can specify the url of a zip file that
+contains the Java jar file if the :xph.ZIPPATH:exph. option is also
+specified.  Or, it can specify the fully-qualified name of the Java jar
+file that resides on the local machine.  This option will resolve STAF
+variables.  For example:
+:xmp.
+  http://server1.company.com/staf/myservice.jar
+  http://prdownloads.sourceforge.net/staf/STAXV333.zip
+  C:/STAF/services/stax/STAX.jar
+  {STAF/Config/STAFRoot}/services/email/STAFEmail.jar
+:exmp.
+:p.
+:xph.ZIPPATH:exph. specifies the path to the service jar file in the
+zip file specified by the :xph.EXECUTE:exph. option.  Note that this
+option should only be used if the :xph.EXECUTE:exph. option specifies
+a url for a zip file that can be unzipped using the STAF ZIP service.
+This option does not resolve STAF variables.  For example:
+:xmp.
+  stax/STAX.jar
+  myService.jar
+:exmp.
+:p.
+:xph.OPTION:exph. specifies a configuration option that will be passed
+on to JSTAF to further control the interface to the JVM where this
+service will be run.  You may specify multiple :xph.OPTION:exph.s for
+a given service.  See section :hdref refid=jvmcfg. for valid
+options that can be specified for the JSTAF service proxy library.
+:p.
+:xph.PARMS:exph. specifies parameters that will be passed to the
+service during initialization.
+
+:h5.Examples
+
+:xmp.
+# Register the custom SERVICE1 service, downloading it from a web server
+SERVICE SERVICE1 LIBRARY JSTAF EXECUTE http://www.company.com/service1.jar
+
+# Register the custom SERVICE2 service, downloading it from a web server
+SERVICE SERVICE2 LIBRARY JSTAF EXECUTE http://www.company.com/service2.jar \
+        OPTION JVMName=SERVICE2
+
+# Register the STAX V3.3.0 service, downloading it from the SourceForge website
+SERVICE STAX LIBRARY JSTAF \
+             EXECUTE http://prdownloads.sourceforge.net/staf/STAXV333.zip \
+             ZIPPATH stax/STAX.jar \
+             OPTION JVMName=STAX OPTION J2=-Xmx1024m \
+             PARMS "EXTENSIONXMLFILE C:/staf/services/extensions.xml"
+
+# Register the Cron V3.3.2 service, downloading it from the SourceForge website
+SERVICE CRON LIBRARY JSTAF \
+             EXECUTE http://server.company.com/staf/CronV332.zip \
+             ZIPPATH cron/STAFCron.jar OPTION JVMName=CRON
+
+# Register the Email service (which resides in a jar file on the local machine)
+SERVICE EMAIL LIBRARY JSTAF EXECUTE C:/STAF/services/email/STAFEmail.jar \
+              PARMS "MAILSERVER NA.relay.ibm.com \
+                     BACKUPMAILSERVERS \"LA.relay.ibm.com EMEA.relay.ibm.com\""
+:exmp.
+:p.
+A sample HTTP Service Loader Service Configuration File is available
+on SourceForge that can be used to download the latest versions of
+STAF Java services available on SourceForge such as STAX, Event,
+Cron, EventManager, etc.  It is located at
+http://staf.sourceforge.net/current/STAFHTTPSLS.cfg.
+Note that you may need to customize this HTTPSLS configuration file
+for the services that you use by changing parameters for some services
+(like the :xph.MAILSERVER:exph. and :xph.BACKUPMAILSERVERS:exph. parameters
+for the Email service) and/or you may need to run some services like STAX
+in its own JVM with a larger maximum heap size for the JVM by adding some
+:xph.OPTION:exph.s.  Or, you may not use use some of the services so you
+may want to remove them, or you may want to download the STAF Java service
+zip files and put them on your own web server for faster download times, etc.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.Authenticator registration
+:ih1.configuration
+:i2.Authenticator registration
+:ih1.registration
+:i2.Authenticator registration
+:h2.Authenticator Registration
+:h3.Description
+:p.Authenticator services are registered with the AUTHENTICATOR configuration statement.
+The first Authenticator registered is the default, unless overridden by using the
+:xph.DEFAULTAUTHENTICATOR:exph. operational parameter.
+:h4.Syntax
+:xmp.
+AUTHENTICATOR <Name> LIBRARY <Implementation library> &lbrk.EXECUTE <Executable>&rbrk.
+                     &lbrk.OPTION <Name[=Value]>&rbrk.... &lbrk.PARMS <Parameters>&rbrk.
+:exmp.
+
+:p.:xph.<Name>:exph. is the name by which this authenticator service will be
+known on this machine.  The name cannot be "none" as this is reserved for use by STAF.
+If you want to authenticate across systems, you must register the authenticator on
+each system using the same name (case-insensitive).
+:p.:xph.LIBRARY:exph. is the name of the shared library / DLL which implements
+the authenticator service or acts as a proxy for the authenticator service.
+See the information for each authenticator to determine the appropriate value
+for this option.
+:p.:xph.EXECUTE:exph. is used by service proxy libraries to specify what
+the proxy library should execute.  For example, this might be the name of the
+Java jar file which actually implements the authenticator service.
+This option has no significance for non-proxy service libraries.  See the
+Service Registration section for information regarding the JSTAF
+service proxy library.
+:p.:xph.OPTION:exph. specifies a configuration option that will be passed on
+to the shared library / DLL.  This is typically used by service proxy
+libraries to further control the interface to the actual service
+implementation.  You may specify multiple :xph.OPTION:exph.s for a given
+authenticator service.  See the Service Registration section for acceptable options
+for the JSTAF service proxy library.  Otherwise, see the documentation
+provided with the service (proxy) library.
+:p.:xph.PARMS:exph. specifies optional parameters that will be passed to the
+authenticator service during initialization.
+
+:h4.Examples
+:xmp.
+AUTHENTICATOR MyAuth LIBRARY JSTAF EXECUTE C:/STAF/services/MyAuth.jar
+
+AUTHENTICATOR AuthSample LIBRARY JSTAF \
+              EXECUTE {STAF/Config/STAFRoot}\services\AuthSampleV300.jar \
+              OPTION JVMName=Auth \
+              PARMS "UserPropertiesFile {STAF/Config/STAFRoot}/services/authsample.properties"
+:exmp.
+.*---------------------------------------------------------------------
+:ih1.registration
+:i2.Authenticator registration
+:h3 id=sampleAuth.Sample Authenticator
+:p.A sample authenticator service is provided by STAF and is available
+via the
+.*b2h html <A HREF="http://staf.sourceforge.net/getcurrent.php">Download STAF</A> website.
+It is called AuthSample and is available as a jar file called
+AuthSampleV300.jar.
+
+:h4.Registration Syntax
+:p.To try out user trust, you can register the sample authenticator as
+follows (assuming you downloaded it to a services directory created in the
+STAF root directory).
+:xmp.
+AUTHENTICATOR AuthSample LIBRARY JSTAF \
+              EXECUTE {STAF/Config/STAFRoot}\services\AuthSampleV300.jar \
+              PARMS "USERPROPERTIESFILE {STAF/Config/STAFRoot}/services/authsample.properties"
+:exmp.
+
+:p.:xph.LIBRARY:exph. must be JSTAF for this sample authenticator
+as it is implemented in Java.
+:p.:xph.EXECUTE:exph. must be the fully-qualified name of the AuthSampleV300.jar
+file.
+:p.This sample authenticator has the following required parameter:
+:ul.
+:li.:xph.UserPropertiesFile:exph. specifies the fully-qualified name of
+a file that contains the user identifiers and passwords that this
+authenticator supports.  The format of a user properties file must be
+that of a Java Properties file.  A property file contains a set of strings.
+Properties in a file are declared with the syntax name=value.  The
+name specifies the user identifier and the value specifies its password.
+:eul.
+:p.To perform user authentication across systems, the authenticator
+must be registered as the same name (case-insensitive) on all machines
+where you want to use user trust authentication and with the same
+user properties file (e.g. one that supports the same user identifiers
+and passwords).
+
+:h4.User Properties File
+:p.An example of a user properties file is:
+:xmp.
+# User Properties File for the Sample Authenticator
+
+User1=Password1
+User2=Password2
+User3=Password3
+User4=Password4
+User5=Password5
+:exmp.
+:p.You can specify any user identifiers and passwords that you want
+in a user properties file.
+However, if you specify any confidential information (e.g. any real
+passwords that you want to protect), you should only use the secure
+TCP interface so that this information is protected when sent over
+the network.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.Operational parameters
+:ih1.configuration
+:i2.Operational parameters
+:h2 id=opparms.Operational parameters
+:h3.Description
+:p.STAFProc allows you to set various parameters which affect the general
+operation of STAF.  The SET configuration statement lets you set
+these general operational parameters.
+:h4.Syntax
+:xmp.
+SET &lbrk.CONNECTATTEMPTS <Number>&rbrk.
+    &lbrk.CONNECTRETRYDELAY <Number>&lbrk.s|m|h|d|w&rbrk.&rbrk.
+.*  &lbrk.MAXFILES <Number>&rbrk.
+    &lbrk.MAXQUEUESIZE <Number>&rbrk.
+    &lbrk.MAXRETURNFILESIZE <Number>&lbrk.k|m&rbrk.&rbrk.
+    &lbrk.HANDLEGCINTERVAL <Number>&lbrk.s|m|h|d&rbrk.&rbrk.
+    &lbrk.INITIALTHREADS <Number>&rbrk.
+    &lbrk.THREADGROWTHDELTA <Number>&rbrk.
+    &lbrk.DATADIR <Directory Name>&rbrk.
+    &lbrk.INTERFACECYCLING <Enabled | Disabled>&rbrk.
+    &lbrk.DEFAULTINTERFACE <Name>&rbrk.
+    &lbrk.DEFAULTAUTHENTICATOR <Name>&rbrk.
+    &lbrk.ENABLEDIAGS&rbrk.
+    &lbrk.STRICTFSCOPYTRUST&rbrk.
+    &lbrk.RESULTCOMPATIBILITYMODE <Mode>&rbrk.
+    &lbrk.DEFAULTSTOPUSING <Method>&rbrk.
+    &lbrk.DEFAULTNEWCONSOLE | DEFAULTSAMECONSOLE&rbrk.
+    &lbrk.DEFAULTFOCUS <Background | Foreground | Minimized>&rbrk.
+    &lbrk.PROCESSAUTHMODE <Authentication Mode>&rbrk.
+    &lbrk.DEFAULTAUTHUSERNAME&rbrk.
+    &lbrk.DEFAULTAUTHPASSWORD&rbrk.
+    &lbrk.DEFAULTAUTHDISABLEDACTION <Disabled Action>&rbrk.
+    &lbrk.DEFAULTSHELL <Shell>&rbrk.
+    &lbrk.DEFAULTNEWCONSOLESHELL <Shell>&rbrk.
+    &lbrk.DEFAULTSAMECONSOLESHELL <Shell>&rbrk.
+:exmp.
+:p.:xph.CONNECTATTEMPTS:exph. specifies the maximum number of times to attempt
+to connect to a remote system.  The default is 2.
+Note that a trace warning message is generated for each failed attempt if the
+Warning trace point is enabled.
+You may also change this setting dynamically using the MISC service's SET command.
+:p.:xph.CONNECTRETRYDELAY:exph. specifies the maximum time in milliseconds to
+wait after a failed connection attempt to a remote system before trying to connect
+again (if the maximum number of times to attempt to connect to a remote system has
+not been reached yet).  The default is 1000 (i.e., 1 second).
+You may also change this setting dynamically using the MISC service's SET command.
+The retry delay time may be expressed in milliseconds, seconds, minutes, hours,
+days, or weeks.  Its format is :xph.<Number>[s|m|h|d|w]:exph., where :xph.<Number>:exph.
+is an integer >= 0 and indicates milliseconds unless one of the
+following case-insensitive suffixes is specified:  s (for seconds),
+m (for minutes), h (for hours), d (for days), or w (for weeks).
+Examples of valid values include :xph.2s:exph. or :xph.2000:exph..
+.*:p.:xph.MAXFILES:exph. specifies the maximum number of files STAFProc may have
+.*open.  The default is 500.  
+.*Note that this option only has effect on OS/2 systems.
+.*Since STAF V3 is not supported on OS/2, this option has been deprecated.
+:p.:xph.MAXQUEUESIZE:exph. specifies the maximum size of the queue associated
+with each process' handle.  The default is 100.
+You may also change this setting dynamically using the MISC service's SET command.
+:p.:xph.MAXRETURNFILESIZE:exph. specifies the maximum size of a file that
+can be returned by a START request submitted to the PROCESS service running
+on this machine or by a GET FILE request submitted to the FS service running
+on this machine.  The default is 0 which indicates not to limit the maximum
+size of returned files. Limiting the maximum returned file size can
+help prevent out of memory issues as these requests put the entire returned file
+contents in a result string which can consume a lot of memory for large files.
+This value may be expressed in bytes, kilobytes, or megabytes.
+Its format is :xph.<Number>[k|m]:exph. where :xph.<Number>:exph. is an integer
+>= 0 and indicates bytes unless one of the following case-insensitive suffixes
+is specified:  :xph.k:exph. (for kilobytes) or :xph.m:exph. (for megabytes).
+The calculated value cannot exceed :xph.4294967295:exph. bytes.
+Examples of valid values include :xph.100000:exph., :xph.500k:exph., or
+:xph.5m:exph..
+:p.Note that in addition to setting the :xph.MAXRETURNFILESIZE:exph. operational
+parameter, you can also set the STAF/MaxReturnFileSize variable in the request
+variable pool of the handle that submitted the request.  The lowest of these two
+values is used as the maximum return file size (not including 0 which indicates
+no limit).  Or, if you're using STAX, it also provides a :xph.MAXRETURNFILESIZE:exph.
+parameter that can be set when registering the STAX service or dynamically via the
+STAX service's SET MAXRETURNFILESIZE request.  See the
+.*b2h html <A HREF="http://staf.sourceforge.net/current/STAX/staxug.html">STAX User's Guide</A>
+for more information.
+:p.:xph.HANDLEGCINTERVAL:exph. specifies the time interval that the
+Handle Manager's garbage collection polling loop will wait between
+loops before polling each remote handle specified in the notification
+list to see if the remote machine is still running the same instance
+of STAFProc and if the handle still exists.  The default is 60000
+(i.e. 1 minute).  You may also change this setting dynamically using
+the MISC service's SET command.  The time interval may be expressed in
+milliseconds, seconds, minutes, hours, or days.  Its format is
+:xph.<Number>[s|m|h|d]:exph., where :xph.<Number>:exph. is an integer
+>= 0 and indicates milliseconds unless one of the following
+case-insensitive suffixes is specified:  s (for seconds), m (for minutes),
+h (for hours), or d (for days).  Note that the calculated value
+cannot be less than 5 seconds and cannot exceed 24 hours.  Examples of
+valid values include :xph.2m:exph., :xph.45s:exph., or :xph.50000:exph..
+:p.:xph.INITIALTHREADS:exph. specifies the number of threads initially created
+to handle service requests.  The default is 5.
+:p.:xph.THREADGROWTHDELTA:exph. specifies the number of additional threads which
+should be created when all existing threads are busy.  The default is 1.
+:p.:xph.DATADIR:exph. specifies the directory that STAF and its services will
+use to write data.  The default is :xph.{STAF/Config/STAFRoot}/data/{STAF/Config/InstanceName}:exph..
+Note that this directory name must be unique per instance of
+STAFProc running on a single machine.  Also, make sure to include the
+"SET DATADIR" line in the STAF configuration file at the beginning of the
+file, before any services are registered, since the data directory can be
+used during service registration.
+See :hdref refid=datadircfg. for more information about the 
+STAF data directory and its contents.
+:p.:xph.INTERFACECYCLING:exph. specifies whether to enable or disable automatic
+interface cycling.  The default is to enable automatic interface cycling.
+You may also change this setting dynamically using the MISC service's SET command.
+Recognized values are the following:
+:ul compact.
+:li.:xph.ENABLED:exph. - Enables automatic interface cycling which means that
+if you do not specify an interface in the endpoint when submitting a STAF
+request, STAF will attempt to connect to the endpoint using all of the
+interfaces (aka connection providers) that are configured (instead of just the
+default interface).  STAF will first try to connect via the cached interface
+(if one exists for this endpoint).  If this endpoint is not cached, STAF will
+first attempt to connect via the default interface.  If the connect attempt
+fails, STAF will start attempting to connect using other configured interfaces
+until one works or there are no more interfaces left to try.  If a connect
+attempt succeeds, STAF will cache the interface that worked for this endpoint
+so that the next STAF request that specifies this endpoint will try to connect
+first using the cached interface.
+:p.Note that automatic interface cycling only has an effect if there are
+multiple interfaces configured in the STAF configuration file on the
+machine that is submitting a STAF request.
+Also, note that the MISC service provides a LIST ENDPOINTCACHE request to
+show the cached endpoints and a PURGE ENDPOINTCACHE request to purge one
+or more cached endpoints.
+:p.
+:li.:xph.DISABLED:exph. - Disables automatic interface cycling which means that
+if you do not specify an interface in the endpoint when submitting a STAF request,
+STAF will only try to connect to the endpoint using the default interface.
+:eul.
+:p.:xph.DEFAULTINTERFACE:exph. specifies the name of the network interface
+(aka connection provider) to use, by default.  If not specified, the first
+interface registered is the default.
+You may also change this setting dynamically using the MISC service's SET command.
+:p.:xph.DEFAULTAUTHENTICATOR:exph. specifies the name of the Authenticator to 
+use, by default.  If not specified, the first Authenticator registered is the
+default.  If no authenticators are registered, the default authenticator is
+:xph.none:exph..
+You may also change this setting dynamically using the MISC service's SET command.
+:p.:xph.ENABLEDIAGS:exph. specifies to enable diagnostics.  The default is
+to disable diagnostics.
+You may also enable (or disable) recording diagnostics dynamically
+using the DIAG service.
+:p.:xph.STRICTFSCOPYTRUST:exph. specifies to enable strict trust checking
+when copying a file or directory using the FS service.  The default is
+to disable strict trust checking (e.g. do lenient trust checking) on a FS
+COPY request when the machine submitting the request is the same as the
+machine where which the file/directory is being copied.
+That is, :xph.STRICTFSCOPYTRUST:exph. specifies that a trust check should be done to
+verify that MachineA trusts MachineB when MachineA submits a COPY request to the
+FS service on MachineB to copy a file or directory back to MachineA.
+The default is to do lenient trust checking so that MachineA does not have
+to trust MachineB since why would MachineA ask MachineB to copy the file/directory
+if he didn't want the copy to work.
+You may also change this setting dynamically using the FS service's SET command.
+:p.:xph.RESULTCOMPATIBILITYMODE:exph. specifies the compatibility mode used
+when sending the result from a STAF service request back to a pre-STAF V3 system.
+Recognized values are the following:
+:ul compact.
+:li.:xph.VERBOSE:exph. - 
+When structured data (see :hdref refid=marshall.) is returned in
+the result buffer string, this option indicates to automatically unmarshall
+the data and provide it in a "verbose format" which is easy to read.
+This "verbose format" is equivalent to the output provided when using the
+STAF executable's -verbose option (see :hdref refid=stafexecmd.).
+This is the default mode.
+:li.:xph.NONE:exph. - This indicates that no changes to the result buffer string will
+be made.  Note that marshalled data is not as easy to read.
+:eul.
+You may also change this setting dynamically using the MISC service's SET command.
+:p.:xph.DEFAULTSTOPUSING:exph. allows you to specify the default method used
+to STOP processes.  See :hdref refid=psstop. for more information on available
+methods.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTNEWCONSOLE:exph. specifies that processes should be STARTed in a
+new console window.  So, if a process's stdout/stderr is not redirected, it will be
+unavailable.  This is the default for Windows systems.
+.*and OS/2.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTSAMECONSOLE:exph. specifies that processes should be STARTed in
+the same console as STAFProc.  So, if a process's stdout/stderr is not redirected,
+it will be written to STAFProc's stdout/stderr.  This is the default on Unix systems.
+.*This option has no effect on OS/2.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTFOCUS:exph. specifies the focus that is to be given to new windows
+opened when starting a process on a Windows system. The default focus mode is Background.
+This option only has effect on Windows systems.  &varres.
+See :hdref refid=procstr. for more information on the :xph.FOCUS:exph. option.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.PROCESSAUTHMODE:exph. specifies the mode by which usernames/passwords
+are authenticated when starting processes.  The value of this option is platform
+specific.  Recognized values are the following:
+:ul compact.
+:li.:xph.DISABLED:exph. - This indicates that the user may not specify a username/password
+with which to authenticate when starting a process.  This mode is available on
+all platforms.  This is default mode.
+:li.:xph.WINDOWS:exph. - This indicates that windows-based authentication should be used.
+This mode is only available on Windows systems.
+See :hdref refid=winuser. for more information.
+:li.:xph.NONE:exph. - This indicates that usernames will be honored but not authenticated.
+In this mode, passwords are ignored and processes are started under the indicated
+username.  This mode is only available on Unix systems.
+.*:li.PASSWD - This indicates that usernames/passwords will be authenticated using
+.*entries stored in the /etc/passwd file.  This mode is only available on Unix systems.
+.*:li.SHADOW - This indicates that usernames/passwords will be authenticated using
+.*entries stored in the /etc/shadow file.  This mode is only available on Unix
+.*systems.
+:eul.
+:note.Previously, :xph.PASSWD:exph. and :xph.SHADOW:exph. were supported values
+for the :xph.PROCESSAUTHMODE:exph. on Unix systems, but support for for these
+modes has been removed.
+:p.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTAUTHUSERNAME:exph. specifies the username under which processes
+will be started, by default.  Note, this option IS valid even if process
+authentication has been disabled.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTAUTHPASSWORD:exph. specifies the password with which processes
+will be authenticated, by default.  Note, this option IS valid even if process
+authentication has been disabled.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTAUTHDISABLEDACTION:exph. specifies what default action should be
+taken if the user specifies a username/password on a request to start a process
+when process authentication has been disabled.  The following values are
+recognized:
+:ul compact.
+:li.:xph.IGNORE:exph. - This indicates that the username/password should be ignored.  The
+request will be processed as if the user had not specified these parameters.
+This is the default.
+:li.:xph.ERROR:exph. - This indicates that an error should be passed back to the user.
+:eul.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTSHELL:exph. specifies the default shell to use when starting a
+process via a separate shell.  The default shell used for Unix systems is /bin/sh.
+The default shell used for Windows systems is "cmd.exe /c".
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTNEWCONSOLESHELL:exph. specifies the default shell to use when
+starting a process in a new console window (e.g. :xph.NEWCONSOLE:exph.) via a separate shell, overriding
+the :xph.DEFAULTSHELL:exph. value if specified.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.:xph.DEFAULTSAMECONSOLESHELL:exph. specifies the default shell to use when
+starting a process in the same console as STAFProc (e.g. :xph.SAMECONSOLE:exph.) via a separate shell,
+overriding the :xph.DEFAULTSHELL:exph. value if specified.
+You may also change this setting dynamically using the PROCESS service's SET command.
+:p.
+A shell value can contain substitution characters described in the following table.
+:table cols='* 4* *' align='c l c'.
+:tcap.Substitution Characters for Shells
+:thd.
+:c.Substitution character
+:c.Description
+:c.Supported systems
+:ethd.
+:row.
+:c.%c
+:c.Substitute the values specified by the :xph.COMMAND:exph. and
+:xph.PARMS:exph. options.
+:c.Windows and Unix
+:row.
+:c.%C
+:c.Same as %c, except the substituted value will be quoted (with all
+nested quotes properly escaped).
+:c.Windows and Unix
+:row.
+:c.%p
+:c.Substitute the value specified by the :xph.PASSWORD:exph. option,
+or an empty string if no :xph.PASSWORD:exph. is provided.
+:c.Windows and Unix
+:row.
+:c.%P
+:c.Same as %p, except the substituted value will be quoted (with all
+nested quotes properly escaped).
+:c.Windows and Unix
+:row.
+:c.%t
+:c.Substitute the value specified by the :xph.TITLE:exph. option,
+or <Unknown> if no :xph.TITLE:exph. is provided.
+:c.Windows and Unix
+:row.
+:c.%T
+:c.Same as %t, except the substituted value will be quoted (with all
+nested quotes properly escaped).
+:c.Windows and Unix
+:row.
+:c.%u
+:c.Substitute the value specified by the :xph.USERNAME:exph. option,
+or an empty string if no :xph.USERNAME:exph. is provided.
+:c.Windows and Unix
+:row.
+:c.%U
+:c.Same as %u, except the substituted value will be quoted (with all
+nested quotes properly escaped).
+:c.Windows and Unix
+:row.
+:c.%w
+:c.Substitute the value specified by the :xph.WORKLOAD:exph. option,
+or <Unknown> if no :xph.WORKLOAD:exph. is provided.
+:c.Windows and Unix
+:row.
+:c.%W
+:c.Same as %w, except the substituted value will be quoted (with all
+nested quotes properly escaped).
+:c.Windows and Unix
+:row.
+:c.%x
+:c.Substitute the values specified by the :xph.COMMAND:exph. and
+:xph.PARMS:exph. options followed by input/output redirection, if
+I/O options are specified on the :xph.PROCESS START:exph. request
+(e.g. :xph.STDIN, STDOUT:exph.).  When using this option, do not
+specify any redirection in the :xph.COMMAND/PARMS:exph. values.
+:c.Windows and Unix
+:row.
+:c.%X
+:c.Same as %x, except the substituted value will be quoted (with all
+nested quotes properly escaped).
+:c.Windows and Unix
+:row.
+:c.%%
+:c.Substitute a %.
+:c.Windows and Unix
+:etable.
+
+:notel compact.
+:li.When specifying a shell value, it must contain one of the following: %c, %C, %x, %X.
+:li.The use of %c versus %C, as well as %x versus %X, is highly dependent
+on the shell you specify.
+If the shell expects the command and parameters to be parsed as a single string,
+then use %C or %X.  If the shell expects the command and parameters to be parsed as separate
+strings, then use %c or %x.
+:li.Specifying 'su - %u -c %C' as the shell when starting a process on a UNIX system
+(so that it simulates the environment of the user specified by the :xph.USERNAME:exph. option)
+will cause variables specified via an ENV option to not be set for the process.
+:enotel.
+
+:h4.Examples
+:xmp.
+SET CONNECTATTEMPTS 5 CONNECTRETRYDELAY 2s
+.*SET MAXFILES 1000
+SET MAXQUEUESIZE 1000
+SET MAXRETURNFILESIZE 25m
+SET HANDLEGCINTERVAL 50s
+SET INITIALTHREADS 10 THREADGROWTHDELTA 3
+SET DATADIR /test/stafdata
+SET DEFAULTINTERFACE tcp
+SET DEFAULTAUTHENTICATOR SampleAuth
+SET ENABLEDIAGS
+SET RESULTCOMPATIBILITYMODE none
+SET DEFAULTSTOPUSING SIGTERM DEFAULTSAMECONSOLE
+SET DEFAULTFOCUS minimized
+SET PROCESSAUTHMODE windows DEFAULTAUTHUSERNAME testuser DEFAULTAUTHPASSWORD tupass
+SET PROCESSAUTHMODE none DEFAULTAUTHUSERNAME guest DEFAULTAUTHDISABLEDACTION error
+SET DEFAULTSHELL "C:/cygwin/bin/bash.exe -c %C"
+SET DEFAULTSAMECONSOLESHELL "/bin/csh -c %C"
+SET DEFAULTNEWCONSOLESHELL "xterm -title %T -e /bin/sh -c %X"
+SET DEFAULTSHELL "su - %u -c %C"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.variables
+:ih1.variables
+:i2.configuration
+:h2 id=varcfg.Variables
+:h3.Description
+:p.You may set STAF variables in the system or shared variable pool at startup by
+using the SET VAR configuration statement. SET VAR will set a variable to a certain
+value. The variable is created if it does not exist.
+:p.Note that you may SET multiple variables with a single request.
+:h4.Syntax
+:xmp.
+SET &lbrk.SYSTEM | SHARED&rbrk. VAR <Name=Value> &lbrk.VAR <Name=Value>&rbrk. ...
+:exmp.
+:p.:xph.SYSTEM:exph. means the variable is to be set in system variable pool.
+This is the default.
+:p.:xph.SHARED:exph. means the variable is to be set in shared variable pool.
+:p.:xph.VAR:exph. means the variable to be set. Name is the name of the variable
+and Value is the value of the variable.
+:h4.Examples
+:xmp.
+SET VAR WebServer=testsrv1.test.austin.ibm.com
+SET SHARED VAR "Author1=Jane Tester" VAR "Author2=John Tester"
+SET SYSTEM VAR STAF/Service/Log/Directory={STAF/Config/BootDrive}\STAF\Log
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.trust
+:ih1.trust
+:i2.configuration
+:h2 id=trustcfg.Trust
+:h3.Description
+:p.You may grant access to machines or users by using the TRUST configuration
+statement.
+:p.Trust configuration statements for machines are based on the network
+identification of the system.  In particular, different trust levels can be
+given to the same system coming in through different networking interfaces.
+Both logical and physical identifiers may be used in trust configuration
+statements for machines.
+:p.Trust configuration statements for users require that you have
+an authenticator registered.
+:h4.Syntax
+:xmp.
+TRUST LEVEL <Level> < DEFAULT | MACHINE <Machine> &lbrk.MACHINE <Machine>&rbrk.... |
+                      USER <User> &lbrk.USER <User>&rbrk.... >
+:exmp.
+:p.:xph.LEVEL:exph. is the level of trust that you wish to grant,
+see :hdref refid=trstcon. for a list of trust levels.
+&varres.
+:p.:xph.DEFAULT:exph. indicates that you wish to set the default trust level.
+This is the trust level that will be used for machines which have no
+explicit trust level set.  If no default has been specified in the STAF
+Configuration file, the default is set to 3.
+:p.:xph.MACHINE:exph. indicates a specific machine for which to set a trust
+level.
+&varres.
+The format for <Machine> is:
+:xmp.
+  &lbrk.<Interface>&colon.//&rbrk.<System Identifier>
+:exmp.
+where:
+:ul compact.
+:li.:xph.<Interface>:exph. is the name of the network interface.
+It is case-insensitive.
+If the name of a network interface is not specified, wildcard '*' is
+substituted which will match any network interface name.
+:li.:xph.<System Identifier>:exph. is a valid network identifier for the network
+interface.  It is case-insensitive.
+Logical or physical identifiers may be specified for the system
+identifier.  Physical identifiers are the lowest-level identifier
+available via the specified network interface.  Logical identifiers are more
+human readable identifiers that ultimately map to physical identifiers.
+For example, for a TCP/IP interface, the physical identifier for a
+machine is the IP address, while the logical identifier for a machine
+is the hostname.
+:eul.
+:p.Note that you can specify match patterns (e.g. wild cards) in the
+interface and the system identifier.  These patterns recognize two
+special characters, '*' and '?', where '*' matches a string of
+characters (including an empty string) and '?' matches any single
+character (the empty string does not match).
+:p.Note that if you specify the hostname in a trust specification
+for a TCP/IP interface, you must specify the long host name
+(and/or wildcards).
+:p.Note that if you specify a port (e.g. @6500) at the end of the
+system identifier, it will be removed.
+:p.Requests coming from the local system will now appear as though
+they came from an interface named "local" and a system identifier
+of "local".  This allows you to specify a trust level for local
+requests.  (In STAF V2.x, local requests were automatically granted
+a trust level of 5.)
+:p.:xph.USER:exph. indicates a user for which to set a trust level.
+&varres.
+The format for <User> is:
+:xmp.
+  &lbrk.<Authenticator>&colon.//&rbrk.<User Identifier>
+:exmp.
+where:
+:ul compact.
+:li.<Authenticator> is the name of the authenticator.
+It is case-insensitive.  If an authenticator is not specified, the default
+authenticator is used.
+:li.<User Identifier> is a valid user identifier for the authenticator.
+It is case sensitive.
+:eul.
+:p.Note that you can specify match patterns in the authenticator name
+and the user identifier.  These patterns recognize two special characters,
+'*' and '?', where '*' matches a string of characters (including an
+empty string) and '?' matches any single character (the empty string
+does not match).
+
+:h4 id=userTrustMatching.How to determine Effective Trust for a User
+:p.If multiple trust specifications would match the same user,
+STAF will rank the matching specifications as follows and use the
+match with the highest (i.e. lowest numbered) rank:
+:ol compact.
+:li.Exact match of authenticator and user identifier
+:li.Exact match of authenticator, wildcard match of user identifier
+:li.Wildcard authenticator match, exact match of user identifier
+:li.Wildcard authenticator match, wildcard match of user identifier
+:eol.
+If multiple trust specifications match within the same rank, the
+lowest matching trust level will be used.
+
+:h4 id=machineTrustMatching.How to determine Effective Trust for a Machine
+
+:p.If multiple trust specifications would match the same system,
+STAF will rank the matching specifications as follows and use the
+match with the highest (i.e. lowest numbered) rank:
+:ol compact.
+:li.Exact match of interface and physical network identifier
+:li.Exact match of interface and logical network identifier
+:li.Exact match of interface, wildcard match of physical network identifier
+:li.Exact match of interface, wildcard match of logical network identifier
+:li.Wildcard interface match, exact match of physical network identifier
+:li.Wildcard interface match, exact match of logical network identifier
+:li.Wildcard interface match, wildcard match of physical network identifier
+:li.Wildcard interface match, wildcard match of logical network identifier
+:eol.
+If multiple trust specifications match within the same rank, the
+lowest matching trust level will be used.
+
+:note.The user authentication overrides the machine authentication.
+For example, if the machine trust level is 3 and the authenticated user
+has a trust level of 4, then the handle will have a trust level of 4.
+If the user has been authenticated, but there are no user authentication
+trust matches, the machine trust level is used.  If there is no
+machine trust level specified, then the default trust level is used.
+
+:ih1.examples
+:i2.trust
+:h4.Examples
+:xmp.
+TRUST DEFAULT LEVEL 3
+TRUST LEVEL 5 MACHINE local&colon.//local
+TRUST LEVEL 5 MACHINE client1.austin.ibm.com MACHINE client3.raleigh.ibm.com
+TRUST LEVEL 5 MACHINE 9.3.224.16
+TRUST LEVEL 4 MACHINE tcp&colon.//mysystem.site.com
+TRUST LEVEL 0 MACHINE badguy.austin.ibm.com
+TRUST LEVEL 3 MACHINE tcp2&colon.//9.3.224.*
+TRUST LEVEL 2 MACHINE *.austin.ibm.com
+TRUST LEVEL 2 MACHINE tcp*&colon.//*.site.com
+TRUST LEVEL 5 USER John@company.com USER Jane@company.com
+TRUST LEVEL 0 USER badguy@company.com
+TRUST LEVEL 3 USER *@company.com
+TRUST LEVEL 4 USER SampleAuth&colon.//*@company.com
+TRUST LEVEL 1 USER *&colon.//*
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.start/shutdown notifications
+:ih1.start/shutdown notifications
+:i2.configuration
+:h2 id=notifycfg.Start/Shutdown Notifications
+:h3.Description
+:p.You may specify that you want notifications sent to certain
+machines/processes when STAF is either started or shutdown.  You do this by
+using the NOTIFY configuration statement.  Notifications are handled by the
+STAF Queue service, see :hdref refid=queuesrv. for more information.
+
+:note.You may also dynamically register for SHUTDOWN notifications via the
+SHUTDOWN service, see :hdref refid=shutds..
+:note text=Warning.In order for the receiving machine to accept the
+notifications, it must specify a default or explicit trust level of at least
+3 for this machine.  As of version 2.2.0 of STAF, the default trust level
+is 3, so no explicit action is necessary on systems running this version of
+STAF (or higher).:enote.
+:h4.Syntax
+:xmp.
+NOTIFY <ONSTART | ONSHUTDOWN> MACHINE <Machine> &lbrk.PRIORITY <Priority>&rbrk.
+       <NAME <Name> | HANDLE <Handle>>
+:exmp.
+:p.:xph.ONSTART:exph. indicates that a notification should be sent when
+STAF is fully initialized.  The type of the message will be the string :xph.STAF/Start:exph.
+with a blank message.
+:p.:xph.ONSHUTDOWN:exph. indicates that a notification should be sent when
+STAF is shutdown.  The type of the message will be the string :xph.STAF/Shutdown:exph.
+with a blank message.
+:p.:xph.MACHINE:exph. indicates the machine to receive the message.
+:p.:xph.PRIORITY:exph. indicates the priority of the message.  The default is
+5.
+:p.:xph.NAME:exph. specifies that all processes with the given registered
+name on the given machine should be notified.  This option is usually
+preferred over :xph.HANDLE:exph., as it is difficult to know the desired
+handle in advance.
+:p.:xph.HANDLE:exph. specifies that the process with the given handle on the
+given machine should be notified.
+:h4.Examples
+:xmp.
+NOTIFY ONSTART MACHINE Server1 PRIORITY 3 NAME EventManager
+NOTIFY ONSHUTDOWN MACHINE Server1 NAME EventManager
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.tracing
+:ih1.tracing
+:i2.configuration
+:h2 id=tracecfg.Tracing
+:h3.Description
+:p.STAF provides various tracing facilities to help in auditing and debugging.
+STAF externalizes these facilities through trace points.  Enabling a particular
+trace point causes trace messages to be generated whenever a particular event
+occurs, such as a service request resulting in an "Insufficient Trust Level"
+(aka "Access Denied") error code.
+Care should be taken when enabling trace points, as certain trace points,
+such as ServiceResult, can lead to large quantities of trace messages being
+generated.  In these cases, it is best to limit tracing to only specific
+services.
+:p.You may enable or disable STAF trace points and STAF services for tracing
+using the :xph.TRACE:exph. configuration statement.  In addition, you can set the
+trace output destination and set the default tracing state for newly
+registered services.  By default, all STAF services are enabled for tracing.
+Also, if you are using the default STAF configuration file provided, 
+only the :xph.ERROR:exph. and :xph.DEPRECATED:exph. trace points are enabled
+by default.
+:note.The :xph. TRACE ENABLE/DISABLE SERVICE(S) :exph.statements affect the current
+list of services.  So, if you add line :xph. TRACE DISABLE ALL SERVICES :exph.
+to the configuration file and then register any external services later in the
+configuration file, those services will not necessarily be disabled.
+To ensure that all registered services are disabled, either set the default
+service state to disabled, or add the :xph.TRACE:exph. statements after the
+:xph.SERVICE:exph. configuration statements in the configuration file.
+
+:h4.Syntax
+:xmp.
+TRACE ENABLE ALL  [ TRACEPOINTS | SERVICES ]
+TRACE ENABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+TRACE ENABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]...
+TRACE ENABLE SERVICE <Service> [SERVICE <Service>]...
+
+TRACE DISABLE ALL  [ TRACEPOINTS | SERVICES ]
+TRACE DISABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+TRACE DISABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]...
+TRACE DISABLE SERVICE <Service> [SERVICE <Service>]...
+
+TRACE SET DESTINATION TO < [STDOUT | STDERR] [FILE <File name> [APPEND]] >
+TRACE SET DEFAULTSERVICESTATE <Enabled | Disabled>
+TRACE SET MAXSERVICERESULTSIZE <Number>[k|m]
+:exmp.
+:p.See the TRACE service, section :hdref refid=tracesrv.,
+for information on the above options.
+:p.See table :hdref refid=tracepointref. for a list of valid trace points.
+
+:h4.Examples
+:xmp.
+TRACE SET DESTINATION TO STDERR
+TRACE SET DESTINATION TO FILE {STAF/Config/STAFRoot}/bin/STAF.trc
+TRACE SET DESTINATION TO FILE {STAF/Config/STAFRoot}/bin/STAF.trc APPEND
+TRACE SET DESTINATION TO STDOUT FILE {STAF/Config/STAFRoot}/bin/STAF.trc
+TRACE SET DESTINATION TO STDERR FILE {STAF/Config/STAFRoot}/bin/STAF.trc
+TRACE ENABLE ALL
+TRACE DISABLE SERVICE "Sem"
+TRACE ENABLE TRACEPOINTS "Error ServiceAccessDenied"
+TRACE DISABLE SERVICES "Process Queue Var"
+TRACE SET DEFAULTSERVICESTATE Enabled
+TRACE SET MAXSERVICERESULTSIZE 10k
+:exmp.
+:p. In order to ensure that you are only tracing service results on
+the var and sem services, and that tracing for all other services is
+disabled (including services registered in the future) do this &colon.
+:xmp.
+TRACE SET DEFAULTSERVICESTATE Disabled
+TRACE DISABLE ALL SERVICES
+TRACE DISABLE ALL TRACEPOINTS
+TRACE ENABLE TRACEPOINTS "ServiceResult"
+TRACE ENABLE SERVICES "VAR SEM"
+:exmp.
+
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.example
+:ih1.examples
+:i2.configuration file
+
+:h2 id=examplescfg.Configuration File Examples
+
+:h3 id=defaultcfg.Default Configuration File
+:p.This is the default configuration file provided with STAF.
+:xmp keep=14.
+# Turn on tracing of internal errors and deprecated options
+trace enable tracepoints "error deprecated"
+
+# Enable TCP/IP connections
+interface ssl library STAFTCP option Secure=Yes option Port=6550
+interface tcp library STAFTCP option Secure=No  option Port=6500
+
+# Set default local trust
+trust machine local://local level 5
+
+# Add default service loader
+serviceloader library STAFDSLS
+:exmp.
+
+:h3 id=examplecfg.Configuration File Example
+:note text='Warning'.This configuration file contains references to fictional services,
+machines, etc. and is provided for informational purposes only.  Please do
+not try to use this as your actual STAF.cfg file.  It is unlikely to
+work.:enote.
+:xmp keep=7.
+# ---------------------------------------------------------------------
+# STAF Configuration File
+# ---------------------------------------------------------------------
+# Set the writeable location where STAF can write data
+SET DATADIR E:\test\stafdata
+
+# Enable TCP/IP connections
+interface ssl library STAFTCP option Secure=Yes option Port=6550
+interface tcp library STAFTCP option Secure=No  option Port=6500 option ConnectTimeout=10000
+
+# Set default local trust
+trust machine local&colon.//local level 5
+
+# Add default service loader
+serviceloader library STAFDSLS
+
+# ---------------------------------------------------------------------
+# STAF Log Mask Variable
+# ---------------------------------------------------------------------
+SET SHARED VAR STAF/Service/Log/Mask="START STOP WARNING FATAL ERROR"
+
+# ---------------------------------------------------------------------
+# Setup Trust Levels
+# ---------------------------------------------------------------------
+TRUST DEFAULT LEVEL 2
+TRUST LEVEL 3 MACHINE test1.austin.ibm.com MACHINE test2.test.austin.ibm.com
+TRUST LEVEL 5 MACHINE automate.austin.ibm.com
+TRUST LEVEL 4 MACHINE *.test.austin.ibm.com
+TRUST LEVEL 3 USER IBM&colon.//*@us.ibm.com
+TRUST LEVEL 4 USER JohnDoe@company.com
+TRUST LEVEL 0 USER BadGuy@company.com
+
+# ---------------------------------------------------------------------
+# Delegated Services
+# ---------------------------------------------------------------------
+SERVICE pager DELEGATE globpager.test.austin.ibm.com
+
+# ---------------------------------------------------------------------
+# Java Services
+# ---------------------------------------------------------------------
+
+# Operating system independent name for my STAF services directory
+SET SYSTEM VAR myServiceDir={STAF/Config/STAFRoot}{STAF/Config/Sep/File}services
+
+SERVICE STAX  LIBRARY JSTAF \
+              EXECUTE {myServiceDir}{STAF/Config/Sep/File}STAX.jar \
+              OPTION J2=-Xms64m OPTION J2=-Xmx128m
+SERVICE Event LIBRARY JSTAF \
+              EXECUTE {myServiceDir}{STAF/Config/Sep/File}STAFEvent.jar
+
+# ---------------------------------------------------------------------
+# C++ Services
+# ---------------------------------------------------------------------
+SERVICE log      LIBRARY STAFLog
+SERVICE monitor  LIBRARY STAFMon
+SERVICE respool  LIBRARY STAFPool
+
+# ---------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------
+NOTIFY ONSTART MACHINE automate.austin.ibm.com PRIORITY 3 NAME EventManager
+NOTIFY ONSHUTDOWN MACHINE automate.austin.ibm.com NAME EventManager
+
+# ---------------------------------------------------------------------
+# Activate tracing
+# ---------------------------------------------------------------------
+TRACE SET DESTINATION TO FILE {STAF/DataDir}/user/STAF.trc
+TRACE ENABLE TRACEPOINTS "ServiceAccessDenied Error"
+TRACE ENABLE SERVICES "Process Trust"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.tuning
+:ih1.tuning
+:i2.configuration
+:h2 id=tunecfg.Tuning
+:h3.Description
+:p.STAF provides a way to tune its thread stack size. This is done via setting 
+a "STAF_THREAD_STACK_SIZE" environment variable before STAFProc gets started. User 
+can use this environment variable to set STAF's thread stack size in kilobytes. 
+:h4.Examples, to set the thread stack size to 128KB
+:xmp.
+On Unix: export STAF_THREAD_STACK_SIZE=128
+On Windows: set STAF_THREAD_STACK_SIZE=128
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.configuration
+:i2.data directory structure
+:ih1.data directory structure
+:i2.configuration
+:h2 id=datadircfg.Data Directory Structure
+:p.
+By default, STAF and its services will write data to:
+:xph.{STAF/Config/STAFRoot}/data/{STAF/Config/InstanceName}:exph.. 
+For example: :xph.C:\STAF\data\STAF:exph. on Windows systems or :xph./usr/local/staf/data/STAF:exph.
+on Unix systems or :xph./Library/staf/data/STAF:exph. on Mac OS X systems.
+The :xph.STAF/DataDir:exph. system variable is set to the fully-qualified name
+of this directory.
+:p.
+You may use the DATADIR operational parameter to change the writeable data directory for STAF. 
+This directory name must be unique per instance of STAF running on a single machine.
+:p.
+Note that the ability to change the data directory allows you to install STAF to a shared location
+(e.g. a read-only directory that is accessible via a mounted drive, etc.) and use a unique
+writeable data directory per instance of STAF.
+:p.
+The following table describes the structure of the STAF data directory:
+:table cols='* 4*' align='l l'.
+:tcap.Data Directory Structure
+:thd.
+:c.Directory Name
+:c.Description
+:ethd.
+:row.
+:c.:xph.{STAF/DataDir}/tmp:exph.
+:c.This is the location where temporary data can be stored.
+This directory and all of its contents will be removed and an empty :xph.tmp:exph.
+directory is created whenever STAFProc is restarted.
+:row.
+:c.:xph.{STAF/DataDir}/user:exph.
+:c.Other user data (e.g. from testcases, applications, etc.) can be stored in this
+directory.  You should create subdirectories within this directory to when storing your
+data.
+:row.
+:c.:xph.{STAF/DataDir}/service:exph.
+:c.This directory exists if one or more external services are (or have been) registered.
+If a service stores persistent data, it should create a subdirectory within this
+directory using its registered service name (in lower-case) and store its data in this
+subdirectory.  For example:
+:xmp.
+{STAF/DataDir}/service/event
+{STAF/DataDir}/service/log
+{STAF/DataDir}/service/stax
+:exmp.
+:row.
+:c.:xph.{STAF/DataDir}/lang/java/jvm:exph.
+:c.This directory exists if one or more external Java services are (or have been) registered.
+For each JVM created for Java services, STAF will create a subdirectory within this
+directory using the name of the JVM.  The log files for the JVM (e.g. :xph.JVMLog.1:exph.)
+will be stored in this subdirectory.  For example:
+:xmp.
+{STAF/DataDir}/lang/java/STAFJVM1/JVMLog.1
+{STAF/DataDir}/lang/java/STAX/JVMLog.1
+:exmp.
+:row.
+:c.:xph.{STAF/DataDir}/lang/java/service:exph.
+:c.This directory exists if one or more external Java services are (or have been) registered.
+For each Java service registered, STAF will create a subdirectory within this
+directory using the registered service name and a subdirectory with it named :xph.jars:exph..  
+This subdirectory will contain nested jar files for the service, if any are provided
+by the service.  For example:
+:xmp.
+{STAF/DataDir}/lang/java/service/Event/jars
+{STAF/DataDir}/lang/java/service/STAX/jars
+:exmp.
+:row.
+:c.:xph.{STAF/DataDir}/register:exph.
+:c.For STAF's use only.  This directory is used for storing registration data, if any,
+specified when this version of STAF was installed.
+:etable.
+:p.
+:ih1.configuration
+:i2.Unix temporary diretory
+:ih1.Unix STAF Temporary Directory
+:i2.configuration
+:h3 id=tempdir.Unix STAF Temporary Directory
+:p.
+On Unix systems, STAF also writes a few files to the /tmp directory by default
+for each instance of STAFProc that is running.
+You can override the location of the directory by setting the STAF_TEMP_DIR
+environment variable.  However, you must use the same STAF_TEMP_DIR environment
+variable for all instances of STAFProc in order for STAF to make sure that each
+STAFProc instance has a unique STAF_INSTANCE_NAME and a unique {STAF/DataDir}.
+Note that you should not specify {STAF/DataDir}/tmp for the value of the
+STAF_TEMP_DIR environment variable because each time STAFProc starts, it
+deletes the {STAF/DataDir}/tmp directory and this occurs after STAF creates
+some of these files.
+:p.
+The following files are created in the Unix STAF Temporary Directory when
+starting STAFProc (and are deleted when STAFProc is shutdown).
+:p.
+:ul.
+:li.:xph.<STAF_INSTANCE_NAME>.tmp:exph.
+:note.:xph.<STAF_INSTANCE_NAME>:exph. will be replaced with the actual
+STAF Instance Name which defaults to "STAF" unless it is overridden by setting
+the STAF_INSTANCE_NAME environment variable.
+:li.:xph.DataDir_<DATADIR>.tmp:exph.
+:note.:xph.<DATADIR>:exph. will be replaced with the resolved value of the
+{STAF/DataDir}variable, with the slashes replaced with dashes.
+For example: :xph.DataDir_-usr-local-staf-data-STAF.tmp:exph.
+:li.:xph.STAFIPC_<STAF_INSTANCE_NAME>:exph.
+:p.
+This is a socket file used by the Unix Local IPC connection provider.
+If this socket file is inadvertently deleted, local service requests will fail
+with RC 21 (STAF Not Running).
+:li.:xph.STAFIPC_<STAF_INSTANCE_NAME>JSTAF_<JVMName>:exph.
+:p.
+This is a socket file used by a STAF JVM that was created when registering a
+STAF Java service.  There will be one socket file for each STAF JVM.
+:note.:xph.<JVMName>:exph. will be replaced by the actual STAF JVM name.
+:eul.
+:p.
+:warning.Do not delete these files while the STAFProc instance
+is running.:ewarning.
+:p.
+When submitting a request to the "local" interface to communicate with
+a STAFProc instance, the STAF_INSTANCE_NAME environment variable must be
+set (if the STAFProc instance is not using the default name "STAF").  Also,
+on Unix only, the STAF_TEMP_DIR environment variable must be set
+(if the STAFProc instance is not using the default "/tmp" directory).
+Otherwise, the local service request will not be able to communicate with
+that STAFProc instance and RC 21 (STAF Not Running) will be returned. 
+
+

@@ -1,0 +1,276 @@
+<?xml version="1.0" ?>
+
+<!--
+
+  This file defines the latest STAF release files via the following elements:
+
+  <current>
+    - Attribute "product" defines the product name.  Valid values are "staf".
+    - Attribute "version" defines the current version number for the product.
+
+  <latest>
+    - Attribute "product" defines the product name.  Valid values are "staf",
+      "stax", "cron", "email", "event", "eventmanager", "fsext", "ftp", "http",
+      "namedcounter", "namespace", "sxe", and "timer".
+    - Attribute "platform" defines the platform for the product.  Valid values
+      are "win32", "win64", winamd64", "linux", "linux-ia64", "linux-amd64",
+      "linux-ppc64-32", "linux-ppc64-64", "zlinux-32", "zlinux-64",
+      "zlinux-sles9-32", "zlinux-sles9-64",
+      "zlinux-rhel4-32", "zlinux-rhel4-64", "zos", "zos64", "solaris-sparc",
+      "solaris-sparc64", "solaris-x64", "solaris-x64-64", "solaris-x86", "aix",
+      "aix64", "aix433", "hpux", "hpux-parisc64", "hpux-ia64-32", "hpux-ia64-64",
+      "freebsd", "freebsd410", "macosx-i386", "macosx-ppc", "macosx-universal" and
+      "common" (used for service products).
+    - Attribute "version" defines the current version number for the
+      product/platform.
+
+  <file>
+    - Attribute "name" defines an installer filename for the product/platform.
+    - Attribute "installer" indicates the installer file type.  Valid values
+      are "IA", "IA_NoJVM", "STAFInst", "ISMP", "ISMP_jar", "tar", "zip".
+
+-->
+
+<staf>
+
+  <current product="staf" version="3.4.15"/>
+
+  <latest product="staf" platform="win32" version="3.4.15">
+    <file name="STAF3415-setup-win32.exe" installer="IA"/>
+    <file name="STAF3415-setup-win32-NoJVM.exe" installer="IA_NoJVM"/>
+  </latest>
+
+  <latest product="staf" platform="win64" version="3.4.14">
+    <file name="STAF3414-setup-win64.exe" installer="IA"/>
+    <file name="STAF3414-setup-win64-NoJVM.exe" installer="IA_NoJVM"/>
+  </latest>
+
+  <latest product="staf" platform="winamd64" version="3.4.15">
+    <file name="STAF3415-setup-winamd64.exe" installer="IA"/>
+    <file name="STAF3415-setup-winamd64-NoJVM.exe" installer="IA_NoJVM"/>
+  </latest>
+
+  <latest product="staf" platform="linux" version="3.4.15">
+    <file name="STAF3415-setup-linux.bin" installer="IA"/>
+    <file name="STAF3415-setup-linux-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-linux.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="linux-ia64" version="3.4.1">
+    <file name="STAF341-setup-linux-ia64.bin" installer="IA"/>
+    <file name="STAF341-setup-linux-ia64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF341-linux-ia64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="linux-amd64" version="3.4.15">
+    <file name="STAF3415-setup-linux-amd64.bin" installer="IA"/>
+    <file name="STAF3415-setup-linux-amd64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-linux-amd64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="linux-ppc64-32" version="3.4.15">
+    <file name="STAF3415-setup-linux-ppc64-32.bin" installer="IA"/>
+    <file name="STAF3415-setup-linux-ppc64-32-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-linux-ppc64-32.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="linux-ppc64-64" version="3.4.15">
+    <file name="STAF3415-setup-linux-ppc64-64.bin" installer="IA"/>
+    <file name="STAF3415-setup-linux-ppc64-64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-linux-ppc64-64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zlinux-32" version="3.4.15">
+    <file name="STAF3415-setup-zlinux-32.bin" installer="IA"/>
+    <file name="STAF3415-setup-zlinux-32-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-zlinux-32.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zlinux-64" version="3.4.15">
+    <file name="STAF3415-setup-zlinux-64.bin" installer="IA"/>
+    <file name="STAF3415-setup-zlinux-64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-zlinux-64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zlinux-sles9-32" version="3.1.5">
+    <file name="STAF315-zlinux-sles9-32.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zlinux-sles9-64" version="3.2.0">
+    <file name="STAF320-zlinux-sles9-64.tar.gz" installer="STAFInst"/>
+  </latest>
+ 
+  <latest product="staf" platform="zlinux-rhel4-32" version="3.1.5">
+    <file name="STAF315-zlinux-rhel4-32.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zlinux-rhel4-64" version="3.2.0">
+    <file name="STAF320-zlinux-rhel4-64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zos" version="3.4.15">
+    <file name="STAF3415-zos.tar.Z" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="zos64" version="3.4.15">
+    <file name="STAF3415-zos64.tar.Z" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="solaris-sparc" version="3.4.15">
+    <file name="STAF3415-setup-solaris-sparc.bin" installer="IA"/>
+    <file name="STAF3415-setup-solaris-sparc-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-solaris-sparc.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="solaris-sparc64" version="3.4.15">
+    <file name="STAF3415-setup-solaris-sparc64.bin" installer="IA"/>
+    <file name="STAF3415-setup-solaris-sparc64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-solaris-sparc64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="solaris-x64" version="3.4.15">
+    <file name="STAF3415-setup-solaris-x64.bin" installer="IA"/>
+    <file name="STAF3415-setup-solaris-x64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-solaris-x64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="solaris-x64-64" version="3.4.15">
+    <file name="STAF3415-setup-solaris-x64-64.bin" installer="IA"/>
+    <file name="STAF3415-setup-solaris-x64-64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-solaris-x64-64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="solaris-x86" version="3.4.15">
+    <file name="STAF3415-setup-solaris-x86.bin" installer="IA"/>
+    <file name="STAF3415-setup-solaris-x86-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-solaris-x86.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="aix" version="3.4.15">
+    <file name="STAF3415-setup-aix.bin" installer="IA"/>
+    <file name="STAF3415-setup-aix-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-aix.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="aix64" version="3.4.15">
+    <file name="STAF3415-setup-aix64.bin" installer="IA"/>
+    <file name="STAF3415-setup-aix64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-aix64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="aix433" version="3.3.2">
+    <file name="STAF332-aix433.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="hpux" version="3.4.15">
+    <file name="STAF3415-setup-hpux.bin" installer="IA"/>
+    <file name="STAF3415-setup-hpux-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-hpux.tar.gz" installer="STAFInst"/>
+  </latest>
+  
+  <latest product="staf" platform="hpux" version="3.4.15">
+    <file name="STAF3415-setup-hpux-parisc64.bin" installer="IA"/>
+    <file name="STAF3415-setup-hpux-parisc64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-hpux-parisc64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="hpux-ia64-32" version="3.4.15">
+    <file name="STAF3415-setup-hpux-ia64-32.bin" installer="IA"/>
+    <file name="STAF3415-setup-hpux-ia64-32-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-hpux-ia64-32.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="hpux-ia64-64" version="3.4.15">
+    <file name="STAF3415-setup-hpux-ia64-64.bin" installer="IA"/>
+    <file name="STAF3415-setup-hpux-ia64-64-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-hpux-ia64-64.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="freebsd" version="3.4.15">
+    <file name="STAF3415-setup-freebsd-NoJVM.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-freebsd.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="freebsd410" version="3.4.2">
+    <file name="STAF342-freebsd410.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="macosx-i386" version="3.4.10">
+    <file name="STAF3410-setup-macosx-i386.zip" installer="IA_NoJVM"/>
+    <file name="STAF3410-setup-macosx-i386.bin" installer="IA_NoJVM"/>
+    <file name="STAF3410-macosx-i386.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="macosx-ppc" version="3.4.10">
+    <file name="STAF3410-setup-macosx-ppc.zip" installer="IA_NoJVM"/>
+    <file name="STAF3410-setup-macosx-ppc.bin" installer="IA_NoJVM"/>
+    <file name="STAF3410-macosx-ppc.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="staf" platform="macosx-universal" version="3.4.15">
+    <file name="STAF3415-setup-macosx-universal.zip" installer="IA_NoJVM"/>
+    <file name="STAF3415-setup-macosx-universal.bin" installer="IA_NoJVM"/>
+    <file name="STAF3415-macosx-universal.tar.gz" installer="STAFInst"/>
+  </latest>
+
+  <latest product="stax" platform="common" version="3.5.7">
+    <file name="STAXV357.tar" installer="tar"/>
+    <file name="STAXV357.zip" installer="zip"/>
+  </latest>
+
+  <latest product="cron" platform="common" version="3.4.0">
+    <file name="CronV340.tar" installer="tar"/>
+    <file name="CronV340.zip" installer="zip"/>
+  </latest>
+
+  <latest product="email" platform="common" version="3.3.8">
+    <file name="EmailV338.tar" installer="tar"/>
+    <file name="EmailV338.zip" installer="zip"/>
+  </latest>
+
+  <latest product="event" platform="common" version="3.1.5">
+    <file name="EventV315.tar" installer="tar"/>
+    <file name="EventV315.zip" installer="zip"/>
+  </latest>
+
+  <latest product="eventmanager" platform="common" version="3.4.0">
+    <file name="EventManagerV340.tar" installer="tar"/>
+    <file name="EventManagerV340.zip" installer="zip"/>
+  </latest>
+
+  <latest product="fsext" platform="common" version="3.0.2">
+    <file name="FSExtV302.tar" installer="tar"/>
+    <file name="FSExtV302.zip" installer="zip"/>
+  </latest>
+
+  <latest product="ftp" platform="common" version="1.0.3">
+    <file name="FTPV103.tar" installer="tar"/>
+    <file name="FTPV103.zip" installer="zip"/>
+  </latest>
+
+  <latest product="http" platform="common" version="3.0.4">
+    <file name="HTTPV304.tar" installer="tar"/>
+    <file name="HTTPV304.zip" installer="zip"/>
+  </latest>
+
+  <latest product="namedcounter" platform="common" version="3.0.2">
+    <file name="NamedCounterV302.tar" installer="tar"/>
+    <file name="NamedCounterV302.zip" installer="zip"/>
+  </latest>
+
+  <latest product="namespace" platform="common" version="1.0.3">
+    <file name="NamespaceV103.tar" installer="tar"/>
+    <file name="NamespaceV103.zip" installer="zip"/>
+  </latest>
+
+  <latest product="sxe" platform="common" version="3.0.3">
+    <file name="SXEV303.tar" installer="tar"/>
+    <file name="SXEV303.zip" installer="zip"/>
+  </latest>
+
+  <latest product="timer" platform="common" version="3.0.3">
+    <file name="TimerV303.tar" installer="tar"/>
+    <file name="TimerV303.zip" installer="zip"/>
+  </latest>
+
+</staf>

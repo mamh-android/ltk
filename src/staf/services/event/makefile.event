@@ -1,0 +1,51 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+event_class_targets =\
+  $(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/EventService.class \
+  $(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/Client.class \
+  $(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/GenerationManager.class \
+  $(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/PriorityQueue.class \
+  $(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/RegistrationManager.class \
+  $(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/Timestamp.class \
+  $(O)/services/event/MANIFEST.MF
+
+event_targets += $(event_class_targets)\
+                $(REL)/lib/STAFEvent.jar
+Targets += $(event_targets)
+CleanupTargets += cleanup_event
+
+$(event_targets): SUBSYS_REL := services/event
+SUBSYS_REL := services/event
+
+# Include inference rules
+include $(InferenceRules)
+
+$(event_targets): $(REL)/lib/JSTAF.jar
+
+EVENT_CLASSPATH = $(OS_O)/services/event$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(JAVA_CLASSPATH)
+  
+define EVENT_JAVA_COMPILE_IT
+    @echo "*** Compiling Event Service Java Sources ***"
+    @$(CREATE_PATH)
+    @$(JAVAC) -d $(OS_O)/services/event/STAF-INF/classes -classpath '$(EVENT_CLASSPATH)' $(OS_SRC)/services/event/*.java
+endef
+
+$(O)/services/event/STAF-INF/classes/com/ibm/staf/service/event/%.class: $(SRC)/services/event/%.java
+	$(EVENT_JAVA_COMPILE_IT)
+
+# Event Java targets
+
+$(O)/services/event/MANIFEST.MF: $(SR_SRC)/MANIFEST.MF
+	$(COPY_FILE)
+
+$(REL)/lib/STAFEvent.jar: $(event_class_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/event; $(JAR) cfm '$(OS_@)' MANIFEST.MF `find . -name "*.class" -print`
+
+cleanup_event:
+	-@$(DEL) $(O)/services/event/* $(OUT_ERR_TO_DEV_NULL)

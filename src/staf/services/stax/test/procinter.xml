@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "file:/d:\staxtest\stax.dtd">
+
+<stax>
+
+  <defaultcall function="procinter"/>
+
+  <script>machName = "local"</script>
+  
+  <script>className = 'com.ibm.staf.service.stax.TestProcess'</script>  
+  
+  <function name="procinter">
+
+    <block name="'Process Interaction Block'">
+ 
+     <sequence>
+      
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 10 1 0' % className</parms>            
+          <console use="'same'"/>
+          <process-action>
+            <message>"Interaction Sequence is running!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+          </process-action>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 5 1 0' % className</parms>            
+          <console use="'same'"/>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 10 1 0' % className</parms>            
+          <console use="'same'"/>
+          <process-action>
+            <sequence>
+              <message>"Interaction Sequence is running!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+              <stafcmd>
+                  <location>machName</location>
+                  <service>'delay'</service>
+                  <request>'delay 20000'</request>
+              </stafcmd>
+            </sequence>
+          </process-action>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 5 1 0' % className</parms>            
+          <console use="'same'"/>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 10 1 0' % className</parms>            
+          <console use="'same'"/>
+          <process-action>
+            <sequence>
+              <message>"Interaction Sequence is running!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+              <process>
+                  <location>machName</location>
+                  <command>'java'</command> 
+                  <title>'test_process'</title> 
+                  <parms>'%s 15 1 0' % className</parms>            
+                  <console use="'same'"/>
+                  <process-action>
+                    <sequence>
+                    <message>"Interaction Sequence is running!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+                    <stafcmd>
+                        <location>machName</location>
+                        <service>'delay'</service>
+                        <request>'delay 20000'</request>
+                    </stafcmd>
+                  </sequence>
+                </process-action>
+              </process>
+            </sequence>
+          </process-action>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 5 1 0' % className</parms>            
+          <console use="'same'"/>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'unknown'</command> 
+          <title>'unknown_process'</title>
+          <console use="'same'"/>
+          <process-action>
+            <sequence>
+              <message>"Interaction Sequence is running but it shouldn't!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+              <stafcmd>
+                  <location>machName</location>
+                  <service>'delay'</service>
+                  <request>'delay 5000'</request>
+              </stafcmd>
+            </sequence>
+          </process-action>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 5 1 0' % className</parms>            
+          <console use="'same'"/>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 10 1 0' % className</parms>            
+          <console use="'same'"/>
+          <process-action if='1'>
+            <sequence>
+              <message>"if=1 Interaction Sequence is running!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+              <stafcmd>
+                  <location>machName</location>
+                  <service>'delay'</service>
+                  <request>'delay 10000'</request>
+              </stafcmd>
+            </sequence>
+          </process-action>
+        </process>
+        
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 5 1 0' % className</parms>            
+          <console use="'same'"/>
+        </process>
+
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 10 1 0' % className</parms>            
+          <console use="'same'"/>
+          <process-action if='0'>
+            <sequence>
+              <message>"if=0 Interaction Sequence is running but it shouldn't!\nSTAXProcessHandle = %s" % STAXProcessHandle</message>
+              <stafcmd>
+                  <location>machName</location>
+                  <service>'delay'</service>
+                  <request>'delay 10000'</request>
+              </stafcmd>
+            </sequence>
+          </process-action>
+        </process>
+
+        <process>
+          <location>machName</location> 
+          <command>'java'</command> 
+          <title>'test_process'</title> 
+          <parms>'%s 5 1 0' % className</parms>            
+          <console use="'same'"/>
+        </process>        
+
+      </sequence>
+      
+    </block>
+    
+  </function>      
+
+</stax>

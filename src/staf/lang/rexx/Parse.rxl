@@ -1,0 +1,146 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+#Function All
+
+/*************************************/
+/* DoParse - Parses the token stream */
+/*                                   */
+/* Accepts: Nothing                  */
+/*                                   */
+/* Returns: 0 , if successful        */
+/*          >0, if unsuccessful      */
+/*************************************/
+DoParse: PROCEDURE EXPOSE (ExposeList) symbols. symbolindex. Tokens.,
+                          debugparse debugsymbol
+
+  parsepos = 1
+
+  ExposeList = ExposeList "symbols. symbolindex. debugparse debugsymbol",
+               "parsepos Tokens."
+
+  do while CurrToken() \= 'EOF'
+      parserc = ParseStatement()
+      if parserc \= 0 then RETURN parserc
+  end
+
+  RETURN 0
+
+/* End of DoParse */
+
+
+/*******************************************************************/
+/* A few helper macros for parsing                                 */
+/*                                                                 */
+/* CurrToken - Returns the current token                           */
+/* CurrValue - Returns the value associated with the current token */
+/* NextToken - Increments the token pointer                        */
+/* PrevToken - Decrements the token pointer                        */
+/* CurrPos   - Returns the current position of the token pointer   */
+/* SetPos    - Sets the current position of the token pointer      */
+/*******************************************************************/
+
+CurrToken: PROCEDURE EXPOSE Tokens. parsepos
+
+  RETURN Tokens.parsepos
+
+CurrValue: PROCEDURE EXPOSE Tokens. parsepos
+
+  RETURN Tokens.parsepos.0
+
+NextToken: PROCEDURE EXPOSE Tokens. parsepos
+
+  parse arg num
+  if num = '' then num = 1
+  parsepos = parsepos + num
+  RETURN 0
+
+PrevToken: PROCEDURE EXPOSE Tokens. parsepos
+
+  parse arg num
+  if num = '' then num = 1
+  parsepos = parsepos - num
+  RETURN 0
+
+CurrPos: PROCEDURE EXPOSE parsepos
+
+  RETURN parsepos
+
+SetPos: PROCEDURE EXPOSE parsepos
+
+  parse arg parsepos
+  RETURN 0
+
+
+/***********************************************************************/
+/* TokenMustBe - Returns 0 if the current token is the specified token */
+/*               Otherwise returns 1                                   */
+/***********************************************************************/
+TokenMustBe: PROCEDURE EXPOSE Tokens. parsepos
+
+  parse arg value
+
+  if CurrToken() \= value then
+  do
+      call PrintParseError value, CurrPos()
+      RETURN 1
+  end
+
+  RETURN 0
+
+/* End of TokenMustBe */
+
+
+/************************************************************************/
+/* NextTokenMustBe - Returns 0 if the next token is the specified token */
+/*                   Otherwise returns 1                                */
+/************************************************************************/
+NextTokenMustBe: PROCEDURE EXPOSE Tokens. parsepos
+
+  parse arg value
+
+  call NextToken
+
+  if CurrToken() \= value then
+  do
+      call PrintParseError value, CurrPos()
+      RETURN 1
+  end
+
+  RETURN 0
+
+/* End of NextTokenMustBe */
+
+
+/*************************************************************
+  PrintParseError - Prints out the parsing error and the next
+                    five tokens from the parse error.
+**************************************************************/
+
+PrintParseError: PROCEDURE EXPOSE Tokens.
+
+    parse arg type, from
+
+    say "Error on line" Tokens.from.!Line
+    say "Expecting" type "and found" Tokens.from
+    say "Next five tokens:"
+
+    do i = from to from + 4
+        if (i <= Tokens.0) & (i > 0) then
+        do
+            if Tokens.i = 'STRING' then
+                say "STRING = '"Tokens.i.0"'"
+            else
+                say Tokens.i
+        end
+    end
+
+    RETURN 0
+
+/* End of PrintParseError */
+
+#End

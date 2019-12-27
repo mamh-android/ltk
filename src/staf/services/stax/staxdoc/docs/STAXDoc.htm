@@ -1,0 +1,515 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2004, 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+***************************************************************************
+-->
+<html>
+<head>
+<title>STAX Documentation Generator (STAXDoc) User's Guide</TITLE>
+</head>
+<BODY BGCOLOR="#FFFFFF">
+
+<h1>STAXDoc User's Guide</h1>
+<p>
+  <b>STAX Documentation Generator (STAXDoc) User's Guide</b><br>
+  <b>Version 1.0.4</b><br>
+</p>
+<p>
+  <b>February 26, 2008</b>
+</p>
+
+<!-- <p>Document owner: Bruno Portaluri (email: bruno.portaluri@it.ibm.com)</p> -->
+
+<hr>
+
+<h2>Contents</h2>
+
+<UL>
+  <LI><B><a name="ToC_introduction"   href="#introduction">Introduction</a></B>
+  <UL>
+    <LI><a name="ToC_requirements"    href="#requirements">Requirements</a>
+    <LI><a name="ToC_syntax"          href="#syntax">Syntax</a>
+  </UL>
+  <LI><B><a name="ToC_sourcefiles"    href="#sourcefiles">Source Files</a></B>
+  <UL>
+    <LI><a name="ToC_staxxmlfiles"    href="#staxxmlfiles">STAX Xml Files</a>
+    <LI><a name="ToC_packagecomment"  href="#packagecomment">Package Comment Files</a>
+    <LI><a name="ToC_overviewcomment" href="#overviewcomment">Overview Comment File</a>
+    <LI><a name="ToC_unprocessed"     href="#unprocessed">Miscellaneous Unprocessed Files</a>
+  </UL>
+
+  <LI><B><a name="ToC_options"        href="#options">Options</a></B>
+  <UL>
+    <LI><a name="ToC_optionsdesc"     href="#optionsdesc">Options description</a>
+  </UL>
+  <LI><B><a name="ToC_examples"       href="#examples">Examples</a></B>
+  <li><b><a name="ToC_htmlDoc"        href="#htmlDoc">Generated Documentation</a></b>
+  <LI><B><a name="ToC_references"     href="#references">References</a></B>
+</UL>
+
+<hr>
+
+<!-- INTRODUCTION ------------------------------------------------------------>
+
+<h2><a name="introduction" href="#ToC_introduction">Introduction</a></h2>
+
+<blockquote>
+STAXDoc is used to generate documentation for your STAX xml files.
+As you grow your library of STAX functions, you will probably find it useful
+to document the STAX functions to make it easier to reuse them and share
+them with other test groups.
+<p>    
+STAXDoc is a Java application that parses the documentation elements in a
+set of STAX xml files and generates an HTML document describing all of the
+functions defined in the STAX xml files.
+STAXDoc uses an XSLT stylesheet processor to transform function information
+provided in STAX xml files into HTML files which are nicely formatted. 
+<p>
+You can run STAXDoc on a set of directories that contains STAX xml files.
+Each sub-directory is considered a source "package" and can be passed
+to the STAXDoc command line.
+<p>
+<blockquote>
+   <b>Note:</b> When you pass in package names to STAXDoc, all 
+   <code>.xml</code> files in the specified package directories are processed.
+</blockquote>
+
+STAXDoc produces one complete document each time it is run; it cannot 
+do incremental builds -- that is, it cannot modify or <i>directly</i> 
+incorporate results from previous runs of STAXDoc.
+<p>
+<h3><a name="requirements" href="#ToC_requirements">Requirements</a></h3>
+<p>
+<ol>
+<li>Java Runtime Environment (JRE) 1.4 or later
+<p>
+<li><tt>STAXDoc.jar</tt> provided with the STAX service.
+<p>
+<b>Note:</b>  You can obtain the STAXDoc.jar file by downloading the STAX V3
+tar/zip file obtained from the <a href="http://staf.sourceforge.net/getstax.php">
+Download STAX</a> webpage and extracting the tar/zip file.
+</ol>
+<p>
+<h3><a name="syntax" href="#ToC_syntax">Syntax</a></h3>
+<p>
+<blockquote>
+<tt>java -jar STAXDoc.jar [-options] packagename(s)...</tt>
+<p>
+<dl>
+<dt><tt>options</tt>
+<dd>The command line options that can be specified.  The options include:
+    <pre>
+-d &lt;directory>          Specifies the destination directory for output
+                        files.  The current directory is the default.
+-doctitle &lt;html-code>   Specifies to include the title for the package
+                        index (first) page.
+-functionsummary &lt;FirstSentence | All>
+                        Specifies what to include for the description on
+                        each "Function Summary" page:
+                        - FirstSentence: Include only the first sentence
+                          of the function-prolog.  This is the default.
+                        - All: Include the entire contents of the
+                          function-prolog.
+-help                   Specifies to display the help.
+-overview &lt;file>        Specifies to read overview documentation from the
+                        HTML file.
+-sourcepath &lt;directory> Specifies the root directory of the packages.
+                        The current directory is the default.
+-verbose                Specifies to output messages about what STAXDoc is
+                        doing.
+-windowtitle &lt;title>    Specifies the title to be placed in the HTML
+                        &lt;title> tag.
+</pre>
+   See the <a href="#options">Options</a> section for a more detailed
+   description of the available options.
+   </dd>
+<p>
+<dt><tt>packagename(s)...</tt>
+   <dd>The names of one or more subdirectories in the
+   <a href="#sourcepath"><tt>-sourcepath</tt></a> containing STAX xml files
+   that you want to document.  The subdirectory names must be separated by
+   one or more spaces. You must separately specify each package (subdirectory)
+   that you want to document as subdirectories are not recursively traversed.
+   <p>
+   Package names can be overridden using the<tt> = </tt>keyword.
+   For example, if you specify <tt>src1=P1&nbsp;src2</tt> in the command line,
+   the first package will appear named<tt> P1 </tt>in the generated documentation.
+   </dd>
+</dl>
+<p>
+<h4>Examples</h4>
+  <p>
+    <tt>java -jar STAXDoc.jar -d C:\stax\mydocs -sourcepath C:\stax\xml src1 src2</tt>
+  <p>
+    <tt>java -jar STAXDoc.jar -sourcepath C:\stax\xml -verbose libraries</tt>
+  <p>
+    <tt>java -jar STAXDoc.jar -d C:\staxdocs -functionsummary All -sourcepath C:\stax xml</tt>
+  <p>
+    <tt>java -jar STAXDoc.jar -sourcepath C:\user\src utils/memory </tt>
+  <p>
+  See the <a href="#examples">Examples</a> section for more examples of using STAXDoc.
+</blockquote>
+</blockquote>
+
+
+<!-- SOURCE FILES ------------------------------------------------------------>
+
+<h2><a name="sourcefiles" href="#ToC_sourcefiles">Source Files</a></h2>
+
+<blockquote>
+
+STAXDoc will generate output originating from four different types of 
+"source" files:
+<ol>
+<li>STAX xml files (<tt>.xml</tt>)
+<li>Package comment files (<tt>package.html</tt>)
+<li>Overview comment files (typically <tt>overview.html</tt>)
+<li>Miscellaneous unprocessed files (optional)
+</ol>
+<p>
+<h3><a name="staxxmlfiles" href="#ToC_staxxmlfiles">STAX Xml Files</a></h3>
+<p>
+    Each STAX xml file contains at least one function. Each function can documented
+    using the standard documentation elements defined for a STAX xml file.
+    These include:
+    <ul>
+    <li><tt>function-prolog</tt> (or the deprecated <tt>function-description</tt> element)
+    <li><tt>function-epilog</tt>
+    <li>Description text for function arguments:  <tt>function-required-arg</tt>,
+    <tt>function-optional-arg</tt>, <tt>function-other-arg</tt>, and
+    <tt>function-arg-def</tt>
+    </ul>
+    For more details about these STAX documentation elements, see the
+    STAX User's Guide.
+<p>
+<h3><a name="packagecomment" href="#ToC_packagecomment">Package Comment Files</a></h3>
+<p>
+    Each package can have its own documentation comment, contained in its
+    own HTML file, that STAXDoc will merge into the package summary page 
+    that it generates.  You typically include any documentation that
+    applies to the entire package in this HTML file.  
+<p>
+    To create a package comment file, you must name it 
+    <b><code>package.html</code></b> and place it in the package 
+    directory in the source tree along with the <code>.xml</code> files.  
+    STAXDoc will automatically look for this filename in this location.
+    Notice that the filename is identical for all packages.
+<p>
+    The content of the package comment file is one big documentation
+    comment, written in HTML, like all other comments. When writing the comment,
+    you should make the first sentence a summary about the package, 
+    and not put a title or any other text between
+    <tt>&lt;body&gt;</tt> and the first sentence.
+<p>
+    When STAXDoc runs, it will automatically look for this file;
+    if found, STAXDoc inserts all content between <tt>&lt;body></tt> and
+    <tt>&lt;/body></tt> tags of the file at the bottom of the package
+    summary page it generates.
+<p>    
+<h3><a name="overviewcomment" href="#ToC_overviewcomment">Overview Comment File</a></h3>
+<p>
+    Each application or set of packages that you are documenting 
+    can have its own overview documentation comment, kept in its 
+    own HTML file, that STAXDoc will merge into the overview page 
+    that it generates.  You typically include any documentation that
+    applies to the entire application or set of packages in this HTML file.
+<p>
+    To create an overview comment file, you can name the file anything
+    you want, typically <b><code>overview.html</code></b> and place it 
+    anywhere, typically at the top level of the source tree.
+<p>
+    The content of the overview comment file is one big documentation
+    comment, written in HTML, like the package comment file described
+    previously.  See that description for details.
+<p>
+    When you run STAXDoc, you specify the overview comment file name 
+    with the <a href="#overview">-overview</a> option.  The file
+    is then processed similar to that of a package comment file.
+<p>
+<h3><a name="unprocessed" href="#ToC_unprocessed">Miscellaneous Unprocessed Files</a></h3>
+<p>
+    You can also include in your source any miscellaneous files that
+    you want STAXDoc to copy to the destination directory.  These typically
+    include graphic files, example STAX xml files, and self-standing HTML files.
+<p>
+    To include unprocessed files, put them in a directory called
+    <b><code>doc-files</code></b> which can be a subdirectory of any 
+    package directory. You can have one such subdirectory for each package.
+    You might include images, example code, source files, applets and HTML files.
+<p>
+    Typically these unprocessed files are referenced from STAX documentation
+    tags or package and overview comment files.  For example, a
+    <tt> function-prolog </tt>tag in a STAX xml file may look like:
+<pre>
+    &lt;function-prolog>
+      &lt;![CDATA[
+      This is a custom image &lt;img src="doc-files/MyImage.gif">
+      ]]>
+    &lt;/function-prolog>
+</pre>
+
+</blockquote>
+<br>
+
+<!-- OPTIONS ----------------------------------------------------------------->
+
+<h2><a name="options" href="#ToC_options">Options</a></h2>
+
+<blockquote>
+<p>
+Available command-line options are:
+
+<blockquote>
+  -<a href="#d">d</a><br>
+  -<a href="#doctitle">doctitle</a><br>
+  -<a href="#functionsummary">functionsummary</a><br>
+  -<a href="#help">help</a><br>
+  -<a href="#overview">overview</a><br>
+  -<a href="#sourcepath">sourcepath</a><br>
+  -<a href="#verbose">verbose</a><br>
+  -<a href="#windowtitle">windowtitle</a><br>
+</blockquote>
+
+<h3><a name="optionsdesc" href="#ToC_optionsdesc">Options description</a></h3>
+
+<dl>
+
+<!-- ============== -->
+
+<a name="d"></a>
+<dt><b>-d</b>&nbsp; <var>directory</var>
+<dd>
+Specifies the <b>d</b>estination directory where STAXDoc saves the 
+generated HTML files.  Omitting this
+option causes the files to be saved to the current directory.  
+The value <var>directory</var> can be 
+absolute or relative to the current working directory.  
+<p>
+<!-- ============== -->
+
+<a name="functionsummary"></a>
+<dt><b>-functionsummary</b>&nbsp; <tt>FirstSentence | All</tt>
+<dd>
+Specifies what to include on each "Function Summary" page:
+<ul compact>
+  <li><tt>FirstSentence</tt>: Include only the first sentence of
+      the function-prolog (or function-description).  This is the default.
+  <li><tt>All</tt>: Include the entire contents of the function-prolog
+      (or function-description).
+</ul>
+<p>
+<!-- ============== -->
+
+<a name="doctitle"></a>
+<dt><b>-doctitle</b>&nbsp; <i>title</i> 
+<dd>
+Specifies the title to be placed at the top of the overview summary file.
+The title will be placed as a centered, level-one heading directly beneath
+the upper navigation bar. The title may contain html tags and white spaces,
+though if it does, it must be enclosed in quotes. 
+<p>
+<!-- ============== -->
+
+<a name="help"></a>
+<dt><b>-help</b>
+<dd>
+Displays the online help, which lists the STAXDoc command line options.
+<p>
+<!-- ============== -->
+
+<a name="overview"></a>
+<dt><b>-overview</b> &nbsp;<i>path\filename</i>
+<dd>
+Specifies that STAXDoc should retrieve the text for the overview
+documentation from the "source" file specified by <i>path\filename</i>
+and place it on the Overview page. The <i>path\filename</i> is
+relative to the <code>-sourcepath</code>.
+<p>
+For information about the file specified by <i>path\filename</i>, see 
+<a href="#overviewcomment">overview comment file</a>.
+<p>
+The title on the overview page is set by 
+<a href="#doctitle"><code>-doctitle</code></a>.
+<p>
+<!-- ============== -->
+
+<a name="sourcepath"></a>
+<dt><b>-sourcepath</b>&nbsp; <var>directory</var><dd>
+
+Specifies the root directory of the source tree for the package(s)
+you are documenting.  If <tt>-sourcepath</tt> is not specified,
+STAXDoc looks in the current directory for the source files.
+<p>
+For example, suppose you want to document a package called
+<code>utils/memory</code> whose source files are located at:
+<p>
+<tt>C:\user\staxsrc\utils\memory\*.xml</tt>
+<p>
+In this case you would specify the <code>sourcepath</code> to 
+<code>C:\user\src</code>, the directory that contains 
+<code>utils/memory</code>, and then supply the package name 
+<code>utils/memory</code>:
+<p>
+<tt><b>java -jar STAXDoc.jar -sourcepath C:\user\src utils/memory</b></tt>
+<p>
+
+<!-- ============== -->
+
+<a name="verbose"></a>
+<dt><b>-verbose</b>
+<dd>
+Provides more detailed messages while STAXDoc is running.
+<p>
+
+<!-- ============== -->
+
+<a name="windowtitle"></a>
+<dt><b>-windowtitle</b>&nbsp; <i>title</i> 
+<dd>
+Specifies the title to be placed in the HTML &lt;title> tag. This appears in the
+window title and in any browser bookmarks (favorite places)
+that someone creates for this page.
+<p>
+
+</blockquote>
+<br>
+
+<!-- EXAMPLES ---------------------------------------------------------------->
+
+<h2><a name="examples" href="#ToC_examples">Examples</a></h2>
+
+<blockquote>
+You can run STAXDoc on entire packages of STAX xml files.
+Each package is simply a subdirectory of your root directory containing
+a set of STAX <code>.xml</code> files. 
+In the following examples, the STAX xml files are located at 
+<code>C:\user\src\utils\*.xml</code>. The destination
+directory is <code>C:\user\mystaxdoc</code>.
+
+<h3>Documenting One or More Packages</h3>
+
+You can run STAXDoc either of the following 
+two ways -- by changing directories (with <code>cd</code>) or by 
+using <code>-sourcepath</code> option. You cannot use wildcards
+to specify groups of packages.
+<p>
+
+<ul>
+  <li><b>Case 1 - Changing to the package directory</b> - 
+      Change to the parent directory of the fully-qualified package.
+      Then run STAXDoc, supplying names of one or more
+      packages you want to document:
+  <p>
+  <tt>cd <b>C:\user\src\</b></tt><br>
+  <tt>java -jar STAXDoc.jar <b>-d C:\user\mystaxdoc utils utils/memory</b></tt>
+  <p>
+  <li><b>Case 2 - From any directory</b> -
+      In this case, it doesn't matter what the current directory is.
+      Run STAXDoc supplying <code>-sourcepath</code> with the parent directory
+      of the fully-qualified package, and supply names of one or 
+      more packages you want to document:
+  <p>
+  <tt>java -jar STAXDoc.jar <b>-d C:\user\mystaxdoc -sourcepath C:\user\src utils utils/memory</b></tt>
+  <p>
+</ul>
+<p>
+<h3>Overiding Package Names</h3>
+<p>
+You can override package names using the = keyword. In the following example the package utils/memory is renamed as 'mem':</P>
+<p>
+<tt>java -jar STAXDoc.jar -d C:\user\mystaxdoc -sourcepath C:\user\src utils utils/memory<B>=mem</B></tt>
+<p>
+<h3>Using the Verbose Option</h3>
+<p>
+Here's an example of the output you can get when using the<tt> -verbose </tt>
+option when documenting the samples and libraries packages in the C:\STAF\services\stax 
+directory:
+<pre>
+C:\STAF\services\stax>java -jar STAXDoc.jar -verbose -d C:\STAXDoc\output samples libraries
+Option set: verbose=true
+Option set: d=C:\STAXDoc\output
+STAX source package:samples
+STAX source package:libraries
+
+Package:samples
+  File:samples\sample1.xml
+  File:samples\sample2.xml
+Package:libraries
+  File:libraries\STAXUtil.xml
+
+Generating index.html
+Generating overview-summary.html
+Generating overview-frame.html
+Generating allfiles-frame.html
+Generating package-overview.html - libraries
+Generating package-frame.html
+Generating package-overview.html - samples
+Generating package-frame.html
+Generating .\libraries\STAXUtil.html
+Transforming .\libraries\STAXUtil.xml
+Generating .\samples\sample1.html
+Transforming .\samples\sample1.xml
+Generating .\samples\sample2.html
+Transforming .\samples\sample2.xml
+STAXDoc ended with success
+
+</pre>
+</blockquote>
+
+<h2><a name="htmlDoc" href="#Toc_htmlDoc">Generated Documentation</a></h2>
+
+Suppose you generated HTML documentation for the <tt>.xml</tt> files
+in the "<tt>samples</tt>" and "<tt>libraries</tt>" directories in source
+path<tt> C:\STAF\services\stax</tt> as follows:
+<blockquote>
+<pre>
+cd C:\STAF\services\stax
+java -jar STAXDoc.jar -d c:\STAXDoc\output samples libraries
+</pre>
+</blockquote>
+Here's a view of the HTML documentation generated by STAXDoc for the overall
+documentation obtained by specifying the<tt> index.html </tt> file
+in the destination directory:
+<p>
+<img src="overview.gif" alt="STAXDoc Overview Documentation">
+<p>
+Here's a view of the HTML documentation generated by STAXDoc for the 
+<tt>samples</tt> package obtained by clicking on <font color="darkmagenta">samples</font>
+in the upper left panel under "<b>Packages</b>" and then clicking on
+<font color="darkmagenta"><b>samples</b></font> in the lower-left panel:
+<p>
+<img src="packageView.gif" alt="STAXDoc Package Documentation">
+<p>
+<p>
+Here's a view of the HTML documentation generated by STAXDoc for file<tt> sample1.xml</tt>
+obtained by clicking on <font color="darkmagenta"><b>sample1.xml</b></font>.  
+Note that a summary of all of the functions defined in the xml file are shown
+first, followed by a detailed description of each function.
+<p>
+<img src="fileView.gif" alt="STAXDoc File Documentation (1)">
+<p>
+<img src="fileView2.gif" alt="STAXDoc File Documentation (2)">
+<p>
+<img src="fileView3.gif" alt="STAXDoc File Documentation (3)">
+<p>
+<img src="fileView4.gif" alt="STAXDoc File Documentation (4)">
+<p>
+<br>
+
+<!-- References ---------------------------------------------------------------->
+
+<h2><a name="references" href="#ToC_references">References</a></h2>
+<p>
+For additional information on STAF and STAX, see:
+<ul>
+  <li><a href="http://staf.sourceforge.net/current/STAFUG.htm" target="FrameNew">STAF User's Guide</a></li>
+  <li><a href="http://staf.sourceforge.net/current/staxug.pdf" target="FrameNew">STAX User's Guide</a> (PDF manual)</li>
+</ul>
+<p>
+
+
+</body>
+</html>

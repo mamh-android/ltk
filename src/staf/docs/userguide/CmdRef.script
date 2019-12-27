@@ -1,0 +1,566 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : CMDRef SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Command Reference
+.*  Detail:
+.*
+.*     This file describes the STAF Command Reference
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.command reference
+:i1.service command reference
+:h1 id=cmdref.Service Command Reference
+:table id     = cmdtab
+       headhi = 3
+       frame  = box
+       split  = yes
+       cols   = '* 4*'
+       align  = 'l l'.
+:tcap.STAF Service Command Reference
+.*-----------------------------
+:thd.
+:c.Command
+:c.Syntax
+:ethd.
+.*-----------------------------
+:row.
+:c.:hp2.CONFIG:ehp2.
+:c.Provides a way to save the current STAF configuration to a file,
+reflecting any changes made since STAFProc was started
+:p.
+:xmp.
+SAVE [FILE <Name>] [VARS <Current | Startup>]
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.DELAY:ehp2.
+:c.Delay (or sleep) for a specified amount of time.
+:p.
+:xmp.
+DELAY <Number>[s|m|h|d|w]
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.DIAG:ehp2.
+:c.Allows diagnostics to be recorded, listed, enabled, disabled, and reset.
+:p.
+:xmp.
+RECORD TRIGGER <Trigger> SOURCE <Source>
+
+LIST   < &lbrk.TRIGGER <Trigger> | SOURCE <Source> | TRIGGERS | SOURCES&rbrk.
+         &lbrk.SORTBYCOUNT | SORTBYTRIGGER | SORTBYSOURCE&rbrk. > |
+       SETTINGS
+
+RESET  FORCE
+
+ENABLE
+
+DISABLE
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.ECHO:ehp2.
+:c.Echo a return string from other STAF clients.
+:p.
+:xmp.
+ECHO <Message>
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.FS:ehp2.
+:c.Allows you to manipulate files and directories and get information about file system entries.
+:p.
+:xmp.
+COPY   FILE <Name> &lbrk.TOFILE <Name> | TODIRECTORY <Name>&rbrk.  &lbrk.TOMACHINE <Machine>&rbrk.
+       &lbrk.TEXT &lbrk.FORMAT <Format>&rbrk.&rbrk.  &lbrk.FAILIFEXISTS | FAILIFNEW&rbrk.
+
+COPY   DIRECTORY <Name> &lbrk.TODIRECTORY <Name>&rbrk.  &lbrk.TOMACHINE <Machine>&rbrk.
+       &lbrk.NAME <Pattern>&rbrk.  &lbrk.EXT <Pattern>&rbrk. &lbrk.CASESENSITIVE | CASEINSENSITIVE&rbrk.
+       &lbrk.TEXTEXT <Pattern>... &lbrk.FORMAT <Format>&rbrk.&rbrk.
+       &lbrk.RECURSE &lbrk.KEEPEMPTYDIRECTORIES | ONLYDIRECTORIES&rbrk.&rbrk.
+       &lbrk.IGNOREERRORS&rbrk. &lbrk.FAILIFEXISTS | FAILIFNEW&rbrk.
+
+MOVE   FILE <Name> <TOFILE <Name> | TODIRECTORY <Name>>
+
+MOVE   DIRECTORY <Name> TODIRECTORY <Name>
+
+GET    FILE <Name> &lbrk.&lbrk.TEXT | BINARY&rbrk. &lbrk.FORMAT <Format>&rbrk.&rbrk.
+
+GET    ENTRY <Name> <TYPE | SIZE | MODTIME | LINKTARGET |
+                     CHECKSUM &lbrk.<Algorithm>&rbrk.>
+QUERY  ENTRY <Name>
+
+CREATE DIRECTORY <Name> &lbrk.FULLPATH&rbrk. &lbrk.FAILIFEXISTS&rbrk.
+
+LIST   DIRECTORY <Name> &lbrk.RECURSE&rbrk. &lbrk.LONG &lbrk.DETAILS&rbrk. | SUMMARY&rbrk. &lbrk.TYPE <Types>&rbrk.
+       &lbrk.NAME <Pattern>&rbrk. &lbrk.EXT <Pattern>&rbrk. &lbrk.CASESENSITIVE | CASEINSENSITIVE&rbrk.
+       &lbrk.SORTBYNAME | SORTBYSIZE | SORTBYMODTIME&rbrk.     
+
+LIST   COPYREQUESTS &lbrk.LONG&rbrk. &lbrk.INBOUND&rbrk. &lbrk.OUTBOUND&rbrk.
+       &lbrk.FILE &lbrk.&lbrk.BINARY&rbrk. &lbrk.TEXT&rbrk.&rbrk.&rbrk. &lbrk.DIRECTORY&rbrk.
+
+LIST   SETTINGS
+
+DELETE ENTRY <Name> CONFIRM &lbrk.RECURSE&rbrk. &lbrk.IGNOREERRORS&rbrk.
+       &lbrk. CHILDREN &lbrk.TYPE <Types>&rbrk. &lbrk.NAME <Pattern>&rbrk. &lbrk.EXT <Pattern>&rbrk.
+                  &lbrk.CASESENSITIVE | CASEINSENSITIVE&rbrk. &rbrk.
+                  
+SET    STRICTFSCOPYTRUST <Enabled | Disabled>
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.HANDLE:ehp2.
+:c.Allows you to query information on various process handles and to manage static handles.
+:p.
+:xmp.
+CREATE HANDLE NAME <Handle Name>
+
+DELETE HANDLE <Number>
+
+QUERY HANDLE <Handle>
+
+LIST &lbrk. HANDLES <&lbrk.NAME <Handle Name>&rbrk. &lbrk.LONG&rbrk. &lbrk.PENDING&rbrk. &lbrk.REGISTERED&rbrk.
+                &lbrk.INPROCESS&rbrk. &lbrk.STATIC&rbrk.> | &lbrk.SUMMARY&rbrk. &rbrk.
+
+LIST NOTIFICATIONS &lbrk.HANDLE <Handle> | MACHINE <Machine>&rbrk. &lbrk.LONG&rbrk.
+
+AUTHENTICATE USER <User Identifier> CREDENTIALS <Credentials>
+             &lbrk.AUTHENTICATOR <Authenticator Name>&rbrk.
+
+UNAUTHENTICATE
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.HELP:ehp2.
+:c.List and query STAF return codes.  Allows services to register their own
+return codes.
+:p.
+:xmp.
+REGISTER   SERVICE <Name> ERROR <Number> INFO <String> DESCRIPTION <String>
+
+UNREGISTER SERVICE <Name> ERROR <Number>
+
+&lbrk.SERVICE <Name>&rbrk. ERROR <Number>
+
+LIST SERVICES | &lbrk.SERVICE <Name>&rbrk. ERRORS
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.LIFECYCLE:ehp2.
+:c.Allows STAF service requests to be submitted automatically when STAFProc starts
+up or shuts down.  Also, allows managing registration of the STAF service requests
+to be submitted.
+:p.
+:xmp.
+REGISTER   PHASE <Startup | Shutdown>
+           MACHINE <Machine> SERVICE <Service> REQUEST <Request>
+           [ONCE] [PRIORITY <Priority>] [DESCRIPTION <Description>]
+
+UNREGISTER ID <Registration ID>
+
+UPDATE     ID <Registration ID> [PRIORITY <Priority>] [ONCE <True | False>]
+           [MACHINE <Machine>] [SERVICE <Service>] [REQUEST <Request>]
+           [PHASE <Startup | Shutdown>] [DESCRIPTION <Description>]
+
+LIST       [PHASE <Startup | Shutdown>] [LONG]
+
+QUERY      ID <Registration ID>
+
+TRIGGER    <ID <Registration ID> | PHASE <Startup | Shutdown>> CONFIRM
+
+ENABLE     ID <Registration ID>
+
+DISABLE    ID <Registration ID>
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.LOG:ehp2.
+:c.Allows for robust data-logging and log file querying and manipulation.
+:p.
+:xmp.
+LOG    <GLOBAL | MACHINE | HANDLE> LOGNAME <Logname> LEVEL <Level>
+       MESSAGE <Message> &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+
+QUERY  <GLOBAL | MACHINE <Machine> &lbrk.HANDLE <Handle>&rbrk.> LOGNAME <Logname>
+       &lbrk.LEVELMASK <Mask>&rbrk. &lbrk.QMACHINE <Machine>&rbrk.... &lbrk.QHANDLE <Handle>&rbrk....
+       &lbrk.NAME <Name>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.ENDPOINT <Endpoint>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.CSCONTAINS <String>&rbrk....
+       &lbrk.STARTSWITH <String>&rbrk.... &lbrk.CSSTARTSWITH <String>&rbrk....
+       &lbrk.FROM <Timestamp> | AFTER <Timestamp>&rbrk.
+       &lbrk.BEFORE <Timestamp> | TO <Timestamp>&rbrk.
+       &lbrk.FROMRECORD <Num>&rbrk. &lbrk.TORECORD <Num>&rbrk.
+       &lbrk.FIRST <Num> | LAST <Num> | ALL&rbrk. &lbrk.TOTAL | STATS | LONG&rbrk.
+       &lbrk.LEVELBITSTRING&rbrk.
+
+LIST   GLOBAL | MACHINES | MACHINE <Machine> &lbrk.HANDLE <Handle> | HANDLES&rbrk. |
+       SETTINGS
+
+DELETE <GLOBAL | MACHINE <Machine> &lbrk.HANDLE <Handle>&rbrk.>
+        LOGNAME <Logname> CONFIRM
+
+PURGE  <GLOBAL | MACHINE <Machine> &lbrk.HANDLE <Handle>&rbrk.> LOGNAME <Logname>
+       CONFIRM | CONFIRMALL
+       &lbrk.LEVELMASK <Mask>&rbrk. &lbrk.QMACHINE <Machine>&rbrk.... &lbrk.QHANDLE <Handle>&rbrk....
+       &lbrk.NAME <Name>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.ENDPOINT <Endpoint>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.CSCONTAINS <String>&rbrk....
+       &lbrk.STARTSWITH <String>&rbrk.... &lbrk.CSSTARTSWITH <String>&rbrk....
+       &lbrk.FROM <Timestamp> | AFTER <Timestamp>&rbrk.
+       &lbrk.BEFORE <Timestamp> | TO <Timestamp>&rbrk.
+       &lbrk.FROMRECORD <Num>&rbrk. &lbrk.TORECORD <Num>&rbrk.
+       &lbrk.FIRST <Num> | LAST <Num>&rbrk.
+
+SET    &lbrk.MAXRECORDSIZE <Size>&rbrk. &lbrk.DEFAULTMAXQUERYRECORDS <Number>&rbrk.
+       &lbrk.ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&rbrk.
+       &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+
+VERSION
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.MISC:ehp2.
+:c.Provides miscellaneous services such as VERSION, WHOAMI, and WHOAREYOU
+information, allows for listing and querying enabled interfaces, allows
+you to set operational parameters for STAF and show their settings,
+and allows you to list and purge the endpoint cache used by automatic
+interface cycling.
+:p.
+:xmp.
+VERSION
+
+WHOAMI
+
+WHOAREYOU
+
+LIST  INTERFACES | SETTINGS | ENDPOINTCACHE
+
+QUERY INTERFACE <Name>
+
+SET   &lbrk.CONNECTATTEMPTS <Number>&rbrk. &lbrk.CONNECTRETRYDELAY <Number>&lbrk.s|m|h|d|w&rbrk.&rbrk.
+      &lbrk.MAXQUEUESIZE <Number>&rbrk. &lbrk.HANDLEGCINTERVAL <Number>&lbrk.s|m|h|d&rbrk.&rbrk.
+      &lbrk.INTERFACECYCLING <Enabled | Disabled>&rbrk.
+      &lbrk.DEFAULTINTERFACE <Name>&rbrk.  &lbrk.DEFAULTAUTHENTICATOR <Name>&rbrk.
+      &lbrk.RESULTCOMPATIBILITYMODE <Verbose | None>&rbrk.
+      
+PURGE ENDPOINTCACHE <ENDPOINT <Endpoint>... | CONFIRM>
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.MONITOR:ehp2.
+:c.Allows test cases the ability to log and query status messages.
+:p.
+:xmp.
+LOG    MESSAGE <Message> [NAME <Name>] &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+
+QUERY  MACHINE <Machine> < HANDLE <Handle> | NAME <Name> >
+
+LIST   <MACHINES | MACHINE <Machine> [NAMES] | SETTINGS>
+
+DELETE &lbrk.BEFORE <Timestamp>&rbrk. CONFIRM
+
+SET    &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+       &lbrk.OLDRETURNCODES | NEWRETURNCODES&rbrk. &lbrk.MAXRECORDSIZE <Size>&rbrk.
+       &lbrk.ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&rbrk.
+
+VERSION
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.PING:ehp2.
+:c.Allows you to ping other STAF clients.
+:p.
+:xmp.
+PING &lbrk.MACHINE <Machine>&rbrk.
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.PROCESS:ehp2.
+:c.Allows you to start, stop, and manage processes.
+:p.
+:xmp.
+START &lbrk.SHELL &lbrk.<Shell>&rbrk.&rbrk. COMMAND <Command> &lbrk.PARMS <Parms>&rbrk. &lbrk.WORKDIR <Directory>&rbrk.
+      &lbrk.VAR <Variable>=<Value>&rbrk.... &lbrk.ENV <Variable>=<Value>&rbrk.... &lbrk.USEPROCESSVARS&rbrk.
+      &lbrk.WORKLOAD <Name>&rbrk. &lbrk.TITLE <Title>&rbrk. &lbrk.WAIT &lbrk.<Number>[s|m|h|d|w]&rbrk. | ASYNC&rbrk.
+      &lbrk.STOPUSING <Method>&rbrk. &lbrk.STATICHANDLENAME <Name>&rbrk.
+      &lbrk.NEWCONSOLE | SAMECONSOLE&rbrk. &lbrk.FOCUS <Background | Foreground | Minimized>&rbrk.
+      &lbrk.USERNAME <User name> &lbrk.PASSWORD <Password>&rbrk.&rbrk.
+      &lbrk.DISABLEDAUTHISERROR | IGNOREDISABLEDAUTH&rbrk.
+      &lbrk.STDIN <File>&rbrk. &lbrk.STDOUT <File> | STDOUTAPPEND <File>&rbrk.
+      &lbrk.STDERR <File> | STDERRAPPEND <File> | STDERRTOSTDOUT&rbrk.
+      &lbrk.RETURNSTDOUT&rbrk. &lbrk.RETURNSTDERR&rbrk. &lbrk.RETURNFILE <File>&rbrk....
+      &lbrk.NOTIFY ONEND &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+      &lbrk.MACHINE <Machine>&rbrk. &lbrk.PRIORITY <Priority>&rbrk &lbrk.KEY <Key>&rbrk.&rbrk.
+
+STOP  <ALL CONFIRM | WORKLOAD <Name> | HANDLE <Handle>> &lbrk.USING <Method>&rbrk.
+
+KILL  PID <Pid> CONFIRM &lbrk.USING <Method>&rbrk.
+
+LIST  &lbrk.HANDLES&rbrk. &lbrk.RUNNING&rbrk. &lbrk.COMPLETED&rbrk. &lbrk.WORKLOAD <Name>&rbrk. &lbrk.LONG&rbrk.
+LIST  SETTINGS
+
+QUERY HANDLE <Handle>>
+
+FREE  <ALL | WORKLOAD <Name> | HANDLE <Handle>>
+
+NOTIFY REGISTER   ONENDOFHANDLE <Handle> &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+                  &lbrk.MACHINE <Machine>&rbrk. &lbrk.PRIORITY <Priority>&rbrk.
+
+NOTIFY UNREGISTER ONENDOFHANDLE <Handle> &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+                  &lbrk.MACHINE <Machine>&rbrk. &lbrk.PRIORITY <Priority>&rbrk.
+                  
+NOTIFY LIST       ONENDOFHANDLE <Handle>
+
+SET   &lbrk.DEFAULTSTOPUSING <Method>&rbrk. &lbrk.DEFAULTCONSOLE <New | Same>&rbrk.
+      &lbrk.DEFAULTFOCUS <Background | Foreground | Minimized>&rbrk.
+      &lbrk.PROCESSAUTHMODE <Auth Mode>&rbrk.
+      &lbrk.DEFAULTAUTHUSERNAME <User Name>&rbrk. &lbrk.DEFAULTAUTHPASSWORD <Password>&rbrk.
+      &lbrk.DEFAULTAUTHDISABLEDACTION <Error | Ignore>&rbrk. &lbrk.DEFAULTSHELL <Shell>&rbrk.
+      &lbrk.DEFAULTNEWCONSOLESHELL <Shell>&rbrk. &lbrk.DEFAULTSAMECONSOLESHELL <Shell>&rbrk.
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.QUEUE:ehp2.
+:c.Allows you to manipulate and manage queues.
+:p.
+:xmp.
+QUEUE  MESSAGE <Message>
+       &lbrk.HANDLE <Handle>&rbrk. | &lbrk.NAME <Name>&rbrk. &lbrk.PRIORITY <Priority>&rbrk. &lbrk.TYPE <Type>&rbrk.
+
+GET    &lbrk.PRIORITY <Priority>&rbrk.... &lbrk.MACHINE <Endpoint>&rbrk.... &lbrk.NAME <Name>&rbrk....
+       &lbrk.HANDLE <Handle>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.TYPE <Type>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.ICONTAINS <String>&rbrk....
+       &lbrk.FIRST <Number> | ALL&rbrk.
+       &lbrk.WAIT &lbrk.<Number>[s|m|h|d|w]&rbrk.&rbrk.
+
+PEEK   &lbrk.PRIORITY <Priority>&rbrk.... &lbrk.MACHINE <Endpoint>&rbrk.... &lbrk.NAME <Name>&rbrk....
+       &lbrk.HANDLE <Handle>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.TYPE <Type>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.ICONTAINS <String>&rbrk....
+       &lbrk.FIRST <Number> | ALL&rbrk.
+       &lbrk.WAIT &lbrk.<Number>[s|m|h|d|w]&rbrk.&rbrk.
+
+DELETE &lbrk.PRIORITY <Priority>&rbrk.... &lbrk.MACHINE <Endpoint>&rbrk.... &lbrk.NAME <Name>&rbrk....
+       &lbrk.HANDLE <Handle>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.TYPE <Type>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.ICONTAINS <String>&rbrk....
+
+LIST   &lbrk.HANDLE <Handle>&rbrk.
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.RESPOOL:ehp2.
+:c.Allows you to manage exclusive access to entries within resource pools.
+:p.
+:xmp.
+CREATE  POOL <PoolName> DESCRIPTION <Pooltext>
+
+DELETE  POOL <PoolName> CONFIRM &lbrk.FORCE&rbrk.
+
+QUERY   POOL <PoolName>
+
+REQUEST POOL <PoolName>
+        &lbrk.FIRST | RANDOM | ENTRY <Value> &lbrk.RELEASE&rbrk.&rbrk. &lbrk.PRIORITY <Number>&rbrk.
+        &lbrk.TIMEOUT <Number>[s|m|h|d|w]&rbrk. &lbrk.GARBAGECOLLECT <Yes | No>&rbrk.
+
+RELEASE POOL <PoolName> ENTRY <Value> &lbrk.FORCE&rbrk.
+
+CANCEL  POOL <PoolName>
+        &lbrk.FORCE &lbrk.MACHINE <Machine>&rbrk. &lbrk.HANDLE <Handle #> | NAME <Handle Name>&rbrk.&rbrk.
+        &lbrk.ENTRY <Entry>&rbrk. &lbrk.PRIORITY <Number>&rbrk. &lbrk.FIRST | LAST&rbrk.
+
+ADD     POOL <PoolName> ENTRY <Value> &lbrk.ENTRY <Value>&rbrk....
+
+REMOVE  POOL <PoolName> ENTRY <Value> &lbrk.ENTRY <Value>&rbrk.... CONFIRM &lbrk.FORCE&rbrk.
+
+LIST    [POOLS | SETTINGS]
+
+VERSION
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.SEM:ehp2.
+:c.Allows you to manipulate and manage mutex and event semaphores.
+:p.
+:xmp.
+REQUEST MUTEX <Name> &lbrk.TIMEOUT <Number>[s|m|h|d|w]&rbrk. &lbrk.GARBAGECOLLECT <Yes | No>&rbrk.
+RELEASE MUTEX <Name> &lbrk.FORCE&rbrk.
+CANCEL  MUTEX <Name>
+        &lbrk.FORCE [MACHINE <Machine>&rbrk. &lbrk.HANDLE <Handle #> | NAME <Handle Name>&rbrk.&rbrk.
+        &lbrk.FIRST | LAST&rbrk.
+
+POST    EVENT <Name>
+RESET   EVENT <Name>
+PULSE   EVENT <Name>
+WAIT    EVENT <Name> &lbrk.TIMEOUT <Number>[s|m|h|d|w]&rbrk.
+
+DELETE  MUTEX <Name> | EVENT <Name>
+QUERY   MUTEX <Name> | EVENT <Name>
+LIST    MUTEX | EVENT
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.SERVICE:ehp2.
+:c.Allows you to manage STAF services and requests.
+:p.
+:xmp.
+LIST    &lbrk. SERVICES | SERVICELOADERS | AUTHENTICATORS |
+          REQUESTS <&lbrk.PENDING&rbrk. &lbrk.COMPLETE&rbrk. &lbrk.LONG&rbrk.> | &lbrk.SUMMARY&rbrk. &rbrk.
+
+QUERY   SERVICE <Service Name> | SERVICELOADER <ServiceLoader Name> |
+        AUTHENTICATOR <Authenticator Name> | REQUEST <Request Number>
+
+ADD     SERVICE <Service Name> LIBRARY <Library Name>
+        &lbrk.EXECUTE <Executable>&rbrk. &lbrk.OPTION <Name=&lbrk.=Value&rbrk.>&rbrk....
+        &lbrk.PARMS <Parameters>&rbrk.
+.*
+.*REPLACE SERVICE <Service Name> LIBRARY <Library Name>
+.*        &lbrk.EXECUTE <Executable>&rbrk. &lbrk.OPTION <Name=&lbrk.=Value&rbrk.>&rbrk....
+.*        &lbrk.PARMS <Parameters>&rbrk. &lbrk.RENAME <Service Name>&rbrk.
+.*
+.*RENAME  SERVICE <Service Name> TO <New Service Name>
+
+REMOVE  SERVICE <Service Name>
+
+FREE    REQUEST <Request Number> [FORCE]
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.SHUTDOWN:ehp2.
+:c.Allows you to manage the STAFProc daemon process.
+:p.
+:xmp.
+SHUTDOWN
+
+NOTIFY REGISTER   &lbrk.MACHINE <Machine>&rbrk. &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+                  &lbrk.PRIORITY <Priority>&rbrk.
+
+NOTIFY UNREGISTER &lbrk.MACHINE <Machine>&rbrk. &lbrk.HANDLE <Handle> | NAME <Name>&rbrk.
+                  &lbrk.PRIORITY <Priority>&rbrk.
+
+NOTIFY LIST
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.TRACE:ehp2.
+:c.Allows you to turn tracing on and off at the service and tracepoint level.
+:p.
+:xmp.
+ENABLE ALL  &lbrk. TRACEPOINTS | SERVICES &rbrk.
+ENABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+ENABLE TRACEPOINT <Trace point> &lbrk.TRACEPOINT <Trace point>&rbrk....
+ENABLE SERVICE <Service> &lbrk.SERVICE <Service>&rbrk....
+
+DISABLE ALL  &lbrk. TRACEPOINTS | SERVICES &rbrk.
+DISABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+DISABLE TRACEPOINT <Trace point> &lbrk.TRACEPOINT <Trace point>&rbrk....
+DISABLE SERVICE <Service> &lbrk.SERVICE <Service>&rbrk....
+
+SET DESTINATION TO < &lbrk.STDOUT | STDERR&rbrk. &lbrk.FILE <File name> [APPEND]&rbrk. >
+SET DEFAULTSERVICESTATE < Enabled | Disabled >
+
+LIST &lbrk.SETTINGS&rbrk.
+
+PURGE
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.TRUST:ehp2.
+:c.Allows you to manipulate and manage trust levels (security).
+:p.
+:xmp.
+SET < MACHINE <Machine> | USER <User> | DEFAULT > LEVEL <Level>
+
+GET MACHINE <Machine> &lbrk.USER <User>&rbrk.
+
+DELETE MACHINE <Machine> | USER <User>
+
+LIST
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.VAR:ehp2.
+:c.Allows you to manipulate and manage system, shared and process specific variable pools.
+:p.
+:xmp.
+SET &lbrk.SYSTEM | SHARED | HANDLE <Handle>&rbrk. &lbrk.FAILIFEXISTS&rbrk.
+    VAR <Name=Value> &lbrk.VAR <Name=Value>&rbrk....
+
+GET &lbrk.SYSTEM | SHARED | HANDLE <Handle>&rbrk. VAR <Name>
+
+DELETE &lbrk.SYSTEM | SHARED | HANDLE <Handle>&rbrk. VAR <Name> &lbrk.VAR <Name>&rbrk....
+
+LIST &lbrk.SYSTEM | SHARED | HANDLE <Handle> | ASHANDLE <Handle> | REQUEST &lbrk.<Number>&rbrk.&rbrk.
+
+RESOLVE &lbrk.SYSTEM | SHARED | HANDLE <Handle> | ASHANDLE <Handle> | REQUEST &lbrk.<Number>&rbrk.&rbrk.
+        STRING <String> &lbrk.STRING <String>&rbrk....
+
+HELP
+:exmp.
+.*-----------------------------
+:row.
+:c.:hp2.ZIP:ehp2.
+:c.Allows for unzipping, listing, and adding/deleting entries in Zip archives which are
+PKZip, WinZip and Jar compatible.
+:p.
+:xmp.
+UNZIP  ZIPFILE <Name> TODIRECTORY <Name>
+       &lbrk.FILE <Name>&rbrk.... &lbrk.DIRECTORY <Name>&rbrk....
+       &lbrk.RESTOREPERMISSION&rbrk. &lbrk.REPLACE&rbrk.
+       
+ADD    ZIPFILE <Name> < FILE <Name> | DIRECTORY <Name> &lbrk.RECURSE&rbrk. >
+       &lbrk.RELATIVETO <Directory>&rbrk.
+
+DELETE ZIPFILE <Name> FILE <Name> &lbrk.FILE <Name>&rbrk.... CONFIRM
+
+LIST   ZIPFILE <Name>
+
+VERSION
+
+HELP
+:exmp.
+.*-----------------------------
+:etable.
+

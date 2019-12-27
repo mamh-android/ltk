@@ -1,0 +1,565 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2008
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Generator" content="Lotus Word Pro">
+   <meta name="GENERATOR" content="Mozilla/4.7 [en] (WinNT; U) [Netscape]">
+   <title>FTP Service User's Guide</title>
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1>
+FTP Service User's Guide</h1>
+<b>Version 1.0.3</b>
+<p><b>Last updated: December 6, 2010</b>
+
+<p>
+<hr>
+<h2><a name="ToC"></a>Table of Contents</h2>
+<p>
+<a name="ToC_Overview" href="#Header_Overview"><b>Overview</b></a>
+<p>
+<a name="ToC_Installation" href="#Header_Installation"><b>Installation and Configuration</b></a>
+<p>
+<a name="ToC_urlpath" href="#Header_urlpath"><b>FTP URL Path</b></a>
+<p>
+<a name="ToC_RequestSyntax" href="#Header_RequestSyntax"><b>Request Syntax</b></a>
+<menu>
+<li><a name="ToC_Help" href="#Header_Help">HELP</a></li>
+<li><a name="ToC_Get" href="#Header_Get">GET</a></li>
+<li><a name="ToC_Put" href="#Header_Put">PUT</a></li>
+<li><a name="ToC_Dir" href="#Header_Dir">DIR</a></li>
+<li><a name="ToC_Version" href="#Header_Version">VERSION</a></li>
+</menu>
+<a name="ToC_ErrorCodes" href="#Header_ErrorCodes"><b>Error Code Reference</b></a>
+
+<p>
+<hr>
+<p>
+<h1><a NAME="Header_Overview" href="#ToC_Overview">Overview</a></h1>
+
+The FTP (File Transfer Protocol) service is an external STAF service written in Java.
+The purpose of the FTP service is to provide client side FTP functionality that
+can be used to access remote FTP servers.  This service only provides a few basic
+FTP capabilities:
+<ul>
+<li>The ability to perform a binary file download from a FTP host server machine
+<li>The ability to perform a binary file upload to a FTP host server machine
+<li>The ability to list the contents of a directory on a FTP host server machine.
+</ul>
+<p>
+The STAF FTP service uses the FTP client support provided in Java to provide lower level FTP
+protocol handling via the java.net.URL class.  The advantage to using this library
+is that it comes with Java and is public and documented.  The disadvantages are that
+it implements RFC1738 rather than the newer RFC959 specification, and FTP URLs require
+that the connection close after every operation which is not very efficient for
+transferring many small files, and it lacks several useful features.
+<p>
+Note that JavaWorld conducted a formal review of FTP client libraries that are available
+<a href="http://www.javaworld.com/javaworld/jw-04-2003/jw-0404-ftp.html">here</a>.
+
+<p>
+<hr>
+<p>
+<h1>
+<a NAME="Header_Installation" href="#ToC_Installation">Installation and Configuration</a></h1>
+
+<ol>
+<li>Install Java 1.4 or later.
+<p>
+<li>Install STAF 3.0.0 or later by following
+the installation instructions in the STAF documentation.
+<p>
+<li>Install the FTP service:
+<p>Download the FtpV103.zip/tar file from
+<a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+into a local directory (e.g. C:/STAF/services or /usr/local/staf/services) and extract it.
+<p>
+<li>Configure the FTP service:
+<p>Add the following statement to your STAF.cfg file:
+<p><tt>
+SERVICE &lt;Service Name> LIBRARY JSTAF EXECUTE &lt;Service Jar File Name></tt>
+<p>where:
+<ul>
+<li>
+<tt>&lt;Service Name></tt>
+is the name by which the FTP service will be known on this machine.</li>
+<li>
+<tt>&lt;Service Jar File Name></tt>
+is the fully-qualified name of the STAFFTP.jar file.</li>
+</ul>
+
+<p><b>Examples:</b>
+<p><tt>
+SERVICE FTP LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/ftp/STAFFTP.jar</tt>
+<p><tt>
+SERVICE FTP LIBRARY JSTAF EXECUTE C:/STAF/services/ftp/STAFFTP.jar</tt>
+<p>Or, you can dynamically add the FTP service using the SERVICE
+service's <tt>ADD SERVICE</tt> request.
+</ol>
+<p>
+<h1><a name="Header_urlpath" href="#ToC_urlpath">FTP URL Path</a></h1>
+
+The GET, PUT, and DIR requests have a URLPATH option whose value is a url-path
+for a FTP Uniform Resource Locator (URL).  The FTP URL scheme is used to
+designate files and directories on Internet hosts accessible using the FTP protocol.   
+The syntax for a url-path as defined by
+<a href="http://www.isi.edu/in-notes/rfc1738.txt">RFC 1738</a> is:
+<pre>
+  &lt;cwd1>/&lt;cwd2>/.../&lt;cwdN>/&lt;name>
+</pre>
+where &lt;cwd1> through &lt;cwdN> and &lt;name> are (possibly encoded) strings.
+The &lt;cwdx> parts may be empty.  Also, the &lt;name> part should be
+empty for a DIR request.
+The url-path is interpreted as a series of FTP commands as follows:
+<ul>
+<li>Each of the &lt;cwd> elements is to be supplied, sequentially, as the
+    argument to a CWD (change working directory) command.
+<li>Then if the &lt;name> part is supplied (as it must be for a GET and PUT request),
+    change to binary mode and access the file whose name is &lt;name>
+    (for example, on a GET request, using the RETR command or
+    on a PUT request, using the PUT command).
+    If the &lt;name> part is not supplied (as it shouldn't be for a DIR request),
+   then use the DIR command to get a directory listing.
+</ul>
+<p>
+Within a name or CWD component, the characters "/" and ";" are
+reserved and must be encoded. The components are decoded prior to
+their use in the FTP protocol.  In particular, if the appropriate FTP
+sequence to access a particular file requires supplying a string
+containing a "/" as an argument to a CWD or RETR command, it is
+necessary to encode each "/".
+<p>
+For example on a GET request, the url-path <tt>%2Fetc/myfile.txt</tt> is
+interpreted by executing <tt>"CWD /etc"</tt> and then <tt>"RETR myfile.txt"</tt>.
+This has a different meaning from url-path <tt>etc/filefile.txt</tt> which
+would <tt>"CWD etc"</tt> and then <tt>"RETR myfile.txt"</tt>; the initial "CWD"
+might be executed relative to the default directory for the user that you used to
+login to the FTP host server.  On the other hand, url-path
+<tt>/etc/myfile.txt</tt>, would <tt>"CWD "</tt> with a null argument, then
+<tt>"CWD etc"</tt>, and then <tt>"RETR myfile.txt"</tt>.
+<p>
+<hr>
+<p>
+<h1>
+<a NAME="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></b></h1>
+
+The FTP service provides the following requests:
+<ul type=disc>
+<li>GET - Downloads a file in binary mode from a remote FTP host server</li>
+<li>PUT - Uploads a file in binary mode to a remote FTP host server</li>
+<li>DIR - Provides a directory listing for a directory on a remote FTP host server</li>
+<li>VERSION - displays the version of the STAF FTP service</li>
+<li>HELP - provides the help syntax for the STAF FTP service</li>
+</ul>
+
+<h2><a NAME="Header_Help" href="#ToC_Help">HELP</a></h2>
+
+HELP displays the request options and how to use them.
+
+<h4>Syntax</h4>
+
+<tt>HELP</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the Help messages for the request options for
+the FTP service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the syntax for the FTP service on machine client1:
+<p><tt>STAF client1 FTP HELP</tt>
+<p><b>Output:</b>
+<pre>
+FTP Service Help
+
+GET HOST &lt;Host> [PORT &lt;Port>] URLPATH &lt;FTP URL File Path> FILE &lt;Name>
+    [USER &lt;Name> PASSWORD &lt;Password>]
+
+PUT HOST &lt;Host> [PORT &lt;Port>] URLPATH &lt;FTP URL File Path> FILE &lt;Name>
+    [USER &lt;Name> PASSWORD &lt;Password>]
+
+DIR HOST &lt;Host> [PORT &lt;Port>] URLPATH &lt;FTP URL Directory Path>
+    [USER &lt;Name> PASSWORD &lt;Password>]
+
+VERSION
+
+HELP
+</pre>
+</ul>
+
+<h2><a NAME="Header_Get" href="#ToC_Get">GET</a></h2>
+
+<p>
+The GET command downloads a file in binary mode from the remote FTP host and stores it
+on the STAF FTP service machine.
+
+<h4>Syntax</h4>
+
+<pre>
+GET HOST &lt;Host> [PORT &lt;Port>] URLPATH &lt;FTP URL File Path> FILE &lt;Name>
+    [USER &lt;Name> PASSWORD &lt;Password>]
+</pre>
+<p>
+<tt>HOST</tt> specifies the host name or IP address of the FTP server where the
+file you want to download resides.
+This option will resolve variables.
+<p>
+<tt>PORT</tt> specifies the port number to which the TCP connection is made
+on the remote FTP host machine.  If the port is not specified, the default port
+for the ftp protocol is used instead.
+This option will resolve variables.
+<p>
+<tt>URLPATH</tt> specifies the FTP URL path to a file on the remote FTP host server that
+you want to download.  See <a href="#Header_urlpath">FTP URL Path</a>
+for more information on the syntax for a FTP URL Path.
+This option will resolve variables.
+<p>
+<tt>FILE</tt> specifies the fully-qualified name of the file on the
+STAF FTP service machine where you want to store the file downloaded from
+the remote FTP host.
+This option will resolve variables.
+<p>
+<tt>USER</tt> specifies the user name that will be used in conjunction with
+specified password to login to the FTP host.
+The default is anonymous (to attempt an anonymous login to the FTP server).
+This option will resolve variables.
+<p>
+<tt>PASSWORD</tt> specifies the password that will be used in conjunction
+with the specified user name to login to the FTP host.
+The default is the registered name of the STAF FTP service followed by "@" and
+the logical name (e.g. host name) of the machine submitting the request to
+the FTP service.
+This option will resolve variables.
+<p>
+A valid user and password is required to login to the FTP host.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 4.
+
+<h4>Results</h4>
+
+<p>On a successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> To download file "/tests/test.zip" from remote
+FTP host server "server1.company.com" and to store it on the local
+FTP service machine in file "C:/myTests/test.zip".
+Login to the FTP host server machine using user "tester" and password "secret"
+(specifying STAF privacy delimiters around the password to protect it).
+<p>
+<tt>STAF local FTP GET HOST server1.company.com URLPATH /tests/test.zip FILE C:/myTests/test.zip USER tester PASSWORD !!@secret@!!</tt>
+<p>
+<li><b>Goal:</b> To download file "./tests/test1.jar" from remote FTP host server
+"9.3.99.999" using port 2121 and to store it in file C:\test1.jar on the local FTP service machine.
+Login to the FTP host server machine using user "guest" and password "guest".
+<p>
+<tt>STAF local FTP GET HOST 9.3.99.999 PORT 2121 URLPATH ./tests/test1.jar FILE C:/test1.jar USER guest PASSWORD guest</tt>
+<p>
+<li><b>Goal:</b> To download file "./test.zip" from remote FTP host server
+"server1.company.com" and to store it on FTP service machine "client1.company.com"
+in file "/tests/test.zip".
+Login to the FTP host server machine using user "tester" and password "secret" (specifying
+STAF privacy delimiters around the password to protect it).
+<p>
+<tt>STAF client1.company.com FTP GET HOST server1.company.com URLPATH ./test.zip FILE /tests/test.zip USER tester PASSWORD !!@secret@!!</tt>
+<p>
+<li><b>Goal:</b> To download file "./test.zip" from remote FTP host server
+"server1.company.com" and to store it on FTP service machine "client1.company.com"
+in file "/tests/test.zip".
+Login to the FTP host server machine anonymously (assumes the FTP host server
+"server1.company.com" supports anonymous FTP).
+<p>
+<tt>STAF client1.company.com FTP GET HOST server1.company.com URLPATH ./test.zip FILE /tests/test.zip</tt>
+</ul>
+
+<h2><a NAME="Header_Put" href="#ToC_Put">PUT</a></h2>
+
+<p>
+The PUT command uploads a file in binary mode from the STAF FTP service machine to a
+remote FTP host server.
+ 
+<h4>Syntax</h4>
+
+<pre>
+PUT HOST &lt;Host> [PORT &lt;Port>] URLPATH &lt;FTP URL File Path> FILE &lt;Name>
+    [USER &lt;Name> PASSWORD &lt;Password>]
+</pre>
+<p>
+<tt>HOST</tt> specifies the host name or IP address of the FTP server
+where you want a upload a file to.
+This option will resolve variables.
+<p>
+<tt>PORT</tt> specifies the port number to which the TCP connection is made
+on the remote FTP host machine.  If the port is not specified, the default port
+for the ftp protocol is used instead.
+This option will resolve variables.
+<p>
+<tt>URLPATH</tt> specifies the FTP URL path to a file on the remote FTP host server that
+you want to upload.  See <a href="#Header_urlpath">FTP URL Path</a>
+for more information on the syntax for a FTP URL Path.
+This option will resolve variables.
+<p>
+<tt>FILE</tt> specifies the fully-qualified name of the file on the
+STAF FTP service machine that you want to upload to the remote FTP host server.
+This option will resolve variables.
+<p>
+<tt>USER</tt> specifies the user name that will be used in conjunction with
+specified password to login to the FTP host.
+The default is anonymous (to attempt an anonymous login to the FTP server).
+This option will resolve variables.
+<p>
+<tt>PASSWORD</tt> specifies the password that will be used in conjunction
+with the specified user name to login to the FTP host.
+The default is the registered name of the STAF FTP service followed by "@" and
+the logical name (e.g. host name) of the machine submitting the request to
+the FTP service.
+This option will resolve variables.
+<p>
+A valid user and password is required to login to the FTP host.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 4.
+
+<h4>Results</h4>
+
+<p>On a successful return, the result buffer will be empty.
+
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> To upload file "C:/myTests/results.zip" from my local machine
+to FTP host server "server1.company.com" and to store it as file "/builds/myProduct/results.zip"
+on the FTP host server.
+Login to the FTP host server as user "tester" with password "secret"
+(specifying STAF privacy delimiters around the password to protect it).
+<p>
+<tt>STAF local FTP PUT FILE C:/myTests/results.zip HOST server1.company.com URLPATH /builds/myProduct/results.zip USER tester PASSWORD !!@secret@!!</tt>
+<p>
+<li><b>Goal:</b> To upload file "/tests/test1.jar" from my local machine
+to FTP host server "9.3.99.999" using port 2121 and store it as file "./myProduct/tests/test1.jar"
+on the FTP host server.
+Login to the FTP host server anonymously (assuming the FTP server allows anonymous logins).
+<p>     
+<tt>STAF LOCAL FTP PUT FILE /tests/test1.jar HOST 9.3.99.999 PORT 2121 URLPATH ./myProduct/tests/test1.jar</tt>
+<p>
+<li><b>Goal:</b> Using the STAF FTP service on remote machine client1.company.com,
+upload file "C:/tests.zip" (that resides on machine client1.company.com)
+to FTP host server "server1.company.com" and store it as file "./myProduct/tests.zip"
+on the FTP host server.
+Login to the FTP host server as user "tester" with password "secret"
+(specifying STAF privacy delimiters around the password to protect it).
+<p>
+<tt>STAF client1.company.com FTP PUT FILE C:/tests.zip HOST server1.company.com URLPATH ./myProduct/tests.zip USER tester PASSWORD !!@secret@!!</tt>
+</ul>
+
+<h2>
+<a NAME="Header_Dir" href="#ToC_Dir">DIR</a></h2>
+
+<p>The DIR command is used to list the contents of a directory on a
+remote FTP host server.
+
+<h4>Syntax</h4>
+
+<pre>
+DIR HOST &lt;Host> [PORT &lt;Port>] URLPATH &lt;FTP URL Directory Path>
+    [USER &lt;User Name> PASSWORD &lt;Password>]
+</pre>
+<p>
+<tt>HOST</tt> specifies the host name or IP address of a FTP server.
+This option will resolve variables.
+<p>
+<tt>PORT</tt> specifies the port number to which the TCP connection is made
+on the remote FTP host machine.  If the port is not specified, the default port
+for the ftp protocol is used instead.
+This option will resolve variables.
+<p>
+<tt>URLPATH</tt> specifies the FTP URL path to a directory on the remote FTP
+host server that you want to list the contents of.
+See <a href="#Header_urlpath">FTP URL Path</a> for more
+information on the syntax for a FTP URL Path.
+This option will resolve variables.
+<p>
+<tt>USER</tt> specifies the user name that will be used in conjunction with
+specified password to login to the FTP host.
+The default is anonymous (to attempt an anonymous login to the FTP server).
+This option will resolve variables.
+<p>
+<tt>PASSWORD</tt> specifies the password that will be used in conjunction
+with the specified user name to login to the FTP host.
+The default is the registered name of the STAF FTP service followed by "@" and
+the logical name (e.g. host name) of the machine submitting the request to
+the FTP service.
+This option will resolve variables.
+<p>
+A valid user and password is required to login to the FTP host.
+
+<h4>Security</h4>
+
+<p>This command requires trust level 2.
+
+<h4>Results</h4>
+<p>
+Upon successful return, the result buffer will contain a string
+containing a list of the contents of the directory.  The format of this
+string will vary depending on the operating system of your FTP host server.
+Because the format varies, the results are returned as is, without any
+attempt to parse the contents.
+
+<h4>Examples</h4>
+
+<p>For the following examples, the FTP host server, server1.company.com,
+is a Linux machine.
+<p>
+<ul>
+<li><b>Goal:</b> To obtain a directory listing for the FTP root folder
+on remote FTP host server "server1.company.com", specify "."
+for the remote directory:
+<p><tt>STAF local FTP DIR HOST server1.company.com URLPATH . USER tester PASSWORD !!@secret@!!
+</tt>
+<p><b>Result:</b>  The result could look similar to the following:
+<pre>
+drwxr-xr-x    2 0        0            4096 Jul 30  2005 automate
+drwxr-xr-x   77 0        0            4096 Sep 24 15:21 build
+-rw-r--r--    1 0        0        135669760 Oct 12  2006 hang.tar
+-rw-r--r--    1 0        0           16752 Oct 12  2006 hang.xml
+-rw-r--r--    1 0        0        63614186 Oct 12  2006 hangTest.zip
+drwxr-xr-x    3 0        0            4096 Sep 25 20:11 tools
+-rw-r--r--    1 0        0          153115 Apr 23 00:07 test.zip
+drwxr-xr-x    5 0        0            4096 Jan 22  2007 vmware
+</pre>
+<p>
+<li><b>Goal:</b> To obtain a directory listing for a subdirectory, "tools",
+in the FTP root folder on remote FTP host server "server1.company.com",
+specify "./tools/" for the remote directory:
+<p><tt>STAF local FTP DIR HOST server1.company.com URLPATH ./tools/ USER tester PASSWORD !!@secret@!!</tt>
+<p><b>Result:</b> The result could look similar to the following:
+<pre>
+-rw-rw-rw-    1 0        0        20182856 Jul 30  2005 VMware-workstation-4.0.0-4460.exe
+drwxr-xr-x    6 0        0            4096 Aug 18  2005 server1
+drwxr-xr-x    2 0        0            4096 Aug 18  2005 server2
+drwxr-xr-x    2 0        0            4096 Jan 22  2007 server3
+
+</pre>
+<p>
+<li><b>Goal:</b> To obtain a directory list for directory /build/win32/
+on remote FTP host server "server1.company.com", logging in as user     
+tester with password secret (protected using the STAF privacy delimiters):
+<p><tt>STAF local FTP DIR HOST server1.company.com URLPATH /build/win32/ USER tester PASSWORD !!@secret@!!</tt>
+<p><b>Result:</b> The result could look similar to the following:
+<pre>
+-rw-rw-rw-    1 0        0        13612644 Sep 17 03:12 STAF330-setup-win32-NoJVM.exe
+-rw-rw-rw-    1 0        0        49108598 Sep 17 03:12 STAF330-setup-win32.exe
+-rw-rw-rw-    1 0        0        13639235 Oct 02 12:07 STAF331-setup-win32-NoJVM.exe
+-rw-rw-rw-    1 0        0        49135189 Oct 02 12:07 STAF331-setup-win32.exe
+
+</pre>
+</ul>
+<p>
+For the following examples, the FTP host server, os2server, is a OS/2 machine
+(to show how the format of the list directory results varies by operating system).
+<p>
+<ul>
+<pre>
+C:\>STAF local FTP DIR HOST os2server URLPATH . USER guest PASSWORD guest
+Response
+--------
+                 0           DIR   03-24-08   15:03  330beta1
+
+
+C:\>STAF local FTP DIR HOST os2server URLPATH ./330beta1 USER guest PASSWORD guest
+Response
+--------
+                 0           DIR   03-24-08   15:05  aix
+                 0           DIR   03-24-08   15:08  hpux
+                 0           DIR   03-24-08   15:04  linux
+                 0           DIR   03-24-08   15:10  macosx-i386
+                 0           DIR   03-24-08   15:07  solaris
+                 0           DIR   03-24-08   15:03  win32
+
+
+C:\>STAF local FTP DIR HOST os2server URLPATH ./330beta1/aix USER guest PASSWORD guest
+Response
+--------
+          27063831      A          10-01-08   12:06  aix.bin
+          27063831      A          03-24-08   15:06  STAF330Beta1-setup-aix-NoJVM.bin
+          86046231      A          03-24-08   15:06  STAF330Beta1-setup-aix.bin
+
+</pre>
+</ul>
+
+<h2><a NAME="Header_Version" href="#ToC_Version">VERSION</a></h2>
+
+VERSION displays the FTP Service version.
+
+<h4>Syntax</h4>
+
+<tt>VERSION</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result is the version number of the FTP service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the version of the FTP service on machine client1:
+<p><tt>STAF client1 FTP VERSION</tt>
+<p><b>Output:</b>
+<pre>
+1.0.3
+</pre>
+</ul>
+
+<p>
+<hr>
+<p>
+<h1>
+<a NAME="Header_ErrorCodes" href="#ToC_ErrorCodes">Error Code Reference</a></b></h1>
+<p>
+In addition to the common STAF return codes, the following service
+return codes are defined for the FTP service:
+<br>&nbsp;
+<table BORDER WIDTH="100%" BGCOLOR="#FFFF00" >
+<tr>
+<td><b><font face="Comic Sans MS">Error Code</font></b></td>
+
+<td><b><font face="Comic Sans MS">Meaning&nbsp;</font></b></td>
+
+<td><b><font face="Comic Sans MS">Comment&nbsp;</font></b></td>
+</tr>
+
+<tr>
+<td>4001</td>
+<td>FTP host connection error</td>
+<td>Could not open a connection to the specified FTP host. Additional
+information about the error is provided in the result.</td>
+</tr>
+</table>
+
+<p>
+</body>
+</html>

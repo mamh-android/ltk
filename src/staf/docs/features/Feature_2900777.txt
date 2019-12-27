@@ -1,0 +1,324 @@
+Feature ID  : 2900777
+Title       : Add a priority option when requesting a ResPool entry
+
+Description
+-----------
+
+Provide the ability to specify a priority when submitting a REQUEST
+request to the ResPool (Resource Pool) service and use this priority
+to determine the order in which pending resource requests will be
+satisfied (if a suitable resource is not immediately available).
+
+
+Problem(s) Solved
+-----------------
+
+Currently the ResPool service only supports a First-In-First-Out
+(FIFO) "Pending Request" list, so requests are satisfied based on
+the order in which they were submitted (e.g. based on the "Date-Time
+Requested").  However, some resource pool requests may have a higher
+priority than others, so this feature allows you to specify a priority
+for the resource request, so that requests will be added to the
+"Pending Request" list in ascending order by "Priority" and within the
+same priority in ascending order by "Date-Time Requested".  This way,
+pending requests with a higher priority will be satisfied first if the
+resource requested becomes available.
+
+Note:  If the PRIORITY option is not utilized, then the "Pending
+Requests" list is maintained in FIFO order (just like it used to be)
+since all requests will have the same priority.
+
+
+Related Features/Patches
+------------------------
+
+None
+
+
+External Changes
+----------------
+
+a) RESPOOL REQUEST Request:
+
+Syntax:
+
+Add a new optional option PRIORITY <Priority> to the RESPOOL service's
+REQUEST request to indicate the priority of the resource request.
+
+REQUEST POOL <PoolName> [TIMEOUT <Number>[s|m|h|d|w]]
+                        [FIRST | RANDOM | ENTRY <Entry>]
+                        [PRIORITY <Priority>] [GARBAGECOLLECT <Yes | No>]
+
+PRIORITY specifies the priority of the resource request and determines
+the order in which pending resource requests will be satisfied (if a
+suitable resource is not immediately available).  It must be a number
+from 1 to 99, where 1 indicates the highest priority.  The default is
+50.  Pending requests with priority 1 will be satisfied first, followed
+by pending requests with priority 2, and so on.  Pending requests with
+the same priority will be satisfied in ascending "Date-Time Requested"
+order.  This option will resolve variables.
+
+Examples:
+
+Request a random resource entry from the "MyMachines" resource pool,
+specifying the highest priority.
+
+STAF local RESPOOL REQUEST POOL MyMachines PRIORITY 1
+
+Request a resource entry named "MachineA" from the "MyMachines" resource
+pool, specifying the lowest priority.
+
+STAF local RESPOOL REQUEST POOL MyMachines ENTRY MachineA PRIORITY 99
+
+b) RESPOOL QUERY Request:
+
+Result:
+
+In the result from a QUERY request of a resource pool, change each
+entry in the "Pending Request" list as follows:
+- Add a "Priority" field to each entry as the first field.
+- Move the existing "Date-Time Requested" and "Requested Entry" fields
+to be after the new "Priority" field to better indicate the order in
+which pending requests will attempt to be satisfied.
+
+The entries in the "Pending Requests" list will appear in ascending
+order by "Priority", and within the same priority they will appear in
+ascending order by "Date-Time Requested".
+
+Example:
+
+STAF local RESPOOL QUERY POOL MachinePool
+Response
+--------
+{
+  Description     : Test Machine Pool
+  Pending Requests: [
+    {
+      Priority                  : 1
+      Date-Time Requested       : 20100121-13:49:50
+      Requested Entry           : <None>
+      Machine                   : client1.company.com
+      Handle Name               : Test3
+      Handle                    : 26
+      User                      : none://anonymous
+      Endpoint                  : ssl://client1.company.com@6550
+      Perform Garbage Collection: Yes
+    }
+    {
+      Priority                  : 50
+      Date-Time Requested       : 20100121-13:49:10
+      Requested Entry           : <None>
+      Machine                   : client2.company.com
+      Handle Name               : Test2
+      Handle                    : 46
+      User                      : none://anonymous
+      Endpoint                  : local://local
+      Perform Garbage Collection: Yes
+    }
+    {
+      Priority                  : 50
+      Date-Time Requested       : 20100121-13:49:44
+      Requested Entry           : machine2
+      Machine                   : client1.company.com
+      Handle Name               : Test2
+      Handle                    : 24
+      User                      : none://anonymous
+      Endpoint                  : ssl://client1.company.com@6550
+      Perform Garbage Collection: Yes
+    }
+  ]
+  Resources       : [
+    {
+      Entry: machine1
+      Owner: {
+        Machine                   : client1.company.com
+        Handle Name               : Test1
+        Handle                    : 22
+        User                      : none://anonymous
+        Endpoint                  : ssl://client1.company.com@6550
+        Date-Time Requested       : 20100121-13:48:54
+        Date-Time Acquired        : 20100121-13:48:54
+        Perform Garbage Collection: Yes
+      }
+    }
+    {
+      Entry: machine2
+      Owner: {
+        Machine                   : client2.company.com
+        Handle Name               : Test1
+        Handle                    : 44
+        User                      : none://anonymous
+        Endpoint                  : local://local
+        Date-Time Requested       : 20100121-13:47:38
+        Date-Time Acquired        : 20100121-13:47:38
+        Perform Garbage Collection: Yes
+      }
+    }
+  ]
+}
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+services/respool/STAFResPoolService.cpp
+
+1) Change/add some variables:
+
+  a) Define some static variables:
+
+  static const int sMinimumPriority = 1;
+  static const int sMaximumPriority = 99;
+  static const int sDefaultPriority = 50;
+  static const STAFString sPriority("PRIORITY");
+
+  b) Add a priority field to the RequestData structure:  
+
+  int priority;      // Priority for the request, default is 50
+
+2) Changes in the HELP text for the ResPool service:
+
+  sHelpMsg = STAFString("*** ") + pData->fShortName + " Service Help ***" +
+      ...
+      "REQUEST POOL <PoolName> [TIMEOUT <Number>[s|m|h|d|w]]" +
+      sLineSep +
+      "                        [FIRST | RANDOM | ENTRY <Entry>]" +
+      sLineSep +
+      "                        [PRIORITY <Priority>] [GARBAGECOLLECT <Yes | No>]" +
+      ... 
+
+3) Changes in handling a REQUEST request:
+
+  a) Add a "PRIORITY" option to the REQUEST parser:
+
+  pData->fRequestParser->addOption(
+      "PRIORITY", 1, STAFCommandParser::kValueRequired);
+
+  b) In the handleRequest() method, determine the priority to assign to
+  the resource request:
+
+  unsigned int priority = sDefaultPriority;
+
+  if (parsedResult->optionTimes(sPriority) > 0)
+  {
+       resultPtr = resolveOp(pInfo, pData, parsedResult, sPriority);
+
+       if (resultPtr->rc != kSTAFOk) return resultPtr;
+
+       // Convert resolved option string to an unsigned integer in range
+       // 0 to 99
+
+       resultPtr = convertOptionStringToUInt(
+           resultPtr->result, sPriority, priority,
+           sMinimumPriority, sMaximumPriority);
+
+       if (resultPtr->rc != kSTAFOk) return resultPtr;
+  }
+
+  c) In the handleRequest() method, change how the request gets added to
+  the "Pending Request" list by changing from simply adding it to the
+  end of the list (via poolPtr->requestList.push_back(requestDataPtr),
+  to inserting the request entry in the right place, maintaining an
+  ascending order by priority.
+  
+  // Else no resources currently available; put on the pending list
+    
+  RequestData requestData(pInfo->stafInstanceUUID, pInfo->machine,
+                          pInfo->handleName, pInfo->handle,
+                          pInfo->user, pInfo->endpoint,
+                          garbageCollect,
+                          requestType, requestedEntry, priority);
+
+  requestDataPtr = RequestDataPtr(new RequestData(requestData),
+                                  RequestDataPtr::INIT);
+
+  // Insert the request into the pending request list in
+  // ascending order by priority/requestedTime
+            
+  RequestList::iterator iter;
+  bool addedToList = false;
+
+  for (iter = poolPtr->requestList.begin(); 
+       iter != poolPtr->requestList.end() && !addedToList;
+       ++iter)
+  {
+      if (priority < (*iter)->priority)
+      {
+          poolPtr->requestList.insert(iter, requestDataPtr);
+          addedToList = true;
+      }
+  } // End for loop for iterating thru pending request list
+
+  if (!addedToList)
+  {
+      // Add to the end of the pending request list
+
+      poolPtr->requestList.push_back(requestDataPtr);
+  }
+
+4) Changes in handling a QUERY request:
+
+  a) Add a "priority" key definition to the map class definition
+  for a Pending Request as the first key displayed and move the
+  "requestedTimestamp" and "requestedEntry" keys after the new
+  "priority" key:
+
+  pData->fRequestClass->addKey("priority", "Priority");
+  pData->fRequestClass->addKey("requestedTimestamp",
+                               "Date-Time Requested");
+  pData->fRequestClass->addKey("requestedEntry",
+                               "Requested Entry");
+
+  b) Assign the "priority" field to each entry in the "Pending
+  Requests" list in the result:
+
+  requestMap->put("priority", (*iList)->priority);
+
+5) Define a convertOptionStringToUint() helper method that is called
+  by in the handleRequest() method to convert the priority option
+  string to an integer and verify that it is in range 1-99.
+  This method is the same as what is already used in other external
+  STAF services like the LOG service.
+
+  This method is defined as follows:
+
+  static STAFResultPtr convertOptionStringToUInt(
+      const STAFString &theString,
+      const STAFString &optionName,
+      unsigned int &number,
+      const unsigned int minValue = 0,
+      const unsigned int maxValue = UINT_MAX);
+
+  STAFResultPtr convertOptionStringToUInt(const STAFString &theString,
+                                          const STAFString &optionName,
+                                          unsigned int &number,
+                                          const unsigned int minValue,
+                                          const unsigned int maxValue)
+  {
+      // Convert an option value to an unsigned integer
+ 
+      STAFString_t errorBufferT = 0;
+
+      STAFRC_t rc = STAFUtilConvertStringToUInt(
+          theString.getImpl(), optionName.getImpl(), &number,
+          &errorBufferT, minValue, maxValue);
+
+      if (rc == kSTAFOk)
+      {
+          return STAFResultPtr(new STAFResult(), STAFResultPtr::INIT);
+      }
+      else
+      {
+          return STAFResultPtr(
+              new STAFResult(
+                  rc, STAFString(errorBufferT, STAFString::kShallow)),
+              STAFResultPtr::INIT);
+      }
+  }
+
+Backward Compatibility Issues
+-----------------------------
+
+None

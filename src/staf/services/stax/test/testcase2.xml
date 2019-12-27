@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "file:/d:\staxtest\stax.dtd">
+
+<stax> 
+
+  <script>machName = "local"</script>  
+  
+  <function name="testcase2">
+
+    <block name="'OuterBlock'">
+ 
+     <sequence>     
+        <message>"Starting testcase1"</message>   
+        <testcase name="'TestA1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestB1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestC1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestD1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestE1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestH1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestI1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestJ1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestK1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestL1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestM1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestN1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestO1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestP1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestQ1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestR1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestS1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestT1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestU1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestV1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestW1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestX1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestY1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestZ1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestA2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestB2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestC2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestD2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestE2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestF2'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestG2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestH2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestI2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestJ2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestK2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestL2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestM2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestN2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestO2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestP2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestQ2'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestR2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestS2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestT2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestU2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestV2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestW2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestX2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestY2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestZ2'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestA3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestB3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestC3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestD3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestE3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestF3'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestG3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestH3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestI3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestJ3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestK3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestL3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestM3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestN3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestO3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestP3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestQ3'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestR3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestS3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestT3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestU3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestV3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestW3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestX3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestY3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestZ3'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestA4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestB4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestC4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestD4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestE4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestF4'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestG4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestH4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestI4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestJ4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestK4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestL4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestM4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestN4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestO4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestP4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestQ4'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestR4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestS4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestT4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestU4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestV4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestW4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestX4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestY4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestZ4'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestA5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestB5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestC5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestD5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestE5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestF5'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestG5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestH5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestI5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestJ5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestK5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestL5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestM5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestN5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestO5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestP5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestQ5'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestR5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestS5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestT5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestU5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestV5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestW5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestX5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestY5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestZ5'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestG1'"> 
+          <tcstatus result="'pass'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <testcase name="'TestF1'"> 
+          <tcstatus result="'fail'"/>         
+        </testcase>
+        <message>"Ending testcase1"</message>
+      </sequence>
+    </block>
+  </function>
+</stax>

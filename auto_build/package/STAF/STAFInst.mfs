@@ -1,0 +1,196 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+# SOFTWARE TESTING AUTOMATION FRAMEWORK - INSTALL FILE                        #
+###############################################################################
+# M = Minimum, R = Recommended + Minimum, F = Full + Recommended + Minimum    #
+# B = Binary,  L = Library. Last column shows aliases                         #
+###############################################################################
+
+M      RO     LICENSE.htm
+M      RO     NOTICES.txt
+M      RO     install.properties
+MB     RX     bin/STAF                           bin/staf
+MB     --     bin/STAF                           staf
+M      RX     bin/STAFProc
+M      RX     bin/STAFReg
+M      RX     bin/STAFLoop
+M      RX     bin/STAFExecProxy
+M      RW     bin/STAF.cfg
+M      RO     bin/STAFDefault.crt
+M      RO     bin/STAFDefault.key
+M      RO     bin/CAList.crt
+R      RX     bin/PLSTAF.pm
+R      RX     bin/PLSTAFService.pm
+R      RX     bin/STAF.pl
+R      RX     bin/STAF2.pl
+R      RX     bin/STAFMon.pm
+R      RX     bin/STAFLog.pm
+R      RX     bin/STAF.tcl
+
+###############################################################################
+# STAF DEVELOPMENT                                                            #
+###############################################################################
+
+R      RO     include/STAF.h
+R      RO     include/STAFInlImpl.cpp
+F      RO     include/STAFCommandParser.h
+F      RO     include/STAFCommandParserInlImpl.cpp
+R      RO     include/STAFDataTypes.h
+R      RO     include/STAFDataTypesInlImpl.cpp
+R      RO     include/STAFDynamicLibrary.h
+R      RO     include/STAFDynamicLibraryInlImpl.cpp
+R      RO     include/STAFError.h
+R      RO     include/STAFEventSem.h
+R      RO     include/STAFEventSemInlImpl.cpp
+R      RO     include/STAFFileSystem.h
+R      RO     include/STAFFileSystemInlImpl.cpp
+R      RO     include/STAFException.h
+R      RO     include/STAFMutexSem.h
+R      RO     include/STAFMutexSemInlImpl.cpp
+R      RO     include/STAFOSTypes.h
+R      RO     include/STAFRefPtr.h
+F      RO     include/STAFServiceInterface.h
+R      RO     include/STAFString.h
+R      RO     include/STAFStringInlImpl.cpp
+R      RO     include/STAFThread.h
+R      RO     include/STAFTimestamp.h
+R      RO     include/STAFTimestampInlImpl.cpp
+R      RO     include/STAFUtil.h
+R      RO     include/STAF_fstream.h
+R      RO     include/STAF_iostream.h
+R      RO     include/STAFLogService.h
+R      RO     include/STAFMonitorService.h
+R      RO     include/STAFResPoolService.h
+R      RO     include/STAFProcess.h
+R      RO     include/STAFProcessInlImpl.cpp
+R      RO     include/STAFTrace.h
+R      RO     include/STAFTraceInlImpl.cpp
+
+###############################################################################
+# LIBRARIES                                                                   #
+###############################################################################
+
+RL     RO     lib/JSTAF.zip
+RL     RO     lib/JSTAF.jar
+RL     RO     lib/STAFHTTPSLS.jar
+ML     RX     lib/IPv4/libSTAF.so
+ML     RX     lib/IPv6/libSTAF.so
+ML     RX     lib/libSTAFLIPC.so
+ML     RX     lib/IPv4/libSTAFTCP.so
+ML     RX     lib/IPv6/libSTAFTCP.so
+ML     RX     lib/libssl*.so*
+ML     RX     lib/libcrypto*.so*
+ML     RX     lib/libSTAFDSLS.so
+ML     RX     lib/libSTAFEXECPROXY.so
+RL     RX     lib/libJSTAF.so
+RL     RX     lib/libJSTAFSH.so
+RL     RX     lib/libRXSTAF.so
+RL     RX     lib/libRxThread.so
+RL     RX     lib/perl50/libPLSTAF.so
+RL     RX     lib/perl56/libPLSTAF.so
+RL     RX     lib/perl58/libPLSTAF.so
+RL     RX     lib/perl510/libPLSTAF.so
+RL     RX     lib/perl512/libPLSTAF.so
+RL     RX     lib/perl514/libPLSTAF.so
+RL     RX     lib/python22/PYSTAF.so
+RL     RX     lib/python23/PYSTAF.so
+RL     RX     lib/python24/PYSTAF.so
+RL     RX     lib/python25/PYSTAF.so
+RL     RX     lib/python26/PYSTAF.so
+RL     RX     lib/python27/PYSTAF.so
+RL     RX     lib/python30/PYSTAF.so
+RL     RX     lib/python31/PYSTAF.so
+RL     RX     lib/tcl84/libTCLSTAF.so
+RL     RX     lib/tcl85/libTCLSTAF.so
+RL     RX     lib/tcl86/libTCLSTAF.so
+R      RO     lib/STAFLog.rxl
+R      RO     lib/STAFMon.rxl
+R      RO     lib/STAFPool.rxl
+R      RO     lib/STAFUtil.rxl
+F      RO     lib/STAFCPar.rxl
+R      RO     lib/PySTAF.py
+R      RO     lib/PySTAFv3.py
+R      RO     lib/PySTAFLog.py
+R      RO     lib/PySTAFMon.py
+R      RO     lib/pkgIndex.tcl
+R      RO     lib/STAFLog.tcl
+R      RO     lib/STAFMon.tcl
+R      RO     lib/STAFUtil.tcl
+
+# This is for Mac OS X
+
+RL     RX     lib/libSTAF.jnilib
+RL     RX     lib/libJSTAF.jnilib
+RL     RX     lib/libJSTAFSH.jnilib
+
+# These are standard libraries that need to be shipped for various platforms
+
+# This is for Solaris
+ML     RX     lib/libstdc++.so.2.10.0
+# These are for Solaris-sparc64
+ML     RX     lib/libstdc++.so.6
+ML     RX     lib/libgcc_s.so.1
+
+###############################################################################
+# SERVICES                                                                    #
+###############################################################################
+
+RL     RX     lib/libSTAFLog.so
+RL     RX     lib/libSTAFMon.so
+RL     RX     lib/libSTAFPool.so
+RL     RX     lib/libSTAFZip.so
+RL     RX     lib/libSTAFZlib.so
+
+###############################################################################
+# UTILITIES                                                                   #
+###############################################################################
+
+RB     RX     bin/FmtLog                         bin/fmtlog
+RB     --     bin/FmtLog                         fmtlog
+
+###############################################################################
+# DOCUMENTATION                                                               #
+###############################################################################
+
+M      RO     docs/STAFUG.htm
+M      RO     docs/History
+R      RO     docs/STAFCMDS.htm
+R      RO     docs/STAFRC.htm
+R      RO     docs/STAFFAQ.htm
+R      RO     docs/STAFHome.htm
+R      RO     docs/STAFGS.pdf
+R      RO     docs/STAFInstall.pdf
+R      RO     docs/STAFDiag.htm
+
+###############################################################################
+# SAMPLES                                                                     #
+###############################################################################
+
+R      RO     samples/c/LogIt.c
+R      RO     samples/cpp/LogIt.cpp
+R      RO     samples/demo/STAFDemoController.java
+R      RO     samples/demo/STAFProcess.java
+R      RO     samples/demo/STAFDemo.jar
+R      RO     samples/java/JPing.java
+F      RO     samples/misc/OldVars.cfg
+R      RO     samples/rexx/PingTest.cmd
+R      RO     samples/rexx/Sample1.cmd
+R      RO     samples/rexx/Sample2.cmd
+R      RO     samples/rexx/Sample3.cmd
+R      RO     samples/rexx/Sample4.cmd
+
+###############################################################################
+# CODEPAGES                                                                   #
+###############################################################################
+
+M      RW     codepage/alias.txt
+M      RO     codepage/ibm-437.bin
+M      RO     codepage/ibm-850.bin
+M      RO     codepage/ibm-1047.bin
+F      RO     codepage/*.bin
+
+###############################################################################

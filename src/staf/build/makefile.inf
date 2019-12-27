@@ -1,0 +1,61 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# This makefile contains inference rules.  Before including this file
+# the variable SUBSYS_REL should be set to appropriate relative subsystem
+
+#############################################################################
+# C++ inference rules
+#############################################################################
+
+ifdef OS_SUBTYPE
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/$(OS_SUBTYPE)/%.cpp
+	$(C_DEPEND_IT)
+endif
+
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/%.cpp
+	$(C_DEPEND_IT)
+
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/%.cpp
+	$(C_DEPEND_IT)
+
+ifdef OS_SUBTYPE
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/$(OS_SUBTYPE)/%.cpp
+	$(COMPILE_IT)
+endif
+
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/%.cpp
+	$(COMPILE_IT)
+
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/%.cpp
+	$(COMPILE_IT)
+
+#############################################################################
+# C inference rules
+#############################################################################
+
+ifdef OS_SUBTYPE
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/$(OS_SUBTYPE)/%.c
+	$(C_DEPEND_IT_C)
+endif
+
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/%.c
+	$(C_DEPEND_IT_C)
+
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/%.c
+	$(C_DEPEND_IT_C)
+
+ifdef OS_SUBTYPE
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/$(OS_SUBTYPE)/%.c
+	$(COMPILE_IT_C)
+endif
+
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/$(OS_TYPE)/%.c
+	$(COMPILE_IT_C)
+
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/%.c
+	$(COMPILE_IT_C)

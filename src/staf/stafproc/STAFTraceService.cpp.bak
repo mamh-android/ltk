@@ -1,0 +1,726 @@
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2001                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+#include "STAF.h"
+#include "STAFProc.h"
+#include "STAFProcUtil.h"
+#include "STAFUtil.h"
+#include "STAFTrustManager.h"
+#include "STAFTrace.h"
+#include "STAFServiceManager.h"
+#include "STAFTraceService.h"
+#include "STAFThreadManager.h"
+
+//  ENABLE ALL  [ TRACEPOINTS | SERVICES ]
+//  ENABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+//  ENABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]...
+//  ENABLE SERVICE <Service> [SERVICE <Service>]...
+//
+//  DISABLE ALL  [ TRACEPOINTS | SERVICES ]
+//  DISABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>
+//  DISABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]...
+//  DISABLE SERVICE <Service> [SERVICE <Service>]...
+//
+//  SET DESTINATION TO < STDOUT | STDERR | FILE <Filename> >
+//
+//  LIST [SETTINGS]
+//
+//  HELP
+
+static const int COLON_COLUMN = 21;
+static const STAFString EnabledString = new STAFString("Enabled");
+static const STAFString DisabledString = new STAFString("Disabled");
+
+STAFTraceService::STAFTraceService() : STAFService("Trace")
+{
+
+    // enable|disable options
+
+    fEnableParser.addOption("ENABLE", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fEnableParser.addOption("DISABLE", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fEnableParser.addOption("ALL", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fEnableParser.addOption("TRACEPOINTS", 1,
+        STAFCommandParser::kValueAllowed);
+    fEnableParser.addOption("TRACEPOINT", 0,
+        STAFCommandParser::kValueRequired);
+    fEnableParser.addOption("SERVICES", 1,
+        STAFCommandParser::kValueAllowed);
+    fEnableParser.addOption("SERVICE", 0,
+        STAFCommandParser::kValueRequired);
+
+    // enable|disable groups
+
+    fEnableParser.addOptionGroup("ENABLE DISABLE", 1, 1);
+    fEnableParser.addOptionGroup("TRACEPOINT SERVICE", 0, 2);
+    fEnableParser.addOptionGroup("TRACEPOINTS SERVICES", 0, 1);
+
+    // enable|disable needs
+
+    fEnableParser.addOptionNeed("ENABLE DISABLE",
+        "ALL TRACEPOINT SERVICE TRACEPOINTS SERVICES");
+
+
+    //SET options
+
+    fSetParser.addOption("SET", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fSetParser.addOption("DESTINATION", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fSetParser.addOption("TO", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fSetParser.addOption("STDOUT", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fSetParser.addOption("STDERR", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fSetParser.addOption("FILE", 1,
+        STAFCommandParser::kValueRequired);
+
+    //SET groups
+
+    fSetParser.addOptionGroup("STDOUT STDERR FILE", 1, 1);
+
+    //SET needs
+
+    fSetParser.addOptionNeed("DESTINATION", "SET");
+    fSetParser.addOptionNeed("TO", "DESTINATION");
+    fSetParser.addOptionNeed("SET", "TO");
+    fSetParser.addOptionNeed("STDOUT STDERR FILE", "SET");
+
+
+    //LIST options
+
+    fListParser.addOption("LIST", 1,
+        STAFCommandParser::kValueNotAllowed);
+    fListParser.addOption("SETTINGS", 1,
+        STAFCommandParser::kValueNotAllowed);
+
+    //LIST groups
+
+    fListParser.addOptionGroup("LIST", 1, 1);
+    fListParser.addOptionGroup("SETTINGS", 0, 1);
+
+    //LIST needs
+
+    fListParser.addOptionNeed("SETTINGS", "LIST");
+}
+
+
+STAFServiceResult STAFTraceService::acceptRequest(
+    const STAFServiceRequest &requestInfo)
+{
+    STAFString action = requestInfo.fRequest.subWord(0, 1).lowerCase();
+
+    if (action == "enable" || action == "disable")
+        return handleEnable(requestInfo);
+    else if (action == "set")   return handleSet(requestInfo);
+    else if (action == "list")  return handleList(requestInfo);
+    else if (action == "help")    return handleHelp(requestInfo);
+    else return kSTAFInvalidRequestString;
+}
+
+STAFServiceResult STAFTraceService::handleList(
+    const STAFServiceRequest &requestInfo)
+{
+    STAFCommandParseResultPtr parsedResult =
+                              fListParser.parse(requestInfo.fRequest);
+
+    if (requestInfo.fTrustLevel < 2)
+    {
+        return kSTAFAccessDenied;
+    }
+
+    if (parsedResult->rc != kSTAFOk)
+    {
+        return STAFServiceResult(kSTAFInvalidRequestString,
+                                 parsedResult->errorBuffer, 0);
+    }
+
+    STAFString errorBuffer;
+    STAFString result;
+    STAFString traceFilename;
+    STAFTraceDestination_t traceDestination =
+                           STAFTrace::getTraceDestination(traceFilename);
+
+    result = "Tracing to: ";
+
+    if (traceDestination == kSTAFTraceToStdout)
+        result += "STDOUT";
+    else if (traceDestination == kSTAFTraceToStderr)
+        result += "STDERR";
+    else if (traceDestination == kSTAFTraceToFile)
+        result += "File - " + traceFilename;
+
+    result += *gLineSeparatorPtr + *gLineSeparatorPtr;
+    result += "Trace points:" + *gLineSeparatorPtr +
+              *gLineSeparatorPtr;
+
+    result += "ServiceRequest       : ";
+    if (STAFTrace::doTrace(kSTAFTraceServiceRequest))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "ServiceAccessDenied  : ";
+    if (STAFTrace::doTrace(kSTAFTraceServiceAccessDenied))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "ServiceError         : ";
+    if (STAFTrace::doTrace(kSTAFTraceServiceError))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "ServiceResult        : ";
+    if (STAFTrace::doTrace(kSTAFTraceServiceResult))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "ServiceManagement    : ";
+    if (STAFTrace::doTrace(kSTAFTraceServiceManagement))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "Registration         : ";
+    if (STAFTrace::doTrace(kSTAFTraceRegistration))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "RemoteRequests       : ";
+    if (STAFTrace::doTrace(kSTAFTraceRemoteRequests))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "Error                : ";
+    if (STAFTrace::doTrace(kSTAFTraceError))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "Warning              : ";
+    if (STAFTrace::doTrace(kSTAFTraceWarning))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "Info                 : ";
+    if (STAFTrace::doTrace(kSTAFTraceInfo))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += "Deprecated           : ";
+    if (STAFTrace::doTrace(kSTAFTraceDeprecated))
+        result += "ENABLED";
+    else
+        result += "DISABLED";
+    result +=  *gLineSeparatorPtr;
+
+    result += *gLineSeparatorPtr + "Services: " +
+              *gLineSeparatorPtr + *gLineSeparatorPtr;
+
+    STAFServiceManager::ServiceStringList enabledServiceList =
+        STAFServiceManager::getTraceServices();
+    STAFServiceManager::OrderedServiceList allServiceList =
+         gServiceManagerPtr->getOrderedServiceListCopy();
+    STAFServiceManager::OrderedServiceList::iterator allIter;
+
+    for(allIter = allServiceList.begin(); allIter != allServiceList.end(); allIter++)
+    {
+
+        result += allIter->first +
+            spaces(COLON_COLUMN - (allIter->first).length());
+        if(enabledServiceList.find(allIter->first) != enabledServiceList.end())
+        {
+            result += ": ENABLED";
+        }
+        else
+        {
+            result += ": DISABLED";
+        }
+        result += *gLineSeparatorPtr;
+    }
+
+
+    return STAFServiceResult(kSTAFOk, result);
+}
+
+STAFServiceResult STAFTraceService::handleSet(
+    const STAFServiceRequest &requestInfo)
+{
+    STAFCommandParseResultPtr parsedResult =
+                              fSetParser.parse(requestInfo.fRequest);
+
+    if (requestInfo.fTrustLevel < 5)
+    {
+        return kSTAFAccessDenied;
+    }
+
+    DEFINE_VAR_POOL_LIST(varPoolList, varPoolListSize, requestInfo);
+    STAFString errorBuffer;
+    STAFString filename;
+    STAFString result;
+    STAFRC_t rc = RESOLVE_OPTIONAL_STRING_OPTION("FILE", filename);
+
+    if (rc) return STAFServiceResult(kSTAFInvalidRequestString, errorBuffer);
+
+    // Set the trace destination
+    if (parsedResult->optionTimes("STDOUT"))
+        STAFTrace::setTraceDestination(kSTAFTraceToStdout);
+    else if (parsedResult->optionTimes("STDERR"))
+        STAFTrace::setTraceDestination(kSTAFTraceToStderr);
+    else if (parsedResult->optionTimes("FILE"))
+        STAFTrace::setTraceDestination(kSTAFTraceToFile, filename);
+
+    // report the trace destination value held by STAFTrace
+    STAFString traceFilename;
+    STAFTraceDestination_t traceDestination =
+                                   STAFTrace::getTraceDestination(traceFilename);
+    result = "Tracing to: ";
+
+    if (traceDestination == kSTAFTraceToStdout)
+        result += "STDOUT";
+    else if (traceDestination == kSTAFTraceToStderr)
+        result += "STDERR";
+    else if (traceDestination == kSTAFTraceToFile)
+        result += "File - " + traceFilename;
+
+    return STAFServiceResult(kSTAFOk, result);
+}
+
+
+
+STAFServiceResult STAFTraceService::handleEnable(
+    const STAFServiceRequest &requestInfo)
+{
+    STAFCommandParseResultPtr parsedResult =
+                              fEnableParser.parse(requestInfo.fRequest);
+
+    if (parsedResult->rc != kSTAFOk)
+    {
+        return STAFServiceResult(kSTAFInvalidRequestString,
+                                 parsedResult->errorBuffer, 0);
+    }
+
+    STAFString errorBuffer;
+
+    if (requestInfo.fTrustLevel < 5)
+    {
+        return kSTAFAccessDenied;
+    }
+
+    DEFINE_VAR_POOL_LIST(varPoolList, varPoolListSize, requestInfo);
+    STAFString result;
+    STAFString filename;
+    STAFRC_t rc;
+
+    if (parsedResult->optionTimes("ENABLE") != 0)
+    {
+        //XXX: Currently doesn't handle a scenario where user types:
+        // TRACE ENABLE ALL SERVICES
+        // then registers a service "servicex"
+        // If you do a trace list it will show servicex as being disabled
+
+        if (parsedResult->optionTimes("ALL") != 0)
+        //Handles ENABLE ALL TRACEPOINTS SERVICES
+        {
+            if ((parsedResult->optionTimes("TRACEPOINTS") == 0) &&
+                (parsedResult->optionTimes("SERVICES") == 0))
+            {
+                STAFTrace::traceOn(kSTAFTraceAll);
+                STAFServiceManager::traceOnAllServices();
+
+                result += "All Tracepoints ENABLED" + *gLineSeparatorPtr;
+                result += "All Services ENABLED" + *gLineSeparatorPtr;
+            }
+            else if (parsedResult->optionTimes("SERVICES") != 0)
+            {
+                STAFServiceManager::traceOnAllServices();
+
+                result += "All Services ENABLED" + *gLineSeparatorPtr;
+            }
+            else if (parsedResult->optionTimes("TRACEPOINTS") != 0)
+            {
+                STAFTrace::traceOn(kSTAFTraceAll);
+
+                result += "All Tracepoints ENABLED" + *gLineSeparatorPtr;
+            }
+        }
+
+        else if ((parsedResult->optionTimes("TRACEPOINTS") != 0) ||
+            (parsedResult->optionTimes("SERVICES") != 0))
+        // Handles ENABLE TRACEPOINTS <TRACEPOINT LIST> SERVICES <SERVICE LIST>
+        {
+            if (parsedResult->optionTimes("TRACEPOINTS") != 0)
+            {
+                STAFString tracepointList = parsedResult->optionValue("TRACEPOINTS");
+                STAFString tracepoint;
+                bool invalid;
+                for (int i = 0; i < tracepointList.numWords(); ++ i)
+                {
+                    invalid = false;
+
+                    tracepoint = tracepointList.subWord(i, 1).upperCase();
+                    if (tracepoint == "SERVICEREQUEST")
+                        STAFTrace::traceOn(kSTAFTraceServiceRequest);
+                    else if (tracepoint == "SERVICEACCESSDENIED")
+                        STAFTrace::traceOn(kSTAFTraceServiceAccessDenied);
+                    else if (tracepoint == "SERVICEERROR")
+                        STAFTrace::traceOn(kSTAFTraceServiceError);
+                    else if (tracepoint == "SERVICERESULT")
+                        STAFTrace::traceOn(kSTAFTraceServiceResult);
+                    else if (tracepoint == "SERVICEMANAGEMENT")
+                        STAFTrace::traceOn(kSTAFTraceServiceManagement);
+                    else if (tracepoint == "REGISTRATION")
+                        STAFTrace::traceOn(kSTAFTraceRegistration);
+                    else if (tracepoint == "REMOTEREQUESTS")
+                        STAFTrace::traceOn(kSTAFTraceRemoteRequests);
+                    else if (tracepoint == "ERROR")
+                        STAFTrace::traceOn(kSTAFTraceError);
+                    else if (tracepoint == "WARNING")
+                        STAFTrace::traceOn(kSTAFTraceWarning);
+                    else if (tracepoint == "INFO")
+                        STAFTrace::traceOn(kSTAFTraceInfo);
+                    else if (tracepoint == "DEPRECATED")
+                        STAFTrace::traceOn(kSTAFTraceDeprecated);
+                    else
+                    {
+                         result += "ERROR: \'" + tracepoint +
+                            "\' is not a valid tracepoint" +
+                            *gLineSeparatorPtr;
+                         invalid = true;
+                    }
+
+                    if (!invalid)
+                    {
+                         result += tracepoint + spaces(
+                             COLON_COLUMN - (tracepoint).length())
+                             + ": ENABLED" + *gLineSeparatorPtr;;
+                    }
+
+                }
+            }
+            if(parsedResult->optionTimes("SERVICES") != 0)
+            {
+                STAFString servList = parsedResult->optionValue("SERVICES");
+                STAFServiceManager::traceOnServices(servList);
+
+                STAFString service;
+
+                for (int i = 0; i < servList.numWords(); ++i)
+                {
+                    service =  servList.subWord(i, 1).upperCase();
+                    result += service + spaces(
+                             COLON_COLUMN - (service).length()) +
+                             ": ENABLED" + *gLineSeparatorPtr;
+                }
+
+            }
+        }
+        else if ((parsedResult->optionTimes("TRACEPOINT") != 0) ||
+            (parsedResult->optionTimes("SERVICE") != 0))
+        // Handles ENABLE TRACEPOINT <tp> SERVICE <tp>
+        {
+            STAFString tracepoint;
+            STAFString service;
+
+            for (int i = 1, optionCount =
+                parsedResult->optionTimes("TRACEPOINT"); i <= optionCount; ++i)
+            {
+                rc = RESOLVE_INDEXED_STRING_OPTION("TRACEPOINT", i, tracepoint);
+
+                tracepoint = tracepoint.upperCase();
+
+                if (rc) return STAFServiceResult(rc, errorBuffer);
+
+                if (tracepoint == "SERVICEREQUEST")
+                    STAFTrace::traceOn(kSTAFTraceServiceRequest);
+                else if (tracepoint == "SERVICEACCESSDENIED")
+                    STAFTrace::traceOn(kSTAFTraceServiceAccessDenied);
+                else if (tracepoint == "SERVICEERROR")
+                    STAFTrace::traceOn(kSTAFTraceServiceError);
+                else if (tracepoint == "SERVICERESULT")
+                    STAFTrace::traceOn(kSTAFTraceServiceResult);
+                else if (tracepoint == "SERVICEMANAGEMENT")
+                    STAFTrace::traceOn(kSTAFTraceServiceManagement);
+                else if (tracepoint == "REGISTRATION")
+                    STAFTrace::traceOn(kSTAFTraceRegistration);
+                else if (tracepoint == "REMOTEREQUESTS")
+                    STAFTrace::traceOn(kSTAFTraceRemoteRequests);
+                else if (tracepoint == "ERROR")
+                    STAFTrace::traceOn(kSTAFTraceError);
+                else if (tracepoint == "WARNING")
+                    STAFTrace::traceOn(kSTAFTraceWarning);
+                else if (tracepoint == "INFO")
+                    STAFTrace::traceOn(kSTAFTraceInfo);
+                else if (tracepoint == "DEPRECATED")
+                    STAFTrace::traceOn(kSTAFTraceDeprecated);
+                else
+                {
+                    result += "ERROR: \'" + tracepoint + "\' is not a valid tracepoint" + *gLineSeparatorPtr;
+                    rc = 1; //signify error
+                }
+                if(!rc)
+                {
+                    result += tracepoint + spaces(
+                             COLON_COLUMN - (tracepoint).length()) +
+                             ": ENABLED" + *gLineSeparatorPtr;
+                }
+            }
+
+            for(i = 1, optionCount =
+                parsedResult->optionTimes("SERVICE"); i <= optionCount; ++i)
+            {
+                rc = RESOLVE_INDEXED_STRING_OPTION("SERVICE", i, service);
+
+                if (rc) return STAFServiceResult(rc, errorBuffer);
+
+                STAFServiceManager::traceOnService(service);
+                result += service.upperCase() + spaces(
+                             COLON_COLUMN - (service).length()) +
+                             ": ENABLED" + *gLineSeparatorPtr;
+            }
+
+        }
+    }
+    else if (parsedResult->optionTimes("DISABLE") != 0)
+    {
+        if (parsedResult->optionTimes("ALL") != 0)
+        //Handles DISABLE ALL TRACEPOINTS SERVICES
+        {
+            if ((parsedResult->optionTimes("TRACEPOINTS") == 0) &&
+                (parsedResult->optionTimes("SERVICES") == 0))
+            {
+                STAFTrace::traceOff(kSTAFTraceAll);
+                STAFServiceManager::traceOffAllServices();
+
+                result += "All Tracepoints DISABLED" + *gLineSeparatorPtr;
+                result += "All Services DISABLED" + *gLineSeparatorPtr;
+            }
+            else if (parsedResult->optionTimes("SERVICES") != 0)
+            {
+                STAFServiceManager::traceOffAllServices();
+
+                result += "All Services DISABLED" + *gLineSeparatorPtr;
+            }
+            else if (parsedResult->optionTimes("TRACEPOINTS") != 0)
+            {
+                STAFTrace::traceOff(kSTAFTraceAll);
+
+                result += "All Tracepoints DISABLED" + *gLineSeparatorPtr;
+            }
+        }
+        else if ((parsedResult->optionTimes("TRACEPOINTS") != 0) ||
+            (parsedResult->optionTimes("SERVICES") != 0))
+        // Handles DISABLE TRACEPOINTS <TRACEPOINT LIST> SERVICES <SERVICE LIST>
+        {
+            if (parsedResult->optionTimes("TRACEPOINTS") != 0)
+            {
+                STAFString tracepointList = parsedResult->optionValue("TRACEPOINTS");
+                STAFString tracepoint;
+
+                bool invalid;
+
+                for (int i = 0; i < tracepointList.numWords(); ++ i)
+                {
+                    invalid = false;
+
+                    tracepoint = tracepointList.subWord(i, 1).upperCase();
+
+                    if (tracepoint == "SERVICEREQUEST")
+                        STAFTrace::traceOff(kSTAFTraceServiceRequest);
+                    else if (tracepoint == "SERVICEACCESSDENIED")
+                        STAFTrace::traceOff(kSTAFTraceServiceAccessDenied);
+                    else if (tracepoint == "SERVICEERROR")
+                        STAFTrace::traceOff(kSTAFTraceServiceError);
+                    else if (tracepoint == "SERVICERESULT")
+                        STAFTrace::traceOff(kSTAFTraceServiceResult);
+                    else if (tracepoint == "SERVICEMANAGEMENT")
+                        STAFTrace::traceOff(kSTAFTraceServiceManagement);
+                    else if (tracepoint == "REGISTRATION")
+                        STAFTrace::traceOff(kSTAFTraceRegistration);
+                    else if (tracepoint == "REMOTEREQUESTS")
+                        STAFTrace::traceOff(kSTAFTraceRemoteRequests);
+                    else if (tracepoint == "ERROR")
+                        STAFTrace::traceOff(kSTAFTraceError);
+                    else if (tracepoint == "WARNING")
+                        STAFTrace::traceOff(kSTAFTraceWarning);
+                    else if (tracepoint == "INFO")
+                        STAFTrace::traceOff(kSTAFTraceInfo);
+                    else if (tracepoint == "DEPRECATED")
+                        STAFTrace::traceOff(kSTAFTraceDeprecated);
+                    else
+                    {
+                        result += "ERROR: \'" + tracepoint +
+                            "\' is not a valid tracepoint" +
+                            *gLineSeparatorPtr;
+                        invalid = true;
+                    }
+
+                    //report the results if nothing went wrong
+                    if (!invalid)
+                        result += tracepoint + spaces(
+                             COLON_COLUMN - (tracepoint).length()) +
+                             ": DISABLED" + *gLineSeparatorPtr;
+
+                }
+
+            }
+            if (parsedResult->optionTimes("SERVICES") != 0)
+            {
+                STAFString servList = parsedResult->optionValue("SERVICES");
+                STAFServiceManager::traceOffServices(servList);
+
+                STAFString service;
+
+                for (int i = 0; i < servList.numWords(); ++i)
+                {
+                    service =  servList.subWord(i, 1).upperCase();
+                    result += service.upperCase() + spaces(
+                             COLON_COLUMN - (service).length()) +
+                             ": DISABLED" + *gLineSeparatorPtr;
+                }
+            }
+        }
+        else if ((parsedResult->optionTimes("TRACEPOINT") != 0) ||
+            (parsedResult->optionTimes("SERVICE") != 0))
+        // Handles DISABLE TRACEPOINT <tp> SERVICE <tp>
+        {
+            STAFString tracepoint;
+            STAFString service;
+
+            for (int i = 1, optionCount =
+                parsedResult->optionTimes("TRACEPOINT"); i <= optionCount; ++i)
+            {
+                rc = RESOLVE_INDEXED_STRING_OPTION("TRACEPOINT", i, tracepoint);
+                tracepoint = tracepoint.upperCase();
+
+                if (rc) return STAFServiceResult(rc, errorBuffer);
+
+                if (tracepoint == "SERVICEREQUEST")
+                    STAFTrace::traceOff(kSTAFTraceServiceRequest);
+                else if (tracepoint == "SERVICEACCESSDENIED")
+                    STAFTrace::traceOff(kSTAFTraceServiceAccessDenied);
+                else if (tracepoint == "SERVICEERROR")
+                    STAFTrace::traceOff(kSTAFTraceServiceError);
+                else if (tracepoint == "SERVICERESULT")
+                    STAFTrace::traceOff(kSTAFTraceServiceResult);
+                else if (tracepoint == "SERVICEMANAGEMENT")
+                    STAFTrace::traceOff(kSTAFTraceServiceManagement);
+                else if (tracepoint == "REGISTRATION")
+                    STAFTrace::traceOff(kSTAFTraceRegistration);
+                else if (tracepoint == "REMOTEREQUESTS")
+                    STAFTrace::traceOff(kSTAFTraceRemoteRequests);
+                else if (tracepoint == "ERROR")
+                    STAFTrace::traceOff(kSTAFTraceError);
+                else if (tracepoint == "WARNING")
+                    STAFTrace::traceOff(kSTAFTraceWarning);
+                else if (tracepoint == "INFO")
+                    STAFTrace::traceOff(kSTAFTraceInfo);
+                else if (tracepoint == "DEPRECATED")
+                    STAFTrace::traceOff(kSTAFTraceDeprecated);
+                else
+                {
+                    result += "ERROR: \'" + tracepoint +
+                    "\' is not a valid tracepoint" + *gLineSeparatorPtr;
+                    rc = 1; //signify error
+                }
+
+                //report the results if nothing went wrong
+                if (!rc)
+                    result += tracepoint + spaces(
+                             COLON_COLUMN - (tracepoint).length()) +
+                             ": DISABLED" + *gLineSeparatorPtr;;
+            }
+
+            for (i = 1, optionCount =
+                parsedResult->optionTimes("SERVICE"); i <= optionCount; ++i)
+            {
+                rc = RESOLVE_INDEXED_STRING_OPTION("SERVICE", i, service);
+                if (rc) return STAFServiceResult(rc, errorBuffer);
+
+                STAFServiceManager::traceOffServices(service);
+
+                result += service.upperCase() + spaces(
+                             COLON_COLUMN - (service).length()) +
+                             ": DISABLED" + *gLineSeparatorPtr;
+            }
+        }
+
+    }
+
+    return STAFServiceResult(kSTAFOk, result);
+}
+
+
+STAFServiceResult STAFTraceService::handleHelp(
+    const STAFServiceRequest &requestInfo)
+{
+    if (requestInfo.fTrustLevel < 1) return kSTAFAccessDenied;
+
+    STAFString result("Trace service help" + *gLineSeparatorPtr +
+                      *gLineSeparatorPtr);
+
+
+    result += "ENABLE ALL  [ TRACEPOINTS | SERVICES ]" + *gLineSeparatorPtr;
+    result += "ENABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>" + *gLineSeparatorPtr;
+    result += "ENABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]..." + *gLineSeparatorPtr;
+    result += "ENABLE SERVICE <Service> [SERVICE <Service>]..." + *gLineSeparatorPtr;
+    result += *gLineSeparatorPtr;
+    result += "DISABLE ALL  [ TRACEPOINTS | SERVICES ]" + *gLineSeparatorPtr;
+    result += "DISABLE TRACEPOINTS <Trace point list> | SERVICES <Service list>" + *gLineSeparatorPtr;
+    result += "DISABLE TRACEPOINT <Trace point> [TRACEPOINT <Trace point>]..." + *gLineSeparatorPtr;
+    result += "DISABLE SERVICE <Service> [SERVICE <Service>]..." + *gLineSeparatorPtr;
+    result += *gLineSeparatorPtr;
+    result += "SET DESTINATION TO < STDOUT | STDERR | FILE <Filename> >" + *gLineSeparatorPtr;
+    result += *gLineSeparatorPtr;
+    result += "LIST [SETTINGS]" + *gLineSeparatorPtr;
+    result += *gLineSeparatorPtr;
+    result += "VERSION" + *gLineSeparatorPtr;
+    result += *gLineSeparatorPtr;
+    result += "HELP" + *gLineSeparatorPtr;
+
+    return STAFServiceResult(kSTAFOk, result);
+}
+
+STAFString STAFTraceService::spaces(int numSpaces)
+{
+    STAFString str = "";
+    for (int i = 0; i < numSpaces; i++)
+    {
+        str += " ";
+    }
+    return str;
+}
+
+STAFString STAFTraceService::info(unsigned int) const
+{
+    return (name() + ": Internal");
+}
+
+STAFTraceService::~STAFTraceService()
+{
+   ; /* Do Nothing */
+}

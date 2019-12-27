@@ -1,0 +1,397 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : Overview SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Overview
+.*  Detail:
+.*
+.*     This file contains an overview of STAF.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:ih1.handles
+:i2.concepts
+:h1 id=concepts.Concepts
+:h2 id=hndlcon.Handles
+:p.A handle is a unique identifier, representing a given process.  This
+handle is used when submitting requests to STAF.  This handle, combined with
+the machine name, uniquely identifies a particular process in the STAF
+Environment.  It is this combination of machine/handle that allows
+services to track requests from multiple processes on different machines.
+:p.In order to submit service requests to STAF, a process must have a handle.
+Thus, the first thing a process should do is register with STAF to obtain a
+handle.  Other data tied to this handle is the following:
+:ul compact.
+:li.Name - a descriptive name associated with the handle, which is specified
+when a process registers with STAF.
+:li.Last used date/time - a timestamp of the last time the handle was used to
+submit a request.
+:li.User authentication information - user authentication information
+associated with the handle if the handle has been authenticated
+:li.Variable pool - a means by which to store and retrieve information that the
+process may use, such as configuration data.
+:li.Queue - a priority queue used for interprocess communication between other
+processes/machines using STAF.
+:eul.
+:p.Before a process exits it should unregister with STAF to free up any
+resources used by that handle.
+:note.Handle 1 is always allocated to the STAF Process itself.  The name
+associated with this handle is STAF_Process.
+:p.
+If STAFProc is shutdown on a machine (or the machine is rebooted), STAF handles
+for that machine are deleted.
+:p.  
+The SEM and RESPOOL services perform garbage collection for handles that have
+been deleted by default, unless you specified no garbage collection when
+requesting a mutex semaphore or resource pool entry.  Performing garbage
+collection means that when a handle is deleted, any mutex semaphores or
+resource pool entries owned by the handle will be released and any pending
+requests submitted by the handle will be removed.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.services
+:ih2.general
+:i3.concepts
+:h2 id=srvcon.Services
+:p.Services are what provide all the capability in STAF.  Services may be
+internal services, in which case, the executable code for the service resides
+within STAFProc.  Services may also be external services, in which case, the
+executable code for the service resides outside of STAFProc, for example, in
+a Java routine.
+:p.Services are known by their name, such as PROCESS or LOG.  Internal
+services are always available and have a fixed name.  External services must
+be registered, and the name by which they are known is specified when they are
+registered.  If an external service is not registered with STAF, then the
+service is not available on that STAF Client.
+:p.Services may also be delegated to another STAF Client.  In this case, when
+a request is made for the service on the local STAF Client, it is automatically
+forwarded to the machine to which this service has been delegated.  For example,
+a testcase may request the local machine to log some information via the LOG
+service.  If the LOG service has been delegated to another machine, the
+LOG request will actually be handled by the machine to which logging has
+been delegated.  In this way, all logs could be conveniently stored on one
+system, without the testcases needing to explicitly send their LOG requests
+to the common system.  In a similar manner, if a service were only available
+on a specific operating system, then all testcases could assume that the
+service was available locally, when, in fact, the service was being delegated
+to the machine running the required operating system.
+:note.Internal services may not be delegated.
+:p.External services and delegated services are both registered in the STAF
+Configuration File.  External services also may be dynamically added (registered)
+or removed (unregistered and terminated) 
+.*replaced, or renamed
+via the SERVICE service (see :hdref refid=srvService.).
+:ih1.services
+:i2.service loader
+:i1.Service loader registration
+:p.Service loaders are external services whose purpose is to load services on-demand.
+They allow services to be loaded only when they have been requested,
+so they don't take up memory until needed.
+They also allow dynamic service registration when a request is made so that
+you don't have to change the STAF configuration file to register a
+service.
+:p.When a request is encountered for a service that doesn't exist,
+STAF will call each service loader, in the order they were
+configured, until the service exists or we run out of service loaders.
+If we run out of service loaders, then the standard
+RC 2 (DoesNotExist) will be returned indicating that the service is not registered.
+Otherwise, the request will be sent to the newly added service.
+If a service is currently being attempted to be loaded by a service loader,
+any requests submitted to the service while it's being loaded will wait
+until the attempt to load the service has completed.  If the service was loaded,
+the request will be sent to the newly added service.  If the service wasn't loaded,
+RC 2 (DoesNotExist) will be returned indicating that the service is not registered.
+:p.STAF ships two service loader services:
+:ol.
+:li.A default service loader service called STAFDSLS which is written in C++ and
+can dynamically load the Log, Zip, Monitor, and ResPool C++ services.  This service
+loader is configured automatically in the default STAF.cfg file.
+See section :hdref refid=STAFDSLS. for more information about the default
+service loader service.
+:li.A HTTP service loader service called STAFHTTPSLS which is written in Java and
+can dynamically load any STAF services written in Java.  It can download the
+jar file for a STAF Java service (or a zip file that contains the jar file)
+from a web server or from a file on the local machine.  It uses a configuration
+file to determine what services it can load.  This service loader service can
+reduce the maintenance for managing STAF Java services.
+See section :hdref refid=STAFHTTPSLS. for more information about the HTTP
+service loader service.
+:eol.
+
+:ih1.services
+:i2.authenticator
+:p.Authenticators are special external services whose purpose is to
+authenticate users in order to provide user level trust, which can be used
+in addition (or instead of) machine level trust.  An Authenticator is a
+special service that accepts an authenticate request.  As a user, you
+cannot directly submit a request to an authenticator service.
+Authenticators are accessed indirectly via the Handle service.
+:p.Authenticators can only be registered in the STAF configuration file --
+they cannot be dynamically registered.  One or more Authenticators can be
+registered.  The first Authenticator registered is the default, unless
+overridden by using the DEFAULTAUTHENTICATOR operational parameter.
+If you want to authenticate across systems, you must register the
+Authenticator on each system using the same name (case-insensitive).
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.workload
+:i2.concepts
+:h2 id=wkldcon.Workloads
+:p.A workload is a set of processes running on a set of machines.  A workload
+may be as simple as a single process running on a single machine, or it may be
+as complex as multiple processes on multiple machines coordinating together to
+perform a larger complex task.  STAF was designed to help the creation and
+automation of workloads of all sizes.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.variables
+:i2.concepts
+:h2 id=varcon.Variables
+:p.STAF provides a means to store and retrieve variables.  These variables
+may be used for any purpose the tester desires, such as storing testcase
+configuration parameters.  These variables provide two main capabilities
+to testcase writers.  One, they provide a standard means by which to store
+configuration data, i.e., each tester doesn't have to figure out how to store
+and retrieve said configuration data.  Two, these variables may be changed
+dynamically.  For example, if a testcase queries the WebServer variable
+before sending a request off to the web server, and that web server goes down,
+the WebServer variable can be dynamically changed by the tester to refer to a
+different web server, and the testcase can continue execution.  Note how STAF
+allows the variable's value to be changed outside of the scope of the running
+testcase, thus allowing the testcase to continue execution without needing to
+be stopped and restarted.
+:p.STAF maintains a "system" variable pool that is common to all
+the processes on a given STAF Client.
+STAF also maintains a "shared" variable pool which is also system-wide,
+but which will be sent across the network and used in variable resolution
+on remote systems.
+In addition, each process/handle has its own variable pool.
+By default, the values of variables in a process' variable pool override the
+values of variables in the system and shared variable pools.  However, the
+process may override this behavior when asking for the value of a variable.
+Basically, as part of every remote request, the originating handle and system 
+shared variable pools are sent across the wire. These pools are stored only for 
+the duration of the request for use in variable resolution.
+:i2.predefined
+:p.The following system variables are predefined:
+:ul compact.
+:li.STAF/Config/BootDrive - Indicates the drive from which the machine was
+booted
+:li.STAF/Config/CodePage - The codepage used by STAF
+:li.STAF/Config/ConfigFile - The configuration file used to start STAF
+:li.STAF/Config/DefaultAuthenticator - The default authenticator.  If no
+authenticators are registered, it's value is "none".
+:li.STAF/Config/DefaultInterface - The default interface.  If no
+network interfaces are registered, it's value is "local" to show that
+the local interface is the only interface available.
+:li.STAF/Config/InstanceName - The name of this STAF instance.  The default
+is STAF if the STAF_Instance_Name environment variable is not specified.
+:li.STAF/Config/Machine - The name of this machine
+:li.STAF/Config/MachineNickname - The nickname for this machine.  This defaults
+to the same value as STAF/Config/Machine unless overridden using the MACHINENICKNAME
+configuration setting.
+:li.STAF/Config/Mem/Physical/Bytes - The amount of physical memory in bytes. 
+Note: The value is 0 on z/OS because STAF cannot determine
+the physical memory on this operating system.
+:li.STAF/Config/Mem/Physical/KB - The amount of physical memory in kilobytes.
+Note: The value is 0 on z/OS because STAF cannot determine
+the physical memory on this operating system.
+:li.STAF/Config/Mem/Physical/MB - The amount of physical memory in megabytes.
+Note: The value is 0 on z/OS because STAF cannot determine
+the physical memory on this operating system.
+:li.STAF/Config/OS/Name - The name of the operating system, e.g.
+WinXP, WinSrv2008, Linux, AIX, SunOS, HP-UX, Darwin
+:li.STAF/Config/OS/MajorVersion - This is operating system specific
+:li.STAF/Config/OS/MinorVersion - This is operating system specific
+:li.STAF/Config/OS/Revision - This is operating system specific
+:li.STAF/Config/Processor/NumAvail - The number of available processors.
+Note: The value is 0 on z/OS because STAF cannot determine
+the number of available processors on this operating system.
+:li.STAF/Config/Sep/Command - The character(s) used to separate multiple
+commands concatenated together in a single line
+:li.STAF/Config/Sep/File - The character(s) used to separate files and
+directories in a path
+:li.STAF/Config/Sep/Line - The character(s) used to separate lines in a text
+file
+:li.STAF/Config/Sep/Path - The character(s) used to separate paths in a path
+list
+:li.STAF/Config/STAFRoot - The directory in which STAF is installed
+:li.STAF/DataDir - The directory that STAF and its services use to write data
+(based on the DATADIR operational parameter)
+:li.STAF/Env/* - All environment variables accessible via STAF
+:li.STAF/Version - The version of STAF installed
+:eul.
+:p.
+:h3 id=varconbasics.The Basics of Variable References
+:p.
+To substitute a variable's value, write the name of the variable in curly braces:
+"{STAF/Config/OS/Name}" is a valid reference to the variable STAF/Config/OS/Name.
+Assuming STAF/Config/OS/Name=Win2000, string "Operating system is {STAF/Config/OS/Name}"
+resolves to "Operating system is Win2000".
+:p.
+Variable references can be used in many places when submitting a STAF request.
+For example:
+:ul compact.
+:li.When submitting a request to any service, the machine
+name and service name can contain STAF variables.
+:li.When using the Variable service, the string being resolved can contain STAF variables.
+:li.When starting a process via the Process service, the values of any of its request options
+can contain STAF variables.
+:li.When logging a message via the Log service, the value of the message can contain
+STAF variables.
+:eul.
+:p.
+See section :hdref refid=varservice. for more information on setting and resolving
+variables.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.security
+:h2 id=trstcon.Security
+:p.Security in STAF can be defined at the machine level and/or the user level.
+In other words, you grant access to machines and/or to userids.
+Access in STAF is granted by specifying a certain trust level for a machine or
+user, where trust level 0 indicates no access and trust level 5 indicates all access.
+Each service in STAF defines what trust level is required in order to use the various
+functions the service provides.
+:ih1.trust
+:i2.levels
+:p.A basic description of each level follows
+:ul compact.
+:li.Level 0 - No access
+:li.Level 1 - Restricted access.  Only PING and helps available.
+:li.Level 2 - Limited access.  Only query/view facilities available.
+:li.Level 3 - Standard access.  Non-destructive updates allowed, e.g., logging.
+:li.Level 4 - Advanced access.  Update abilities, e.g., copying files, deleting
+log files.
+:li.Level 5 - All access, e.g., SHUTDOWN, Process invocation, Trust definition
+manipulation
+:eul.
+:p.In order to use user trust security in STAF, you must have at least
+one authenticator registered.
+:note.The local machine can be granted a trust level by specifying
+interface "local" and a system identifier of "local".
+:p.User authentication overrides machine authentication.  For example,
+if the machine trust level is 3 and the authenticated user has a trust
+level of 4, then the handle will have a trust level of 4.
+If the user has been authenticated, but there are no user authentication
+trust matches, the machine trust level is used.  If there is no machine
+trust level specified, then the default trust level is used.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.queues
+:i2.concepts
+:h2 id=queuecon.Queues
+:p.Each handle in STAF has a priority queue associated with it.  This queue
+is used to accept/retrieve messages from other processes/machines.  Each
+message in the queue has the following data associated with it.
+:ul compact.
+:li.Priority - An unsigned long value (0 - 4294967296) representing the
+importance of the message, with 0 representing the most important message
+:li.Timestamp - The date/time the message was received
+:li.Machine - The machine which sent the message
+:li.Process name - The registered name of the process which sent the message
+:li.Handle - The handle of the process which sent the message
+:li.Message - The actual message itself
+:eul.
+:p.STAF allows you to register to receive notifications for certain events,
+such as STAF starting and shutting down.  These events will appear in the
+queue of the requesting process.  They will reveal the originating handle as
+handle 1 of the originating machine, which is the reserved STAF Process handle.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.codepage
+:i2.concepts
+:ih1.strings
+:i2.concepts
+:h2 id=stringcon.Strings and Codepages
+:p.The requests submitted to STAF and the results received from STAF are all
+strings.  These strings may contain any arbitrary set of characters, including
+the NULL (i.e., 0) character.  When working in an environment with a
+heterogeneous set of codepages, STAF will translate the request and result
+strings from and to the necessary codepages.  This ensures that the request and
+result strings are not misinterpreted by the receiver.
+:p.
+In general, when using STAF services, there shouldn't be any round trip problems.
+"Round trip" in this context means when all requests are originating from the 
+same system, even if the requests are sent to, and the data is stored on, a system
+with a different codepage.  However, if you send, for example, a request to log
+data containing Japanese codepage specific characters to any system and then
+query the log from a system using a US English codepage, you won't get the
+"correct" data, as that is not a valid "round trip". 
+:note.All STAF generated strings are composed of only ASCII-7 characters and
+will safely survive the translation from/to different codepages.
+.* XXX: Commented out since don't support REXX in STAF V3
+.*:note text=Caution.If you use a STAF service that is written in REXX, it 
+.*can have round trip codepage translation problems.  All of STAF services
+.*currently provided are written in C++/Java so they do not have this problem.
+:p.
+:h3.Windows Codepage Translation Anomalies
+:p.
+If you need to specify non-ASCII characters in  a request, then you need to be
+aware of some anomalies if your target system is a Windows system that isn't
+using an English codepage and whose ANSI codepage (ACP) identifier is different
+from the OEM codepage (OEMCP) identifier.  The system locale determines which
+codepages are defaults for the Windows system.  However, some European locales
+such as French and German set different values for the ACP and OEMCP.
+By default, STAF uses the OEM codepage when doing codepage translation.
+But, depending on where the data is input, it may be necessary to tell STAF
+to use the ANSI codepage.  The ANSI codepage is used in the window manager
+and graphics device interface and by many applications.  However, the Windows
+command line and bat files use the OEM codepage as they are interpreted by
+cmd.exe.  You can use CHCP to display or change the codepage used by the
+command line.  Note that these anomalies occur only on Windows systems.
+:p.
+To avoid these Windows codepage anomalies, you may need to change the codepage
+used by STAF using one of these methods:
+:p.
+:ul.
+:li.Change the OEMCP value to be set to the same data as the ACP value in the
+Windows Registry.  You can use REGEDIT to start the Windows Registry Editor
+and select Edit->Find and type in ACP to find its value data and then do the
+same for OEMCP to find its value data.  Assuming they are different, you
+could change the value data for OEMCP to be the same as the value data for
+ACP by highlighting OEMCP and selecting Edit->Modify and enter the new value
+data for OEMCP and then exit the REGEDIT program.  The system must be
+rebooted for the registry change to take effect.  Also, if the system is
+abnormally rebooted, it's possible that the Windows operating system may
+reset the registry value.  This is the recommended method.
+:note text=Caution.You should NOT change the ACP value to the OEMCP value.
+:p.
+:li.Or, you can override the codepage used by STAF by setting the
+STAFCODEPAGEOVERRIDE environment variable to the ANSI codepage and then
+start STAFProc.
+:eul.
+:note.To see the codepage that STAF is using, check the value of
+STAF variable STAF/Config/CodePage.  For example: 
+:xmp.    STAF testmach1 VAR RESOLVE STRING {STAF/Config/CodePage}:exmp.
+
+:p.
+:h3 id=FSGetFileConverterError.Codepage Converter Error on a FS GET FILE Request
+:p.
+On a GET FILE request to the FS service (or on another service request that
+submits a GET FILE request to the FS service like the STAX service does on
+an EXECUTE FILE request), RC 39 (Converter Error) is returned if the file
+contains data that is not valid in the codepage that STAF is using.
+To see the codepage that STAF is using, check the value of STAF variable
+STAF/Config/CodePage as discussed in the previous section.
+:p.
+To resolve an RC 39 (Converter Error) on a GET FILE request to the FS service,
+either:
+:ul.
+:li.Change the file contents to only use data that is valid in the codepage
+used by STAF, or
+:li.Override the codepage used by STAF by setting the STAFCODEPAGEOVERRIDE
+environment variable to a codepage that does support the data in the file
+and then re-start STAFProc.
+:eul.

@@ -1,0 +1,780 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002, 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML><HEAD>
+
+<TITLE>SXE Service</TITLE>
+
+</HEAD><BODY bgcolor=#ffffff>
+
+<A NAME=Top_Of_Page></A>
+
+<H1>STAF eXecution Engine (SXE) Service User's Guide</H1>
+<b>Version 3.0.3</b></p>
+<p><b>Last updated: December 1, 2009</b>
+
+<HR><H2><A NAME=ToC>Table of Contents</A></H2>
+
+<MENU>
+<LI><A name=ToC_2 href="#Header_2" >Overview</A>
+<LI><A name=ToC_3 href="#Header_3" >Installation and Configuration</A>
+<LI><A name=ToC_7 href="#Header_7" >Variables</A>
+<li><a name="ToC_RequestSyntax" href="#Header_RequestSyntax">Request Syntax</a>
+  <menu>
+  <LI><A name=ToC_15 href="#Header_15" >EXECUTE</A>
+  <LI><A name=ToC_List href="#Header_List" >LIST</A>
+  <LI><A name=ToC_Version href="#Header_Version" >VERSION</A>
+  <LI><A name=ToC_Help href="#Header_Help" >HELP</A>
+  </menu>
+<LI><A name=ToC_51 href="#TMMHANDLERERR" >SXE Error Code Reference</A></LI>
+<li><a name=ToC_52 href="#SERVICELOGGING">Service Logging</a></li>
+</MENU>
+<P>
+<hr>
+<H1><A name=Header_2 href="#ToC_2">Overview</A></H1>
+
+The STAF eXecution Engine (SXE) service is an external STAF service, written in Java, that is intended to allow the user to sequentially execute any number
+of STAF commands. The SXE service reads a file containing STAF commands and executes them in the order which they appear
+in the file.
+<p>
+The purpose of the SXE service is to provide a simple STAF service to execute a list
+of STAF commands specified in a file.
+<p>
+<hr>
+<H1><A name=Header_3 href="#ToC_3">Installation and Configuration</A></H1>
+<p>
+This service requires:
+<ul>
+<li>STAF Version 3.0.0 or later
+<li>Java 1.2 or later
+</ul>
+<p>
+Install the SXE service by downloading the SXEV303.tar/zip file from
+<a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+and extracting its contents to a local directory (e.g. C:\STAF\services or
+/usr/local/staf/services).
+The STAFSXE.jar file is the service jar file needed when
+registering the SXE service.
+<p>
+The SXE service is written in Java and since it is an external service,
+it must be registered with the SERVICE configuration statement in the
+STAF configuration file.  The syntax is:
+<PRE>
+SERVICE &lt;Name> LIBRARY JSTAF EXECUTE &lt;Service Jar File Name>
+               [OPTION &lt;Name[=Value]>]... [PARMS LOGNAME &lt;Logname>]
+</PRE>
+where:
+<ul>
+<li><tt>SERVICE</tt> specifies the name by which the SXE service will be known
+on this machine.</li>
+<p>
+<li><tt>EXECUTE</tt> specifies the fully qualified name of the STAFSXE.jar file.
+On Windows systems, this might be C:\STAF\services\sxe\STAFSXE.jar.
+On Unix systems, this might be /usr/local/staf/services/sxe/STAFSXE.jar.
+Or, you could specify {STAF/Config/STAFRoot}/services/sxe/STAFSXE.jar
+which would work on any operating system.
+<p>
+<li><tt>OPTION</tt> specifes a configuration option that will be passed on to the
+JSTAF Java service proxy library.
+This is typically used by service proxy libraries to further control the interface 
+to the actual service implementation. You may specify 
+multiple <tt>OPTIONs</tt> for a given service.
+See the STAF User's Guide for more information on options for the JSTAF Java
+service proxy library.
+<p>
+<li>
+<tt>LOGNAME</tt> is an optional parameter that specifies the name of the service log to use when
+service logging is performed via the STAF LOG service.
+It defaults to SXELOG if not specified.</li>
+</ul>
+
+<H4><A NAME="Header_5">Examples</A></H4>
+
+<PRE>
+SERVICE SXE LIBRARY JSTAF EXECUTE C:/staf/services/sxe/STAFSXE.jar
+
+SERVICE SXE LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/sxe/STAFSXE.jar \
+            PARMS LOGNAME SXEServiceLog
+</pre>
+
+Or, you can dynamically add the SXE service using the SERVICE service's
+<tt>ADD SERVICE</tt> request. 
+<p>
+In most cases, the way that you would use this service is that you would designate
+a system as the SXE Server. That system would have STAF installed, plus the SXE
+service with the SERVICE configuration statement in the configuration file that
+is shown above. Assuming that the machine name for the SXE server is server1,
+an example of the command line interface to execute a file would be: 
+<pre>  STAF server1 SXE EXECUTE FILE C:/tests/sxeTest.txt</pre>
+<P>
+<hr>
+<H1><A name=Header_7 href="#ToC_7">Variables</A></H1>
+<p>
+The following variables may be defined for the SXE service and will affect the behavior
+of the SXE service:
+<DL COMPACT>
+<DD><TT>STAF/Service/SXE/LogLevel:</TT> Specifies the level (amount) of logging to be performed</DD>
+<DD><TT>STAF/Service/SXE/ElapsedTarget:</TT> Sets the target for elapsed time for the testcase</DD>
+<DD><TT>STAF/Service/SXE/ElapsedTolerance:</TT> Sets the tolerance for the elapsed time target for the testcase</DD>
+</DL>
+<p>
+<ul>
+<li><b><tt>STAF/Service/SXE/LogLevel</tt></b>
+<P>
+This variable may be set to <tt>None</tt>, <tt>File</tt>, or <tt>Command</tt>.
+By default, it is set to <tt>None</tt>.
+If this variable is set to:
+<ul>
+<li><tt>None</tt> - no logging will be performed by the SXE service.
+<li><tt>File</tt> - a log entry will be made when starting execution of a file and
+also will log a PASS or FAIL after the file completes. Note that if a file is
+executed in a loop, logging will occur for each iteration of the file.
+<li><tt>Command</tt> -  the above file logging will occur as well as
+start and PASS or FAIL logging for each command executed in the file.
+This variable is checked at each logging attempt. Therefore, the log level may be
+dynamically changed, even during file execution.
+</ul>
+<p>
+<b>Examples:</b>
+<pre>
+SET SYSTEM VAR STAF/Service/SXE/LogLevel=None
+SET SYSTEM VAR STAF/Service/SXE/LogLevel=File
+SET SYSTEM VAR STAF/Service/SXE/LogLevel=Command
+</pre>
+<p>
+<li><b><tt>STAF/Service/SXE/ElapsedTarget</tt></b>
+<P>
+This variable sets the target for elapsed time for the testcase.
+The format for the time is&nbsp; <tt>hours:minutes:seconds.milliseconds</tt>.
+<p>
+This variable must be set from inside the file passed to the SXE EXECUTE command
+via the STAF VAR service. The call to the VAR service should not specify SYSTEM,
+SHARED or HANDLE.
+<p>
+<b>Example:</b>
+<pre>
+local VAR SET VAR STAF/Service/SXE/ElapsedTarget=0:30:0.0</DD>
+</pre>
+<b>Warning:</b> If this variable exists in the global variable pool, the results
+of the elapsed time checking could be unpredictable.
+<p>
+See below for a description of the elapsed time checking.
+<p>
+<li><b><tt>STAF/Service/SXE/ElapsedTolerance</tt></b>
+<P>
+This variable sets the tolerance for the elapsed time target for the testcase.
+The number specified is a percentage.
+<p>
+This variable must be set from inside the file passed to the SXE EXECUTE command
+via the STAF VAR service. The call to the VAR service should not specify SYSTEM,
+SHARED or HANDLE.
+<p>
+<b>Example:</b>
+<pre>
+local VAR SET VAR STAF/Service/SXE/ElapsedTolerance=25</DD>
+</pre>
+<b>Warning:</b> If this variable exists in the system or shared variable pool,
+the results of the elapsed time checking could be unpredictable.
+<p>
+See below for a description of the elapsed time checking.
+</ul>
+
+<H2>Elapsed Time Checking</H2>
+<P>
+If both of the variables ElapsedTarget and ElapsedTolerance are set with valid values
+from within the file passed to the SXE EXECUTE command, Elapsed Time Checking will be
+enabled.  This indicates that after SXE has successfully completed executing all the
+commands in the specified file, it will check to see if the actual elapsed time is
+greater than:
+<pre>
+ElapsedTarget + (ElapsedTarget * ElapsedTolerance%)
+</pre>
+If it is, an ElapsedTargetExceeded return code will be returned.
+Otherwise, RC 0 will be returned indicating success.
+
+<hr>
+<h1><b><a name="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></b></h1>
+
+The SXE service provides the following requests:
+<ul>
+<li>EXECUTE - Executes all the STAF comands specified in a file.</li>
+<li>VERSION - Returns the version of the SXE service</li>
+<li>HELP - Displays a list of requests for the SXE service and how
+to use them.</li>
+</ul>
+
+<H2><A name=Header_15 href="#ToC_15">EXECUTE</A></H2>
+<P>
+Executes all the STAF commands specified in a file. Each file will be given
+a STAF handle and all commands will be executed using this STAF handle.
+The fully qualified filename is passed to STAF during handle registration.
+<P>
+When SXE is given a file to execute, it will execute each command in the file
+sequentially, proceeding to the next command after the previous command returns.
+Should a command return a non-zero return code,  SXE execution will halt and
+RC 4001 (Execution Error) will be returned and the result buffer from
+will contain additional information about the failing command.
+
+<H4><A NAME="Header_16">Syntax</A></H4>
+
+<PRE>
+EXECUTE FILE &lt;File&gt; [LOOP &lt;Number of loops&gt; | MINRUNTIME &lt;hh:mm&gt;]
+</PRE>
+<P><tt>FILE</tt> specifies the fully-qualified name of a file which contains
+a list of STAF commands to execute.
+<P>
+<tt>LOOP</tt> specifies the number of times that the file should be executed.
+<tt>FOREVER</tt> may be specified to indicate an infinite loop.
+If this option is not specified, the file will be executed once.
+<P>
+<tt>MINRUNTIME</tt> specifies the minimum amount of time that the test should
+execute.  It's format is hh:mm.  If at the end of an iteration, the entire
+execution time for this test is greater than or equal to the minimum runtime,
+the test will end.  Otherwise, a new iteration of the test will begin.
+<P>
+<b>Notes:</b>
+<ol compact>
+<li>SXE will set a handle variable named sxeloop and it will contain the
+number of the current loop iteration.
+<li>The parameters LOOP and MINRUNTIME are mutually exclusive.
+</ol>
+
+<H4><A NAME="Header_17">Security</A></H4>
+<P>
+Minimum security level of 3 required to submit an <tt>EXECUTE</tt> request.
+
+<H4>File format</H4>
+<P>
+The file specified for an <tt>EXECUTE</tt> request should contain be a text
+file, where each line in the file should contain a single STAF command in 
+the following format:
+<pre>
+&lt;Endpoint&gt; &lt;Service&gt; &lt;Request&gt;
+</pre>
+where:
+<ul compact>
+<li><tt>&lt;Endpoint&gt;</tt> is the endpoint for the machine to receive the STAF command
+<li><tt>&lt;Service&gt;</tt> is the STAF service to receive the command
+<li><tt>&lt;Request&gt;</tt> is the actual request to send to the service
+</ul>
+<p>
+Blank lines in the file are ignored.
+If the first non white-space character of a line is '#', that line will
+be treated as a comment.
+<p>
+Here is a sample file:
+<pre>
+local PING    PING
+local MISC    VERSION
+local PROCESS START COMMAND notepad
+</pre>
+<p>
+Here is another sample file that enables elapsed time checking by setting
+variables STAF/Service/SXE/ElapsedTarget and STAF/Service/SXE/ElapsedTolerance
+within the file.
+<pre>
+# Run TestA and TestB and do elapsed time checking
+
+local           VAR     SET VAR STAF/Service/SXE/ElapsedTarget=0:30:0.0
+local           VAR     SET VAR STAF/Service/SXE/ElapsedTolerance=20
+local           FS      COPY DIRECTORY C:/tests TOMACHINE client1.ibm.com
+client1.ibm.com PROCESS START COMMAND C:/tests/testA.exe WAIT
+client1.ibm.com FS      COPY FILE C:/tests/testA.res TOFILE C:/results/testA.res
+client1.ibm.com PROCESS START COMMAND C:/tests/testB.exe WAIT
+client1.ibm.com FS      COPY FILE C:/tests/testB.res TOFILE C:/results/testB.res
+client3.ibm.com EVENT   GENERATE TYPE myTests SUBTYPE complete
+</pre>
+
+<H4><A NAME="Header_18">Return Codes</A></H4>
+<P>
+All return codes from EXECUTE are documented in <A href="#TMMHANDLERERR">
+"SXE Error Code Reference"</A>.
+
+<H4><A NAME="Header_19">Results</A></H4>
+<P>
+<ul>
+<li>Upon successful return, the result buffer will contain a marshalled  
+<tt>&lt;Map:STAF/Service/SXE/ExecutionResults></tt>
+representing the execution results.  The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/SXE/ExecutionResults</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents the execution results.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>loops
+<td>Loops Executed
+<td><tt>&lt;String></tt></font>
+<td>
+<tr>
+<td>commands
+<td>Commands Per Loop
+<td><tt>&lt;String></tt>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The "Loops Executed" value is set to the total number of loops executed.
+<li>The "Commands Per Loop" value is set to the total number of commands
+    executed per loop.
+</ol>
+</tr>
+</tfoot>
+</table>
+<p>
+<li>
+<P>If unsuccessful, a non-zero RC will be returned and the result buffer will contain a
+marshalled <tt>&lt;Map:STAF/Service/SXE/ErrorInfo></tt> representing more
+information about the error.  The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/SXE/ErrorInfo</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents error information.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>loopNum
+<td>Loop Number
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>lineNum
+<td>Line Number
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>commandNum
+<td>Command Number
+<td><tt>&lt;String> | &lt;None></tt>
+<td>
+<tr>
+<td>command
+<td>Command
+<td><tt>&lt;String> | &lt;None></tt>
+<tr>
+<td>rc
+<td>RC
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>result
+<td>Result
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The "Loop Number" value is set to the loop number during which a command
+    in the file failed, or &lt;None> if not applicable.
+<li>The "Line Number" value is set to the absolute line number of the command
+    in the file passed to SXE that failed, or &lt;None> if not applicable.
+<li>The "Command Number" value is set to the number of the command that failed, 
+    or &lt;None> if not applicable.
+<li>The "Command" value is set to the actual command that failed,
+    or &lt;None> if not applicable.
+<li>The "RC" value is set to the return code of the failing STAF command.
+<li>The "Result" value is set to the result buffer of the failing STAF command.
+</ol>
+</tr>
+</tfoot>
+</table>
+</ul>
+<P>
+<B>Examples:</B>
+<P>
+<ul>
+<li><b>Goal:</b> Execute a SXE file named C:\tests\myTest.txt that contains
+3 STAF commands once.
+<p><tt>EXECUTE FILE C:\tests\myTests.txt</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and
+the commands in the file are executed successful, the result, in default format,
+could look like:
+<pre>
+Loops Executed   : 1
+Commands Per Loop: 3
+</pre>
+<li><b>Goal:</b> Execute a SXE file named C:\tests\webTest.txt that contains
+50 STAF commands and execute it 5 times.
+<p><tt>EXECUTE FILE C:\tests\webTest.txt LOOP 5</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and
+the commands in the file are executed successful, the RC would be 0 and
+the result buffer would look like:
+<pre>
+Loops Executed   : 5
+Commands Per Loop: 50
+</pre>
+<p>
+<P>Or, if during the 1st loop running the file, the 5th command in the file
+on the 10th line in the file executed failed and the 5th command is
+"local FS COPY FILE c:\foo\test.txt TOMACHINE testmachine" and
+it failed due to file c:\foo\test.txt not existing,
+the RC would be 4001 (Execution Error) and the result buffer would contain:
+<pre>
+Loop Number   : 1
+Line Number   : 10
+Command Number: 5
+Command       : LOCAL FS COPY FILE c:\foo\test.txt TOMACHINE testmachine
+RC            : 48
+Result        : c:\foo\test.txt
+</pre>
+<li><b>Goal:</b> Execute a SXE file named C:\tests\stressTest.txt and continue
+executing it for at least 4 hours.
+<p><tt>EXECUTE FILE C:\tests\webTest.txt MINRUNTIME 4:00</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and
+the commands in the file are executed successful, the result, in default format,
+could look like the following if the test contained 25 commands and ran 15 times:
+<pre>
+Loops Executed   : 15
+Commands Per Loop: 25
+</pre>
+</ul>
+
+<h2><a NAME="Header_List" href="#ToC_List">LIST</a></h2>
+
+LIST allows you to list the current operational settings for the SXE service.
+
+<h4>Syntax</h4>
+
+<pre>
+LIST SETTINGS
+</pre>
+
+<h4>Security</h4>
+
+This request requires at least trust level 2.
+
+<h4>Results</h4>
+
+The result buffer for a <tt>LIST SETTINGS</tt>
+request will contain a marshalled <tt>&lt;Map:STAF/Service/SXE/Settings></tt>
+representing the operational settings for the SXE service.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/SXE/Settings</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents the settings for
+the SXE service.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>logName
+<td>Log Name
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The "Log Name" value is the name of the STAF log where the SXE service
+    logs information.  It's value can be overridden via the <tt>LOGONAME</tt>
+    parameter when registering the SXE service.
+</ol>
+</tr>
+</tfoot>
+</table>
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> List the settings for the email service on machine server1.company.com:
+<p><tt>STAF server1.company.com SXE LIST SETTINGS</tt>
+<p><b>Output:</b>
+If the request is submitted from the command line, the result could look like: 
+<pre>
+Log Name: SXELOG
+</pre>
+</ul>
+
+<h2><a NAME="Header_Version" href="#ToC_Version">VERSION</a></h2>
+
+VERSION displays the SXE Service version.
+
+<h4>Syntax</h4>
+
+<tt>VERSION</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result is the version number of the SXE service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the version of the SXE service on machine server1.company.com:
+<p><tt>STAF server1.company.com SXE VERSION</tt>
+<p><b>Output:</b>
+<pre>
+3.0.3
+</pre>
+</ul>
+
+<h2><a NAME="Header_Help" href="#ToC_Help">HELP</a></h2>
+
+HELP displays the request options and how to use them.
+
+<h4>Syntax</h4>
+
+<tt>HELP</tt>
+
+<h4>Security</h4>
+
+This request requires at least trust level 1.
+
+<h4>Results</h4>
+
+The result buffer contains the Help messages for the request options for
+the SXE service.
+
+<h4>Examples</h4>
+
+<ul>
+<li><b>Goal:</b> Display the syntax for the SXE service requests:
+<p><tt>STAF local SXE HELP</tt>
+<p><b>Output:</b>
+<pre>
+SXE STAF Service
+
+EXECUTE FILE <File> [LOOP <Number of Loops> | MINRUNTIME <HH:MM>]
+LIST    SETTINGS
+VERSION
+HELP
+</pre>
+</ul>
+
+<hr>
+<H1><A name=TMMHANDLERERR href="#ToC_51">SXE Error Code Reference</A></H1>
+<P>
+In addition to the common STAF return codes, the following SXE
+return codes are defined:
+<P>
+<A NAME="TBLTIMERR">Table 1. SXE Service Return Codes</A><BR>
+<TABLE BORDER=1>
+<TR>
+  <TH ALIGN=middle VALIGN=top WIDTH="14%">Error Code</TH>
+  <TH ALIGN=left VALIGN=top WIDTH="29%">Meaning</TH>
+  <TH ALIGN=left VALIGN=top WIDTH="57%">Comment</TH>
+</TR>
+<TR>
+  <TD ALIGN=middle VALIGN=top WIDTH="14%"><B>4001</B></TD>
+  <TD ALIGN=left VALIGN=top WIDTH="29%">Execution Error</TD>
+  <TD ALIGN=left VALIGN=top WIDTH="57%">An error occurred during execution of the file.</TD>
+</TR>
+<TR>
+  <TD ALIGN=middle VALIGN=top WIDTH="14%"><B>4004</B></TD>
+  <TD ALIGN=left VALIGN=top WIDTH="29%">Elapsed Target Exceeded</TD>
+  <TD ALIGN=left VALIGN=top WIDTH="57%">The time specified by ElapsedTarget
+  and ElapsedTolerance was exceeded when this file was executed.</TD>
+</TR>
+<TR>
+  <TD ALIGN=middle VALIGN=top WIDTH="14%"><b>4005</b></TD>
+  <TD ALIGN=left VALIGN=top WIDTH="29%">Error Generating Elapsed Target
+  and/or Elapsed Tolerance values</TD>
+  <TD ALIGN=left VALIGN=top WIDTH="57%">Check the assigned values of
+  STAF/Service/SXE/ElapsedTarget and STAF/Service/SXE/ElapsedTolerance.</TD>
+</TR>
+</TABLE>
+<P>
+<A NAME=Bot_Of_Page></A></P>
+</DD>
+</dl>
+
+<hr>
+<h1><a name=SERVICELOGGING href="#ToC_52">Service Logging</a></h1>
+<p>
+If you have turned on service logging, the SXE service maintains a machine log as
+follows:
+<ul>
+<li>If variable STAF/Service/SXE/LogLevel is set to <tt>File</tt>:
+    <ul compact>
+    <li>A "Start" entry is logged when starting execution of a file
+    <li>A "Stop" entry is logged when stopping execution of a file
+    <li>A "Pass" or "Fail" entry is logged after the file completes with pass or
+        fail information recorded.
+    </ul>
+    <p>
+    Note that if a file is executed in a loop, logging will occur for each
+    iteration of the file.
+<p>
+<li>If variable STAF/Service/SXE/LogLevel is set to <tt>Command</tt>:
+    <ul compact>
+    <li>The above file logging will occur
+    <li>An "Info" entry is logged at the beginning of each command executed
+        in the file.
+    <li>After each command has been executed, if the command completed successfully
+        with RC 0, an "Info" entry is logged containing any result returned by the
+        command.  Otherwise, if the command failed, an "Error" entry is logged
+        containing more information about the error.
+    </ul>
+</ul>
+<p>
+If variable STAF/Service/SXE/LogLevel does not exist or is set
+to <tt>None</tt>, no logging will be performed by the SXE service.
+This variable is checked at each logging attempt. Therefore, the log level may be
+dynamically changed, even during file execution.
+<p>
+The logname for the SXE service is SXELOG unless overridden using the LOGNAME
+parameter when registering the service. 
+<p>
+Here is an example of what a SXE service log on machine server1.austin.ibm.com
+could look like if STAF/Service/SXE/LogLevel is set to <tt>File</tt>
+(shown via a request from the command line in the verbose format): 
+<pre>
+C:\>STAF server1 LOG QUERY MACHINE server1.austin.ibm.com LOGNAME SXELOG
+Response
+--------
+[
+  {
+    Date-Time: 20050128-14:08:31
+    Level    : Start
+    Message  : {
+      Loop Number: 1
+      Time       : 14:8:31.444
+    }
+  }
+  {
+    Date-Time: 20050128-14:08:32
+    Level    : Stop
+    Message  : {
+      Loop Number: 1
+      Time       : 14:8:32.515
+    }
+  }
+  {
+    Date-Time: 20050128-14:08:32
+    Level    : Pass
+    Message  : {
+      Loop Number              : 1
+      Elapsed Time             : 0:0:1.071
+      Elapsed Target           :
+      Elapsed Tolerance Percent: 0
+    }
+  }
+]
+</pre>
+<p>
+Here is an example of what a SXE service log on machine server1.austin.ibm.com
+could look like if STAF/Service/SXE/LogLevel is set to <tt>Command</tt>
+(shown via a request from the command line in the verbose format): 
+<pre>
+C:\>STAF server1 LOG QUERY MACHINE server1.austin.ibm.com LOGNAME SXELOG
+Response
+--------
+[
+  {
+    Date-Time: 20050128-14:10:47
+    Level    : Start
+    Message  : {
+      Loop Number: 1
+      Time       : 14:10:47.399
+    }
+  }
+  {
+    Date-Time: 20050128-14:10:47
+    Level    : Info
+    Message  : {
+      Action : Begin
+      Command: client1 ping ping
+      Result : <None>
+    }
+  }
+  {
+    Date-Time: 20050128-14:10:47
+    Level    : Info
+    Message  : {
+      Action : End
+      Command: client1 ping ping
+      Result : PONG
+    }
+  }
+  {
+    Date-Time: 20050128-14:10:47
+    Level    : Info
+    Message  : {
+      Action : Begin
+      Command: local delay delay 1000
+      Result : <None>
+    }
+  }
+  {
+    Date-Time: 20050128-14:10:48
+    Level    : Info
+    Message  : {
+      Action : End
+      Command: local delay delay 1000
+      Result :
+    }
+  }
+  {
+    Date-Time: 20050128-14:10:48
+    Level    : Stop
+    Message  : {
+      Loop Number: 1
+      Time       : 14:10:48.521
+    }
+  }
+  {
+    Date-Time: 20050128-14:10:48
+    Level    : Pass
+    Message  : {
+      Loop Number              : 1
+      Elapsed Time             : 0:0:1.122
+      Elapsed Target           :
+      Elapsed Tolerance Percent: 0
+    }
+  }
+]</pre>
+
+</BODY></HTML>

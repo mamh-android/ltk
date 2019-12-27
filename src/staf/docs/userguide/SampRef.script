@@ -1,0 +1,84 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : SampRef SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Samples Reference
+.*  Detail:
+.*
+.*     This file contains samples of using STAF.
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.samples
+:h1 id=sampref.Samples Descriptions
+:table id     = samptab
+       headhi = 3
+       frame  = box
+       cols   = '* 2* 4*'
+       align  = 'l l'.
+:tcap.STAF Sample Code
+.*-----------------------------
+:thd.
+:c.Name
+:c.Description
+:c.Comments
+:ethd.
+.*-----------------------------
+:row.
+:c.:hdref refid=javsam1.
+:c.Java Ping Sample
+:c.This sample uses the STAF Ping command to ping a STAF client
+and measure the throughput.
+.*-----------------------------
+:row.
+:c.:hdref refid=rexsam1.
+:c.Rexx Synchronous Process Sample
+:c.This sample loads the STAF Functions, registers to STAF, queries
+a system variable from STAF, initiates a synchronous process
+which is a chkdsk of the boot drive, then unregisters.
+.*-----------------------------
+:row.
+:c.:hdref refid=rexsam2.
+:c.Rexx Asynchronous Process Sample
+:c.This sample loads REXX and STAF Functions, registers to STAF,
+sets a system variable, initiates an asynchronous PMSEEK process,
+list variables, queries process status, stops PMSEEK, queries
+process status again, frees the process, queries the system
+variable previously set, then unregisters.
+.*-----------------------------
+:row.
+:c.:hdref refid=rexsam3.
+:c.Rexx Monitor Sample
+:c.This sample loads STAF Functions, registers to STAF,
+writes a monitor message and then queries it, this is done 10 times,
+then it unregisters. The size of the monitor messages written
+is based on a random number generated.
+.*-----------------------------
+:row.
+:c.:hdref refid=rexsam4.
+:c.Rexx Log Sample
+:c.This sample loads STAF Functions, registers to STAF, writes and
+queries 10 log messages to a global log called LOGTEST, then unregisters.
+The size of the log messages written is based on a random number generated.
+.*-----------------------------
+:row.
+:c.:hdref refid=rexsam5.
+:c.Rexx Ping Sample
+:c.This sample uses the STAF Ping command to ping a STAF client
+and measure the throughput.
+.*-----------------------------
+:row.
+:c.:hdref refid=csam1.
+:c.C Log Sample
+:c.This sample logs a message via the STAF LOG service.
+.*-----------------------------
+:row.
+:c.:hdref refid=cppsam1.
+:c.C++ Log Sample
+:c.This sample logs a message via the STAF LOG service.
+:etable.

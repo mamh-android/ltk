@@ -1,0 +1,1388 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name       : LogSrv SCRIPT
+.*  Descriptive Name: Software Test Automation Framework
+.*  Detail          : This file describes the STAF Log Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.log service
+:ih1.services
+:i2.log service
+:h2 id=logsrv.Log Service
+:h3.Description
+The Log service is an external STAF service that provides the following
+functions:
+:ul compact.
+:li.LOG - Write data to a log file
+:li.QUERY - Query data from a log file
+:li.LIST - List log file characteristics
+:li.DELETE - Delete a log file
+:li.PURGE - Purge records from a log file
+:li.SET - Set operation characteristics
+:li.&help.
+:eul.
+:p.The purpose of the Log service is to allow a test case to easily and
+flexibly manage information that needs to be logged.  It allows you to specify
+a log mask which defines which messages actually get logged to the log file.
+This log mask can be dynamically changed to alter the set of log messages
+written to the log file(s).  This can greatly assist in debugging.  For example,
+while a test case is running, you can dynamically alter the log mask to allow
+debug and trace log messages to start being logged.  The log query mechanism
+allows for record selection based on many selection criteria matches.
+:p.The Log service can be run in one of two modes.  In local mode, all log
+requests are handled locally, and all log files are stored locally.  In remote
+mode, all log requests are forwarded to a central system for processing.  In
+addition, all log files are stored on the central system.  While it is possible
+to delegate the log service to a central system, this has some unwanted side
+effects.  The primary one being that many unwanted messages are likely to be
+sent over the network, consuming time and bandwidth.
+:p.The following is an example of the major difference between delegating
+the Log service and using the Log service in remote logging mode.
+:cgraphic scale='.8'.
+Example Delegated Log
+
+                                  NETWORK
+            start                    ! start
+            info                     ! info
+            warning                  ! warning
+ +------+   trace    +-----------+   ! trace    +-------+
+ ! TEST !-> debug -> !   STAF    !-> ! debug -> ! STAF  ! -> WRITE LOG
+ ! CASE !   trace    ! DELEGATED !   ! trace    ! LOG   !    =========
+ +------+   error    !   LOG     !   ! error    ! Mask= !    error
+            debug    +-----------+   ! debug    ! Error !    fail
+            trace                    ! trace    ! Fail  !
+            debug                    ! debug    +-------+
+            fail                     ! fail
+
+
+Example Remote Logging
+
+                                 NETWORK
+            start                    !
+            info                     !
+            warning                  !
+ +------+   trace    +-----------+   !          +------+
+ ! TEST !-> debug -> !  LOG      !-> ! error -> ! STAF ! -> WRITE LOG
+ ! CASE !   trace    !  Mask=    !   ! fail     ! LOG  !    =========
+ +------+   error    !  Error    !   !          +------+    error
+            debug    !  Fail     !   !                      fail
+            trace    +-----------+   !
+            debug                    !
+            fail                     !
+:ecgraphic.
+:p.In the above Delegated Log service example, all the messages flowed over
+the network to the ultimate log server even though only error and fail
+conditions were selected to be logged. In the above Remote Logging example, the
+selection of the messages occur at the local box and only those
+messages that are selected get sent over the network to the ultimate
+log server.
+:note.When using the Log service in remote logging mode, you should have the
+log mask disabled (i.e. log everything) at the ultimate log server to avoid
+confusion and multiple log mask filtering.:enote.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.registration
+:i2.log service
+:h3.Registration
+The Log service is an external service and must be registered with the SERVICE
+configuration statement. The syntax is:
+:xmp.
+SERVICE :xph.<Name>:exph. LIBRARY STAFLog &lbrk.PARMS <Log parameters>&rbrk.
+:exmp.
+:p.:xph.<Name>:exph. is the name by which the Log service will be known on this
+machine.  The recommended name of the Log service is "LOG"
+:p.:xph.<Log parameters>:exph. are valid log parameters described below.
+:h4.Example
+:xmp.
+service log library STAFLog
+service log library STAFLog parms "Directory {STAF/Config/STAFRoot}/logdata ResolveMessage"
+:exmp.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.parameters
+:i2.log service
+:h3 id=logparms.Parameters
+:p.The Log service accepts a parameter string in the following formats
+:xmp.
+&lbrk.DIRECTORY <Log Directory Root>&rbrk.
+&lbrk.MAXRECORDSIZE <Size>&rbrk. &lbrk.DEFAULTMAXQUERYRECORDS <Number>&rbrk.
+&lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+&lbrk.ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&rbrk.
+:exmp.
+or
+:xmp.
+ENABLEREMOTELOGGING REMOTELOGSERVER <Server name>
+                    &lbrk.REMOTELOGSERVICE <Service Name>&rbrk.
+:exmp.
+:p.:xph.DIRECTORY:exph. specifies the root directory under which log files are
+stored.  The default is :xph.{STAF/DataDir}/service/&lt;Service Name (lower-case)>:exph..
+:note.Previously, in STAF 2.x, the default root directory was
+:xph.{STAF/Config/STAFRoot}/data/log:exph..
+So, if you want to continue to use the STAF 2.x log files with the
+current version of STAF, move the log files to the new default root
+directory or specify the old root directory for the :xph.DIRECTORY:exph. parameter.:enote.
+:p.:xph.MAXRECORDSIZE:exph. specifies the maximum length (in characters) of a
+logged message.  The default is 100000.
+:p.:xph.DEFAULTMAXQUERYRECORDS:exph. specifies the maximum number of records
+that will be returned if your query criteria selects more records than this number.
+The default is 100.  If no limit on the maximum number of records returned by
+a query is desired, specify 0.
+If a non-zero value is specified, it's equivalent to specifying LAST <Number>.
+This limit is only used if none of the following options are specified on a
+:xph.QUERY:exph. request:  :xph.FIRST, LAST, ALL, TOTAL, or STATS:exph..
+:p.:xph.RESOLVEMESSAGE:exph. specifies that variables in log messages should
+be resolved by default.
+:p.:xph.NORESOLVEMESSAGE:exph. specifies that variables in log messages should
+not be resolved by default.  This is the default.
+:p.:xph.ENABLERESOLVEMESSAGEVAR:exph. specifies that the log service should
+check the value of the STAF/Service/<Name>/ResolveMessage variable to determine
+if variables in log messages should be resolved.  This option will adversely
+affect the performance of the Log service.  See below for more information.
+:p.:xph.DISABLERESOLVEMESSAGEVAR:exph. specifies that the log service should not
+check the value of the STAF/Service/<Name>/ResolveMessage variable to determine
+if variables in log messages should be resolved.  See below for more information.
+This is the default.
+:p.:xph.ENABLEREMOTELOGGING:exph. specifies that the Log service should operate
+in remote/forwarding mode.
+:p.:xph.REMOTELOGSERVER:exph. specifies the server to which forwarded log
+requests should be sent.  This machine must be running STAF V3.0.0 or later.
+:note.From a trust perspective, the tcp interface names on the remote log
+server and on the machine forwarding requests to it must match or the remote
+log server must use a wildcard to match any interface in the trust statement for
+the machine that is forwarding log requests to it.
+:p.:xph.REMOTELOGSERVICE:exph. specifies the service to which forwarded log
+requests should be sent.  The default is the same name under which the Log
+service was registered on the local machine.
+:note.All these parameters, with the exception of :xph.DIRECTORY:exph.,
+:xph.ENABLEREMOTELOGGING:exph., :xph.REMOTELOGSERVER:exph., and
+:xph.REMOTELOGSERVICE:exph. may be changed with the :xph.SET:exph. command,
+see :hdref refid=logset. for more information.:enote.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.variables
+:i2.log service
+:h3.Variables
+The following variables will affect the behavior of the Log service.
+:sl compact.
+:li.:xph.STAF/Service/<Name>/Mask::exph. A string of log mask descriptions, or a 32 bit binary mask.
+:li.:xph.STAF/Service/<Name>/ResolveMessage::exph. Whether to resolve variables in the message
+:esl.
+:h4.STAF/Service/<Name>/Mask
+The variable determines what messages will and will NOT be written
+to the log file. You can set it to only have FATAL and ERROR messages written
+to the log file for example, or turn on DEBUG in the middle of a running test.
+This allows you to put as much informational, trace, debug, status, etc.
+logging messages into your testcases as you want, but based on the circumstance,
+dynamically alter the logging levels via configuration, not the testcase.
+:p.See :hdref refid=loglev. for a complete list of logging levels.
+:p.The log mask contains the set of levels that will actually be logged to the
+log file.
+:sl compact.
+:li.:hp2.Example::ehp2. set shared var "STAF/Service/Log/Mask=START STOP WARNING FATAL ERROR"
+:li.:hp2.Default::ehp2. All logging levels will be logged
+:esl.
+Alternatively, a 32 bit binary string may be specified that determines which logging
+levels will be applied.
+:sl compact.
+:li.:hp2.Example::ehp2. set shared var STAF/Service/Log/Mask=11111111000000000000000000000000
+:esl.
+:h4.STAF/Service/<Name>/ResolveMessage
+This variable determines if messages should be resolved before writing them.
+If message resolution is desired, then a call to the STAF variable
+service is made and all variables in the message are resolved.  If for any reason
+the resolution is unsuccessful (e.g. unbalanced braces {}, infinite recursion,
+etc.) then an error is generated.
+:note.This variable is not checked unless the :xph.ENABLERESOLVEMESSAGEVAR:exph.
+option has been set.
+:sl compact.
+:li.:hp2.Example::ehp2. set shared var STAF/Service/Log/ResolveMessage=1
+:li.:hp2.Default::ehp2. 0 (messages are NOT resolved)
+:esl.
+If a message was "Machine booted from {STAF/Config/BootDrive}" and
+STAF/Service/:xph.<Name>:exph./ResolveMessage was set to 1 then what would
+actually be logged would look like: "Machine booted from C:".  If
+STAF/Service/:xph.<Name>:exph./ResolveMessage was not defined or set to 0 then
+the original text of the message would be logged:
+"Machine booted from {STAF/Config/BootDrive}".
+:note.There are three places where message resolution can be affected.  They are
+evaluated in the following order
+:ul compact.
+:li.The :xph.RESOLVEMESSAGE:exph. or :xph.NORESOLEMESSAGE:exph. options on a
+:xph.LOG:exph. request.
+:li.The variable STAF/Service/<Name>/ResolveMessage, if the
+:xph.ENABLERESOLVEMESAGEVAR:exph. option has been set.
+:li.The :xph.RESOLVEMESSAGE:exph. or :xph.NORESOLVEMESSAGE:exph. operational
+parameters, settable via the :xph.PARMS:exph. option when configuring the
+service or via the :xph.SET:exph. command.
+:eul.
+:enote.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LOG
+:i3.log service
+:h3.LOG
+Writes data to a log file.
+:h4.Syntax
+:xmp.
+LOG <GLOBAL | MACHINE | HANDLE> LOGNAME <Logname> LEVEL <Level> MESSAGE <Message>
+    &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+:exmp.
+:p.:xph.GLOBAL:exph. indicates you want to write to a global log.  The global
+log is intended to facilitate multiple testcases on multiple machines all
+writing to a common log.
+:p.:xph.MACHINE:exph. indicates you want to write to a machine log.  The machine
+log is intended to facilitate multiple testcases on a single machine all writing
+to a common machine name log.
+:p.:xph.HANDLE:exph. indicates you want to write to a handle log.  The handle
+log is intended to facilitate each testcase writing to a separate log (no matter
+how many machines and processes are involved)
+:p.:xph.LOGNAME:exph. contains the name of the log to which you want to write.
+&varres.
+:p.:xph.LEVEL:exph. determines the level that you want to log. This can be in
+the form of level type such as "FATAL", "ERROR",  WARNING", etc. or a 32 byte
+binary string such as "00000000000000000000000000000001". &varres.
+See :hdref refid=loglev. for a complete list of logging levels.
+:p.:xph.MESSAGE:exph. contains the message (data) that you want to write to the
+log.  This option will not resolve messages by default but can be configured to
+do so in the STAF configuration file or by using RESOLVEMESSAGE.
+Any private data in the message will be masked before writing to the log.
+:p.:xph.RESOLVEMESSAGE:exph. causes the LOG service to call the STAF variable
+service to resolve any variables in the message before being written.  This
+overrides any other message resolution settings.
+:p.:xph.NORESOLVEMESSAGE:exph. causes the LOG service to not call the STAF
+variable service.  This overrides any other message resolution settings.
+:h4.Security
+:p.&seclvl. 3.
+:h4.Return Codes
+:h4.Results
+:p.The result buffer will contain no data on return from a LOG command.
+:h4.Examples
+:ul.
+:li.:xph.LOG GLOBAL  LOGNAME stresstst LEVEL fatal MESSAGE &colon.33&colon.Testcase aborted with error "255":exph.
+:li.:xph.LOG MACHINE LOGNAME stresstst LEVEL 10000000000000000000000000000000 MESSAGE Recovered:exph.
+:li.:xph.LOG HANDLE  LOGNAME stresstst LEVEL start MESSAGE "Step1 in Test1 initiated":exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.QUERY
+:i3.log service
+:h3 id=query.QUERY
+:p.Allows you to query records from a log based on a set of selection criteria.
+:note.A stand-alone utility also exists, called FmtLog, that can read a log file
+and write the data to an output file in a readable format.
+See :hdref refid=fmtlog. for additional information.:enote.
+:h4.Syntax
+:xmp.
+QUERY  <GLOBAL | MACHINE <Machine> &lbrk.HANDLE <Handle>&rbrk.> LOGNAME <Logname>
+       &lbrk.LEVELMASK <Mask>&rbrk. &lbrk.QMACHINE <Machine>&rbrk.... &lbrk.QHANDLE <Handle>&rbrk....
+       &lbrk.NAME <Name>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.ENDPOINT <Endpoint>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.CSCONTAINS <String>&rbrk....
+       &lbrk.STARTSWITH <String>&rbrk.... &lbrk.CSSTARTSWITH <String>&rbrk....
+       &lbrk.FROM <Timestamp> | AFTER <Timestamp>&rbrk.
+       &lbrk.BEFORE <Timestamp> | TO <Timestamp>&rbrk.
+       &lbrk.FROMRECORD <Num>&rbrk. &lbrk.TORECORD <Num>&rbrk.
+       &lbrk.FIRST <Num> | LAST <Num> | ALL&rbrk. &lbrk.TOTAL | STATS | LONG&rbrk.
+       &lbrk.LEVELBITSTRING&rbrk.
+:exmp.
+:p.:xph.GLOBAL:exph. indicates you want to query to a global log.  The global log is intended
+to facilitate multiple testcases on multiple machines all writing to a common log.
+:p.:xph.MACHINE:exph. indicates you want to query to a machine log.  Specify the machine nickname.
+The machine log is intended to facilitate multiple testcases on a single machine all
+writing to a common log.  &varres.
+:p.:xph.HANDLE:exph. indicates you want to query to a handle log.  The handle log is intended
+to facilitate each testcase writing to a separate log. &varres.
+:p.:xph.LOGNAME:exph. contains the name of the log you want to query. All log files have the ".log"
+extension automatically added to the file name. &varres.
+:p.:xph.LEVELMASK:exph. determines the levels that are selected.  This can be in the form of
+"FATAL ERROR WARNING" or a 32 byte bit string such as "00000000000000000000000000000111".  &varres.
+:p.:xph.QMACHINE:exph. selects only those records that originated from a certain machine.
+Multiple :xph.QMACHINE:exph. statements are handled as an "or" condition. &varres.
+:p.:xph.QHANDLE:exph. selects only those records that are associated with a certain handle.
+Multiple :xph.QHANDLE:exph. statements are handled as an "or" condition. &varres.
+:p.:xph.NAME:exph. selects only those records with a certain registered name.
+Multiple :xph.NAME:exph. statements are handled as an "or" condition. &varres.
+:p.:xph.USER:exph. selects only those records with a certain user.
+:xph.<User>:exph. format is :xph.<Authenticator>&colon.//<User Identifier>:exph. (e.g.
+none&colon.//anonymous, SampleAuth&colon.//johnDoe@company.com).
+Multiple :xph.USER:exph. statements are handled as an "or" condition. &varres.
+:p.:xph.ENDPOINT:exph. selects only those records with a certain endpoint.
+Multiple :xph.ENDPOINT:exph. statements are handled as an "or" condition. &varres.
+:p.:xph.CONTAINS:exph. selects only those records that contain a specified string in the message.  Note
+that this match is case insensitive. Multiple :xph.CONTAINS:exph. statements are
+handled as an "or" condition. &varres.
+:p.:xph.CSCONTAINS:exph. selects only those records that contain a specified string in the message.  Note
+that this match is case sensitive. Multiple :xph.CSONTAINS:exph. statements are
+handled as an "or" condition. &varres.
+:p.:xph.STARTSWITH:exph. selects only those records that start with a specified string in the message.
+Note that this match is case insensitive. Multiple :xph.STARTSWITH/CSSTARTSWITH:exph. statements are
+handled as an "or" condition. &varres. 
+:p.:xph.CSSTARTSWITH:exph. selects only those records that start with a specified string in the message.
+Note that this match is case sensitive. Multiple :xph.CSSTARTSWITH/STARTSWITH:exph. statements are
+handled as an "or" condition. &varres. 
+:p.:xph.FROM:exph. selects only those records that have a date and/or time from the specified format.  &varres.
+:p.:xph.AFTER:exph. selects only those records that have a date and/or time after the specified format.  &varres.
+:p.:xph.TO:exph. selects only those records that have a date and/or time to the specified format. &varres.
+:p.:xph.BEFORE:exph. selects only those records that have a date and/or time before the specified format. &varres.
+:note.:xph.<Timestamp>:exph. format is date, @time, or date@time (e.g. 19980214, @16:30:45, 19980214@16:30:45)
+:note.The keyword :hp3.TODAY:ehp3. can be used for the current date in the :xph.FROM, AFTER, TO, BEFORE:exph. options.
+:p.:xph.FROMRECORD:exph. selects only those records whose record number is greater than or equal
+to the specified record number (which must be >= 1). &varres.
+:p.:xph.TORECORD:exph. selects only those records whose record number is less than or equal to
+the specified record number (which must be >= 1). &varres.
+:p.:xph.FIRST:exph. selects only the first <Num> records. &varres.
+:p.:xph.LAST:exph. selects only the last <Num> records. &varres.
+:p.:xph.ALL:exph. selects all the records that meet the query criteria.
+:p.:xph.TOTAL:exph. display only the total number of records selected instead of the records themselves.
+:p.:xph.STATS:exph. display the totals for each level instead of the records themselves.
+:p.:xph.LONG:exph. displays all of the fields for each log record instead of just the timestamp, level, and 
+message fields.
+:p.:xph.LEVELBITSTRING:exph. displays the selected records with the level displayed as a 32 byte binary bit
+string, e.g. 00000000000000000000000000000001 instead of the standard level text e.g. Error.
+See :hdref refid=loglev. for a complete list of logging levels.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+QUERY also returns codes documented in :hdref refid=logerr..
+:h4.Results
+:p.
+If the query criteria selects more records than allowed by the DefaultMaxQueryRecords
+parameter/setting (and none of the following options are specified:  :xph.FIRST, LAST,
+ALL, TOTAL, or STATS:exph.), the return code will be set to 4010 and the result buffer will
+contain only the 'last' default maximum number of query records.
+:p.
+If successful, the result buffer will contain data based on the QUERY command:
+:p.
+:ul.
+:li.If the :xph.TOTALS:exph. option is specified, the result buffer
+will contain only the total number of records selected instead
+of the records themselves.
+:p.
+:li.If the :xph.STATS:exph. option is specified, the result buffer will
+contain a marshalled :xph.<Map&colon.STAF/Service/Log/QueryStats>:exph.
+defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Log/QueryStats
+:tnote text='Description'.This map class represents the totals for the log levels of the
+selected records in the log.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Value / Format
+:ethd.
+:row.
+:c.fatal
+:c.Fatal
+:c.&stringObj.
+:c.
+:row.
+:c.error
+:c.Error
+:c.&stringObj.
+:c.
+:row.
+:c.warning
+:c.Warning
+:c.&stringObj.
+:c.
+:row.
+:c.info
+:c.Info
+:c.&stringObj.
+:c.
+:row.
+:c.trace
+:c.Trace
+:c.&stringObj.
+:c.
+:row.
+:c.trace2
+:c.Trace2
+:c.&stringObj.
+:c.
+:row.
+:c.trace3
+:c.Trace3
+:c.&stringObj.
+:c.
+:row.
+:c.debug
+:c.Debug
+:c.&stringObj.
+:c.
+:row.
+:c.debug2
+:c.Debug2
+:c.&stringObj.
+:c.
+:row.
+:c.debug3
+:c.Debug3
+:c.&stringObj.
+:c.
+:row.
+:c.start
+:c.Start
+:c.&stringObj.
+:c.
+:row.
+:c.stop
+:c.Stop
+:c.&stringObj.
+:c.
+:row.
+:c.pass
+:c.Pass
+:c.&stringObj.
+:c.
+:row.
+:c.fail
+:c.Fail
+:c.&stringObj.
+:c.
+:row.
+:c.status
+:c.Status
+:c.&stringObj.
+:c.
+:row.
+:c.user1
+:c.User1
+:c.&stringObj.
+:c.
+:row.
+:c.user2
+:c.User2
+:c.&stringObj.
+:c.
+:row.
+:c.user3
+:c.User3
+:c.&stringObj.
+:c.
+:row.
+:c.user4
+:c.User4
+:c.&stringObj.
+:c.
+:row.
+:c.user5
+:c.User5
+:c.&stringObj.
+:c.
+:row.
+:c.user6
+:c.User6
+:c.&stringObj.
+:c.
+:row.
+:c.user7
+:c.User7
+:c.&stringObj.
+:c.
+:row.
+:c.user8
+:c.User8
+:c.&stringObj.
+:c.
+:etable.
+:p.
+:li.If the :xph.LONG:exph. option is specified, the result buffer will
+contain a marshalled :xph.<List> of
+<Map&colon.STAF/Service/Log/LogRecordLong>:exph.,
+representing detailed information for the selected log records.
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Log/LogRecordLong
+:tnote text='Description'.This map class represents detailed information for a log record.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Value / Format
+:ethd.
+:row.
+:c.recordNumber
+:c.Record #
+.br
+(R#)
+:c.&stringObj.
+:c.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.machine
+:c.Machine
+:c.&stringObj.
+:c.
+:row.
+:c.handle
+:c.Handle
+.br
+(H#)
+:c.&stringObj.
+:c.
+:row.
+:c.handleName
+:c.Handle Name
+.br
+(Name)
+:c.&stringObj.
+:c.
+:row.
+:c.user
+:c.User
+:c.&stringObj.
+:c.
+:row.
+:c.endpoint
+:c.Endpoint
+:c.&stringObj.
+:c.:xph.<Interface>://<System Identifier>[@<Port>]:exph.
+:row.
+:c.level
+:c.Level
+:c.&stringObj.
+:c.
+:row.
+:c.message
+:c.Message
+:c.&stringObj.
+:c.
+:etable.
+:p.
+:li.Otherwise, the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Log/LogRecord>:exph.,
+representing the selected log records (in a "short" format).
+The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Log/LogRecord
+:tnote text='Description'.This map class represents a log record.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Value / Format
+:ethd.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.level
+:c.Level
+:c.&stringObj.
+:c.
+:row.
+:c.message
+:c.Message
+:c.&stringObj.
+:c.
+:etable.
+:eul.
+
+:h4.Examples
+:p.Assume this example log file called STRESSTST contains the following records:
+:xmp.
+R# Date-Time         Machine                 H# Name   User             Endpoint                          Level   Message
+-- ----------------- ----------------------  -- ------ ---------------- --------------------------------- ------- ----------------------------------
+1  20070210-18:04:00 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Start   Stress Test 1A Initiated
+2  20070210-19:37:15 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Trace   Step 1: processing time: 01:31:26
+3  20070210-19:39:09 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug   Step 1: debug: files=23 threads=37
+4  20070210-22:20:34 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Warning Step 2: File not ready, retry=3
+5  20070210-22:21:01 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Info    Step 2: File ready on retry 3
+6  20070211-01:21:39 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Trace   Step 2: processing time: 03:02:41
+7  20070211-01:21:58 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug   Step 2: debug: files=31 threads=54
+8  20070211-01:37:25 crazy8s.austin.ibm.com  41 Test2  none://anonymous tcp://crazy8s.austin.ibm.com@6500 Trace   Step 1: processing time: 03:11:53
+9  20070211-01:43:46 crazy8s.austin.ibm.com  41 Test2  none://anonymous tcp://crazy8s.austin.ibm.com@6500 Debug   Step 1: debug: files=43 threads=67
+10 20070211-02:53:20 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Error   Step 3: Sharing buffer exceeded
+11 20070211-02:54:22 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     User1   Step 3: Error recovery started
+12 20070211-04:32:53 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     User2   Step 3: Error recovery completed
+13 20070211-04:33:49 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Trace   Step 3: processing time: 03:10:41
+14 20070211-04:34:07 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug   Step 3: debug: files=78 threads=98
+15 20070211-08:46:22 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Stop    Stress Test 1A Completed
+16 20070211-08:47:21 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Pass    Stress Test 1A: Errors=1 Recover=1
+17 20070211-08:48:46 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Status  Step1=P, Step2=P, Step3=W, TC=P
+:exmp.
+:note. The output for these examples are formatted for ease of reading in this
+document, the actual format will vary depending on whether the command is
+submitted via STAF.exe or via a program's submit(), etc. method.
+:ul.
+:li.:hp2.Goal::ehp2. Show me all the trace and debug entries for global log stresstst
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst LEVELMASK "TRACE TRACE2 TRACE3 DEBUG DEBUG2 DEBUG3":exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Date-Time         Level Message
+----------------- ----- ----------------------------------
+20070210-19:37:15 Trace Step 1: processing time: 01:31:26
+20070210-19:39:09 Debug Step 1: debug: files=23 threads=37
+20070211-01:21:39 Trace Step 2: processing time: 03:02:41
+20070211-01:21:58 Debug Step 2: debug: files=31 threads=54
+20070211-01:37:25 Trace Step 1: processing time: 03:11:53
+20070211-01:43:46 Debug Step 1: debug: files=43 threads=67
+20070211-04:33:49 Trace Step 3: processing time: 03:10:41
+20070211-04:34:07 Debug Step 3: debug: files=78 threads=98
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the errors
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst LEVELMASK "ERROR":exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result in table format, could look like:
+:xmp.
+Date-Time         Level Message
+----------------- ----- -------------------------------
+20070211-02:53:20 Error Step 3: Sharing buffer exceeded
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. How many log records are there?
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst total:exph.
+:p.:hp2.Results::ehp2.
+:xmp.
+17
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me everything that happened after I left until I came in on machine "automate"
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst FROM 20070210@19:00:00 QMACHINE automate to today@08:00:00:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in table format, could look like:
+:xmp.
+Date-Time         Level   Message
+----------------- ------- ----------------------------------
+20070210-19:37:15 Trace   Step 1: processing time: 01:31:26
+20070210-19:39:09 Debug   Step 1: debug: files=23 threads=37
+20070210-22:20:34 Warning Step 2: File not ready, retry=3
+20070210-22:21:01 Info    Step 2: File ready on retry 3
+20070211-01:21:39 Trace   Step 2: processing time: 03:02:41
+20070211-01:21:58 Debug   Step 2: debug: files=31 threads=54
+20070211-02:53:20 Error   Step 3: Sharing buffer exceeded
+20070211-02:54:22 User1   Step 3: Error recovery started
+20070211-04:32:53 User2   Step 3: Error recovery completed
+20070211-04:33:49 Trace   Step 3: processing time: 03:10:41
+20070211-04:34:07 Debug   Step 3: debug: files=78 threads=98
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me everything that happened after I left until I came in that
+has "threads" or "buffer" in the message (in the long format)
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY LONG GLOBAL LOGNAME stresstst FROM 20070210@19:00:00 TO today@08:00:00 CONTAINS threads CONTAINS buffer:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in table format, could look like:
+:xmp.
+R# Date-Time         Machine                 H# Name   User             Endpoint                          Level Message
+-- ----------------- ----------------------- -- ------ ---------------- --------------------------------- ----- ----------------------------------
+3  20070210-19:39:09 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug Step 1: debug: files=23 threads=37
+7  20070211-01:21:58 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug Step 2: debug: files=31 threads=54
+9  20070211-01:43:46 crazy8s.austin.ibm.com  41 Test2  none://anonymous tcp://crazy8s.austin.ibm.com@6500 Debug Step 1: debug: files=43 threads=67
+10 20070211-02:53:20 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Error Step 3: Sharing buffer exceeded
+14 20070211-04:34:07 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug Step 3: debug: files=78 threads=98
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the debug entries for global log stresstst
+that starts with "Step 1:" or "Step 2:" in the message (in the long format)
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY LONG GLOBAL LOGNAME stresstst CSCONTAINS "Step 1:" CSCONTAINS "Step 2:" LEVELMASK Debug:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in verbose format, could look like:
+:xmp.
+[
+  {
+    Record #   : 3
+    Date-Time  : 20070210-19:39:09
+    Machine    : automate.austin.ibm.com
+    Handle     : 37
+    Handle Name: Test1A
+    User       : none://anonymous
+    Endpoint   : local://local
+    Level      : Debug
+    Message    : Step 1: debug: files=23 threads=37
+  }
+  {
+    Record #   : 7
+    Date-Time  : 20070211-01:21:58
+    Machine    : automate.austin.ibm.com
+    Handle     : 37
+    Handle Name: Test1A
+    User       : none://anonymous
+    Endpoint   : local://local
+    Level      : Debug
+    Message    : Step 2: debug: files=31 threads=54
+  }
+  {
+    Record #   : 9
+    Date-Time  : 20070211-01:43:46
+    Machine    : crazy8s.austin.ibm.com
+    Handle     : 41
+    Handle Name: Test2
+    User       : none://anonymous
+    Endpoint   : tcp://crazy8s.austin.ibm.com@6500
+    Level      : Debug
+    Message    : Step 1: debug: files=43 threads=67
+  }
+]
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show the statistics for the file.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst STATS:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in default format, could look like:
+:xmp.
+Fatal  : 0
+Error  : 1
+Warning: 1
+Info   : 1
+Trace  : 4
+Trace2 : 0
+Trace3 : 0
+Debug  : 4
+Debug2 : 0
+Debug3 : 0
+Start  : 1
+Stop   : 1
+Pass   : 1
+Fail   : 0
+Status : 1
+User1  : 1
+User2  : 1
+User3  : 0
+User4  : 0
+User5  : 0
+User6  : 0
+User7  : 0
+User8  : 0
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me log record numbers 5 to 10 in global log stresstst in the long format.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst FROMRECORD 5 TORECORD 10 LONG:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in table format, could look like:
+:xmp.
+R# Date-Time         Machine                 H# Name   User             Endpoint                          Level Message
+-- ----------------- ----------------------- -- ------ ---------------- --------------------------------- ----- ----------------------------------
+5  20070210-22:21:01 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Info  Step 2: File ready on retry 3
+6  20070211-01:21:39 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Trace Step 2: processing time: 03:02:41
+7  20070211-01:21:58 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Debug Step 2: debug: files=31 threads=54
+8  20070211-01:37:25 crazy8s.austin.ibm.com  41 Test2  none://anonymous tcp://crazy8s.austin.ibm.com@6500 Trace Step 1: processing time: 03:11:53
+9  20070211-01:43:46 crazy8s.austin.ibm.com  41 Test2  none://anonymous tcp://crazy8s.austin.ibm.com@6500 Debug Step 1: debug: files=43 threads=67
+10 20070211-02:53:20 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Error Step 3: Sharing buffer exceeded
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me which log records numbered 5 to 10 in global log stresstst have log level "Trace".
+Use the long format.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.QUERY GLOBAL LOGNAME stresstst FROMRECORD 5 TORECORD 10 LEVELMASK Trace LONG:exph.
+:p.:hp2.Results::ehp2.  If the request was issued from the
+command line, the result, in table format, could look like:
+:xmp.
+R# Date-Time         Machine                 H# Name   User             Endpoint                          Level Message
+-- ----------------- ----------------------- -- ------ ---------------- --------------------------------- ----- ----------------------------------
+6  20070211-01:21:39 automate.austin.ibm.com 37 Test1A none://anonymous local://local                     Trace Step 2: processing time: 03:02:41
+8  20070211-01:37:25 crazy8s.austin.ibm.com  41 Test2  none://anonymous tcp://crazy8s.austin.ibm.com@6500 Trace Step 1: processing time: 03:11:53
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.LIST
+:i3.log service
+:h3.LIST
+Allows you to list the names of the log files based on a global, machine,
+or handle location.   Also allows you to list current operational settings
+:h4.Syntax
+:xmp.
+LIST GLOBAL | MACHINES | MACHINE <Machine> &lbrk.HANDLES | HANDLE <Handle>&rbrk.
+:exmp.
+or
+:xmp.
+LIST SETTINGS
+:exmp.
+:p.:xph.GLOBAL:exph. indicates you want to list all global logs.
+:p.:xph.MACHINES:exph. indicates you want to list all the machines which have
+created machine logs.
+:p.:xph.MACHINE:exph. indicates you want to list all the machine logs for the
+specified machine nickname.  &varres.
+:p.:xph.HANDLES:exph. indicates you want to list all the handles that have
+created handle logs for the given machine.
+:p.:xph.HANDLE:exph. indicates you want to list all the handle logs for the
+specified handle of the specified machine. &varres.
+:p.:xph.SETTINGS:exph. indicates you want to list the current operational
+settings.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+LIST also returns codes documented in :hdref refid=logerr..
+:h4.Results
+:p.If successful, the result buffer will contain data based on the LIST command:
+:p.
+:ul.
+:li.If the :xph.MACHINES:exph. option is specified, the result buffer
+will contain a marshalled :xph.<List>:exph. of &stringObj., which
+represents the machines for which machine logs have been generated.
+:p.
+:li.If the :xph.HANDLES:exph. option is specified, the result buffer
+will contain a marshalled :xph.<List>:exph. of &stringObj., which
+represents the handles for which handle logs have been generated.
+:p.
+:li.If the :xph.GLOBAL:exph. option is specified, the result buffer
+will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Log/ListLogs>:exph.,
+which represents the global logs.
+:p.If option :xph.MACHINE:exph. is specified without the
+:xph.HANDLES:exph. option, the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Log/ListLogs>:exph.,
+which represents the machine logs for the specified machine nickname.
+:p.If both options :xph.MACHINE:exph. and :xph.HANDLE:exph. are specified,
+the result buffer will contain a marshalled
+:xph.<List> of <Map&colon.STAF/Service/Log/ListLogs>:exph.,
+which represents the handle logs for the specified machine nickname and handle.
+:p.The map is defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Log/ListLogs
+:tnote text='Description'.This map class represents a log file.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Value / Format
+:ethd.
+:row.
+:c.logName
+:c.Log Name
+:c.&stringObj.
+:c.
+:row.
+:c.timestamp
+:c.Date-Time
+:c.&stringObj.
+:c.&timestampFormat.
+:row.
+:c.upperSize
+:c.U-Size
+:c.&stringObj.
+:c.
+:row.
+:c.size
+:c.L-Size
+:c.&stringObj.
+:c.
+:tnote text='Notes'. 
+The "U-Size" value is the upper 32-bits of the size and the "L-Size" value is
+the lower 32-bits of the size.  The sizes are shown in bytes.
+:etnote.
+:etable.
+:p.
+:li.If the :xph.SETTINGS:exph. option is specified, the result buffer will
+contain a marshalled map of the settings for the log service in one of
+two formats:
+:p.
+:ul.
+:li.If the logging mode is local, the default mode, the
+:xph.LIST SETTINGS:exph. request will contain a marshalled
+:xph.<Map&colon.STAF/Service/Log/ListLocalSettings>:exph. defined as follows:
+:table cols='* * * 2*'.
+:tcap.Definition of map class STAF/Service/Log/ListLocalSettings
+:tnote text='Description'.This map class represents the settings for a Log service
+whose logging mode is local.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Value / Format
+:ethd.
+:row.
+:c.loggingMode
+:c.Logging Mode
+:c.&stringObj.
+:c.:xph.'Local':exph.
+:row.
+:c.directory
+:c.Directory
+:c.&stringObj.
+:c.
+:row.
+:c.maxRecordSize
+:c.Max Record Size
+:c.&stringObj.
+:c.
+:row.
+:c.defaultMaxQueryRecords
+:c.Default Max Query Records
+:c.&stringObj.
+:c.
+:row.
+:c.resolveMessage
+:c.Resolve Message
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:row.
+:c.resolveMessageVar
+:c.Resolve Message Var
+:c.&stringObj.
+:c.:xph.'Enabled' | 'Disabled':exph.
+:etable.
+:p.
+:li.If the logging mode is remote, the :xph.LIST SETTINGS:exph. request
+will contain a marshalled
+:xph.<Map&colon.STAF/Service/Log/ListRemoteSettings>:exph. defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Log/ListRemoteSettings
+:tnote text='Description'.This map class represents the settings for a Log service
+whose logging mode is remote.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.loggingMode
+:c.Logging Mode
+:c.&stringObj.
+:c.:xph.'Remote':exph.
+:row.
+:c.remoteLogServer
+:c.Remote Log Server
+:c.&stringObj.
+:c.
+:row.
+:c.remoteLogService
+:c.Remote Log Service
+:c.&stringObj.
+:c.
+:etable.
+:eul.
+:eul.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Show me all the global logs.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST GLOBAL:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Log Name  Date-Time         U-Size L-Size
+--------- ----------------- ------ ------
+StressTST 20070210-14:17:00 0      120823
+Suite100  20070211-15:45:00 0      2622
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the machines that have created machine logs.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINES:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+automate.austin.ibm.com
+testmachine1
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the machine logs for machine automate.austin.ibm.com.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINE automate.austin.ibm.com:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Log Name Date-Time         U-Size L-Size
+-------- ----------------- ------ ------
+AutoGlob 20070210-10:54:00 0      1168
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the handles for machine automate.austin.ibm.com that have created logs.
+:p.:hp2.Syntax::ehp2. LIST MACHINE automate.austin.ibm.com HANDLES
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result could look like:
+:xmp.
+42
+43
+44
+45
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me all the handle logs for machine automate.austin.ibm.com and handle 43.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST MACHINE automate.austin.ibm.com HANDLE 43:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in table format, could look like:
+:xmp.
+Log Name Date-Time         U-Size L-Size
+-------- ----------------- ------ ------
+HandLog1 20070210-10:54:00 0      19043
+HandLog2 20070211-18:23:00 0      45264
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Show me the current operational settings.
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.LIST SETTINGS:exph.
+:p.:hp2.Results::ehp2.  If the request is submitted from the
+command line, the result, in default format, could look like:
+:xmp.
+Logging Mode             : Local
+Directory                : C:\STAF\data\STAF\service\log
+Max Record Size          : 100000
+Default Max Query Records: 100
+Resolve Message          : Disabled
+Resolve Message Var      : Disabled
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.DELETE
+:i3.log service
+:h3.DELETE
+Delete a log file.
+:h4.Syntax
+:xmp.
+DELETE <GLOBAL | MACHINE <Machine> &lbrk.HANDLE <Handle>&rbrk.> LOGNAME<Logname> CONFIRM
+:exmp.
+:p.:xph.GLOBAL:exph. indicates you want to delete a global log.
+:p.:xph.MACHINE:exph. indicates you want to delete a machine log. Specify the machine nickname.  &varres.
+:p.:xph.HANDLE:exph. indicates you want to delete a handle log. &varres.
+:p.:xph.LOGNAME:exph. contains the name of the log you want to delete. &varres.
+:p.:xph.CONFIRM:exph. confirms you really want to delete the log file.
+:h4.Security
+:p.&seclvl. 4.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+DELETE also returns codes documented in :hdref refid=logerr..
+:h4.Results
+:p.The result buffer will contain no data on return from a DELETE command.
+:h4.Examples
+:ul.
+:li.:xph.DELETE GLOBAL LOGNAME stresstst CONFIRM:exph.
+:li.:xph.DELETE MACHINE automate.austin.ibm.com LOGNAME autoglob CONFIRM:exph.
+:li.:xph.DELETE MACHINE testmachine1 HANDLE 45 LOGNAME handlog5 CONFIRM:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.PURGE
+:i3.log service
+:h3.PURGE
+Purge selected records from a log file.  
+The purge command will lock the log file during the entire purge process.
+It is recommended that you refrain from logging records to a log file
+that is being purged.
+
+:h4.Syntax
+:xmp.
+PURGE  <GLOBAL | MACHINE <Machine> &lbrk.HANDLE <Handle>&rbrk.> LOGNAME <Logname>
+       CONFIRM | CONFIRMALL
+       &lbrk.LEVELMASK <Mask>&rbrk. &lbrk.QMACHINE <Machine>&rbrk.... &lbrk.QHANDLE <Handle>&rbrk....
+       &lbrk.NAME <Name>&rbrk.... &lbrk.USER <User>&rbrk.... &lbrk.ENDPOINT <Endpoint>&rbrk....
+       &lbrk.CONTAINS <String>&rbrk.... &lbrk.CSCONTAINS <String>&rbrk....
+       &lbrk.STARTSWITH <String>&rbrk.... &lbrk.CSSTARTSWITH <String>&rbrk....
+       &lbrk.FROM <Timestamp> | AFTER <Timestamp>&rbrk.
+       &lbrk.BEFORE <Timestamp> | TO <Timestamp>&rbrk.
+       &lbrk.FROMRECORD <Num>&rbrk. &lbrk.TORECORD <Num>&rbrk.
+       &lbrk.FIRST <Num> | LAST <Num>&rbrk. 
+:exmp.
+:p.:xph.GLOBAL:exph. indicates you want to purge a global log.
+:p.:xph.MACHINE:exph. indicates you want to purge a machine log.  Specify the machine nickname.  &varres.
+:p.:xph.HANDLE:exph. indicates you want to purge a handle log. &varres.
+:p.:xph.LOGNAME:exph. contains the name of the log you want to purge. &varres.
+:p.:xph.CONFIRM:exph. confirms you really want to purge the log file,
+but protects you from deleting all records in the log file accidently.
+:p.:xph.CONFIRMALL:exph. confirms you really want to purge the log file,
+even if your purge selection criteria selects every record in the log file.
+:note.If your purge selection criteria selects every record in the log
+file and you specified the :xph.CONFIRM:exph. option, you will receive
+an error indicating you need to use the :xph.CONFIRMALL:exph. option instead,
+or you can submit a DELETE request to the LOG service if you really want
+to delete all records in the log file.:enote.
+:p.Purge allows almost the same selection options as Query.
+See :hdref refid=query. for a list of valid purge selection options with
+the exception of TOTAL, STATS, ALL, LONG, and LEVELBITSTRING not allowed.
+
+:h4.Security
+:p.&seclvl. 4.
+
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+PURGE also returns codes documented in :hdref refid=logerr..
+
+:h4.Results
+:p.If successful, the result buffer will contain a marshalled
+:xph.<Map&colon.STAF/Service/Log/PurgeStats>:exph., representing
+the number of log records that were purged and the total number of
+log records.  The map is defined as follows:
+:table cols='* * * *'.
+:tcap.Definition of map class STAF/Service/Log/PurgeStats
+:tnote text='Description'.This map class respresents the purge statistics for the log.
+:thd.
+:c.Key Name
+:c.Display Name
+:c.Type
+:c.Format / Value
+:ethd.
+:row.
+:c.purgedRecords
+:c.Purged Records
+:c.&stringObj.
+:c.
+:row.
+:c.totalRecords
+:c.Total Records
+:c.&stringObj.
+:c.
+:etable.
+:p.
+For example, suppose you submitted a :xph.PURGE:exph. request for a log that
+contained 129 records and 21 of the records met the purge criteria you
+specified.  If the :xph.PURGE:exph. request was submitted from the
+command line, the result could look like:
+:xmp keep=2.
+Purged Records: 21
+Total Records : 129
+:exmp.
+
+:h4.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Purge all the trace and debug entries for global log stresstst
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE GLOBAL LOGNAME stresstst CONFIRM LEVELMASK "TRACE TRACE2 TRACE3 DEBUG DEBUG2 DEBUG3":exph.
+:p.:hp2.Results::ehp2.  If the :xph.PURGE:exph. request was issued from the
+command line, the result could look like:
+:xmp.
+Purged Records: 8
+Total Records : 17
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Purge all the entries in machine log test1 for machine
+{STAF/Config/MachineNickname} whose timestamp is prior to year 2008
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE MACHINE {STAF/Config/MachineNickname} LOGNAME test1 CONFIRM BEFORE 20080101:exph.
+:p.:hp2.Results::ehp2.  If the :xph.PURGE:exph. request was issued from the
+command line, the result could look like:
+:xmp.
+Purged Records: 2710
+Total Records : 3269
+:exmp.
+:p.
+:li.:hp2.Goal::ehp2. Purge all the records in machine log myTest for machine
+{STAF/Config/MachineNickname}
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.PURGE MACHINE {STAF/Config/MachineNickname} LOGNAME myTest CONFIRMALL:exph.
+:p.:hp2.Results::ehp2.  If the :xph.PURGE:exph. request was issued from the
+command line, the result could look like:
+:xmp.
+Purged Records: 152
+Total Records : 152
+:exmp.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.service commands
+:ih2.SET
+:i3.log service
+:h3 id=logset.SET
+The SET command allows you to change the operation parameters of the Log
+service.
+:h4.Syntax
+:xmp.
+SET  &lbrk.MAXRECORDSIZE <Size>&rbrk. &lbrk.DEFAULTMAXQUERYRECORDS <Number>&rbrk.
+     &lbrk.ENABLERESOLVEMESSAGEVAR | DISABLERESOLVEMESSAGEVAR&rbrk.
+     &lbrk.RESOLVEMESSAGE | NORESOLVEMESSAGE&rbrk.
+:exmp.
+:p.See section :hdref refid=logparms. for a description of these options.
+:h4.Security
+:p.&seclvl. 5.
+:h4.Return Codes
+:p.In addition to the return codes documented in :hdref refid=retcode.,
+SET also returns codes documented in :hdref refid=logerr..
+:h4.Results
+:p.The result buffer will contain no data on return from a successful SET command.
+:h5.Examples
+:ul.
+:li.:hp2.Goal::ehp2. Change the maximum record size to 150000
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET MaxRecordSize 150000:exph.
+:p.
+:li.:hp2.Goal::ehp2. Change the default maximum number of records returned
+on a generic query request to 50
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET DefaultMaxQueryRecords 50:exph.
+:p.
+:li.:hp2.Goal::ehp2. Turn on message resolution
+:p.:hp2.Syntax::ehp2.&nbsp; :xph.SET ResolveMessage:exph.
+:eul.
+.*
+.*---------------------------------------------------------------------
+.*
+:i1.logging levels
+:h3 id=loglev.Logging Levels Reference
+Logging levels consist of a 32 byte binary string that represents the
+level type of each record.  You can use the 32 byte binary string or
+the description of the level type when referencing a level.  The
+following are the valid logging levels along with their appropriate
+32 byte binary string:
+:p.:table cols='* *'.
+:tcap.Logging Levels Reference
+:thd.
+:c.Level Definition
+:c.32 Byte Bit String Representation
+:ethd.
+:row.
+:c.:hp2.Fatal:ehp2.
+:c.00000000000000000000000000000001
+:row.
+:c.:hp2.Error:ehp2.
+:c.00000000000000000000000000000010
+:row.
+:c.:hp2.Warning:ehp2.
+:c.00000000000000000000000000000100
+:row.
+:c.:hp2.Info:ehp2.
+:c.00000000000000000000000000001000
+:row.
+:c.:hp2.Trace:ehp2.
+:c.00000000000000000000000000010000
+:row.
+:c.:hp2.Trace2:ehp2.
+:c.00000000000000000000000000100000
+:row.
+:c.:hp2.Trace3:ehp2.
+:c.00000000000000000000000001000000
+:row.
+:c.:hp2.Debug:ehp2.
+:c.00000000000000000000000010000000
+:row.
+:c.:hp2.Debug2:ehp2.
+:c.00000000000000000000000100000000
+:row.
+:c.:hp2.Debug3:ehp2.
+:c.00000000000000000000001000000000
+:row.
+:c.:hp2.Start:ehp2.
+:c.00000000000000000000010000000000
+:row.
+:c.:hp2.Stop:ehp2.
+:c.00000000000000000000100000000000
+:row.
+:c.:hp2.Pass:ehp2.
+:c.00000000000000000001000000000000
+:row.
+:c.:hp2.Fail:ehp2.
+:c.00000000000000000010000000000000
+:row.
+:c.:hp2.Status:ehp2.
+:c.00000000000000000100000000000000
+:row.
+:c.:hp2.<Reserved1>:ehp2.
+:c.00000000000000001000000000000000
+:row.
+:c.:hp2.<Reserved2>:ehp2.
+:c.00000000000000010000000000000000
+:row.
+:c.:hp2.<Reserved3>:ehp2.
+:c.00000000000000100000000000000000
+:row.
+:c.:hp2.<Reserved4>:ehp2.
+:c.00000000000001000000000000000000
+:row.
+:c.:hp2.<Reserved5>:ehp2.
+:c.00000000000010000000000000000000
+:row.
+:c.:hp2.<Reserved6>:ehp2.
+:c.00000000000100000000000000000000
+:row.
+:c.:hp2.<Reserved7>:ehp2.
+:c.00000000001000000000000000000000
+:row.
+:c.:hp2.<Reserved8>:ehp2.
+:c.00000000010000000000000000000000
+:row.
+:c.:hp2.<Reserved9>:ehp2.
+:c.00000000100000000000000000000000
+:row.
+:c.:hp2.User1:ehp2.
+:c.00000001000000000000000000000000
+:row.
+:c.:hp2.User2:ehp2.
+:c.00000010000000000000000000000000
+:row.
+:c.:hp2.User3:ehp2.
+:c.00000100000000000000000000000000
+:row.
+:c.:hp2.User4:ehp2.
+:c.00001000000000000000000000000000
+:row.
+:c.:hp2.User5:ehp2.
+:c.00010000000000000000000000000000
+:row.
+:c.:hp2.User6:ehp2.
+:c.00100000000000000000000000000000
+:row.
+:c.:hp2.User7:ehp2.
+:c.01000000000000000000000000000000
+:row.
+:c.:hp2.User8:ehp2.
+:c.10000000000000000000000000000000
+:etable.
+:note.
+The :hp2.User1-8:ehp2. logging levels have been set aside for the user of
+STAFLog to implement as deemed necessary.  You may decide that for a
+testcase or test suite that you want to log a certain behavior
+as "User1" for example.  This will enable you to easily extract
+log records associated with level "User1".
+:enote.
+:note.
+The :hp2.<Reserved1-8>:ehp2. levels cannot be used and as the name implies,
+they are reserved by STAF for future use. If you would like to see a common
+logging level added to this list, please contact the document
+owners for discussion.
+:enote.
+.*
+.*---------------------------------------------------------------------
+.*
+:ih1.error codes
+:i2.log service
+:h3 id=logerr.Log Error Code Reference
+:p.In addition to the common STAF return codes (see :hdref refid=retcode. for additional information),
+the following Log return codes are defined:
+:table id     = logerr
+       headhi = 3
+       frame  = box
+       cols   = '* 2* 4*'
+       align  = 'c l l'.
+:tcap.Log Service Return Codes
+:thd.
+:c.Error Code
+:c.Meaning
+:c.Comment
+:ethd.
+:row.
+:c.:hp2.4004:ehp2.
+:c.Invalid level
+:c.An invalid logging level was specified.
+See :hdref refid=loglev. for a complete list of logging levels.
+:row.
+:c.:hp2.4007:ehp2.
+:c.Invalid file format
+:c.An invalid/unknown record format was encountered while reading the log file.
+:row.
+:c.:hp2.4008:ehp2.
+:c.Unable to purge all log records
+:c.Your purge criteria selected every record in the log file.  Use CONFIRMALL
+instead of CONFIRM if you really want to delete every record (or submit a
+DELETE request to the LOG service).  Or, modify your purge criteria if you
+don't want to delete every record.
+:row.
+:c.:hp2.4010:ehp2.
+:c.Exceeded default maximum query records
+:c.Your query criteria selected more records than allowed by the
+DefaultMaxQueryRecords setting.  Use the FIRST <Num> or LAST <Num> option to
+specify the number of records or the ALL option if you really want all of the records.
+:etable.

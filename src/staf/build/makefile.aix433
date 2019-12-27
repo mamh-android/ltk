@@ -1,0 +1,49 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_LIBS ?= pthread
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := xlC
+endif
+
+OS_COMMONFLAGS := -DSTAF_OS_NAME_AIX -DSTAF_GETHOSTBYNAME_R_3PARM \
+                  -DSTAF_GETHOSTBYADDR_R_5PARM -D_LARGE_FILES
+
+OS_LD_PATH_NAME := LIBPATH
+
+# Provide the default location for Java files on this system
+
+JAVA_BUILD_V11 ?= 0
+JAVA_V11_ROOT ?= /usr/jdk_base
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /usr/java_dev2
+
+REXX_ROOT ?= /usr/lpp/orexx
+
+# Provide the default location for zlib files on this system
+
+ZLIB_SOURCEDIR ?= /opt/dev/autobuild/tools/zlib-1.2.3
+
+# Provide the default location for openssl files on this system
+
+OPENSSL_ROOT ?= /opt/dev/autobuild/tools/openssl-0.9.8e-root
+
+# Provide the default location for Ant on this system
+
+ANT_ROOT ?= /opt/dev/autobuild/tools/apache-ant-1.6.2

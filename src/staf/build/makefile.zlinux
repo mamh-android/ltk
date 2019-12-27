@@ -1,0 +1,76 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_LIBS = pthread crypt dl
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := gcc
+endif
+
+OS_COMMONFLAGS := -D_XOPEN_SOURCE -D_BSD_SOURCE -DSTAF_OS_NAME_LINUX \
+                  -DSTAF_GETHOSTBYNAME_R_6PARM -DSTAF_GETHOSTBYADDR_R_8PARM
+
+ifeq ($(BUILD_ARCH),m31)
+    CC_ARCHFLAGS = -m31
+endif
+
+# Provide the default location for Java files on this system
+
+JAVA_DEFAULT_VERSION ?= V12
+
+JAVA_BUILD_V11 ?= 0
+JAVA_V11_ROOT ?= /usr/local/java/jdk118
+
+JAVA_BUILD_V12 ?= 1
+JAVA_V12_ROOT ?= /opt/IBMJava2-s390-141
+JAVA_V12_INCLUDE_OS_NAME ?= linux
+
+# Rexx data
+
+REXX_INCLUDEDIRS ?= /usr/local/orexx
+
+# Perl info
+
+PERL_VERSION ?= 5.00503
+
+ifeq ($(PERL_VERSION), 5.6)
+    OS_COMMONFLAGS += -DPERL5_6PLUS
+    PERL_ROOT = /usr/local/ActivePerl-5.6/lib/5.6.0/i686-linux-thread-multi/CORE
+elif ($(PERL_VERSION), 5.8)
+    OS_COMMONFLAGS += -DPERL5_6PLUS
+    PERL_ROOT = /usr/local/ActivePerl-5.8/lib/5.8.0/i686-linux-thread-multi/CORE
+elif ($(PERL_VERSION), 5.00503)
+    PERL_ROOT = /usr/lib/perl5/5.00503/i386-linux/CORE
+endif
+
+# Provide the default location for zlib files on this system
+
+ZLIB_SOURCEDIR ?= /opt/dev/autobuild/tools/zlib-1.2.5
+
+# Provide the default location for openssl files on this system
+
+
+ifeq ($(BUILD_ARCH),m31)
+    OPENSSL_ROOT ?= /opt/dev/autobuild/tools/openssl-0.9.8e-31bit-root
+else
+    OPENSSL_ROOT ?= /opt/dev/autobuild/tools/openssl-0.9.8e-root
+endif
+
+# Provide the default location for Ant on this system
+
+ANT_ROOT ?= /opt/dev/autobuild/tools/apache-ant-1.6.2

@@ -1,0 +1,51 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+LIB_STAFREG = $(subst Name,STAFReg,$(DLL))
+
+stafregservice_targets += $(REL)/lib/$(LIB_STAFREG)
+Targets += $(stafregservice_targets)
+CleanupTargets += cleanup_stafregservice
+
+$(stafregservice_targets): SUBSYS_REL := services/stafreg
+SUBSYS_REL := services/stafreg
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafregservice_targets): OBJS = $(stafregservice_objs)
+$(stafregservice_targets): LIBS = STAF
+$(stafregservice_targets): CFLAGS := $(CC_EXPORT_SHARED_LIB_SYMBOLS)
+
+stafregservice_objs :=\
+  STAFRegService
+
+stafregservice_objs        := $(foreach obj,$(stafregservice_objs),$(O)/services/stafreg/$(obj)$(OS_OE))
+stafregservice_dependents  := $(stafregservice_objs:$(OS_OE)=.d)
+$(stafregservice_dependents): SUBSYS_REL := services/stafreg
+
+ifeq ($(OS_NAME),win32)
+    stafregservice_objs += $(SR_SRC)/STAFReg.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafregservice_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# STAFReg targets
+
+$(REL)/lib/$(LIB_STAFREG): $(stafregservice_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+
+cleanup_stafregservice:
+	-@$(DEL) $(O)/services/stafreg/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/$(LIB_STAFREG) $(OUT_ERR_TO_DEV_NULL)

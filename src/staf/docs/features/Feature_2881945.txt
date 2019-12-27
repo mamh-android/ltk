@@ -1,0 +1,204 @@
+Feature ID  : 2881945
+Title       : Add garbage collection for a DELAY request
+
+Description
+-----------
+
+Provide the ability to "cancel" DELAY requests submitted to the DELAY
+service so that if the handle that submitted a DELAY request is
+unregistered/deleted, the DELAY request will be cancelled when the
+handle is garbage collected.
+
+
+Problem(s) Solved
+-----------------
+
+Currently, pending DELAY requests show up in the SERVICE LIST REQUESTS
+output until the delay timeout expires.  On Unix machines this means
+that an open file descriptor (on the STAF socket in /tmp) will exist
+until the request completes, which takes up unnecessary resources.
+
+
+Related Features/Patches
+------------------------
+
+This is similar to Bug #2861597 "Killed queue get requests leave file
+descriptors open" which I previously fixed.
+
+
+External Changes
+----------------
+
+None
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+M stafproc/STAFSimpleServices.h
+M stafproc/STAFSimpleServices.cpp
+
+Currently, the DELAY service handles a DELAY <delay> request using STAF
+Thread Manager's sleepCurrentThread() method as follows:
+
+  gThreadManagerPtr->sleepCurrentThread(delay);
+
+Instead, we'll change it to use the STAF Handle Manager garbage collection
+mechanism.  To do this we'll change how the DELAY service handles
+a DELAY request and we'll add support for the STAF_CALLBACK request to
+the DELAY service.
+
+1) Changes to the DELAY Service's DELAY Request Handling:
+
+a) Register for notification so that if the handle is deleted/
+unregistered before the delay timeout expires, a STAF_CALLBACK request
+will be submitted to the DELAY service.  The originating request number
+will be provided as the key.
+
+    gHandleManagerPtr->addNotification(
+        requestInfo.fHandle, requestInfo.fEndpoint,
+        requestInfo.fMachine, requestInfo.fSTAFInstanceUUID,
+        name(), requestInfo.fRequestNumber);
+
+b) We'll store pending delay requests in a DelayRequestMap and we'll
+have a mutex semaphore that we use when we need to access the
+DelayRequestMap:
+
+    DelayRequestMap fDelayRequestMap;
+    STAFMutexSem fDelayRequestMapSem;
+    typedef std::map<STAFString, STAFEventSemPtr> DelayRequestMap;
+
+The key for this map will be a string containing the following values
+provided in requestInfo as this combination of request#, handle#,
+and STAFInstanceUUID is guaranteed to be unique:
+
+    STAFString key = STAFString(requestInfo.fRequestNumber) + "|" +
+        STAFString(requestInfo.fHandle) + "|" +
+        requestInfo.fSTAFInstanceUUID;
+
+The value we'll assign for this key in the map will be an event
+semaphore pointer in the reset state.
+ 
+    // Create an event semaphore pointer in the Reset state
+ 
+    STAFEventSemPtr waiterSem(new STAFEventSem(), STAFEventSemPtr::INIT);
+ 
+    {
+        STAFMutexSemLock lock(fDelayRequestMapSem);
+        fDelayRequestMap[key] = waiterSem;
+    }
+
+c) We'll use this event semaphore to wait for the specified delay time.
+
+    waiterSem->wait(delay);
+
+d) When the wait completes, we'll check if the state of the event
+semaphore is reset (the initial state) which means that the DELAY
+request completed successfully after delaying for the specified delay
+timeout.  Otherwise, the state of the event semaphore is posted
+which means that the handle that submitted the DELAY request was
+deleted and garbage collection as occurred (as the DELAY service's
+callback posts the event semaphore as I'll show later), so we'll
+return a RequestCancelled error.
+ 
+    STAFMutexSemLock lock(fDelayRequestMapSem);
+
+    if (waiterSem->query() == kSTAFEventSemReset)
+    {
+        // Remove the request from the DelayRequestMap and remove
+        // the notfication from the handle gc notification list
+ 
+        fDelayRequestMap.erase(key);
+
+        gHandleManagerPtr->deleteNotification(
+            requestInfo.fHandle, requestInfo.fMachine,
+            requestInfo.fSTAFInstanceUUID,
+            name(), requestInfo.fRequestNumber);
+ 
+        return STAFServiceResult(kSTAFOk);
+    }
+    else
+    {
+        return STAFServiceResult(
+            kSTAFRequestCancelled,
+            "The handle that submitted this request no longer exists");
+    }
+
+2) Define a parser for the STAF_CALLBACK request in the DELAY service's
+   constructor as follows:
+
+    STAFCommandParser fSTAFCallbackParser;
+ 
+    fSTAFCallbackParser.addOption("STAF_CALLBACK",  1, 
+        STAFCommandParser::kValueNotAllowed);
+    fSTAFCallbackParser.addOption("HANDLEDELETED", 1, 
+        STAFCommandParser::kValueNotAllowed);
+    fSTAFCallbackParser.addOption("HANDLE", 1, 
+        STAFCommandParser::kValueRequired);
+    fSTAFCallbackParser.addOption("MACHINE", 1, 
+        STAFCommandParser::kValueRequired);
+    fSTAFCallbackParser.addOption("UUID", 1, 
+        STAFCommandParser::kValueRequired);
+    fSTAFCallbackParser.addOption("KEY", 1, 
+        STAFCommandParser::kValueRequired);
+
+3) Add code to handle a STAF_CALLBACK request submitted to the DELAY
+   service:
+
+   a) Check if a STAF_CALLBACK request command was specified.  Make sure
+   that the requesting handle is the STAFProc handle (as STAF_CALLBACK
+   is an undocumented request command that can only be submitted by
+   STAFProc).
+
+    else if (action == "staf_callback")
+    {
+        // Don't check the TRUST level, but make sure the requesting handle
+        // is the STAFProc handle
+ 
+        if (requestInfo.fHandle != 1)
+        {
+            return STAFServiceResult(
+                kSTAFAccessDenied,
+                "This request is only valid when submitted by STAFProc");
+        }
+ 
+    b) Parse the STAF_CALLBACK request:
+
+        STAFCommandParseResultPtr parsedResult =
+            fSTAFCallbackParser.parse(requestInfo.fRequest);
+ 
+        if (parsedResult->rc != kSTAFOk)
+        {
+            return STAFServiceResult(
+                kSTAFInvalidRequestString, parsedResult->errorBuffer);
+        }
+ 
+    c) Assign the key using the values provided in the STAF_CALLBACK
+      request's KEY, HANDLE, and UUID options:
+
+        STAFString key = parsedResult->optionValue("KEY") + "|" +
+            parsedResult->optionValue("HANDLE") + "|" +
+            parsedResult->optionValue("UUID");
+
+    d) Get a lock on the fDelayRequestMapSem mutex semaphore and
+      check if the key exists in the fDelayRequestMap.  If so,
+      post its event semaphore and remove the entry for this key from
+      the fDelayRequestMap and return:
+ 
+        STAFMutexSemLock lock(fDelayRequestMapSem);
+ 
+        if (fDelayRequestMap.find(key) != fDelayRequestMap.end())
+        {
+            fDelayRequestMap[key]->post();
+            fDelayRequestMap.erase(key);
+        }
+
+        return STAFServiceResult(kSTAFOk);
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

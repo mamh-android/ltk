@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="main"/>
+
+  <function name="main">
+
+    <sequence>
+
+      <process name="'My Test Process'">
+        <location>'local'</location>
+        <command>'java'</command>
+        <parms>'com.ibm.staf.service.stax.TestProcess 10 3 99'</parms>
+        <env>
+          'CLASSPATH=C:/STAF/bin/JSTAF.jar;C:/STAF/services/stax/STAXMon.jar'
+        </env>
+        <stderr mode="'stdout'"/>
+        <returnstdout/>
+      </process>
+
+      <if expr="RC != 0">
+        <message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)</message>
+        <else>
+          <message>'Process RC was 0.  STAXResult=%s' % STAXResult</message>
+        </else>
+      </if>
+
+    </sequence>
+
+  </function>
+
+</stax>

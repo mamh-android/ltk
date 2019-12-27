@@ -1,0 +1,80 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+ifeq ($(PYTHON_BUILD_V22),1)
+
+# On Windows, starting in Python 2.5, the only filename extension for Python
+# extension modules that is searched for is .pyd (.dll is no longer supported
+# by Python 2.5+)
+ifeq ($(OS_NAME),win32)
+  LIB_PYSTAF = PYSTAF.pyd
+else
+  ifeq ($(OS_NAME),macosx)
+    LIB_PYSTAF = PYSTAF.so
+  else
+    LIB_PYSTAF = PYSTAF$(OS_SHARED_LIB_SUFFIX)
+  endif
+endif
+
+SUBSYS_REL_PYTHON = lang/python/python22
+
+stafif_python22_targets += \
+  $(REL)/lib/python22/$(LIB_PYSTAF)
+Targets += $(stafif_python22_targets)
+CleanupTargets += cleanup_stafif_python22
+
+$(stafif_python22_targets): SUBSYS_REL := lang/python/python22
+SUBSYS_REL := lang/python/python22
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(stafif_python22_targets): LIBS = STAF $(PYTHON_V22_LIBS)
+$(stafif_python22_targets): LIBDIRS = STAF $(PYTHON_V22_LIBDIRS)
+$(stafif_python22_targets): OBJS = $(stafif_python22_objs)
+$(stafif_python22_targets): INCLUDEDIRS = $(PYTHON_V22_INCLUDEDIRS)
+
+stafif_python22_objs :=\
+  PYSTAF
+
+stafif_python22_objs := $(foreach obj,$(stafif_python22_objs),$(O)/$(SUBSYS_REL)/$(obj)$(OS_OE))
+stafif_python22_dependents  := $(stafif_python22_objs:$(OS_OE)=.d)
+$(stafif_python22_dependents): SUBSYS_REL = $(SUBSYS_REL_PYTHON)
+$(stafif_python22_dependents): INCLUDEDIRS = $(PYTHON_V22_INCLUDEDIRS)
+
+ifeq ($(OS_NAME),win32)
+    stafif_python22_objs += $(SRC)/lang/python/PYSTAF.def
+endif
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(stafif_python22_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# These two rules allow us to build the Python specific versions from the common
+# parent tree
+
+$(O)/$(SUBSYS_REL)/%.d: $(SRC)/$(SUBSYS_REL)/../%.cpp
+	$(C_DEPEND_IT)
+
+$(O)/$(SUBSYS_REL)/%$(OS_OE): $(SRC)/$(SUBSYS_REL)/../%.cpp
+	$(COMPILE_IT)
+
+# STAF Python targets
+
+$(REL)/lib/python22/$(LIB_PYSTAF): $(stafif_python22_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(SHARED_LIB_IT)
+
+cleanup_stafif_python22:
+	-@$(DEL) $(O)/stafif/python/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/lib/python22/$(LIB_PYSTAF) $(OUT_ERR_TO_DEV_NULL)
+
+endif

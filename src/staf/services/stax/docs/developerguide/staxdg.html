@@ -1,0 +1,2168 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002, 2004, 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+<html>
+<head>
+   <title>STAX V3 Extensions Developer's Guide</title>
+</head>
+<body bgcolor=white>
+
+<h1>STAX Extensions Developer's Guide</h1>
+<P>
+<P>October 3, 2007
+<P>Version 3.3.0
+<p>
+<hr>
+<font color=blue><h1><a NAME="ToC"></a>Contents</h1></font>
+<menu>
+<li><A NAME="ToC_Intro"      HREF="#Header_Intro">Introduction</a></li>
+<li><a NAME="ToC_getsource"  HREF="#Header_getsource">Obtaining STAX Source Code</a></li>
+<li><a NAME="ToC_naming"     HREF="#Header_naming">Naming Conventions for STAX Extensions</a></li>
+<li><a NAME="ToC_createExt"  HREF="#Header_createExt">Writing STAX Service Extensions</a></li>
+    <menu>
+    <li><a name="ToC_delaySrvExt" href="#Header_delaySrvExt">Service Extension Sample - Delay</a></li>
+    <li><a name="ToC_aliasExt" href="#Header_aliasExt">Defining Aliases for Extension Elements</a></li>
+    <li><a name="ToC_delayXMLFile" href="#Header_delayXMLFile">STAX XML File Using Delay Extension</a></li>
+    <li><a name="ToC_changesFor330" href="#Header_changesFor330">Changes to Service Extensions for STAX V3.3.0+</a></li>
+    </menu>
+<li><a NAME="ToC_monext"     HREF="#Header_monext">Writing STAX Monitor Extensions</a></li>
+    <menu>
+    <li><a name="ToC_activeJobMonExt" href="#Header_activeJobMonExt">"Active Job Elements" Monitor Extension Sample - Delay</a></li>
+    <li><a name="ToC_messagetextMonExt" href="#Header_messagetextMonExt">"Info" Monitor Extension Sample - Message Text</a></li>
+    </menu>
+<li><a NAME="ToC_buildreqs"  HREF="#Header_buildreqs">Requirements for Building STAX Extensions</a></li>
+<li><a NAME="ToC_building"   HREF="#Header_building">Building STAX Service Extensions</a></li>
+    <menu>
+    <li><a name="ToC_compilingExt" href="#Header_compilingExt">Compiling STAX Extensions</a></li>
+    <li><a name="ToC_manifestExt" href="#Header_manifestExt">Creating a Manifest File for a STAX Extension Jar File</a></li>
+    <li><a name="ToC_creatingExtJarFile" href="#Header_creatingExtJarFile">Creating a STAX Extension Jar File</a></li>
+    <li><a name="ToC_makeFileExt" href="#Header_makeFileExt">Using a Make Script/Bat File to Create an Extension Jar File</a></li>
+    </menu>
+<li><a NAME="ToC_reg"        HREF="#Header_reg">Registering STAX Service Extensions</a></li>
+<li><a NAME="ToC_regmonext"  HREF="#Header_regmonext">Registering STAX Monitor Extensions</a></li>
+</menu>
+<P>
+<hr>
+<!---------------------------------------------------------------------------->
+<a name="Header_Intro" HREF="#ToC_Intro">
+<font color=blue><h1>Introduction</h1></font></a>
+<P>
+This document explains how to create extensions for STAX.
+Extensions to the STAX service can be written which define new elements that can be
+used in a STAX xml file.  In addition, extensions to the STAX Monitor can be written
+which define plug-in views which can be displayed via the STAX Monitor.
+<p>
+It assumes that you are
+familiar with writing, compiling, and executing Java code, creating jar files, and
+the process of building software in general.  It will walk you through the process of:
+<ol compact>
+<li>Obtaining the STAX source code</li>
+<li>Writing STAX service and monitor extensions</li>
+<li>Setting up your build environment</li>
+<li>Building STAX extensions</li>
+<li>Registering STAX service and monitor extensions</li>
+</ol>
+<P>
+Developers who want to write STAX extensions are the intended audience for this document.
+<p>
+A couple of sample STAX extensions are provided and are referenced throughout
+this document:
+<ul>
+<li>Delay Service and Monitor Extensions
+<li>Message Text Monitor Extension
+</ul>
+<p>
+This document assumes you are using STAX V3.3.0 as some new classes were added in STAX V3.3.0
+that allows your extension to provide better debug information (e.g. line number, xml file
+name, and machine name).
+<p>
+<hr>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_getsource" HREF="#ToC_getsource">
+<font color=blue><h1>Obtaining STAX Source Code</h1></font>
+</a>
+<p>
+When creating STAX extensions, it is helpful to have the STAX source code, in
+addition to the STAX javadoc documentation.
+<p>
+Externally open sourced STAX code is available on SourceForge via two methods:
+<ul>
+<li>a tar file containing the source code (available by STAF version, not STAX version)
+<LI>CVS - only current STAX code is available
+</ul>
+<p>
+All STAX source code is contained in the /src/staf/services/stax directory:
+<ul>
+<li>The /src/staf/services/stax/service directory contains STAX Service source code.
+<li>The /src/staf/services/stax/monitor directory contains STAX Monitor source code.
+<li>The /src/staf/services/stax/ext directory contains sample STAX service and monitor extensions.
+</ul>
+<P>
+<H3>Obtaining STAX Source Code Via a Tar File</H3>
+<P>
+Each STAF source tar file contains a snapshot of the source code for a released
+version of STAF, including the source code for STAF services.
+Note, that new versions of STAX are not necessarily
+released at the same time as new STAF releases are made available.
+<OL>
+<LI>Download the zip or tar file for the STAF Version (must be a version after V3.2.3)
+    you want from SourceForge (e.g. STAF330-src.zip or STAF330-src.tar.gz)
+    from <A HREF=http://staf.sourceforge.net/getcurrent.php>
+    http://staf.sourceforge.net/getcurrent.php</A>.
+    <p>
+    Note that this version of the STAX Extensions Developer's Guide assumes you have
+    the source code for STAX V3.3.0 or later as it uses some classes that were added
+    in STAX V3.3.0 (e.g. STAXActionDefaultImpl, STAXElementInfo) to set/get line 
+    number, xml file, and machine information to provide better debug information
+    when an error occurs.   Note that STAX V3.3.0 was released after STAF V3.2.3,
+    so to obtain STAX 3.3.0 or later source code via a tar file, you need to use a
+    STAF source code tar file for a version of STAF released after V3.2.3.
+<P>
+<li>Unzip/untar the downloaded file:
+  <p>
+  <ul>
+  <li>If you downloaded the zip file, unzip it using your favorite unzip utility (e.g. Winzip, unzip).
+  <p>
+  <li>If you downloaded the tar file, uncompress it and untar it:
+    <ul>
+    <LI>Uncompress the tar file: 
+      <br><font face="Courier New,Courier"><font size=-1>&nbsp; gunzip STAF330-src.tar.gz</font></font>
+    <LI>Untar the file:
+      <br><font face="Courier New,Courier"><font size=-1>&nbsp; tar -xvf STAF330-src.tar</font></font>
+    </ul>
+  </ul>
+</ol>
+<p>
+<H3>Obtaining STAX Source Code Via CVS</H3>
+<P>
+The current STAX code is contained in CVS, including code that has not been released yet.
+<p>
+SourceForge provides several ways to access project CVS repositories:
+<p>
+<ul>
+<li>SourceForge provides web-based access to project CVS repositories.
+Repositories may be browsed via the CVS page for each project, accessible from a
+project's Summary page.
+<p>
+  <ul>
+  <li>You can browse individual STAX service source files
+  at <A HREF=http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/staf/src/staf/services/stax/service/>
+  http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/staf/src/staf/services/stax/service/</A>.
+  <p>
+  <li>You can browse individual STAX monitor source files
+  at <A HREF=http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/staf/src/staf/services/stax/monitor/>
+  http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/staf/src/staf/services/stax/monitor/</A>.
+  </ul>
+<p>
+<li>SourceForge.net provides read-only, anonymous pserver-based access to all
+project CVS repositories, as to ensure that the Open Source community has access to
+the latest development materials for all projects. Non-developers (i.e. people who are
+not listed on the official team member listing for a SourceForge.net project) should
+make use of anonymous pserver-based repository access. Only a CVS client package is
+needed to make use of pserver-based repository access.
+<p>
+If you have CVS on your system, you can extract a non-updateable version of the source
+directory from the CVS tree.  The instructions on how to do this are available via
+the "CVS" link at the top of <A HREF=http://sourceforge.net/projects/staf>
+http://sourceforge.net/projects/staf</A>, and then click on "Site Docs" at the left
+on this page.  See topic 5, "Information for SourceForge.net Project Developers",
+particularly the "Introduction to SourceForge.net Project CVS Services". 
+You may also want to see topic 6, "CVS Instructions".
+<p>
+If you don't have CVS directly, you can obtain it, along with a bunch of other Unix tools,
+via Cygwin at <A HREF=http://sources.redhat.com/cygwin>
+http://sources.redhat.com/cygwin</A>.
+Also, other software, such as Eclipse and IBM WebSphere Studio Application
+Developer (WSAD), allow you to directly access CVS trees.
+</ul>
+<P>
+<hr>
+<P>
+<!---------------------------------------------------------------------------->
+<a name="Header_naming" HREF="#ToC_naming">
+<font color=blue><h1>Naming Conventions for STAX Extensions</h1></font>
+</a>
+<P>
+To try to make sure that the names of your extension's elements, classes, and
+event sub-types do not clash with the names of future STAX elements or with
+the names of other extensions, you should follow these naming conventions
+when writing STAX extensions:
+<P>
+<UL>
+<LI>Prefix your extension elements with a unique prefix.  The sample service
+extensions provided with STAX use an "ext-" prefix (e.g. &lt;ext-delay>).  You
+can specify whatever prefix you like for your extensions.
+<P>
+<LI>You should put your extension classes in a
+com.ibm.staf.service.stax.extension package.  For example, for the
+delay extension, we put its classes in a
+com.ibm.staf.service.stax.extension.samples.extdelay package.
+Also, to make your extension class names are unique, prefix them with a unique
+prefix as well.  The sample extension classes provided with STAX use Ext
+(e.g. ExtDelayActionFactory).  Do not prefix your extension classes with
+STAX or STAF as these are reserved.
+<P>
+<LI>When generating events to the STAX monitor using the generateEvent method,
+prefix your event subtype names.  The sample extension extensions provided
+with STAX use an "ext-" prefix.  For example:
+<P>
+  <UL>
+  <li>In ExtDelayActionFactory.java, the following static string was defined:
+  <PRE>public static final String EXT_DELAY = new String("ext-delay");</PRE>  
+  <LI>In ExtDelayAction.java, this string was passed as the event sub-type to the
+  generateEvent method:    
+  <PRE>thread.getJob().generateEvent(ExtDelayActionFactory.EXT_DELAY, delayMap);</pre>
+  </UL>
+</UL>                
+<P>
+<hr>
+<P>
+<!---------------------------------------------------------------------------->
+<a name="Header_createExt" HREF="#ToC_createExt">
+<font color=blue><h1>Writing STAX Service Extensions</h1></font>
+</a>
+<p>
+For each STAX service extension you create, you must write, at a minimum,
+the following two classes: 
+<ol>
+<li><B>A class that implements the <tt>STAXActionFactory</tt> interface.</B>
+<P>
+The <tt>STAXActionFactory</tt> interface is a factory interface that creates a STAX
+action based on information obtained by parsing an XML node from a DOM tree
+for elements whose DTD information it provides.
+STAX will create a single instance of each <tt>STAXActionFactory</tt> class. 
+This class must provide at least one of the following constructors:
+<p>
+  <ol type="a">
+  <li>A constructor with no parameters.  Here's an example of a constructor
+      with no parameters for an extension class named ExtDelayActionFactory which does
+      nothing:
+<pre>public ExtDelayActionFactory()
+{ /* Do nothing */ }</pre>
+  <li>A constructor that accepts a STAX object.
+      You need to implement this constructor if this extension requires access
+      to the STAX service object.
+      <p>
+      Some examples of why the extension may require access to the STAX service object are:
+      <ul>
+      <li>To handle requests to LIST instances
+      of the extension element in a job (by calling the staxService.registerListHandler method),
+      <li>To handle requests to QUERY a particular instance of an extension element
+      that is active in a job (by calling the staxService.registerQueryHandler method),
+      <li>To manage a container of currently active extension elements
+      for a job (by calling the <tt>staxService.registerJobManagementHandler</tt> method) so
+      that the extension's initJob method is run at the start of a job and/or the
+      extension's termJob method is run at the end of a job.
+      </ul>
+      <p>
+      Here's an example of a constructor that accepts a STAX object for an extension class
+      named ExtDelayActionFactory which uses the STAX object to register a job management
+      handler:
+<pre>public ExtDelayActionFactory(STAX staxService)
+{
+    // Note that in order for it's initJob method to be run at the start
+    // of a job, you must register the factory as a Job Management handler.
+
+    staxService.registerJobManagementHandler(this);
+}</pre>
+  <li>A constructor that accepts a STAX object and a Map object and throws a
+      STAXExtensionInitException exception.
+      You need to implement this constructor if this extension supports any parameters.
+      The Map object contains the name and value of any parameters passed to the extension via
+      &lt;parameter> sub-elements for an &lt;extension> element in an extension xml file specified
+      via an EXTENSIONXMLFILE option when registering the extension.
+      <p>
+      An example of a constructor that accepts a STAX object and a Map object
+      is provided in ExtDelayActionFactory.java.  It's constructor uses the STAX object
+      to register a list handler, a query handler, and a job management handler,
+      and uses the Map object to verify that the parameters contained in the map
+      are valid for this extension and to store the parameter values to be
+      used by the extension.
+<pre>public ExtDelayActionFactory(STAX staxService, Map parmMap)
+    throws STAXExtensionInitException
+{
+    // See code provided in ExtDelayActionFactory.java for
+    // this constructor.
+}</pre>
+  </ol>
+<p>
+This class must provide an implementation for the following methods:
+<P>
+  <ul>
+  <LI><B>getDTDInfo</B> - returns a string containing the STAX DTD information
+  for one or more elements that make up the extension
+  <P>
+  <LI><B>getDTDTaskName</B> - returns a string contining the name of an element
+  to add to the STAX DTD's task entity or "" if no element needs to be added to
+  the task entity
+  <P>
+  <LI><B>parseAction</B> - parses the extension's XML element, creating a
+  <tt>STAXActionDefaultImpl</tt> object that contains the information obtained
+  from parsing a node from the DOM tree that represents the extension's XML element,
+  and returns the <tt>STAXActionDefaultImpl</tt> object it created.
+  <p>
+  To store the line number, file name, and machine name in your action
+  object, use the <tt>STAXActionDefaultImpl</tt> class's <tt>setLineNumber()</tt>,
+  <tt>setXmlFile()</tt>, and <tt>setXmlMachine()</tt> methods.
+  <p>
+  For each extension XML element's text node or attribute node value that should
+  be evaluated via Python, call the <tt>STAXUtil.parseAndCompileForPython</tt>
+  method to parse the string containing the Python code to remove leading whitespace
+  and to compile the Python code before the STAX job is executed to check for validity.
+  The <tt>parseAndCompileForPython</tt> method requires the following two arguments
+  and returns a string containing the parsed and compiled Python code:
+  <ol>
+  <li>A string containing the Python code to parsed and compiled.</li>
+  <li>A <tt>STAXActionDefaultImpl</tt> object that your <tt>parseAction()</tt>
+      method created and already set the line number, file name, and machine
+      information for it.  If a Python error occurs compiling the Python code,
+      it will access this useful debug information from the action object and
+      construct a complete error message for the Python compile exception.</li>
+  </ol>
+  <p>
+  Note:  A deprecated version of the <tt>STAXUtil.parseAndCompileForPython</tt>
+  method requires the same first argument, but the second argument is a string that
+  contains additional information to help identify the xml element (and attribute,
+  if applicable) if a Python compile exception is raised.
+  <p>    
+  Before calling <tt>STAXUtil.parseAndCompileForPython()</tt>, call the 
+  <tt>STAXActionDefaultImpl</tt> class's <tt>setElementInfo()</tt> method
+  and pass it a new instance of the <tt>STAXElementInfo</tt> class to set
+  information to be used if an error occurs such as:
+  <ul compact>
+  <li>the name of the element being processed (required),
+  <li>the attribute name being processed (if applicable),
+  <li>the index of the element (if you can specify the element multiple times),
+  <li>and an optional string containing additional error information.
+  </ul>
+  <p>
+  For more information about the <tt>STAXElementInfo</tt> class, see its source
+  code at <tt>src/staf/services/stax/service/STAXElementInfo.java</tt>.</li>
+  </li>
+  </ol>
+  <p>
+  Here's an example an extension's <tt>parseAction</tt> method that calls the
+  <tt>STAXUtil.parseAndCompileForPython</tt> method for the value of an
+  element's text node:
+<pre>
+public STAXAction parseAction(STAX staxService, STAXJob job,
+                              org.w3c.dom.Node root) throws STAXException
+{
+    ExtDelayAction delay = new ExtDelayAction();
+
+    delay.setActionFactory(this);
+
+    // Gets the line number for the root element (e.g. ext-delay) and the name
+    // of the xml file and machine and stores this information in the action
+    // object (so it can be used later if an error occurs)
+    <b>delay.setLineNumber(root);
+    delay.setXmlFile(job.getXmlFile());
+    delay.setXmlMachine(job.getXmlMachine());</b>
+       
+    NodeList children = root.getChildNodes();
+
+    for (int i = 0; i < children.getLength(); ++i)
+    {
+        Node thisChild = children.item(i);
+        
+        if (thisChild.getNodeType() == Node.TEXT_NODE)
+        {
+            // Sets element information about the particular element/
+            // attribute being parsed so that if an error occurs, the
+            // parseAndCompileForPython method will get the line number
+            // for the specified element.
+
+            <b>delay.setElementInfo(new STAXElementInfo(
+                root.getNodeName(), STAXElementInfo.NO_ATTRIBUTE_NAME));</b>
+
+            delay.setDelayValue(
+                <b>STAXUtil.parseAndCompileForPython(
+                    thisChild.getNodeValue(), delay)</b>);
+        }
+    }
+
+    return delay;
+}</pre>
+  </ul>
+For more information about the <tt>STAXActionFactory</tt> interface, see its source code
+at <tt>src/staf/services/stax/service/STAXActionFactory.java</tt>.
+<p>
+<li><B>A class that extends the <tt>STAXActionDefaultImpl</tt> class.</B>
+<P>
+The <tt>STAXActionDefaultImpl</tt> class implements the <tt>STAXAction</tt>
+interface and defines the action to take when processing a STAX XML element.
+This class must provide an implementation for the following methods:
+<P>
+  <UL>
+  <LI><B>getInfo</B> - returns a string containing general information about
+  an action
+  <P>
+  <LI><B>getDetails</B> - returns a string containing detailed information
+  about an action
+  <P>
+  <li><B>execute</B> - called by STAXThread when the extension element is
+  encountered on the thread's action stack to execute the action desired for
+  the STAX extension under normal conditions (that is, when there are no
+  pending conditions).
+  <p>
+  If your extension raises a signal, call the <tt>STAXActionDefaultImpl</tt>
+  class's <tt>setElementInfo()</tt> method and pass it a new instance of the
+  <tt>STAXElementInfo</tt> class to set the name of the element being processed
+  (required), the attribute name being processed (if applicable), the index of
+  the element (if the element can be specified multiple times), and an optional
+  string containing additional error information.  Then, when setting the
+  signal's message variable, use the <tt>STAXUtil.formatErrorMessage()</tt>
+  method to create a nicely formatted error message that includes the line
+  number (and file and machine) information for the element causing the
+  signal to be raised.  For more information about the <tt>STAXElementInfo</tt> class,
+  see its source code at <tt>src/staf/services/stax/service/STAXElementInfo.java</tt>.</li>
+  <P>
+  <li><B>handleCondition</B> - called by STAXThread if there are any pending
+  conditions, passing the highest priority condition
+  <P>
+  <LI><B>cloneAction</B> - returns a clone of the action.
+  </UL>
+<P>
+For more information on the <tt>STAXActionDefaultImpl</tt> class, see its source code
+at <tt>src/staf/services/stax/service/STAXActionDefaultImpl.java</tt>.
+For more information on the STAXAction interface, see its source code
+at <tt>src/staf/services/stax/service/STAXAction.java</tt>.</LI>
+</UL>
+</ol>
+
+
+<a name="Header_delaySrvExt" HREF="#ToC_delaySrvExt">
+<font color=blue><h2>Service Extension Sample - Delay</h2></font>
+</a>
+
+Let's walk through writing a STAX service extension.  Let's write a STAX
+service extension that adds an element named &lt;ext-delay> to the STAX DTD.
+The delay element can contain PCDATA which contains the number of seconds it
+should delay.
+The delay element waits the specified number of seconds, and
+for each second it delays, it sends an event to the STAX Monitor so that a
+progress bar representing the progress of the delay element can be displayed
+in the Active Job Elements tree using a STAX Monitor extension.
+We'll walk through writing a STAX monitor delay extension later.
+<p>
+Note that if no value is specified for the delay element (e.g. &lt;ext-delay/> or
+&lt;ext-delay>&lt;/ext-delay>), the default delay value is used.
+The default delay value can be specified if an extension xml file is used
+to register the delay extension.  If the extension xml file specifies a
+parameter named delay, its value is used as the default delay value.
+If no default delay value is provided, a ExtDelayInvalidValue signal is raised
+and the job is terminated.
+<p>
+Here's an example of an extension xml file used to register the delay extension
+that specifies a default delay value of 5 seconds:
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax-extensions SYSTEM "stax-extensions.dtd">
+
+&lt;stax-extensions>
+   
+   &lt;extension jarfile="{STAF/Config/STAFRoot}/services/ExtDelay.jar">
+     &lt;parameter name="delay" value="5"/>
+   &lt;/extension>
+
+&lt;/stax-extensions>
+</pre>
+
+The delay service extension lets you specify &lt;delay> elements in a STAX
+XML job file.  Here are some examples:
+<p>
+<ul>
+<li>Specify to delay for 10 seconds, generating an event each second:
+<pre>&lt;ext-delay>10&lt;/ext-delay></pre>
+<li>Specify to delay the default delay time, generating an event each second.
+    If the above extension xml file is used to register the delay element via
+    the EXTENSIONXMLFILE option when registering the STAX service,
+    the following delay element specifies to delay for 5 seconds:
+<pre>&lt;ext-delay/></pre>
+</ul>
+<P>
+<h3>ExtDelayActionFactory Source Code for Sample Service Extension</h3></font>
+<p>
+Here's the ExtDelayActionFactory source code for the delay extension which
+implements the STAXActionFactory interface.  Its source code is provided
+in src/staf/services/stax/ext/delay/ExtDelayActionFactory.java.
+<pre>
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2002                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+package com.ibm.staf.service.stax.extension.samples.extdelay;
+import org.w3c.dom.Node;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
+import com.ibm.staf.service.stax.*;
+
+public class ExtDelayActionFactory implements STAXActionFactory,
+                                              STAXJobManagementHandler
+{
+    public static final String EXT_DELAY = new String("ext-delay");
+    
+    private static Map fParameterMap = new HashMap();
+
+    private static String fDTDInfo =
+"\n" +
+"&lt;!--================= The Ext-Delay Element ============================ -->\n" +
+"&lt;!--\n" +
+"     Delays for the specified number of seconds and generates and event\n" +
+"     every iteration.\n" +
+"-->\n" +
+"&lt;!ELEMENT ext-delay     (#PCDATA)>\n";
+
+    public ExtDelayActionFactory() { }
+
+    public ExtDelayActionFactory(STAX staxService)
+    {
+        // Note that in order for it's initJob method to be run at the start
+        // of a job, you must register the factory as a Job Management handler.
+
+        staxService.registerJobManagementHandler(this);
+    }
+
+    public ExtDelayActionFactory(STAX staxService, Map parmMap)
+        throws STAXExtensionInitException
+    {
+        // Note that in order for it's initJob method to be run at the start
+        // of a job, you must register the factory as a Job Management handler.
+
+        staxService.registerJobManagementHandler(this);
+
+        // If an invalid parameter name or an invalid value for a parameter is
+        // specified, raise a STAXExtensionInitException.
+
+        Iterator iter = parmMap.keySet().iterator();
+
+        while (iter.hasNext())
+        {
+            // Check if the parameter name is supported
+
+            String name = (String)iter.next();
+
+            if (!name.equals("delay"))
+            {
+                throw new STAXExtensionInitException(
+                    "Unsupported parameter name " + name);
+            }
+
+            // Make sure that the value specified for the "delay"
+            // parameter is an integer > 0.
+                
+            String delay = (String)parmMap.get(name);
+
+            try
+            {
+                Integer delayInt = new Integer(delay);
+             
+                if (delayInt.intValue() &lt;= 0)
+                {
+                    throw new STAXExtensionInitException(
+                        "Value specified for parameter delay is not > 0.  " +
+                        "Value=" + delay);
+                }
+            }
+            catch (NumberFormatException e)
+            {
+                throw new STAXExtensionInitException(
+                    "Value specified for parameter delay is not an integer.\n" +
+                    e.toString());
+            }
+
+            // Add to the parameter map
+
+            fParameterMap.put(name, delay);
+        }
+    }
+
+    public String getParameter(String name)
+    {
+        return (String)fParameterMap.get(name);
+    }
+
+    public String getDTDInfo()
+    {
+        return fDTDInfo;
+    }
+
+    public String getDTDTaskName()
+    {
+        return "ext-delay";
+    }
+
+    public STAXAction parseAction(STAX staxService, STAXJob job,
+                                  org.w3c.dom.Node root) throws STAXException
+    {
+        ExtDelayAction delay = new ExtDelayAction();
+
+        delay.setActionFactory(this);
+        delay.setLineNumber(root);
+        delay.setXmlFile(job.getXmlFile());
+        delay.setXmlMachine(job.getXmlMachine());
+        
+        NodeList children = root.getChildNodes();
+
+        for (int i = 0; i &lt; children.getLength(); ++i)
+        {
+            Node thisChild = children.item(i);
+
+            if (thisChild.getNodeType() == Node.COMMENT_NODE)
+            {
+                /* Do nothing */
+            }
+            else if (thisChild.getNodeType() == Node.CDATA_SECTION_NODE)
+            {
+                /* Do nothing */
+            }
+            else if (thisChild.getNodeType() == Node.TEXT_NODE)
+            {
+                delay.setElementInfo(new STAXElementInfo(root.getNodeName()));
+
+                delay.setDelayValue(
+                    STAXUtil.parseAndCompileForPython(
+                        thisChild.getNodeValue(), delay));
+            }
+        }
+
+        return delay;
+    }
+
+    // STAXJobManagement methods
+
+    public void initJob(STAXJob job)
+    {
+        // Create a default signal handler for signal ExtDelayInvalidValue
+        // that logs and displays a message and terminates the job.
+
+        ArrayList signalHandlerActionList = new ArrayList();
+
+        // Note the message is in a Python form so it can be evaluated.
+        String msg = "'ExtDelayInvalidValue signal raised.  " +
+                     "Terminating job. %s' % ExtDelayInvalidValueMsg";
+        
+        signalHandlerActionList.add(new STAXMessageAction(msg));
+        signalHandlerActionList.add(new STAXLogAction(msg, "'error'",
+                                                      STAXJob.JOB_LOG));
+        signalHandlerActionList.add(new STAXTerminateAction("'main'"));
+
+        // Add the default signal handler to the job's default action list.
+        job.addDefaultAction(new STAXSignalHandlerAction(
+            "'ExtDelayInvalidValue'",
+            new STAXSequenceAction(signalHandlerActionList)));
+
+        // Create a map that contains a key named "extDelayNum" whose
+        // value is initialized to 0.  This number is used in creating a 
+        // unique name for each delay element within a job.
+
+        HashMap extDelayMap = new HashMap();
+        extDelayMap.put("extDelayNum", new Integer(0));
+
+        boolean result = job.setData("ext-delay-map", extDelayMap); 
+    }
+
+    public void terminateJob(STAXJob job)
+    { /* Do Nothing */ }
+}</pre>
+<P>
+<h3>ExtDelayAction Source Code for Sample Service Extension</h3></font>
+<p>
+Here's the ExtDelayAction source code for the delay extension which
+extends the STAXActionDefaultImpl interface.  Its source code is provided
+in src/staf/services/stax/ext/delay/ExtDelayAction.java.
+<pre>
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2002                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+package com.ibm.staf.service.stax.extension.samples.extdelay;
+import com.ibm.staf.*;
+import java.util.HashMap;
+import com.ibm.staf.service.stax.*;
+
+public class ExtDelayAction extends STAXActionDefaultImpl
+{
+    static final int INIT = 0;
+   
+    static final int DELAY = 1;
+    
+    static final int COMPLETE = 2;
+
+    public ExtDelayAction()
+    { /* Do Nothing */ }
+
+    public ExtDelayAction(String delayValue)
+    { 
+        fUnevalDelayValue = delayValue;
+        fDelayValue = delayValue;
+    }
+
+    public String getDelayValue() { return fDelayValue; } 
+
+    public void setDelayValue(String delayValue) 
+    {
+        fUnevalDelayValue = delayValue; 
+        fDelayValue = delayValue; 
+    }
+    
+    public String getName() { return fName; } 
+
+    public void setName(String name) 
+    {
+        fName = name;
+    }
+    
+    public ExtDelayActionFactory getActionFactory() { return fFactory; }
+    
+    public void setActionFactory(ExtDelayActionFactory factory) 
+    {
+        fFactory = factory; 
+    }
+    
+    public String getXMLInfo()
+    {
+        return "&lt;ext-delay \">" + fDelayValue + "&lt;/ext-delay>";
+    }
+
+    public String getInfo()
+    {
+            return fDelayValue;
+    }
+
+    public String getDetails()
+    {
+        return "Delay Name:" + fName + " DelayValue:" + fDelayValue;
+    }
+
+    public void execute(STAXThread thread)
+    {
+        if (fState == INIT)
+        {
+            fThread = thread;
+            
+            try
+            {
+                fCurrentBlockName = thread.pyStringEval("STAXCurrentBlock");
+            }
+            catch (STAXPythonEvaluationException e)
+            {
+                fCurrentBlockName = "";  //Shouldn't happen
+            }
+            
+            // Assign a name to uniquely identify the delay element displayed
+            // in the "Active Job Elements" panel on the STAX Job Monitor.
+            // Get the value for key "extDelayNum" stored in the ext-delay-map
+            // for the job and increment it and use it in the name.
+            
+            HashMap extDelayMap = 
+                (HashMap)fThread.getJob().getData("ext-delay-map");
+            
+            synchronized (extDelayMap)
+            {
+                Integer extDelayNum = (Integer)extDelayMap.get("extDelayNum");
+
+                int num = extDelayNum.intValue() + 1;
+
+                // Store the new delay number for the job
+                extDelayMap.put("extDelayNum", new Integer(num));
+            
+                fName = "Delay" + num;
+            }
+
+            if (fUnevalDelayValue.equals(""))
+            {
+                // Assign default delay value if no value is specified
+                // The default delay value is obtained via a parameter
+                // named "delay" specified in the extension xml file.
+
+                fUnevalDelayValue = fFactory.getParameter("delay");
+
+                if (fUnevalDelayValue == null)
+                {
+                    // A default delay value was not provided.  Raise a signal.
+                    fState = COMPLETE;
+                    thread.popAction();
+ 
+                    setElementInfo(new STAXElementInfo(
+                        getElement(), STAXElementInfo.NO_ATTRIBUTE_NAME,
+                        "Must specify a value for the \"delay\" element if " +
+                        "no default value is specified.\n" +
+                        "A default value can be specified via a parameter " +
+                        "named delay in the extension xml file used to " +
+                        "register the \"delay\" element."));
+
+                    thread.setSignalMsgVar(
+                        "ExtDelayInvalidValueMsg",
+                        STAXUtil.formatErrorMessage(this));
+
+                    thread.raiseSignal("ExtDelayInvalidValue");
+
+                    return;
+                }
+
+                fDelayValue = fUnevalDelayValue;
+                fDelayInt = (new Integer(fDelayValue)).intValue();
+            }
+            else
+            {
+                try
+                {
+                    fDelayInt = thread.pyIntEval(fUnevalDelayValue);
+                }
+                catch (STAXPythonEvaluationException e)
+                {
+                    fState = COMPLETE;
+                    thread.popAction();
+
+                    setElementInfo(new STAXElementInfo(getElement()));
+
+                    thread.setSignalMsgVar(
+                        "STAXPythonEvalMsg",
+                        STAXUtil.formatErrorMessage(this), e);
+
+                    thread.raiseSignal("STAXPythonEvaluationError");
+
+                    return;
+                }
+            
+                if (fDelayInt &lt;= 0)
+                {
+                    // Delay value must be an integer > 0.  Raise a signal.
+                    fState = COMPLETE;
+                    thread.popAction();
+ 
+                    setElementInfo(new STAXElementInfo(
+                        getElement(), STAXElementInfo.NO_ATTRIBUTE_NAME,
+                        "Delay value " + fDelayInt +
+                        " must be an integer > 0."));
+
+                    thread.setSignalMsgVar(
+                        "ExtDelayInvalidValueMsg",
+                        STAXUtil.formatErrorMessage(this));
+
+                    thread.raiseSignal("ExtDelayInvalidValue");
+
+                    return;
+                }
+            }
+            
+            HashMap delayMap = new HashMap();
+            delayMap.put("block", fCurrentBlockName);
+            
+            delayMap.put("delay", fDelayValue);
+            delayMap.put("status", "start");
+            delayMap.put("name", fName);
+            
+            thread.getJob().generateEvent(ExtDelayActionFactory.EXT_DELAY,
+                delayMap);
+            
+            fState = DELAY;
+        }
+        else if (fState == DELAY)
+        {
+            if (fIteration > fDelayInt)
+            {
+                fState = COMPLETE;
+            }
+            else
+            {
+                HashMap delayMap = new HashMap();
+                delayMap.put("block", fCurrentBlockName);
+                delayMap.put("delay", fDelayValue);
+                delayMap.put("status", "iterate");
+                delayMap.put("name", fName);
+                delayMap.put("currentiter", 
+                    (new Integer(fIteration++)).toString());
+                
+                thread.getJob().generateEvent(ExtDelayActionFactory.EXT_DELAY,
+                    delayMap);
+        
+                try
+                {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException e)
+                {
+                }
+            }
+        }
+        else if (fState == COMPLETE)
+        {
+            HashMap delayMap = new HashMap();
+            delayMap.put("block", fCurrentBlockName);
+            delayMap.put("delay", fDelayValue);
+            delayMap.put("status", "stop");
+            delayMap.put("name", fName);
+            
+            thread.getJob().generateEvent(ExtDelayActionFactory.EXT_DELAY,
+                delayMap);
+            
+            fThread.popAction();
+        }
+    }
+
+    public void handleCondition(STAXThread thread, STAXCondition cond)
+    {
+        thread.popAction();
+    }
+
+    public STAXAction cloneAction()
+    {
+        ExtDelayAction clone = new ExtDelayAction();
+
+        // Be sure to set the element, line number map, xml file, and
+        // xml machine in your cloneAction() for your extension
+        clone.setElement(getElement());
+        clone.setLineNumberMap(getLineNumberMap());
+        clone.setXmlFile(getXmlFile());
+        clone.setXmlMachine(getXmlMachine());
+
+        // Clone your extensions member variables
+        clone.fUnevalDelayValue = fUnevalDelayValue;
+        clone.fDelayValue = fDelayValue;
+        clone.fName = fName;
+        clone.fFactory = fFactory;
+        
+        return clone;
+    }
+    
+    int fState = INIT;
+    STAXThread fThread = null;
+
+    private String fUnevalDelayValue = new String();
+    private String fDelayValue = new String();
+    private int fDelayInt = 0;
+    
+    private String fName = new String();
+    private ExtDelayActionFactory fFactory;
+    private String fCurrentBlockName = new String();
+    private int fIteration = 1;
+}</pre>
+
+<a name="Header_aliasExt" HREF="#ToC_aliasExt">
+<font color=blue><h2>Defining Aliases for Extension Elements - Delay</h2></font>
+</a>
+
+You can define aliases for extension elements so that the alias elements
+perform the same function.  Defining an alias for an extension element
+requires writing an action factory that extends the action factory for 
+the extension element for which an alias is being defined.
+For example, the Delay extension also defines two other elements,
+ext-sleep and ext-wait, that are aliases for the ext-delay element
+so that specifying any of the following elements results in the same action:
+<ul>
+<li>&lt;ext-delay>10&lt;/ext-delay>
+<li>&lt;ext-sleep>10&lt;/ext-sleep>
+<li>&lt;ext-wait>10&lt;/ext-wait>
+</ul>
+<P>
+<h3>ExtSleepActionFactory Source Code for the Delay Service Extension</h3>
+<p>
+Here's the ExtSleepActionFactory source code for the delay extension which
+extends the ExtDelayActionFactory class to provide an alias for the
+&lt;ext-delay> element called &lt;ext-sleep>.  Its source code is provided
+in src/staf/services/stax/ext/delay/ExtSleepActionFactory.java.
+<pre>
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2002                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+package com.ibm.staf.service.stax.extension.samples.extdelay;
+import java.util.Map;
+import com.ibm.staf.service.stax.*;
+
+public class ExtSleepActionFactory extends ExtDelayActionFactory
+{
+    private static String fDTDInfo =
+"\n" +
+"&lt;!--================= The Ext-Sleep Element ============================ -->\n" +
+"&lt;!--\n" +
+"     Delays for the specified number of seconds and generates and event\n" +
+"     every iteration.\n" +
+"-->\n" +
+"&lt;!ELEMENT ext-sleep     (#PCDATA)>\n";
+
+    public String getDTDInfo()
+    {
+        return fDTDInfo;
+    }
+
+    public String getDTDTaskName()
+    {
+        return "ext-sleep";
+    }
+    
+    public ExtSleepActionFactory()
+    {
+        /* Do Nothing */
+    }
+    
+    public ExtSleepActionFactory(STAX staxService)
+    {
+        super(staxService);
+    }
+
+    public ExtSleepActionFactory(STAX staxService, Map parmMap)
+        throws STAXExtensionInitException
+    {
+        super(staxService, parmMap);
+    }
+}</pre>
+
+<h3>ExtWaitActionFactory Source Code for the Delay Service Extension</h3>
+<p>
+Here's the ExtWaitActionFactory source code for the delay extension which
+extends the ExtDelayActionFactory class to provide another alias for the
+&lt;ext-delay> element called &lt;ext-wait>.  Its source code is provided
+in src/staf/services/stax/ext/delay/ExtWaitActionFactory.java.
+<pre>
+/*****************************************************************************/
+/* Software Testing Automation Framework (STAF)                              */
+/* (C) Copyright IBM Corp. 2002                                              */
+/*                                                                           */
+/* This software is licensed under the Eclipse Public License (EPL) V1.0.    */
+/*****************************************************************************/
+
+package com.ibm.staf.service.stax.extension.samples.extdelay;
+import java.util.Map;
+import com.ibm.staf.service.stax.*;
+
+public class ExtWaitActionFactory extends ExtDelayActionFactory
+{
+    private static String fDTDInfo =
+"\n" +
+"&lt;!--================= The Ext-Wait Element ============================= -->\n" +
+"&lt;!--\n" +
+"     Delays for the specified number of seconds and generates and event\n" +
+"     every iteration.\n" +
+"-->\n" +
+"&lt;!ELEMENT ext-wait     (#PCDATA)>\n";
+
+    public String getDTDInfo()
+    {
+        return fDTDInfo;
+    }
+
+    public String getDTDTaskName()
+    {
+        return "ext-wait";
+    }
+    
+    public ExtWaitActionFactory()
+    {
+        /* Do Nothing */
+    }
+    
+    public ExtWaitActionFactory(STAX staxService)
+    {
+        super(staxService);
+    }
+
+    public ExtWaitActionFactory(STAX staxService, Map parmMap)
+        throws STAXExtensionInitException
+    {
+        super(staxService, parmMap);
+    }
+}</pre>
+
+<a name="Header_delayXMLFile" HREF="#ToC_delayXMLFile">
+<font color=blue><h2>STAX XML File Using Delay Extension</h2></font>
+</a>
+
+Here's a sample job that uses the service extension &lt;ext-delay>,
+&lt;ext-sleep>, and &lt;ext-wait> elements:
+<PRE>
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>
+&lt;!DOCTYPE stax SYSTEM "file:/d:\staxtest\stax.dtd">
+
+&lt;stax>
+
+  &lt;defaultcall function="test"/>
+   
+  &lt;function name="test">     
+  
+   &lt;parallel>
+   
+    &lt;block name="'Block A'">
+  
+      &lt;parallel>
+        &lt;stafcmd>
+          &lt;location>'local'&lt;/location>
+          &lt;service>'delay'&lt;/service>
+          &lt;request>'delay 10000'&lt;/request>
+        &lt;/stafcmd>
+        &lt;ext-delay>20&lt;/ext-delay>
+      &lt;/parallel>
+      
+    &lt;/block>
+    
+    &lt;block name="'Block B'">
+
+      &lt;ext-delay>10&lt;/ext-delay>
+      
+    &lt;/block>
+   
+    &lt;block name="'Block C'">
+
+      &lt;parallel>
+        &lt;ext-delay>10&lt;/ext-delay>
+        &lt;ext-delay/>
+      &lt;/parallel>
+      
+    &lt;/block>
+    
+    &lt;block name="'Block D'">
+
+      &lt;parallel>
+        &lt;ext-wait>8&lt;/ext-wait>
+        &lt;ext-sleep/>
+      &lt;/parallel>
+
+    &lt;/block>
+
+   &lt;/parallel>
+
+  &lt;/function>
+
+&lt;/stax>
+</PRE>
+
+<a name="Header_changesFor330" href="#ToC_changesFor330">
+<font color=blue><h2>Changes to Service Extensions for STAX V3.3.0+</h2></font>
+</a>
+<p>
+If you wrote a STAX service extension prior to STAX V3.3.0, you may need to make
+a minor update in order for the extension to work with STAX V3.3.0 and later.
+When submitting a STAX EXECUTE request for a job that uses your STAX service
+extension, if you get RC 4001 and the result indicates a
+<tt>STAXInvalidXMLAttributeException</tt> was caught and the text includes a reference
+to the <tt>"_ln"</tt> attribute being invalid, then you need to modify the
+<tt>parseAction()</tt> method in your extension's <tt>ActionFactory</tt> java
+code to not throw an exception if an extra attribute named <tt>"_ln"</tt> is
+found (as this is used to provide line number information in STAX V3.3.0 and later).
+Since the XML Parser already performed validation that the XML document conforms
+to the DTD as specified by your extension, these extra checks for attributes can be
+safely removed.
+<p>
+In addition, you may want to update the STAX service extension to take
+advantage of some new classes/methods added in STAX V3.3.0 that make it
+easy for a STAX service extension to provide better debug information.
+When an error occurs and in a "Call Stack", in order for your STAX service
+extension to provide better debug information, you need to have your STAX service
+extension <tt>Action</tt> class extend the <tt>STAXActionDefaultImpl</tt> class
+(instead of implementing the <tt>STAXAction</tt> interface).  This will allow your
+extension and the STAX service to use additional methods to set and get debug
+information such as:
+<ul>
+<li>the line number of the element where the error occurred in the xml file
+<li>the name of the xml file containing the element where the error occurred
+<li>the name of the machine where the xml file resides
+</ul>
+<p>
+Note that the <tt>STAXActionDefaultImpl</tt> and <tt>STAXElementInfo</tt>
+classses were introduced in STAX V3.3.0.  Also, the STAXUtil class contains
+a new version of the <tt>parseAndCompileForPython()</tt> method and a new
+<tt>formatErrorMessage()</tt> method.
+<p>  
+For example, here's a diff of the changes we made to the Delay Service Extension
+for STAX V3.3.0 to provide the line number, file, and machine information when
+an error occurs and in the call stack.  You will need to make similar changes if
+you want your STAX service extension to provide better debug information.
+<p>
+<img src="ExtDelayActionFactoryDiff.gif" alt="Diff of ExtDelayActionFactory.java">
+<img src="ExtDelayActionDiff1.gif" alt="Diff of ExtDelayAction.java (Part 1)">
+<img src="ExtDelayActionDiff2.gif" alt="Diff of ExtDelayAction.java (Part 2)">
+<img src="MANIFESTDiff.gif" alt="Diff of MANIFEST.MF">
+
+<!--
+<pre>
+Index: delay/ExtDelayActionFactory.java
+===================================================================
+RCS file:
+/cvsroot/staf/src/staf/services/stax/ext/delay/ExtDelayActionFactory.java,v
+retrieving revision 1.10
+diff -r1.10 ExtDelayActionFactory.java
+118a119,121
+>         delay.setLineNumber(root);
+>         delay.setXmlFile(job.getXmlFile());
+>         delay.setXmlMachine(job.getXmlMachine());
+136,137c139
+&lt;                 String errorInfo = "\n  Element: " +
+&lt;                      root.getNodeName();
+---
+>                 delay.setElementInfo(new STAXElementInfo(root.getNodeName()));
+141,146c143
+&lt;                         thisChild.getNodeValue(), errorInfo));
+&lt;             }
+&lt;             else
+&lt;             {
+&lt;                 throw new STAXInvalidXMLNodeTypeException(
+&lt;                           Integer.toString(thisChild.getNodeType()));
+---
+>                         thisChild.getNodeValue(), delay));
+Index: delay/ExtDelayAction.java
+===================================================================
+RCS file:
+/cvsroot/staf/src/staf/services/stax/ext/delay/ExtDelayAction.java,v
+retrieving revision 1.5
+diff -r1.5 ExtDelayAction.java
+13c13
+&lt; public class ExtDelayAction implements STAXAction
+---
+> public class ExtDelayAction extends STAXActionDefaultImpl
+116,117c116,119
+&lt;                     String errorMsg = "\nMust specify a value for the " +
+&lt;                         "&lt;delay> element if no default value is specified.\n" +
+---
+>                     setElementInfo(new STAXElementInfo(
+>                         getElement(),
+STAXElementInfo.NO_ATTRIBUTE_NAME,
+>                         "Must specify a value for the \"delay\" element if " +
+>                         "no default value is specified.\n" +
+120,121c122,127
+&lt;                         "register the &lt;delay> element.";
+&lt;                     thread.pySetVar("ExtDelayInvalidValueMsg",
+errorMsg);
+---
+>                         "register the \"delay\" element."));
+>
+>                     thread.setSignalMsgVar(
+>                         "ExtDelayInvalidValueMsg",
+>                         STAXUtil.formatErrorMessage(this));
+>
+140,141c146,152
+&lt;                     thread.pySetVar("STAXPythonEvalMsg",
+&lt;                                      getXMLInfo() + "\n" + e);
+---
+>
+>                     setElementInfo(new STAXElementInfo(getElement()));
+>
+>                     thread.setSignalMsgVar(
+>                         "STAXPythonEvalMsg",
+>                         STAXUtil.formatErrorMessage(this), e);
+>
+153,155c164,172
+&lt;                     String errorMsg = "Delay value " + fDelayInt +
+&lt;                                       " must be an integer > 0.";
+&lt;                     thread.pySetVar("ExtDelayInvalidValueMsg", errorMsg);
+---
+>                     setElementInfo(new STAXElementInfo(
+>                         getElement(), STAXElementInfo.NO_ATTRIBUTE_NAME,
+>                         "Delay value " + fDelayInt +
+>                         " must be an integer > 0."));
+>
+>                     thread.setSignalMsgVar(
+>                         "ExtDelayInvalidValueMsg",
+>                         STAXUtil.formatErrorMessage(this));
+>
+225a243,247
+>         clone.setElement(getElement());
+>         clone.setLineNumberMap(getLineNumberMap());
+>         clone.setXmlFile(getXmlFile());
+>         clone.setXmlMachine(getXmlMachine());
+>
+Index: delay/MANIFEST.MF
+===================================================================
+RCS file: /cvsroot/staf/src/staf/services/stax/ext/delay/MANIFEST.MF,v
+retrieving revision 1.8
+diff -r1.8 MANIFEST.MF
+4c4
+&lt; Extension-Version: 3.0.0
+---
+> Extension-Version: 3.3.0
+6c6
+&lt; Required-Service-Version: 3.0.0
+---
+> Required-Service-Version: 3.3.0
+</pre>
+-->
+
+<hr>
+<P>
+<!---------------------------------------------------------------------------->
+<a name="Header_monext" HREF="#ToC_monext">
+<font color=blue><h1>Writing STAX Monitor Extensions</h1></font></a>
+<p>
+A STAX Monitor extension allows you to display additional information in one
+(or more) of the following three panels of the STAX Monitor window:
+<UL>
+<LI>Active Job Elements (upper left panel)
+<LI>Status (upper right panel)
+<LI>Info (lower panel)
+</UL>
+<P>
+For each STAX monitor extension you create, you must write, at a minimum,
+a class that implements the STAXMonitorExtension interface.
+<p>
+A STAX monitor extension class must implement the STAXMonitorExtension
+interface.  The STAXMonitorExtension interface defines how your monitor
+extension plugs in to the STAX Monitor GUI application.  This class must
+provide an implementation for the following methods:
+<P>
+<UL>
+<LI><B>init</b> - initializes the JComponent and performs any other necessary
+initialization activites, and returns the JComponent that will be displayed in
+the STAX Monitor frame
+<P>
+<LI><B>getNotificationEventTypes</B> - returns a space-delimited string of
+event types (such as process, stafcmd, block, etc.) that the extension wants
+to be notified about
+<P>
+<LI><B>getTitle</B> - returns the title of the extension, which is displayed
+in the View menu bar and in the JTabbedPane header
+<P>
+<LI><B>getComponent</B> - returns the JComponent that will be displayed in the
+Monitor frame
+<P>
+<LI><B>getExtensionType</B> - returns one of the following:
+  <UL>
+  <LI>STAXMonitorFrame.EXTENSION_ACTIVE_JOB_ELEMENTS (upper left panel)
+  <LI>STAXMonitorFrame.EXTENSION_STATUS (upper right panel)
+  <LI>STAXMonitorFrame.EXTENSION_INFO (lower panel)
+  </UL>
+<P>  
+<LI><B>handleEvent</B> - uses the Map information passed in to update its
+display
+<P>
+<LI><B>term</B> - performs any necessary termination activities
+</UL>
+<P>
+See its source code (src/staf/services/stax/monitor/STAXMonitorExtension.java)
+for more information about this interface.</LI>
+
+<a name="Header_activeJobMonExt" HREF="#ToC_activeJobMonExt">
+<font color=blue><h2>"Active Job Elements" Monitor Extension Sample - Delay</h2></font>
+</a>
+
+Let's walk through writing a STAX monitor extension.
+Let's write a STAX monitor extension that adds a delay element to the
+"Active Job Elements" tree (upper left) panel in the STAX Monitor GUI
+application.  The delay element consists of an image representing a delay,
+followed by text and a progress bar representing the progress of the delay
+element.  This can be done because the delay service extension sends an event
+to the STAX Monitor for each second it delays.
+<p>
+Here's what the "Active Job Elements" tab could look like running a job
+containing ext-delay elements when viewed via the STAX Monitor:
+<P>
+<!-- Snapshot of STAX Monitor showing delay element -->
+<img src="ext-delay.gif" alt="Delay Element in Active Job Elements Panel">
+<p>
+Here's the source code for the delay monitor extension which
+implements the STAXMonitorExtension interface.
+Its source code is provided in src/staf/services/stax/ext/delay/ExtDelay.java.
+<pre>
+package com.ibm.staf.service.stax.extension.samples.extdelay;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import com.ibm.staf.*;
+import java.util.*;
+import java.awt.*;
+import java.lang.reflect.*;
+import com.ibm.staf.service.stax.*;
+    
+public class ExtDelay implements STAXMonitorExtension
+{
+    STAFHandle fHandle;
+    String fLocalMachine;
+    String fStaxMachine;
+    String fStaxServiceName;
+    String fJobNumber;
+    STAXMonitorFrame fMonitorFrame;
+    String fTitle;
+    HashMap fProgressBarMap;
+    boolean fContinueElapsedTime = true;
+    Hashtable fMonitorDelayStartTimes = new Hashtable();
+    Hashtable fMonitorDelayTimeLabels = new Hashtable();
+    MonitorElapsedTime fElapsedTime;
+    
+    private ImageIcon delayIcon;
+    
+    public JComponent init(STAXMonitorFrame monitorFrame, boolean newJob,
+                           String staxMachineName, 
+                           String staxServiceName, String jobNumber)
+                           throws STAFException
+    {
+        fMonitorFrame = monitorFrame;
+        fStaxMachine = staxMachineName;
+        fStaxServiceName = staxServiceName;
+        fJobNumber = jobNumber;
+
+        fTitle = "Delay text";
+        
+        Class c = this.getClass();
+        ClassLoader classLoader = c.getClassLoader();
+        
+        delayIcon = ((STAXMonitorExtensionClassLoader)classLoader).
+            getImage("delay.gif");
+        
+        fProgressBarMap = new HashMap();
+        
+        fElapsedTime = new MonitorElapsedTime();
+        fElapsedTime.start();
+       
+        return new JPanel();
+    }        
+
+    public String getNotificationEventTypes()
+    {
+        return "ext-delay";
+    }
+    
+    public void term() {}
+    
+    public String getTitle() 
+    { 
+        return fTitle; 
+    }
+    
+    public int getExtensionType()
+    {
+        return STAXMonitorFrame.EXTENSION_ACTIVE_JOB_ELEMENTS;
+    }
+    
+    public JComponent getComponent()
+    {
+        return new JPanel();
+    }
+    
+    public void handleEvent(Map map)
+    {
+        String status = (String)map.get("status");
+        
+        String block = (String)map.get("block");
+        
+        String id = (String)map.get("name");
+        
+        if (status.equals("start"))
+        {
+            String delay = (String)map.get("delay");
+
+            Vector delayDataVector = new Vector();
+                
+            addRow(delayDataVector, "Delay Value", delay);
+            
+            JProgressBar progressBar = new JProgressBar();
+
+            progressBar.setMaximum((new Integer(delay)).intValue());
+            progressBar.setStringPainted(true);
+            Dimension dim = progressBar.getPreferredSize();
+            dim.height = 20;
+            progressBar.setPreferredSize(dim);
+            
+            synchronized(fProgressBarMap)
+            {
+                fProgressBarMap.put(id, progressBar);
+            }
+            
+            JLabel elapsedTimeLabel = new JLabel();
+            elapsedTimeLabel.setFont(new Font("Dialog", Font.PLAIN, 12));
+            
+            JPanel extPanel = new JPanel();
+            extPanel.setLayout(new BorderLayout());
+            extPanel.setBackground(Color.white);
+            extPanel.add(BorderLayout.CENTER, progressBar);
+            extPanel.add(BorderLayout.EAST, elapsedTimeLabel);
+
+            fMonitorFrame.addActiveJobElementsNode("delay", id, 
+                block, id, delayIcon, extPanel, delayDataVector);
+          
+            synchronized(fMonitorDelayStartTimes)
+            {
+                fMonitorDelayStartTimes.put(id, Calendar.getInstance());
+            }
+                
+            synchronized(fMonitorDelayTimeLabels)
+            {
+                fMonitorDelayTimeLabels.put(id, elapsedTimeLabel);
+            }
+        }
+        else if (status.equals("stop"))
+        {
+            synchronized(fProgressBarMap)
+            {
+                fProgressBarMap.remove(id);
+            }
+            
+            synchronized(fMonitorDelayStartTimes)
+            {
+                fMonitorDelayStartTimes.remove(id);
+            }
+            
+            synchronized(fMonitorDelayTimeLabels)
+            {
+                fMonitorDelayTimeLabels.remove(id);
+            }
+                   
+            fMonitorFrame.removeActiveJobElementsNode(id, block);
+        }
+        else if (status.equals("iterate"))
+        {
+            String delay = (String)map.get("delay");
+            
+            String currentIter = (String)map.get("currentiter");
+            
+            Integer delayInt = new Integer(delay);
+            
+            final Integer currentIterInt = new Integer(currentIter);
+            
+            float delayFloat = (float)(delayInt.intValue());
+            float currentIterFloat = (float)(currentIterInt.intValue());
+            
+            int percent = (int)((currentIterFloat / delayFloat * 100));
+            
+            final JProgressBar progressBar = 
+                (JProgressBar)fProgressBarMap.get(id);
+            
+            progressBar.setValue(currentIterInt.intValue());
+            
+            fMonitorFrame.setActiveJobElementsNodeText(id, id + 
+                "  " + (new Integer(percent).toString()) + "% complete");
+        }
+    }
+
+    public void addRow(Vector vector, String name, String value)
+    {
+        Vector newRow = new Vector(2);
+        newRow.add(name);
+        newRow.add(value);
+        vector.add(newRow);
+    }
+    
+    class MonitorElapsedTime extends Thread
+    {
+        public void run()
+        {
+            final int waitTime = fMonitorFrame.getElapsedTimeInterval();
+            
+            if (waitTime == 0)
+                return;
+            
+            while (fContinueElapsedTime)
+            {
+                final Enumeration delayElapsedTimeKeys = 
+                    fMonitorDelayStartTimes.keys();                
+                    
+                Runnable delayRunnable = new Runnable()
+                {
+                    public void run()
+                    {
+                        while (fContinueElapsedTime && 
+                               delayElapsedTimeKeys.hasMoreElements())
+                        {
+                            String delayKey = 
+                                (String)delayElapsedTimeKeys.nextElement();
+                                
+                            Calendar delayStarted = (Calendar)
+                                fMonitorDelayStartTimes.get(delayKey);
+                
+                            synchronized(fMonitorDelayTimeLabels)
+                            {
+                                JLabel elapsedTimeLabel = (JLabel)
+                                    fMonitorDelayTimeLabels.get(delayKey);
+                            
+                                elapsedTimeLabel.setText("  (" + STAXMonitorUtil.
+                                    getElapsedTime(delayStarted) + ")");
+                            }
+                        }
+                    }
+                };
+                    
+                try
+                {
+                    SwingUtilities.invokeAndWait(delayRunnable);
+                }
+                catch (InterruptedException ex)
+                {
+                     ex.printStackTrace();
+                }
+                catch (InvocationTargetException ex)
+                {
+                     ex.printStackTrace();
+                }
+                
+                try
+                {                    
+                    Thread.sleep(waitTime);
+                }
+                catch (InterruptedException ex)
+                {
+                }
+            }
+        }
+    }
+}
+</pre>
+
+<a name="Header_messagetextMonExt" HREF="#ToC_messagetextMonExt">
+<font color=blue><h2>"Info" Monitor Extension Sample - Message Text</h2></font>
+</a>
+
+Let's walk through writing another STAX monitor extension.
+Let's write a STAX monitor extension that displays the messages (the same
+ones displayed by the "Messages" tab) in a JTextArea (with which you can
+use the clipboard to cut and paste messages) by adding a "Message Text" tab to
+the "Info" (lower) panel in the STAX Monitor.
+Note that no service extension code needed to be written for this STAX
+monitor extension.
+<p>
+Here's what the Message Text tab in the "Info" (lower) panel will look like when
+viewed via the STAX Monitor:
+<p>
+<!-- Snapshot of STAX Monitor showing message text tab -->
+<img src="messagetext.gif" alt="Message Text Tab View in STAX Monitor">
+<p>
+Here's the source code for the message text monitor extension which
+implements the STAXMonitorExtension interface.
+Its source code is provided in src/staf/services/stax/ext/messagetext/ExtMessage.java.
+<pre>
+package com.ibm.staf.service.stax.extension.samples.extmessage;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import com.ibm.staf.*;
+import java.util.*;
+import java.awt.*;
+import com.ibm.staf.service.stax.*;
+    
+public class ExtMessage implements STAXMonitorExtension
+{
+    STAFHandle fHandle;
+    String fLocalMachine;
+    String fStaxMachine;
+    String fStaxServiceName;
+    String fJobNumber;
+    JTextArea fMessageTextArea;
+    STAXMonitorFrame fMonitorFrame;
+    String fTitle;
+    
+    public JComponent init(STAXMonitorFrame monitorFrame, boolean newJob,
+                           String staxMachineName, 
+                           String staxServiceName, String jobNumber)
+                           throws STAFException
+    {
+        fMonitorFrame = monitorFrame;
+        fStaxMachine = staxMachineName;
+        fStaxServiceName = staxServiceName;
+        fJobNumber = jobNumber;
+
+        fTitle = "Message Text";
+        
+        fMessageTextArea = new JTextArea();
+        fMessageTextArea.setEditable(false);
+        fMessageTextArea.setFont((new Font("Courier", Font.PLAIN, 12)));
+       
+        return fMessageTextArea;
+    }        
+
+    public String getNotificationEventTypes()
+    {
+        return "message";
+    }
+    
+    public void term() {}
+    
+    public String getTitle() 
+    { 
+        return fTitle; 
+    }
+    
+    public int getExtensionType()
+    {
+        return STAXMonitorFrame.EXTENSION_INFO;
+    }
+    
+    public JComponent getComponent()
+    {
+        return fMessageTextArea;
+    }
+    
+    public void handleEvent(Map map)
+    {
+        String msg = (String)map.get("messagetext");
+        fMessageTextArea.append(msg.substring(msg.indexOf(" ") + 1) + "\n");
+    } 
+}
+</pre>
+<P>
+<hr>
+<P>
+<!---------------------------------------------------------------------------->
+<a name="Header_buildreqs" HREF="#ToC_buildreqs">
+<font color=blue><h1>Requirements for Building STAX Extensions</h1></font>
+</a>
+<p>
+To build STAX Extensions, you need the following software installed:
+<P>
+<UL>
+  <LI>Java SDK (Software Developer Kit), Version 1.4.0 or later, on your
+  development system.
+  <LI>STAX V3.3.0 or later.  The STAX service can be downloaded from
+  <A HREF=http://staf.sourceforge.net/getstax.php>
+  http://staf.sourceforge.net/getstax.php</A>.
+</UL>
+<P>
+<H3>Structure of the STAX Jar File</H3>
+<p>
+The STAX.jar and STAXMon.jar files are provided in the STAX zip/tar file
+that was installed on your STAX service system.
+<p>
+The STAX jar file has the following structure:
+<pre>
+    META-INF/
+    META-INF/MANIFEST.MF
+    STAF-INF/
+    STAF-INF/classes/
+    STAF-INF/classes/com/
+    STAF-INF/classes/com/ibm/
+    STAF-INF/classes/com/ibm/staf/
+    STAF-INF/classes/com/ibm/staf/service/
+    STAF-INF/classes/com/ibm/staf/service/stax/  - Contains all the STAX class files
+    STAF-INF/jars/                               - Contains the nested jar files 
+    STAF-INF/jars/jython.jar                     - Jython jar file
+    STAF-INF/jars/serializer.jar                 - Xalan jar file
+    STAF-INF/jars/xalan.jar                      - Xalan jar file
+    STAF-INF/jars/xercesImpl.jar                 - Xerces (XML Parser) jar file
+    STAF-INF/jars/xmlParserAPIs.jar              - Xerces (XML Parser) jar file
+    JYTHON-INF/
+    JYTHON-INF/Lib/                              - Jython library files
+</pre>
+<p>
+The STAX class files in STAF-INF/classes/ and the nested jar files in
+STAF-INF/jars/ within the STAX.jar file will not be accessible to your
+STAX extension development environment just by adding STAX.jar to the
+ClassPath.  STAF uses a library called JSTAF that acts as a proxy for
+STAF services, such as STAX, that are implemented in the Java language.
+The nested jar files are extracted by JSTAF to a
+local directory when the STAX service is registered.  JSTAF uses its own
+class loader to load the STAX Java classes.
+<p>
+<H3>Extracting STAX Classes and Nested Jars from the STAX Jar File</H3>
+<p>
+To build STAX service extensions, you need the STAX class files that are in the
+STAX.jar file as well as the nested jar files that are within the STAX.jar file
+added to the CLASSPATH.  To extract these files, perform the following steps:
+<p>
+<ol>
+<li>Extract the STAX class files that are in the STAX.jar file so that they
+    are no longer in a STAF-INF/classes/ directory as follows:
+  <p>
+  <ol type="a">
+  <li>Change to a directory where you want to put the STAX class files
+  (e.g. C:\STAXDev if on Windows or /usr/local/STAXDev if on Unix).
+  <p>
+  <li>Type the following to extract the STAX class files from STAX.jar
+  (assuming the STAX.jar file is located in the C:\STAF\services\stax directory
+  if on Windows or the /usr/local/staf/services/stax directory if on Unix):
+  <p>
+    <ul>
+    <li>If on Windows:  
+    <br><font face="Courier New,Courier"><font size=-1>
+    &nbsp; jar xf C:\STAF\services\stax\STAX.jar STAF-INF/classes</font></font>
+    <li>If on Unix:
+    <br><font face="Courier New,Courier"><font size=-1>
+    &nbsp; jar xf /usr/local/staf/services/stax\STAX.jar STAF-INF/classes</font></font>
+    </ul>
+  </ol>
+<p>
+<li>If you have started the STAX service at least once, the nested jar files have
+already been extracted into the following directory:
+    <p>
+    <ul>
+    <li>If Windows:
+    <pre>C:\STAF\data\STAF\lang\java\service\STAX\jars</pre>
+    assuming <tt>C:\STAF</tt> is where STAF is installed,
+        <tt>STAF</tt> is your instance name, and
+        <tt>STAX</tt> is your STAX service name.
+    <li>If Unix:
+    <pre>/usr/local/staf/data/STAF/lang/java/service/STAX/jars</pre>
+    assuming <tt>/usr/local/staf</tt> is where STAF is installed,
+        <tt>STAF</tt> is your instance name, and
+        <tt>STAX</tt> is your STAX service name.
+    </ul>
+    <p>
+    The names of these jar files are xercesImpl.jar, xmlParserAPIs.jar, and jython.jar.
+<p>
+Otherwise, you can extract these jar files that are nested within
+the STAX.jar file as follows:
+<p>
+  <ol type="a">
+  <li>Change to a directory where you want to put the nested jar files
+  (e.g. C:\STAXDev if on Windows or /usr/local/STAXDev if on Unix).
+  <p>
+  <li>Type the following to extract the nested jar files from STAX.jar
+  (assuming the STAX.jar file is located in the C:\STAF\services\stax directory if on Windows
+  or the /usr/local/staf/services/stax directory if on Unix):
+  <p>
+  <ul>
+  <li>If on Windows:<font face="Courier New,Courier"><font size=-1>
+  <br>&nbsp; jar xf C:\STAF\services\stax\STAX.jar STAF-INF/jars</font></font>
+  <li>If on Unix:<font face="Courier New,Courier"><font size=-1>
+  <br>&nbsp; jar xf /usr/local/staf/services/stax/STAX.jar STAF-INF/jars</font></font>
+  </ul>
+  </ol>
+</ol>
+<p>
+<hr>
+</P>
+<!---------------------------------------------------------------------------->
+<a name="Header_building" HREF="#ToC_building">
+<font color=blue><h1>Building STAX Extensions</h1></font></a>
+<p>
+This section describes how to build STAX extensions.
+<p>
+<a name="Header_compilingExt" href="#ToC_compilingExt">
+<font color=blue><h2>Compiling STAX Extensions</h2></font></a>
+<p>
+In order to compile your STAX service extension Java code, you need to have the
+following files and directories in your CLASSPATH:
+<p>
+<ul>
+<li>The JSTAF.jar file which is located in the STAF lib directory
+<li>The directory where you extracted the STAX class files, so that the
+directory you specify contains com/ibm/staf/service/stax/*.class files
+<li>The Xerces Java XML Parser jar files which have been extracted from the
+    STAX.jar file:  xercesImpl.jar and xmlParserAPIs.jar.
+<li>You may also need the Jython jar file, jython.jar, which has been extracted
+    from the STAX.jar file if you access Jython-specific classes in your extension
+</ul>
+<P>
+In order to compile your STAX monitor extension Java code, you need to have
+the following file in your CLASSPATH:
+<ul>
+<li>The STAXMon.jar file which is located in the directory where you
+    unzipped/untarred STAXVxxx.zip/tar file
+</ul>
+<p>
+Here's an example of how to set your CLASSPATH on a Windows system:
+<PRE>set STAXDevDir=C:\STAXDev
+set STAFDir=C:\STAF
+set STAXCLASSES=%STAXDevDir%\STAF-INF\classes
+set JSTAFJAR=%STAFDir%\lib\JSTAF.jar
+set STAXJARDIR=%STAXDevDir%\STAF-INF\jars
+REM set STAXJARDIR=%STAFDir%\data\STAF\lang\java\service\STAX\jars
+set STAXJARFILES=%STAXJARDIR%\xercesImpl.jar;%STAXJARDIR%\xmlParserAPIs.jar;%STAXJARDIR%\jython.jar
+set STAXMONJAR=%STAFDir%\services\STAXMon.jar
+set CLASSPATH=%JSTAFJAR%;%STAXCLASSES%;%STAXJARFILES%;%STAXMONJAR%;
+</pre>
+<p>
+Here's an example of how to set your CLASSPATH on a Unix system:
+<PRE>export STAXDevDir=/usr/local/STAXDev
+export STAFDir=/usr/local/staf
+export STAXCLASSES=$STAXDevDir/STAF-INF/classes
+export JSTAFJAR=$STAFDir/lib/JSTAF.jar
+export STAXJARDIR=$STAXDevDir/STAF-INF/jar
+# export STAXJARDIR=$STAFDir/data/STAF/lang/java/service/STAX/jars
+export STAXJARFILES=$STAXJARDIR/xercesImpl.jar:$STAXJARDIR/xmlParserAPIs.jar:$STAXJARDIR/jython.jar
+export STAXMONJAR=$STAFDir/services/STAXMon.jar
+export CLASSPATH=$JSTAFJAR:$STAXCLASSES:$STAXJARFILES:$STAXMONJAR:
+</pre>
+
+Create the directory structure for your extension classes if not yet created:
+<ul>
+<li>If on Windows:
+<pre>mkdir %STAXDevDir%\STAX-INF\classes\com\ibm\staf\service\stax</pre>
+<li>If on Unix:
+<pre>mkdir $STAXDevDir/STAX-INF/classes/com/ibm/staf/service/stax</pre>
+</ul>
+
+Now you can compile your STAX extension java source code.  The following command can be
+used to compile if the current directory contains the STAX extension java source code:
+<pre>  javac -d STAX-INF/classes *.java</pre>
+
+You may want to change your system CLASSPATH or put the commands to set up the
+CLASSPATH and to do the compile in a shell script or bat file that you run instead
+as described in section <a href="#Header_makeFileExt">Using a Make Script/Bat File
+to Create an Extension Jar File</a>.
+<p>
+<a name="Header_manifestExt" href="#ToC_manifestExt">
+<font color=blue><h2>Creating a Manifest File for a STAX Extension Jar File</h2></font></a>
+<p>
+You need to package your STAX extension class files in a jar file with a
+Manifest file (e.g. MANIFEST.MF).
+You can use any text editor to create a Manifest file.
+The Manifest file must contain specific header information defining the STAX extension(s)
+provided in the jar file.
+<p>
+<h3>Manifest-Version Header</h3>
+<p>
+The Manifest file for a STAX extension jar file should start with the following
+two lines:
+<pre>
+Manifest-Version: 1.0
+
+</pre>
+Note that there must be a blank line following the Manifest-Version line.
+
+<p>
+<h3>Name Header Providing General Information for the Extension Jar File</h3>
+<p>
+The Manifest file for a STAX extension jar file should provide a staf/staxinfo/extension
+Name Header with attributes that identify the extensions provided in the jar file and
+specify any STAX service and/or monitor requirements.
+Following is the format for the the staf/staxinfo/extension Name Header and its attributes:
+<pre>
+  Name: staf/staxinfo/extension
+  Extension-Version: &lt;Extension Version>
+  Extension-Description: &lt;Extension Description>
+  Required-Service-Version: &lt;Required STAX Service Version>
+  Required-Monitor-Version: &lt;Required STAX Monitor Version>
+</pre>
+where:
+<ul>
+<li><font face="Courier New,Courier"><font size=-1>&lt;Extension Version></font></font>
+    is the version of the STAX extension(s) provided in this jar file.
+<p>
+<li><font face="Courier New,Courier"><font size=-1>&lt;Extensions Description></font></font>
+    is the description of the STAX extension(s) provided in this jar file.
+<p>
+<li><font face="Courier New,Courier"><font size=-1>&lt;Required STAX Service Version></font></font>
+    is the minimum version of the STAX Service required for the extension(s)
+    provided in this jar file.
+    The <font face="Courier New,Courier"><font size=-1>Required-Service-Version</font></font>
+    entry should only be provided if the STAX extension jar file contains one or more
+    STAX service extensions.
+    <p>
+    <b>Note: </b>  A STAX service extension that extends the STAXActionDefaultImpl class
+    or uses the STAXElementInfo class requires STAX V3.3.0 or later as that's when these
+    classes were added to STAX.
+<p>
+<li><font face="Courier New,Courier"><font size=-1>&lt;Required STAX Monitor Version></font></font>
+    is the minimum version of the STAX Monitor required for the extension(s)
+    provided in this jar file.
+    The <font face="Courier New,Courier"><font size=-1>Required-Monitor-Version</font></font>
+    entry should only be provided if the STAX extension jar file contains one or more
+    STAX monitor extensions.
+</ul>
+<p>
+<b>Notes:</b>
+<p>
+<ol>
+<li>A STAX version (for extensions, the STAX service and the STAX monitor)
+   must be of the following format:
+   <br><font face="Courier New,Courier"><font size=-1>&nbsp;  a[.b[.c[.d]]] [text]</font></font>
+   <br>where <font face="Courier New,Courier"><font size=-1>a, b, c,</font></font> and
+   <font face="Courier New,Courier"><font size=-1>d</font></font> are numeric and if
+   <font face="Courier New,Courier"><font size=-1>.b, .c,</font></font> or
+   <font face="Courier New,Courier"><font size=-1>.d</font></font> are not specified,
+   they are internally represented as <font face="Courier New,Courier"><font size=-1>.0</font></font>.
+   If text is specified, it must be preceded by one or more spaces.
+   </ul>
+   <p>
+<li>When comparing a STAX version to another STAX version, a, b, c, and d are
+   numerically compared with each other (e.g. 3.0.0 < 3.0.1).  If equal, then the text,
+   if specified, is compared in a case-insensitive fashion (e.g. 3.0.0 Beta 7 > 3.0.0 Alpha).
+   However, no text is greater than any specified text (e.g. 3.0.0 > 3.0.0 Beta).
+</ol>
+<p>
+<h3>Name Header for a STAX Service Extension</h3>
+<p>
+For each STAX service extension to be registered,
+the manifest file should contain the following two entries:
+<pre>
+  Name: staf/stax/&lt;Element Name>
+  Factory-Class: &lt;ActionFactory Class Name>
+</pre>
+where:
+<ul>
+<li><font face="Courier New,Courier"><font size=-1>&lt;Element Name></font></font>
+    is the main element name for the STAX service extension.
+    It should be the same as the name being returned by the getDTDTaskName
+    method in the extension's ActionFactory class.
+<li><font face="Courier New,Courier"><font size=-1>&lt;ActionFactory Class Name></font></font>
+    is the name of your STAX service extension main element's ActionFactory class.
+</ul>
+<p>
+<h3>Name Header for a STAX Monitor Extension</h3>
+<p>
+For each STAX monitor extension to be registered, the manifest file should
+contain the following two entries:
+<pre>
+  Name: staf/staxmonitor/extension/&lt;Extension Name>
+  Extension-Class: &lt;MonitorExtension Class Name>
+</pre>
+where:
+<ul>
+<li><font face="Courier New,Courier"><font size=-1>&lt;Extension Name></font></font>
+    is the name for the STAX monitor extension.
+<li><font face="Courier New,Courier"><font size=-1>&lt;MonitorExtension Class Name></font></font>
+    is the name of your extension's MonitorExtension class.
+</ul>
+<p>
+<b>Notes:</b>
+<p>
+<ol>
+<li>There must be a blank line before each Name header line.
+<li>The MANIFEST.MF text file must end with a new line or carriage return.
+    The last line will not be parsed properly if it does not end with a new
+    line or carriage return.
+</ol>
+<p>
+Here's an example of the MANIFEST.MF file for the Delay extension jar file which contains
+three STAX service extension elements (ext-delay, ext-sleep, and ext-wait) and one
+STAX monitor extension (ext-delay):
+<p>
+<pre>
+Manifest-Version: 1.0
+
+Name: staf/staxinfo/extension
+Extension-Version: 3.3.0
+Extension-Description: Delay STAX Extensions
+Required-Service-Version: 3.3.0
+Required-Monitor-Version: 3.0.0
+
+Name: staf/stax/extension/ext-delay
+Factory-Class: com.ibm.staf.service.stax.extension.samples.extdelay.ExtDelayActionFactory
+
+Name: staf/stax/extension/ext-sleep
+Factory-Class: com.ibm.staf.service.stax.extension.samples.extdelay.ExtSleepActionFactory
+
+Name: staf/stax/extension/ext-wait
+Factory-Class: com.ibm.staf.service.stax.extension.samples.extdelay.ExtWaitActionFactory
+
+Name: staf/staxmonitor/extension/ext-delay
+Extension-Class: com.ibm.staf.service.stax.extension.samples.extdelay.ExtDelay
+
+</pre>
+
+Here's an example of the MANIFEST file for the Message Text extension jar file
+which contains one STAX monitor extension (ext-message).
+<pre>
+Manifest-Version: 1.0
+
+Name: staf/staxinfo/extension
+Extension-Version: 3.0.0
+Extension-Description: Message Text STAX Monitor Extension
+Required-Monitor-Version: 3.0.0
+
+Name: staf/staxmonitor/extension/ext-message
+Extension-Class: com.ibm.staf.service.stax.extension.samples.extmessage.ExtMessage
+
+</pre>
+
+<a name="Header_creatingExtJarFile" href="#ToC_creatingExtJarFile">
+<font color=blue><h2>Creating a STAX Extension Jar File</h2></font></a>
+<p>
+Use the jar executable to create the STAX extension jar file.
+Multiple STAX service and monitor extensions can reside in a single jar file. 
+STAX Monitor extensions can be in the same file as the STAX service extensions.
+<P>
+For example, if the STAX extension manifest file is in the current directory
+(and if called MANIFEST.MF),
+and the STAX extension class files are in directory STAX-INF/classes off the
+current directory, and any images needed for the monitor extensions are
+in STAX-INF/images, type the following to create the STAX extension jar file:
+<pre>  jar cfm ExtDelay.jar MANIFEST.MF STAX-INF/classes/* STAX-INF/images/*</pre>
+
+Here are the contents of the STAX Delay extension jar file, obtained via command:
+<pre>  jar tf ExtDelay.jar</pre>
+<p>META-INF/
+<br>META-INF/MANIFEST.MF
+<br>STAX-INF/classes/com/
+<br>STAX-INF/classes/com/ibm/
+<br>STAX-INF/classes/com/ibm/staf/
+<br>STAX-INF/classes/com/ibm/staf/service/
+<br>STAX-INF/classes/com/ibm/staf/service/stax/
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtDelay$1.class
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtDelay$MonitorElapsedTime.class
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtDelay.class
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtDelayAction.class
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtDelayActionFactory.class
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtSleepActionFactory.class
+<br>STAX-INF/classes/com/ibm/staf/service/stax/extension/samples/extdelay/ExtWaitActionFactory.class
+<br>STAX-INF/images/delay.gif
+<p>
+<a name="Header_makeFileExt" href="#ToC_makeFileExt">
+<font color=blue><h2>Using a Make Script/Bat File to Create an Extension Jar File</h2></font></a>
+<p>
+You may want to write a make.bat file or make.sh file to create your STAX extension jar file.
+<P>
+For example, here's a make.bat file to run on Windows to create a STAX extension jar file for the Delay extension.
+Of course, your path names may be different.  It assumes that it is run from a directory that contains
+the source code for the STAX extension and its MANIFEST.MF file.
+<PRE> set STAXDevDir=C:\STAXDev
+ set STAFDir=C:\STAF
+ set STAXCLASSES=%STAXDevDir%\STAF-INF\classes
+ set JSTAFJAR=%STAFDir%\lib\JSTAF.jar
+ set STAXJARDIR=%STAXDevDir%\STAF-INF\jars
+ REM set STAXJARDIR=%STAFDir%\data\STAF\lang\java\service\STAX\jars
+ set STAXJARFILES=%STAXJARDIR%\xercesImpl.jar;%STAXJARDIR%\xmlParserAPIs.jar;%STAXJARDIR%\jython.jar
+ set STAXMONJAR=%STAFDir%\services\STAXMon.jar
+ set CLASSPATH=%JSTAFJAR%;%STAXCLASSES%;%STAXJARFILES%;%STAXMONJAR%;
+
+ mkdir %STAXDevDir%\STAX-INF\classes\com\ibm\staf\service\stax
+ javac -d %STAXDevDir%/STAX-INF/classes *.java
+ jar cfm ExtDelay.jar MANIFEST.MF STAX-INF/classes/* STAX-INF/images/*</pre>
+
+For example, here's a make.sh file to run on Unix to create a STAX extension jar file for the Delay extension.
+Of course, your path names may be different.  It assumes that it is run from a directory that contains
+the source code for the STAX extension and its MANIFEST.MF file.
+<PRE> #!
+ export STAXDevDir=/usr/local/STAXDev
+ export STAFDir=/usr/local/staf
+ export STAXCLASSES=$STAXDevDir/STAF-INF/classes
+ export JSTAFJAR=$STAFDir/lib/JSTAF.jar
+ export STAXJARDIR=$STAXDevDir/STAF-INF/jars
+ # export STAXJARDIR=$STAFDir/data/STAF/lang/java/service/STAX/jars
+ export STAXJARFILES=$STAXJARDIR/xercesImpl.jar:$STAXJARDIR/xmlParserAPIs.jar:$STAXJARDIR/jython.jar
+ export STAXMONJAR=$STAFDir/services/STAXMon.jar
+ export CLASSPATH=$JSTAFJAR:$STAXCLASSES:$STAXJARFILES:$STAXMONJAR:
+
+ mkdir $STAXDevDir/STAX-INF/classes/com/ibm/staf/service/stax
+ javac -d $STAXDevDir/STAX-INF/classes *.java
+ jar cfm ExtDelay.jar MANIFEST.MF STAX-INF/classes/* STAX-INF/images/*</pre>
+<P>
+<hr>
+<P>
+<!---------------------------------------------------------------------------->
+<a name="Header_reg" HREF="#ToC_reg">
+<font color=blue>
+<h1>Registering STAX Service Extensions</h1>
+</font>
+</a>
+<p>
+For information on how to register a STAX Service Extension, see the
+<a HREF=http://staf.sourceforge.net/current/staxug.pdf>
+STAX User's Guide</a>, section "Registering STAX Service Extensions".
+</P>
+<p>
+<hr>
+<p>
+<!---------------------------------------------------------------------------->
+<a name="Header_regmonext" HREF="#ToC_regmonext">
+<font color=blue>
+<h1>Registering STAX Monitor Extensions</h1>
+</font>
+</a>
+<p>
+For information on how to register a STAX Monitor Extension, see the
+<a HREF=http://staf.sourceforge.net/current/staxug.pdf>
+STAX User's Guide</a>, section "Registering STAX Monitor Extensions".
+<p>
+</body>
+</html>
+

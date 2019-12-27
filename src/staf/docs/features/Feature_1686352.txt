@@ -1,0 +1,1343 @@
+Feature ID  : 1686352
+Title       : Improve robustness of handle garbage collection
+
+Description
+-----------
+
+Improve the robustness of the handle garbage collection (GC),
+especially in error conditions.
+
+When a service like ResPool issues a STAF_NOTIFY request to the
+HANDLE service on the local machine, it does so without checking
+its return value.  This isn't a good idea because if STAF_NOTIFY
+has been asked to register for a notification on handle on a
+remote machine, it does a couple of things that could fail.
+First, it issues a request to the remote machine to receive
+termination notification (and this could fail).  Then it adds an
+entry to the handle GC polling list so that the machine is
+polled every 60 seconds (which should be configurable).  The
+assumption is that the termination request fulfillment will be
+sufficiently robust that the only other exceptional case to be
+considered is abrupt termination of the remote peer.
+Unfortunately, the handle GC polling loop can easily be fooled
+because it does not confirm that the same instance of the peer
+is running, or that the handle still exists remotely in some
+cases.  The issue of identity is significant because it is quite
+possible that the peer will be promptly restarted within 60
+seconds of a fatal crash or being shutdown so its absence might
+go unnoticed by a simple HANDLE QUERY or PING PING request,
+resulting in no STAF_CALLBACK message being sent.  Even during
+normal operation, a STAF_CALLBACK message might well be lost or
+undeliverable so a more robust recovery strategy is warranted. 
+
+
+Problem(s) Solved
+-----------------
+
+Improving the robustness of handle garbage collection will solve
+the following problems:
+
+1) The HandleManager's garbage collection polling loop uses a
+hard-coded delay interval of 60 seconds before it rechecks the
+notification list for handles that have been deleted/terminated.
+This GC delay internal should be configurable to allow some
+performance tuning to control how often handle garbage
+collection occurs.  Adding a new operational parameter,
+HandleGCInterval, that can be set in the STAF.cfg file and
+allowing it to be set dynamically via a MISC SET request will
+provide some garbage collection tuning capabilities for handles.
+ 
+2) Currently, if STAFProc is stopped (or crashes) and then is
+restarted within 60 seconds (which is the current hard-coded
+polling delay interval for handle garbage collection), the
+HandleManager's GC polling method can be fooled into thinking
+the same handle still exists because it does not check the
+STAF instance UUID.  Fix by adding the STAF Instance UUID to
+the output of a HANDLE QUERY request so that the HandleManager's
+GC polling method can determine if the specified handle on the
+remote machine exists and that the handle is for the same STAF
+instance.  If the UUID field does not exist in the HANDLE QUERY
+result map (because it is running an earlier STAF version),
+then if the HANDLE QUERY request succeeds, it will submit a
+MISC WHOAREYOU request to the remote machine to get its UUID.
+
+3) When a service like ResPool (or SEM) submits a STAF_NOTIFY
+request to the local HANDLE service, it is not checking the
+return code.  These services should be changed to check the
+return code and return an error because for remote service
+requests, the service attempts to connect to the remote
+requesting machine to request to be notified when the handle is
+terminated.  So, if this fails (e.g. due to insufficient trust
+or a communication problem), garbage collection won't take
+place for this request and you won't know why.
+
+4) A memory leak will be fixed because, currently, entries are
+not being removed from the notification list and the polling
+data list for remote requests.  We need to implement a
+kSTAFHandleTerminationUnregistrationAPI so that when a polling
+entry (for a remote machine) is deleted, HandleManager needs
+to connect to the remote machine to unregister for notification
+via this new kSTAFHandleTerminationUnregistrationAPI.  Doing
+this will prevent the memory leak that exists now with the
+notification/polling list growing because these entries are
+not being removed.
+
+5) In the ResPool service, fixed the following issues where
+handle notification entries for garbage collection were not
+being deleted:
+- On a RESPOOL DELETE POOL request to delete an entire
+  resource pool:
+  - If there were any owned resource entries in the pool
+    with garbage collection enabled, their notification
+    entries were not being deleted.
+  - It was checking if there are any pending requests for the
+    pool being deleted so it could wake up each requester with
+    no resource specified to complete the pending request.
+    However, this caused a bug because this results in the entry
+    being removed from the Pending Requests list that is currently
+    being iterated (since you can't iterate through a list that
+    has had entries removed).  So, added code to break out of
+    the iteration loop and to restart iterating through the list
+    for each entry.
+- On a RESPOOL REMOVE ENTRY <Entry>... request to remove one or
+  more resource entries from a pool, handle notification entries
+  were not being removed for any owned resource entries that
+  were removed that had the garbage collection flag enabled.
+
+6) In the SEM service, fixed a problem where handle notifications
+for garbage collection were being incorrectly deleted if you
+released a mutex semaphore that isn't owned.  The handleRelease()
+and handleSTAFCallback() methods were only checking if
+sem->owner.garbageCollect was true and weren't first checking if
+sem->isOwned.  Added the check if sem->isOwned because the owner
+information doesn't get removed so if the mutex was previously
+owned then it would be checking if garbage collection was enabled
+for the previous owner's request which is incorrect.
+
+
+Related Features/Patches
+------------------------
+
+None
+
+
+External Changes
+----------------
+
+a) Operational Parameters
+
+Add a new operational parameter, HandleGCInterval, that can be
+set in the STAF configuration file.
+
+Syntax:
+
+SET [HANDLEGCINTERVAL <Number>[s|m|h|d]]
+
+HANDLEGCINTERVAL specifies the time interval that the Handle
+Manager's garbage collection polling loop will wait between
+loops before polling each remote handle specified in the
+notification list.  The default is 60000 (i.e. 1 minute).
+You may also change this setting dynamically using the MISC
+service's SET command.  The time interval may be expressed in
+milliseconds, seconds, minutes, hours, or days.  Its format
+is <Number>[s|m|h|d], where <Number> is an integer >= 0 and
+indicates milliseconds unless one of the following case-
+insensitive suffixes is specified:
+  * s (for seconds)
+  * m (for minutes)
+  * h (for hours)
+  * d (for days)
+
+Note that the calculated value cannot be less than 5 seconds
+and cannot exceed 24 hours.
+
+Examples:
+
+SET HANDLEGCINTERVAL 45s
+SET HANDLEGCINTERVAL 5m
+
+Also, since the new HandleGCInterval operational parameter
+supports the time format of <Number>[s|m|h|d]], we'll
+change the CONNECTRETRYDELAY operational parameter to also
+support this time format instead of just milliseconds.
+
+b) MISC SET HANDLEGCINTERVAL Request:
+
+Syntax:
+
+SET [HANDLEGCINTERVAL <Number>[s|m|h|d]]
+
+See section a) New Operational Parmeter, HandleGCInterval,
+for a description of thise option.
+
+Examples:
+
+  i) Goal: Change the handle garbage collection polling
+     interval to 90 seconds.
+
+     STAF local MISC SET HANDLEGCINTERVAL 90s
+     or
+     STAF local MISC SET HANDLEGCINTERVAL 90000
+
+  ii) Goal: Change the handle garbage collection polling
+     interval to 45 seconds.
+
+     STAF local MISC SET HANDLEGCINTERVAL 45s
+     or
+     STAF local MISC SET HANDLEGCINTERVAL 45000    
+
+c) MISC LIST SETTINGS Request:
+
+Result:
+
+In the result from a LIST SETTINGS request submitted to
+the MISC service, add a new "Handle GC Interval" field to
+the result map which contains the GC interval time in
+milliseconds.
+
+Example:
+
+STAF local MISC LIST SETTINGS
+Response
+--------
+Connection Attempts      : 2
+Connect Retry Delay      : 1000
+Interface Cycling        : Enabled
+Maximum Queue Size       : 1000
+Maximum Return File Size : 0
+Handle GC Interval       : 60000
+Initial Threads          : 10
+Thread Growth Delta      : 1
+Data Directory           : c:\STAF\data\STAF
+Default Interface        : ssl
+Default Authenticator    : none
+Result Compatibility Mode: Verbose
+
+d) MISC SET CONNECTRETRYDELAY Request
+
+Also, since the new HandleGCInterval operational parameter
+supports the time format of <Number>[s|m|h|d]], we'll
+change the CONNECTRETRYDELAY setting to also support this
+time format instead of just milliseconds.
+
+Syntax:
+
+SET [CONNECTRETRYDELAY <Number>[s|m|h|d|w]]
+
+Example:
+
+  Goal: Change the connect retry delay to 2 seconds.
+
+     STAF local MISC SET CONNECTRETRYDELAY 2s
+
+e) MISC HELP Request:
+
+Result:
+
+Change the help text for the SET request by adding the
+HANDLEGCINTERVAL option and change the CONNECTRETRYDELAY's
+value to <Number>[s|m|h|d|w] as follows:
+
+*** MISC Service Help ***
+...
+SET   [CONNECTATTEMPTS <Number>] [CONNECTRETRYDELAY <Number>[s|m|h|d|w]]
+      [MAXQUEUESIZE <Number>] [HANDLEGCINTERVAL <Number>[s|m|h|d]]
+      [INTERFACECYCLING <Enabled | Disabled>]
+      [DEFAULTINTERFACE <Name>] [DEFAULTAUTHENTICATOR <Name>]
+      [RESULTCOMPATIBILITYMODE <Verbose | None>]
+...
+
+f) HANDLE QUERY Request:
+
+Security:
+
+Change the trust level from 2 to 1 (so that when the
+HandleManager's gcPolling() method submits a QUERY request
+to the HANDLE service on a remote machine, there will be
+less of a chance that it will fail with a trust issue).
+
+Result:
+
+In the result from a QUERY HANDLE requset submitted to the
+MISC service, add a new "Instance UUID" field to the result
+map which contains the STAF Instance UUID.
+
+Example:
+
+STAF local HANDLE QUERY HANDLE 1
+Response
+--------
+Handle             : 1
+Handle Name        : STAF_Process
+State              : InProcess
+Last Used Date-Time: 20100126-15:45:40
+PID                : 436
+User               : none://anonymous
+Instance UUID      : 7D625F4BB40100000929359C75636173
+
+g) HANDLE LIST Request:
+
+Syntax:
+
+Add undocumented option to list polling data list in addition to
+the undocumented option that already exists to list notifications.
+
+Listing notfications without the POLLING option specifies to
+list the notifications (for requests submitted to the local
+machine).
+
+LIST NOTIFICATIONS [POLLING]
+
+POLLING specifies to list the entries in the polling data list
+(for requests submitted to remote machines).
+
+Note:  We will continue to leave this request undocumented as
+it is mainly for debugging purposes and to ensure that the lists
+do not grow too large and take up too much memory.
+
+Security:
+
+Change the trust level from 2 to 1 (to be consistent with
+the new trust level for a HANDLE QUERY request).
+
+
+Internal Changes
+----------------
+
+Files changed:
+
+stafproc/STAFConfig.cpp
+stafproc/STAFHandleManager.h
+stafproc/STAFHandleManager.cpp
+stafproc/STAFHandleService.cpp
+stafproc/STAFMiscService.cpp
+stafproc/STAFProc.cpp
+stafproc/STAFProc.h
+stafproc/STAFSemService.cpp
+stafproc/STAFSimpleServices.cpp
+services/respool/STAFResPoolService.cpp
+docs/userguide/Config.script
+docs/userguide/CmdRef.script
+docs/userguide/HandSrv.script
+docs/userguide/MiscSrv.script
+test/STAFTest.xml
+
+1) Changes to stafproc/STAFHandleService.cpp:
+
+  a) Add the "instanceUUID" key to the map class for the result for
+     a QUERY HANDLE request:
+
+   fQueryHandleClass->addKey("instanceUUID", "Instance UUID");
+
+  b) Change the trust level for a QUERY request submitted to the
+     HANDLE service from 2 to 1:
+
+   IVALIDATE_TRUST(1, "QUERY");
+
+  c) Assign the "instanceUUID" field in the result map for a
+     QUERY HANDLE request:
+
+   handleMap->put("instanceUUID", *gSTAFInstanceUUIDPtr);
+
+  d) Change the trust level for a LIST request submitted to the
+     HANDLE service from 2 to 1 (since should be the same as a
+     QUERY request submitted to the HANDLE service:
+
+   IVALIDATE_TRUST(1, "LIST");
+
+  e) Changed handleList() to be able to list the entries in
+     the polling data list or the entries in the notification
+     list for handle garbage collection.  Previously we could
+     not list the entries in the polling data list.
+
+    if (parsedResult->optionTimes("NOTIFICATIONS") != 0)
+    {
+        unsigned int longFormat = parsedResult->optionTimes("LONG");
+                
+        // Create a marshalled list of maps containing notification information
+
+        if (!longFormat)
+            mc->setMapClassDefinition(fNotificationClass->reference());
+        else
+            mc->setMapClassDefinition(fNotificationLongClass->reference());
+
+        STAFObjectPtr outputList = STAFObject::createList();
+
+        if (parsedResult->optionTimes("POLLING") == 0)
+        {
+            // List the entries in the notification data list
+
+            STAFHandleManager::NotificationList notificationList =
+                gHandleManagerPtr->getNotificationListCopy();
+            STAFHandleManager::NotificationList::iterator iter;
+
+            for (iter = notificationList.begin();
+                 iter != notificationList.end(); iter++)
+            {
+                STAFHandleManager::NotificationData notifiee(*iter);
+
+                STAFObjectPtr notifyMap;
+
+                if (!longFormat)
+                {
+                    notifyMap = fNotificationClass->createInstance();
+                }
+                else
+                {
+                    notifyMap = fNotificationLongClass->createInstance();
+                    notifyMap->put("endpoint", notifiee.endpoint);
+                    notifyMap->put("key", notifiee.key);
+                    notifyMap->put("instanceUUID", notifiee.uuid);
+                }
+
+                notifyMap->put("handle", STAFString(notifiee.handle));
+                notifyMap->put("machine", STAFString(notifiee.machine));
+                notifyMap->put("notifyService",
+                               STAFString(notifiee.notifyService));
+
+                outputList->append(notifyMap);
+            }
+        }
+        else
+        {
+            // List the entries in the polling data list
+
+            STAFHandleManager::PollingDataList pollingList =
+                gHandleManagerPtr->getPollingDataListCopy();
+            STAFHandleManager::PollingDataList::iterator iter;
+
+            for (iter = pollingList.begin();
+                 iter != pollingList.end(); iter++)
+            {
+                STAFHandleManager::PollingData notifiee(*iter);
+
+                STAFObjectPtr notifyMap;
+
+                if (!longFormat)
+                {
+                    notifyMap = fNotificationClass->createInstance();
+                }
+                else
+                {
+                    notifyMap = fNotificationLongClass->createInstance();
+                    notifyMap->put("endpoint", notifiee.endpoint);
+                    notifyMap->put("key", notifiee.key);
+                    notifyMap->put("instanceUUID", notifiee.uuid);
+                }
+
+                notifyMap->put("handle", STAFString(notifiee.handle));
+                notifyMap->put("machine", STAFString(notifiee.machine));
+                notifyMap->put("notifyService",
+                               STAFString(notifiee.notifyService));
+
+                outputList->append(notifyMap);
+            }
+        }
+        
+        mc->setRootObject(outputList);
+    }
+
+2) Changes to stafproc/STAFHandleManager.h:
+
+     - Added endpoint as another argument needed for the
+       deleteNotification() method so that it can connect to
+       remote machine entries to unregister for notification via
+       the new kSTAFHandleTerminationUnregistrationAPI.
+
+    STAFRC_t deleteNotification(
+        STAFHandle_t handle, const STAFString &endpoint,
+        const STAFString &machine, const STAFString &uuid,
+        const STAFString &service, const STAFString &key);
+
+3) Changes to stafproc/STAFHandleManager.cpp:
+
+  a) Changes in the STAFHandleManager::deleteNotification() method:
+
+     - Added endpoint as another argument needed for this method.
+
+    STAFRC_t STAFHandleManager::deleteNotification(
+        STAFHandle_t handle, const STAFString &endpoint,
+        const STAFString &machine, const STAFString &uuid,
+        const STAFString &service, const STAFString &key)
+
+     - If the notifiee is not found in the notification list,
+       then after deleting the notification entry from the
+       gc polling list, connect to the remote machine to
+       unregister for notification via the new
+       kSTAFHandleTeminationUnregistrationAPI. 
+
+    // Not found in the notification list, so try to delete the notification
+    // entry from the gc polling list
+
+    STAFRC_t rc = deletePolling(handle, machine, uuid, service, key);
+
+    if (rc == kSTAFOk)
+    {
+        // Connect to the remote machine to unregister for notification
+        // via the kSTAFHandleTerminationUnregistrationAPI (similar to
+        // what we do in addNotification() using the
+        // kSTAFHandleTerminationRegistrationAPI.
+
+        STAFConnectionProviderPtr provider;
+        STAFConnectionPtr connection;
+        STAFString result;
+
+        rc = gConnectionManagerPtr->makeConnection(
+            endpoint, provider, connection, result);
+
+        if (rc)
+        {
+            return rc;
+        }
+
+        connection->writeUInt(kSTAFHandleTerminationUnRegistrationAPI);
+        connection->writeUInt(0);    // Dummy level
+
+        STAFRC_t ack = connection->readUInt();
+
+        if (ack != kSTAFOk)
+        {
+            // The kSTAFHandleTerminationUnRegestrationAPI was added in STAF
+            // V3.4.1 so connecting to earlier versions of STAF will fail
+            rc = ack;
+            return rc;
+        }
+        
+        // Determine the specific level of the API to use
+
+        connection->writeUInt(1);  // min level
+        connection->writeUInt(2);  // max level
+        
+        unsigned int levelToUse = connection->readUInt();
+
+        if (levelToUse == 0)
+        {
+            // Level 0 is invalid for kSTAFHandleTerminationUnRegistrationAPI
+            rc = kSTAFInvalidAPILevel;
+            return rc;
+        }
+
+        connection->writeUInt(handle);
+        connection->writeString(*gMachinePtr);
+        connection->writeString(uuid);
+        connection->writeString(service);
+        connection->writeString(key);
+    }
+    else if (rc == kSTAFDoesNotExist)
+    {
+        // The notification was not found in either the notification list or
+        // the gc polling list.  Log a warning if the service is not DELAY,
+        // as this probably indicates a problem in garbage collection.
+        // Note that since the DELAY service uses the request# as the key,
+        // it doesn't hurt anything if the notification for this request# has
+        // already been removed so no warning needs to be logged in this case.
+
+        if (service != "DELAY")
+        {
+            STAFString msg = STAFString(
+                "In STAFHandleManager::deleteNotification(), No notification "
+                "found for handle=") + STAFString(handle) + " machine=" +
+                machine + " uuid=" + uuid + " service=" + service +
+                " key=" + key;
+
+            STAFTrace::trace(kSTAFTraceWarning, msg);
+        }
+    }
+
+    return rc;
+
+  b) Changes in STAFHandleManager::handleRemoved() method:
+
+     - Changed to pass the endpoint when calling the deleteNotification()
+       method.
+
+       gHandleManagerPtr->deleteNotification(
+           notifiee.handle, notifiee.endpoint, notifiee.machine,
+           notifiee.uuid, notifiee.notifyService, notifiee.key);
+
+  c) Changes the STAFHandleManager::gcPolling() method:
+
+     - Delay for 10 seconds before starting the gcPolling() method
+       instead of delaying for 5 seconds.
+
+     - Use gHandleGCInterval instead of a hard-coded interval of 60000.
+
+     - Moved the try/catch inside the loop so that if an unexpected
+       exception occurs the gcPolling() method won't be terminated.
+
+     - If the HANDLE QUERY request fails with a trust issue, instead
+       of submitting a PING PING request (which has trust level 1),
+       submit a MISC WHOAREYOU request (which also has trust level 1),
+       so we can compare the UUUID in the WHOAREYOU result with the
+       UUID of the notifiee in the notification list to determine if
+       the notifiee machine is still running the same instance of
+       STAFProc.
+
+     - If the HANDLE QUERY request succeeds:
+        - If the UUID is available in the HANDLE QUERY result
+          (!= "<None>"), compare it with the UUID of the notifiee in
+          the notification list to make sure the notifiee machine is
+          still running the same instance of STAFProc.
+        - If the UUID is not available in the result (== "<None>"),
+          submit a WHOAREYOU request to the MISC service on the
+          notifiee machine and compare the UUID in the WHOAREYOU
+          result with the UUID of the notifiee in the notification
+          list to determine if the notifiee machine is still running
+          the same instance of STAFProc.
+ 
+  Here's the complete updated gcPolling() method:
+ 
+void STAFHandleManager::gcPolling()
+{
+    // Delay 10 seconds before beginning the polling loop
+
+    gThreadManagerPtr->sleepCurrentThread(10000);
+    
+    while (1)
+    {
+        try
+        {
+            // Wait for the time specified for the handle GC interval 
+
+            gGCPollingSem->wait(gHandleGCInterval);
+             
+            if (!gContinueGCPolling)
+                return;
+             
+            PollingDataList pollingDataList = getPollingDataListCopy();
+            PollingDataList::iterator iter;
+
+            for (iter = pollingDataList.begin();
+                 iter != pollingDataList.end(); iter++)
+            {
+                PollingData notifiee(*iter);
+               
+                // Submit a HANDLE QUERY HANDLE <notifiee.handle> request to
+                // see if the handle still exists on the notifiee machine and
+                // that the notifiee machine is currently running STAF.
+
+                STAFString request = "QUERY HANDLE " +
+                    STAFString(notifiee.handle);
+
+                STAFResultPtr result = gSTAFProcHandlePtr->submit(
+                    notifiee.endpoint, "HANDLE", request);
+                 
+                if (result->rc == kSTAFAccessDenied)
+                {
+                    // The HANDLE QUERY request failed with a trust issue
+                    // (as this request had trust level 2 in STAF V3.4.0 and
+                    // earlier), so submit a MISC WHOAREYOU request (which has
+                    // trust level 1) to see if the notifiee machine is still
+                    // running the same STAF instance.
+
+                    result = gSTAFProcHandlePtr->submit(
+                        notifiee.endpoint, "MISC", "WHOAREYOU");
+
+                    if (result->rc == kSTAFOk)
+                    {
+                        STAFString uuid = result->resultObj->
+                            get("instanceUUID")->asString();
+                         
+                        if (uuid != notifiee.uuid)
+                        {
+                            result->rc = kSTAFHandleDoesNotExist;
+                        }
+                    }
+                }
+                else if (result->rc == kSTAFOk)
+                {
+                    // Need to make sure that the handle in the result map
+                    // isn't None as there was a bug in the QUERY HANDLE
+                    // request for the HANDLE service in STAF V3.2.2 or
+                    // earlier where it returned RC 0 even if the handle
+                    // did not exist.  In this case, it set all the fields
+                    // including handle to None.
+
+                    STAFString handle = result->resultObj->get("handle")->
+                        asString();
+
+                    if (handle == "<None>")
+                    {
+                        result->rc = kSTAFHandleDoesNotExist;
+                    }
+                    else
+                    {
+                        // Verify that the the same STAFProc instance is
+                        // still running by verifying that the uuid matches
+
+                        STAFString uuid = result->resultObj->get("uuid")->
+                            asString();
+
+                        if (uuid == "<None>")
+                        {
+                            // The UUID is not available in the HANDLE QUERY
+                            // request because the notifiee endpoint is
+                            // running STAF V3.4.1 or later.  So, submit a
+                            // MISC WHOAREYOU request to get the UUID for
+                            // the notifiee endpoint.
+                             
+                            result = gSTAFProcHandlePtr->submit(
+                                notifiee.endpoint, "MISC", "WHOAREYOU");
+
+                            if (result->rc == kSTAFOk)
+                            {
+                                uuid = result->resultObj->
+                                    get("instanceUUID")->asString();
+
+                                if (uuid != notifiee.uuid)
+                                {
+                                    result->rc = kSTAFHandleDoesNotExist;
+                                }
+                            }
+                        }
+                        else if (uuid != notifiee.uuid)
+                        {
+                            result->rc = kSTAFHandleDoesNotExist;
+                        }
+                    }
+                }
+
+                // If the request fails, then we assume the notifiee handle on
+                // the notifiee machine no longer exists (either because the
+                // handle has been deleted or STAF was shutdown on the
+                // notifiee machine).  So, we then submit a
+                // STAF_CALLBACK HANDLEDELETED HANDLE request to notify any
+                // services who registered for the callback that the handle
+                // no longer exists and we delete the polling entry.
+
+                if (result->rc != kSTAFOk)
+                {
+                    request = "STAF_CALLBACK HANDLEDELETED HANDLE " +
+                        STAFString(notifiee.handle) +
+                        " MACHINE " + STAFHandle::wrapData(notifiee.machine) +
+                        " UUID " + STAFHandle::wrapData(notifiee.uuid) +
+                        " KEY " + STAFHandle::wrapData(notifiee.key);
+
+                    STAFResultPtr result = gSTAFProcHandlePtr->submit(
+                        "local", notifiee.notifyService, request,
+                        kSTAFReqFireAndForget);
+            
+                    deletePolling(notifiee.handle, notifiee.machine,
+                                  notifiee.uuid, notifiee.notifyService,
+                                  notifiee.key);
+                }
+            }
+        }
+        catch (STAFException &se)
+        {
+            se.trace("STAFHandleManager::gcPolling()");
+        }
+        catch (...)
+        {
+            STAFTrace::trace(kSTAFTraceError, "Caught unknown exception in "
+                             "STAFHandleManager::gcPolling()");
+        }
+    } // end while forever loop
+}
+
+4) Changes to services/respool/STAFResPoolService.cpp
+
+   a) Create a couple of helper methods to create the STAF_NOTIFY
+      REGISTER and UNREGISTER requests and to submit them to the
+      local HANDLE service.
+
+   static STAFResultPtr submitSTAFNotifyRegisterRequest(
+       ResPoolServiceData *pData, STAFHandle_t handle, STAFString endpoint,
+       STAFString uuid);
+
+   static STAFResultPtr submitSTAFNotifyUnregisterRequest(
+       ResPoolServiceData *pData, STAFHandle_t handle, STAFString endpoint,
+       STAFString uuid);
+
+ STAFResultPtr submitSTAFNotifyRegisterRequest(ResPoolServiceData *pData,
+                                               STAFHandle_t handle,
+                                               STAFString endpoint,
+                                               STAFString uuid)
+ {
+     // Submit a STAF_NOTIFY REGISTER request to the local HANDLE service to
+     // add the notification
+
+     STAFString request = "STAF_NOTIFY REGISTER ONENDOFHANDLE " +
+         pData->fHandlePtr->wrapData(STAFString(handle)) +
+         " MACHINE " + pData->fHandlePtr->wrapData(endpoint) +
+         " UUID " + pData->fHandlePtr->wrapData(uuid) +
+         " SERVICE " + pData->fHandlePtr->wrapData(pData->fShortName) +
+         " KEY " + pData->fHandlePtr->wrapData(sNotificationKey);
+
+     STAFResultPtr resultPtr = pData->fHandlePtr->submit(
+         "local", "HANDLE", request);
+
+     if (resultPtr->rc == kSTAFOk)
+     {
+         return resultPtr;
+     }
+     else
+     {
+         return STAFResultPtr(
+             new STAFResult(
+                 resultPtr->rc,
+                 STAFString("An error occurred when the ") + pData->fShortName
+                 " service on machine '" + pData->fLocalMachineName +
+                 "' attempted to register for garbage collection notification"
+                 " on endpoint '" + endpoint + "' for handle '" +
+                 STAFString(handle) + "'.  Reason: " + resultPtr->result),
+             STAFResultPtr::INIT);
+     }
+ }
+
+ STAFResultPtr submitSTAFNotifyUnregisterRequest(ResPoolServiceData *pData,
+                                        STAFHandle_t handle,
+                                        STAFString endpoint,
+                                        STAFString uuid)
+ {
+     // Submit a STAF_NOTIFY UNREGISTER request to the local HANDLE service to
+     // delete the notification
+
+     STAFString request = "STAF_NOTIFY UNREGISTER ONENDOFHANDLE " +
+         pData->fHandlePtr->wrapData(STAFString(handle)) +
+         " MACHINE " + pData->fHandlePtr->wrapData(endpoint) +
+         " UUID " + pData->fHandlePtr->wrapData(uuid) +
+         " SERVICE " + pData->fHandlePtr->wrapData(pData->fShortName) +
+         " KEY " + pData->fHandlePtr->wrapData(sNotificationKey);
+
+     STAFResultPtr resultPtr = pData->fHandlePtr->submit(
+         "local", "HANDLE", request);
+
+     if (resultPtr->rc == kSTAFOk)
+     {
+         return resultPtr;
+     }
+     else
+     {
+         return STAFResultPtr(
+             new STAFResult(
+                 resultPtr->rc,
+                 STAFString("An error occurred when the ") + pData->fShortName
+                 " service on machine '" + pData->fLocalMachineName +
+                 "' attempted to unregister for garbage collection notification"
+
+                 " on endpoint '" + endpoint + "' for handle '" +
+                 STAFString(handle) + "'.  Reason: " + resultPtr->result),
+             STAFResultPtr::INIT);
+     }
+ }
+
+   b) In the handleRequest() method, changed to check the return code
+      from a STAF_NOTIFY REGISTER request submitted to the HANDLE
+      service and return an error if not successful (and to use the
+      new submitSTAFNotifyRegisterRequest() method to do this).
+
+      if (garbageCollect)
+      {
+          // Register for notification when the handle ends
+                
+          STAFResultPtr resultPtr = submitSTAFNotifyRegisterRequest(
+              pData, pInfo->handle, pInfo->endpoint,
+              pInfo->stafInstanceUUID);
+
+          if (resultPtr->rc != 0) return resultPtr;
+      }
+
+   c) In the handleRelease() method, changed to use the new
+      submitSTAFNotifyUnregisterRequest() method to delete the
+      notification from the handle notification list when releasing
+      a resource entry
+
+      if (poolPtr->resourceList[resid].garbageCollect)
+      {
+          // Delete the notification from the handle notification list
+
+          submitSTAFNotifyUnregisterRequest(
+              pData, poolPtr->resourceList[resid].orgHandle,
+              poolPtr->resourceList[resid].orgEndpoint,
+              poolPtr->resourceList[resid].orgUUID);
+      }
+
+   d) In the handleDelete() method, before deleting the resource
+      pool, for any owned resource entries in the pool being
+      deleted with garbage collection enabled, submitted
+      a STAF_NOTIFY UNREGISTER request to delete their
+      notification entries.
+
+    // If there are any owned resources with garbage collection enabled,
+    // delete the entries in the handle notification lists for garbage
+    // collection
+
+    for (unsigned int i = 0; i < poolPtr->resourceList.size(); i++)
+    {
+        if (poolPtr->resourceList[i].owned &&
+            poolPtr->resourceList[i].garbageCollect)
+        {
+            submitSTAFNotifyUnregisterRequest(
+                pData, poolPtr->resourceList[i].orgHandle,
+                poolPtr->resourceList[i].orgEndpoint,
+                poolPtr->resourceList[i].orgUUID);
+        }
+    }
+
+   e) Also in the handleDelete() method, it was checking if there
+      are any pending requests for the pool being deleted so it
+      could wake up each requester with no resource specified.
+      However, this caused a bug because this results in the entry
+      being removed from the Pending Requests list that is currently
+      being iterated (since you can't iterate through a list that
+      has had entries removed).  So, added code to break out of
+      the iteration loop and to restart iterating through the list
+      for each entry.
+
+    // If there are any pending requests for this pool, wakeup each pending
+    // requester with no resource specified.
+  
+    if (poolPtr->requestList.size() > 0)
+    {
+        RequestList::iterator iter;
+        bool removedRequest = true;
+
+        while (removedRequest)
+        {
+            removedRequest = false;
+
+            for (iter = poolPtr->requestList.begin();
+                 iter != poolPtr->requestList.end(); ++iter)
+            {
+                (*iter)->retCode = kSTAFDoesNotExist;
+                (*iter)->resultBuffer = poolName;
+                (*iter)->wakeup->post();
+
+                // Break since can't continue iterating a list
+                // that has been changed
+
+                removedRequest = true;
+                break;
+            }
+        }
+    }
+
+   f) In the handleRemove() method, handle notification entries
+      were not being removed for any owned resource entries that
+      were removed that had the garbage collection flag enabled.
+      So, added code to do this.  However, if multiple ENTRY
+      options were specified on the REMOVE request and one of
+      the entries was not valid (e.g. did not exist, etc), then
+      no entries would be removed.  So, created a list of the
+      STAF_NOTIFY UNREGISTER ONENDOFHANDLE requests to be submitted
+      if all the entries specified to be deleted were valid. Then,
+      after updating the pool in memory, submitted these STAF_NOTIFY
+      UNREGISTER requests to the HANDLE service to remove the
+      notification entries for garbage collection.
+
+   // List of STAF_NOTIFY UNREGISTER ONENDOFHANDLE requests to be submitted
+   // if removing all entries in a REMOVE request is succuessful
+
+   typedef std::vector<STAFString> NotifyUnregisterRequestList;
+ 
+   ...
+
+   NotifyUnregisterRequestList notifyUnregisterRequestList;
+
+   // If garbage collection is to be performed, remove the
+   // notification entry from the handle notification lists
+
+   if (newPool.resourceList[resid].garbageCollect)
+   {
+       // Generate STAF_NOTIFY UNREGISTER ONENDOFHANDLE request
+       // and save to be submitted the the local HANDLE service
+       // if the remove request is successful
+
+       STAFString request = "STAF_NOTIFY UNREGISTER "
+           "ONENDOFHANDLE " +
+           pData->fHandlePtr->wrapData(
+               STAFString(newPool.resourceList[resid].orgHandle)) +
+           " MACHINE " + pData->fHandlePtr->wrapData(
+               newPool.resourceList[resid].orgEndpoint) +
+           " UUID " + pData->fHandlePtr->wrapData(
+               newPool.resourceList[resid].orgUUID) +
+           " SERVICE " + pData->fHandlePtr->wrapData(
+               pData->fShortName) +
+           " KEY " + pData->fHandlePtr->wrapData(sNotificationKey);
+
+       notifyUnregisterRequestList.push_back(request);
+   }
+
+   ...
+
+   // Submit the STAF_NOTIFY UNREGISTER requests to the local HANDLE service
+   // for the owned resources (with garbage collection enabled) that were
+   // removed so that notification entries will be removed from the handle
+   // notification lists for garbage collection
+
+   for (i = 0; i < notifyUnregisterRequestList.size(); i++)
+   {
+       pData->fHandlePtr->submit(
+           "local", "HANDLE", notifyUnregisterRequestList[i]);
+   }
+
+5) Changes to stafproc/STAFSemService.cpp
+  
+   a) Change the SEM service to check the return code from a
+      STAF_NOTIFY REGISTER request submitted to the HANDLE service
+      and return an error if not successful.
+
+   if (garbageCollect)
+   {
+       // Register for notification when the handle ends so can perform
+       // garbage collection
+  
+       STAFServiceResult serviceResult = gHandleManagerPtr->addNotification(
+           requestInfo.fHandle, requestInfo.fEndpoint, requestInfo.fMachine,
+           requestInfo.fSTAFInstanceUUID, name(), sNotificationKey);
+
+       if (serviceResult.fRC != kSTAFOk)
+       {
+           fMutexSemListSem.release();
+
+           return STAFServiceResult(
+               serviceResult.fRC,
+               STAFString("An error occurred when the ") + name() +
+               " service on machine '" + *gMachinePtr +
+               "' attempted to register for garbage collection notification"
+               " on endpoint '" + requestInfo.fEndpoint +
+               "'.  Reason: " + serviceResult.fResult);
+       }
+   }
+   
+   b) In the handleRequest() method, change to add passing the
+      endpoint when calling gHandleManagerPtr->deleteNotification():
+
+      gHandleManagerPtr->deleteNotification(
+          requestInfo.fHandle, requestInfo.fEndpoint,
+          requestInfo.fMachine, requestInfo.fSTAFInstanceUUID,
+          name(), sNotificationKey);
+
+   c) In the handleRelease() method, change to add passing the
+      endpoint when calling gHandleManagerPtr->deleteNotification():
+
+      gHandleManagerPtr->deleteNotification(sem->owner.handle,
+                                            sem->owner.endpoint,
+                                            sem->owner.machine,
+                                            sem->owner.stafInstanceUUID,
+                                            name(), sNotificationKey);
+
+   d) In the handleRelease() method, before checking if
+      sem->owner.garbageCollect is true, first check if the semaphore
+      is not owned and return RC 0 as nothing needs to be released.
+      This ensures that the semaphore is owned before any checks on
+      sem->owner fields are performed.
+
+      // If the semaphore is not owned, then there is nothing to do so
+      // we can just return
+
+      if (!sem->isOwned)
+          return STAFServiceResult(kSTAFOk, result);
+
+   e) In the handleSTAFCallback() method, before checking if
+      sem->owner.garbageCollect is true, first check if the semaphore
+      is not owned. This ensures that the semaphore is owned before
+      any checks on sem->owner fields are performed.
+
+      if (sem->isOwned && sem->owner.garbageCollect &&
+          (STAFString(sem->owner.handle) == handle) &&
+          (sem->owner.stafInstanceUUID == uuid))
+      {
+          if (sem->requestList.size() > 0)
+          {
+              // There is a pending request.  Remove it from the list and
+              // notify the waiter.
+    
+              sem->acquireTimeDate = STAFTimestamp::now();
+    
+              sem->owner = sem->requestList.front();
+              sem->requestList.pop_front();
+
+              sem->owner.avail->post();
+          }
+          else 
+          {
+              sem->isOwned = 0;
+          }
+      }
+
+6) Changes to stafproc/STAFSimpleServices.cpp
+
+   a) Change the DELAY service to check the return code from a
+      STAF_NOTIFY REGISTER request submitted to the HANDLE service
+      and log a trace warning mesage if not successful.
+
+   STAFServiceResult serviceResult = gHandleManagerPtr->addNotification(
+       requestInfo.fHandle, requestInfo.fEndpoint, requestInfo.fMachine,
+       requestInfo.fSTAFInstanceUUID, name(),
+       STAFString(requestInfo.fRequestNumber));
+        
+   if (serviceResult.fRC != kSTAFOk)
+   {
+       // Could return an error if addNotification() fails, but decided
+       // to just to log a warning message instead
+
+       if (STAFTrace::doTrace(kSTAFTraceDebug))
+       {
+           STAFString msg = STAFString(
+               "STAFDelayService: An error occurred when the DELAY "
+               "service attempted to register for garbage colllection"
+               " notification on endpoint '" + requestInfo.fEndpoint +
+               "', RC: " + STAFString(serviceResult.fRC) +
+               ", Reason: " + serviceResult.fResult;
+           STAFTrace::trace(kSTAFTraceDebug, msg);
+       }
+   } 
+
+   b) Change the DELAY service to add passing the endpoint when calling
+      gHandleManagerPtr->deleteNotification():
+
+       gHandleManagerPtr->deleteNotification(
+           requestInfo.fHandle, requestInfo.fEndpoint, 
+           requestInfo.fMachine, requestInfo.fSTAFInstanceUUID,
+           name(), STAFString(requestInfo.fRequestNumber));
+
+7) Changes to stafproc/STAFProc.h
+
+   a) Define an external global variable to contain the handle GC
+      interval:
+
+   extern unsigned int gHandleGCInterval;
+
+   b) Add the new kSTAFHandleTerminationUnRegistrationAPI:
+
+   enum STAFAPINumber
+   {
+       kSTAFLocalServiceRequestAPI = 0,
+       kSTAFRemoteServiceRequestAPI = 1,
+       kSTAFProcessRegistrationAPI = 2,
+       kSTAFProcessUnRegistrationAPI = 3,
+       kSTAFFileTransferAPI = 4,
+       kSTAFFileTransferAPI2 = 5,
+       kSTAFDirectoryCopyAPI = 6,
+       kSTAFRemoteServiceRequestAPI2 = 7,
+       kSTAFHandleTerminationRegistrationAPI = 8,
+       kSTAFRemoteHandleTerminatedAPI = 9,
+       kSTAFHandleTerminationUnRegistrationAPI = 10
+   };
+
+8) Changes to stafproc/STAFProc.cpp
+
+   a) Set handle GC interval variable to the default time of
+      60000 milliseconds (aka 1 minute).
+
+   unsigned int gHandleGCInterval = 60000;  // 1 minute
+
+   b) Added an entry for the new handleHandlaeTerminationUnRegistrationAPI
+      to the gAPITable:
+
+      STAFAPIDescriptor gAPITable[] =
+      {
+          ...
+          // APINum 10
+          { kNewAPI, 1, 1, false, true,  handleHandleTerminationUnRegistrationAPI }
+      };
+
+   b) Add the new handleHandleTerminationUnRegistrationAPI():
+
+   // This API is used for handling garbage collection
+
+   void handleHandleTerminationUnRegistrationAPI(
+       unsigned int level, const STAFConnectionProvider *provider,
+       STAFConnectionPtr &connection, unsigned int &)
+   {
+       connection->writeUInt(kSTAFOk);
+    
+       STAFHandle_t handle = connection->readUInt();
+       STAFString machine = connection->readString();
+       STAFString uuid = connection->readString();
+       STAFString service = connection->readString();
+       STAFString key = connection->readString();
+
+       // Delete the notification entry for garbage collection
+
+       if (STAFTrace::doTrace(kSTAFTraceDebug))
+       {
+           STAFString msg = STAFString(
+               "HandleTerminationUnRegistrationAPI - deleteNotification(") +
+               STAFString(handle) + ", " + machine + ", " + uuid + ", " +
+               service + ", " + key + ")";
+           STAFTrace::trace(kSTAFTraceDebug, msg);
+       }
+    
+       // Set the endpoint argument passed to deleteNotification() to the
+       // machine value as its value shouldn't matter since the notification
+       // should be removed from the local machine
+
+       gHandleManagerPtr->deleteNotification(
+           handle, machine, machine, uuid, service, key);
+   }
+
+9) Changes to stafproc/STAFConfig.cpp:
+
+  a) To set the new HandleGCInterval operational parameter.
+
+   Added the following code to the handleSetConfig() method:
+
+    fSetParser.addOption("HANDLEGCINTERVAL", 1,
+        STAFCommandParser::kValueRequired);
+
+    optionName = "HANDLEGCINTERVAL";
+
+    if (parsedResult->optionTimes(optionName) != 0)
+    {
+        unsigned int handleGCInterval = 0;
+
+        rc = RESOLVE_DEFAULT_DURATION_OPTION(
+            optionName, handleGCInterval, 60000);
+        
+        if (rc != kSTAFOk)
+        {
+            printSetErrorMessage(optionName, line, errorBuffer, rc);
+            return 1;
+        }
+        
+        // Check if the interval specified for handle garbage collection is
+        // valid.  It must be >= 5 seconds and <= 24 hours.
+
+        if ((handleGCInterval < 5000) || (handleGCInterval > 86400000))
+        {
+            rc = kSTAFInvalidValue;
+            errorBuffer = "Invalid value for " + optionName + ", " +
+                STAFString(handleGCInterval) + ".  Must be between 5 "
+                "seconds and 24 hours.\n\n"
+                "This value may be expressed in milliseconds, seconds, "
+                "minutes, hours, or a day.  Its format is <Number>[s|m|h|d] "
+                "where <Number> is an integer >= 0 and indicates milliseconds "
+                "unless one of the following case-insensitive suffixes is "
+                "specified:  s (for seconds), m (for minutes), h (for hours), "
+                "or d (for day).  The calculated value must be >= 5000 and "
+                "<= 86400000 milliseconds.\n\nExamples: \n"
+                "  60000 specifies 60000 milliseconds (or 1 minute), \n"
+                "  30s specifies 30 seconds, \n"
+                "  5m specifies 5 minutes, \n"
+                "  2h specifies 2 hours, \n"
+                "  1d specifies 1 day.";
+            printSetErrorMessage(optionName, line, errorBuffer, rc);
+            return 1;
+        }
+
+        gHandleGCInterval = handleGCInterval;
+    }
+
+  b) To support the time format of <Number>[s|m|h|d|w]] for
+     the CONNECTRETRYDELAY operational parameter, instead of
+     just supporting milliseconds.
+
+    optionName = "CONNECTRETRYDELAY";
+
+    if (parsedResult->optionTimes(optionName) != 0)
+    {
+        unsigned int connectRetryDelay = 0;
+
+        rc = RESOLVE_DEFAULT_DURATION_OPTION(
+            optionName, connectRetryDelay, 1000);
+        
+        if (rc != kSTAFOk)
+        {
+            printSetErrorMessage(optionName, line, errorBuffer, rc);
+            return 1;
+        }
+
+        gConnectionRetryDelay = connectRetryDelay;
+    }
+
+10) Changes to stafproc/STAFMiscService.cpp:
+
+  a) Define a mutex semaphore to use to make sure that the Handle GC
+     Interval set is only set by one SET request at a time.
+
+    static STAFMutexSem sHandleGCInterval;
+
+  b) Add the new optional HANDLEGCINTERVAL option to the SET request.
+
+    fSetParser.addOption("HANDLEGCINTERVAL", 1,
+                         STAFCommandParser::kValueRequired);
+
+  c) Check if the HANDLEGCINTERVAL option was specified on the SET
+     request and if it's value is valid.
+
+    optionName = "HANDLEGCINTERVAL";
+
+    if (parsedResult->optionTimes(optionName) != 0)
+    {
+        unsigned int handleGCInterval = 0;
+
+        rc = RESOLVE_DEFAULT_DURATION_OPTION(
+            optionName, handleGCInterval, 60000);
+        
+        if (rc != kSTAFOk)
+        {
+            printSetErrorMessage(optionName, line, errorBuffer, rc);
+            return 1;
+        }
+        
+        // Check if the interval specified for handle garbage collection is
+        // valid.  It must be >= 5 seconds and <= 24 hours.
+
+        if ((handleGCInterval < 5000) || (handleGCInterval > 86400000))
+        {
+            rc = kSTAFInvalidValue;
+            errorBuffer = "Invalid value for " + optionName + ", " +
+                STAFString(handleGCInterval) + ".  Must be between 5 "
+                "seconds and 24 hours.\n\n"
+                "This value may be expressed in milliseconds, seconds, "
+                "minutes, hours, or a day.  Its format is <Number>[s|m|h|d] "
+                "where <Number> is an integer >= 0 and indicates milliseconds "
+                "unless one of the following case-insensitive suffixes is "
+                "specified:  s (for seconds), m (for minutes), h (for hours), "
+                "or d (for day).  The calculated value must be >= 5000 and "
+                "<= 86400000 milliseconds.\n\nExamples: \n"
+                "  60000 specifies 60000 milliseconds (or 1 minute), \n"
+                "  30s specifies 30 seconds, \n"
+                "  5m specifies 5 minutes, \n"
+                "  2h specifies 2 hours, \n"
+                "  1d specifies 1 day.";
+            printSetErrorMessage(optionName, line, errorBuffer, rc);
+            return 1;
+        }
+
+        gHandleGCInterval = handleGCInterval;
+    }
+
+  d) Add a "handleGCInterval" key definition to the map class definition
+     for the result of a LIST SETTINGS request.
+
+    fSettingsClass->addKey("handleGCInterval", "Handle GC Interval");
+
+  e) Assign the "handleGCInterval" field to the settingsMap used in the
+     result of a LIST SETTINGS request.
+
+    settingsMap->put("handleGCInterval", STAFString(gHandleGCInterval));
+
+  f) Add the [HANDLEGCINTERVAL <Number>[s|m|h|d]] option to the help
+     text for the MISC service.
+
+    // Assign the help text string for the service
+
+    sHelpMsg = STAFString("*** MISC Service Help ***") +
+        ...
+        "SET   [CONNECTATTEMPTS <Number>] [CONNECTRETRYDELAY <Number>[s|m|h|d|w]]" +
+        *gLineSeparatorPtr +
+        "      [MAXQUEUESIZE <Number>] [HANDLEGCINTERVAL <Number>[s|m|h|d]]" +
+        *gLineSeparatorPtr +
+        "      [INTERFACECYCLING <Enabled | Disabled>]" +
+        *gLineSeparatorPtr +
+        "      [DEFAULTINTERFACE <Name>] [DEFAULTAUTHENTICATOR <Name>] " +
+        *gLineSeparatorPtr +
+        "      [RESULTCOMPATIBILITYMODE <Verbose | None>]" +
+        ...
+
+  g) Change how to resolve/verify the value for the CONNECTRETRYDELAY
+     option on a SET request so that "duration" type values like '1s'
+     are now valid.
+
+    rc = RESOLVE_DEFAULT_DURATION_OPTION(
+        "CONNECTRETRYDELAY", connectRetryDelay, 1000);
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None

@@ -1,0 +1,141 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2002                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+ifndef APACHE_XERCES_ROOT
+  $(error You must set APACHE_XERCES_ROOT to the full pathname containing xercesImpl.jar and xmlParserAPIs.jar)
+endif
+ifndef NEKOHTML_ROOT
+  $(error You must set NEKOHTML_ROOT to the full pathname containing nekohtml.jar)
+endif
+ifndef COMMONS_HTTPCLIENT_ROOT
+  $(error You must set COMMONS_HTTPCLIENT_ROOT to the full pathname containing commons-httpclient-<VERSION>.jar)
+endif
+ifndef COMMONS_CODEC_ROOT
+  $(error You must set COMMONS_CODEC_ROOT to the full pathname containing commons-codec-<VERSION>.jar)
+endif
+ifndef COMMONS_LOGGING_ROOT
+  $(error You must set COMMONS_LOGGING_ROOT to the full pathname containing commons-logging-<VERSION>.jar and commons-logging-api-<VERSION>.jar)
+endif
+
+# Find the commons-httpclient-<VERSION>.jar file in the root directory for Commons HttpClient
+COMMONS_HTTPCLIENT_JAR = $(wildcard $(COMMONS_HTTPCLIENT_ROOT)/commons-httpclient-*.jar)
+COMMONS_HTTPCLIENT_JAR_FILE = $(notdir $(COMMONS_HTTPCLIENT_JAR))
+
+# Find the commons-codec-<VERSION>.jar file in the root directory for Commons Codec
+COMMONS_CODEC_JAR = $(wildcard $(COMMONS_CODEC_ROOT)/commons-codec-*.jar)
+COMMONS_CODEC_JAR_FILE = $(notdir $(COMMONS_CODEC_JAR))
+
+# Find the commons-logging-api-<VERSION>.jar file in the root directory for Commons Logging
+COMMONS_LOGGING_API_JAR = $(wildcard $(COMMONS_LOGGING_ROOT)/commons-logging-api-*.jar )
+COMMONS_LOGGING_API_JAR_FILE = $(notdir $(COMMONS_LOGGING_API_JAR))
+
+# Find the commons-logging-<VERSION>.jar file in the root directory for Commons Logging
+# using wildcard ?.* in jar file name so as to only get this file and not
+# commons-logging-api-<VERSION>.jar or commons-logging-adapters-<VERSION>.jar
+COMMONS_LOGGING_JAR = $(wildcard $(COMMONS_LOGGING_ROOT)/commons-logging-?.*.jar)
+COMMONS_LOGGING_JAR_FILE = $(notdir $(COMMONS_LOGGING_JAR))
+
+HTTP_MANIFEST = $(O)/services/http/MANIFEST.MF
+
+# Define the targets
+        
+http_class_targets =\
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/HTTP.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/utility/ServiceUtilities.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/SessionList.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/WebSession.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/InvalidSessionIDException.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/InvalidElementIDException.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/InvalidCookieIDException.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/CookieAccess.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/Parameter.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/ParameterFactory.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/WebElement.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/WebLink.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/WebForm.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/HTMLParser.class \
+  $(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/InvalidParameterValueException.class \
+  $(HTTP_MANIFEST)
+  
+http_jar_targets =\
+  $(O)/services/http/STAF-INF/jars/xercesImpl.jar \
+  $(O)/services/http/STAF-INF/jars/xmlParserAPIs.jar \
+  $(O)/services/http/STAF-INF/jars/nekohtml.jar \
+  $(O)/services/http/STAF-INF/jars/$(COMMONS_LOGGING_JAR_FILE) \
+  $(O)/services/http/STAF-INF/jars/$(COMMONS_LOGGING_API_JAR_FILE) \
+  $(O)/services/http/STAF-INF/jars/$(COMMONS_CODEC_JAR_FILE) \
+  $(O)/services/http/STAF-INF/jars/$(COMMONS_HTTPCLIENT_JAR_FILE)
+
+http_targets += $(http_class_targets)\
+                $(http_jar_targets)\
+                $(REL)/lib/STAFHTTP.jar
+Targets += $(http_targets)
+CleanupTargets += cleanup_http
+
+$(http_targets): SUBSYS_REL := services/http
+SUBSYS_REL := services/http
+
+# Include inference rules
+include $(InferenceRules)
+
+$(http_targets): $(REL)/lib/JSTAF.zip
+
+HTTP_CLASSPATH = $(OS_O)/services/http$(OS_PS)$(OS_REL)/lib/JSTAF.zip$(OS_PS)$(APACHE_XERCES_ROOT)/xercesImpl.jar$(OS_PS)$(APACHE_XERCES_ROOT)/xmlParserAPIs.jar$(OS_PS)$(COMMONS_LOGGING_JAR)$(OS_PS)$(COMMONS_LOGGING_API_JAR)$(OS_PS)$(NEKOHTML_ROOT)/nekohtml.jar$(OS_PS)$(COMMONS_CODEC_JAR)$(OS_PS)$(COMMONS_HTTPCLIENT_JAR)$(OS_PS)$(JAVA_CLASSPATH)
+  
+define HTTP_JAVA_COMPILE_IT
+   @echo "*** Compiling HTTP Service Java Sources ***"
+   @$(CREATE_PATH)
+   @$(JAVAC) -d $(OS_O)/services/http/STAF-INF/classes -classpath '$(HTTP_CLASSPATH)' $(OS_SRC)/services/http/*.java
+endef
+
+$(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/%.class: $(SRC)/services/http/%.java
+	$(HTTP_JAVA_COMPILE_IT)
+
+$(O)/services/http/STAF-INF/classes/com/ibm/staf/service/http/html/%.class: $(SRC)/services/http/%.java
+	$(HTTP_JAVA_COMPILE_IT)
+
+$(O)/services/http/STAF-INF/classes/com/ibm/staf/service/utility/%.class: $(SRC)/services/http/%.java
+	$(HTTP_JAVA_COMPILE_IT)
+
+# HTTP Java targets
+
+$(O)/services/http/STAF-INF/jars/xercesImpl.jar: $(APACHE_XERCES_ROOT)/xercesImpl.jar
+	$(COPY_FILE)
+$(O)/services/http/STAF-INF/jars/xmlParserAPIs.jar: $(APACHE_XERCES_ROOT)/xmlParserAPIs.jar
+	$(COPY_FILE)
+$(O)/services/http/STAF-INF/jars/nekohtml.jar: $(NEKOHTML_ROOT)/nekohtml.jar
+	$(COPY_FILE)
+$(O)/services/http/STAF-INF/jars/$(COMMONS_LOGGING_JAR_FILE): $(COMMONS_LOGGING_JAR)
+	$(COPY_FILE)
+$(O)/services/http/STAF-INF/jars/$(COMMONS_LOGGING_API_JAR_FILE): $(COMMONS_LOGGING_API_JAR)
+	$(COPY_FILE)
+$(O)/services/http/STAF-INF/jars/$(COMMONS_CODEC_JAR_FILE): $(COMMONS_CODEC_JAR)
+	$(COPY_FILE)
+$(O)/services/http/STAF-INF/jars/$(COMMONS_HTTPCLIENT_JAR_FILE): $(COMMONS_HTTPCLIENT_JAR)
+	$(COPY_FILE)
+
+# Create the MANIFEST.MF file dynamically for the HTTP service because the
+# names of the jar files in the "Packaged-Jars:" line in the manifest can
+# vary depending on the version of HttpClient, Commons Logging, and Commons
+# Codec being used to build the HTTP service
+
+$(HTTP_MANIFEST): $(SRC)/services/http/*.java $(COMMONS_LOGGING_JAR) $(COMMONS_LOGGING_API_JAR) $(COMMONS_HTTPCLIENT_JAR) $(COMMONS_CODEC_JAR)
+	@echo "*** Creating $(@F) for HTTP Service ***"
+	-@echo "Manifest-Version: 1.0" > $(HTTP_MANIFEST)
+	-@echo "" >> $(HTTP_MANIFEST)
+	-@echo "Name: staf/service/info" >> $(HTTP_MANIFEST)
+	-@echo "Service-Class: com.ibm.staf.service.http.HTTP" >> $(HTTP_MANIFEST)
+	-@echo "Packaged-Jars: $(COMMONS_HTTPCLIENT_JAR_FILE) nekohtml.jar xercesImpl.jar $(COMMONS_CODEC_JAR_FILE) $(COMMONS_LOGGING_JAR_FILE) $(COMMONS_LOGGING_API_JAR_FILE) xmlParserAPIs.jar" >> $(HTTP_MANIFEST)
+
+# Create the jar file for the HTTP Service
+        
+$(REL)/lib/STAFHTTP.jar: $(http_class_targets) $(http_jar_targets)
+	@echo "*** Creating $(@F) ***"
+	@cd $(O)/services/http; $(JAR) cfm '$(OS_@)' MANIFEST.MF STAF-INF
+
+cleanup_http:
+	-@$(DEL) $(O)/services/http/* $(OUT_ERR_TO_DEV_NULL)

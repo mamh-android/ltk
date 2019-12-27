@@ -1,0 +1,70 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+#########################
+# Setup C/C++ variables #
+#########################
+
+CC_CC             := CC
+CC_C              := CC
+CC_MK_SHARED_LIB  := CC -G
+
+ifeq ($(BUILD_TYPE),retail)
+    CC_BUILD_TYPE_FLAGS = $(CC_OPTIMIZE)
+else
+    CC_BUILD_TYPE_FLAGS = $(CC_DEBUG)
+endif
+
+CC_DEBUG        := -g
+CC_OPTIMIZE     := -O
+CC_FPIC         := -KPIC
+CC_THREADED     := -Kthread
+CC_SHAREDLIBNAMEFLAGS = -DSTAF_SHARED_LIB_PREFIX=$(OS_SHARED_LIB_PREFIX) \
+                        -DSTAF_SHARED_LIB_SUFFIX=$(OS_SHARED_LIB_SUFFIX)
+CC_COMMONFLAGS   = $(OS_COMMONFLAGS) $(COMMONFLAGS) $(CC_BUILD_TYPE_FLAGS) \
+                   $(CC_SHAREDLIBNAMEFLAGS) -DSTAF_NATIVE_COMPILER
+CC_CFLAGS        = $(CC_COMMONFLAGS) $(CFLAGS)  \
+                   -Wf,--diag_suppress -Wf,68   \
+                   -Wf,--diag_suppress -Wf,111  \
+                   -Wf,--diag_suppress -Wf,177  \
+                   -Wf,--diag_suppress -Wf,335  \
+                   -Wf,--diag_suppress -Wf,337  \
+                   -Wf,--diag_suppress -Wf,375  \
+                   -Wf,--diag_suppress -Wf,550  \
+                   -Wf,--display_error_number
+CC_LINKFLAGS     = $(CC_COMMONFLAGS) $(LINKFLAGS) $(CC_THREADED) $(CC_FPIC)
+CC_INCLUDEDIRS   = /usr/local/include/stl
+
+##########################################
+# Set commands needed by master makefile #
+##########################################
+
+define CC_DEPEND_IT
+  @$(shell test ! -d $(@D) && mkdir $(@D))
+  @cd $(@D)
+  @$(CC_CC) -E -H $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $< 2>$(@D)/dep.d >/dev/null
+  @cat $(@D)/dep.d |\
+      sed -e 's@\(.*\)@$(basename $@).o $(basename $@).d: $< \1@' >$@
+endef
+
+define CC_DEPEND_IT_C
+  @$(shell test ! -d $(@D) && mkdir $(@D))
+  @cd $(@D)
+  @$(CC_C) -E -H $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $< 2>$(@D)/dep.d >/dev/null
+  @cat $(@D)/dep.d |\
+      sed -e 's@\(.*\)@$(basename $@).o $(basename $@).d: $< \1@' >$@
+endef
+
+CC_COMPILE_IT    = $(CC_CC) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_COMPILE_IT_C    = $(CC_C) -c -o $@ $(CC_CFLAGS) $(ALL_INCLUDEDIR_LIST) $<
+
+CC_LINK_IT       = $(CC_CC) -o $@ $(CC_LINKFLAGS) $(ALL_INCLUDEDIR_LIST)\
+                   $(ALL_LIBDIR_LIST) $(ALL_LIB_LIST) $(OBJS)
+
+CC_SHARED_LIB_IT = $(CC_MK_SHARED_LIB) -o $@ $(CC_LINKFLAGS) $(ALL_LIBDIR_LIST)\
+                   $(ALL_LIB_LIST) $(OBJS)

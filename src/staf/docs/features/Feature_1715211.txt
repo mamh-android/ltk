@@ -1,0 +1,396 @@
+Feature ID  : 1715211
+Response Due: 05/17/2007
+Title       : Requesting runtime testcase messages
+
+Description
+-----------
+
+Add the ability to record testcase information without specifying a
+pass or fail status and provide the ability to access this information
+via a STAX LIST TESTCASES and QUERY TESTCASE request.
+
+Problem(s) Solved
+-----------------
+
+Provides the ability to:
+1) Provide status information for a testcase before a pass or fail
+   status is recorded
+2) Get status information for testcases in a currently running job
+   much easier (and faster) than having to either:
+   a) Grepp through the STAX Job log looking for the last status
+      record, or
+   b) Register for STAX Job information via the Event service to
+      get notified when testcase status updates for STAX jobs occur
+      (like the STAX Monitor does).
+
+This is especially useful when you want to record testcase information
+like "Percent Complete: 20%" before recording a pass or fail status
+for a testcase.  It also allows you to easily refresh the status for
+all testcases in a currently running job, including the last status
+information recorded for each testcase via a single command.
+
+
+Related Features
+----------------
+
+Feature #1723039 - Provide ability to enable logging "info" testcase
+                   status msg
+
+External Changes
+----------------
+ 
+1) Add an "information" field to the map class used for a STAX LIST
+   TESTCASES request.  For example:
+
+C:\>STAF local STAX LIST TESTCASES JOB 1
+Response
+--------
+Testcase Name  Passes Fails Elapsed  Starts Information
+-------------- ------ ----- -------- ------ ----------------------------
+client1: TestA 1      0     00:00:11 1      Percent Complete: 100%
+client1: TestB 0      1     00:00:05 1      ERROR: Percent Complete: 40%
+client1: TestC 0      1     00:00:08 1      ERROR: Percent Complete: 70%
+client2: TestA 1      0     00:00:12 1      Percent Complete: 100%
+client2: TestB 1      0     00:00:11 1      Percent Complete: 100%
+client2: TestC 0      0     <Pending 1      Percent Complete: 40%
+                            >
+
+2) Add an "information" field to the map class used for a STAX QUERY
+   TESTCASE request.  For example:
+
+C:\>STAF local STAX QUERY JOB 1 TESTCASE "client1: TestC"
+Response
+--------
+Testcase Name   : client1: TestC
+Passes          : 0
+Fails           : 1
+Elapsed Time    : 00:00:08
+Starts          : 1
+Status Date-Time: 20070516-17:42:41
+Last Status     : fail
+Information     : ERROR: Percent Complete: 70%
+
+3) Support 'info' as a valid testcase status (in addition to
+   supporting "pass" and "fail") in the <tcstatus> element's
+   "result" attribute value.
+
+   The new definition of the "result" attribute for a <tcstatus>
+   element is:
+
+   result - indicates the status for the current testcase.  It is
+            required and it's value must evaluate via Python to
+            'pass', 'fail', or 'info'.  If you specify 'info', you
+            should also specify testcase status information.
+  
+   For example:
+
+   <tcstatus result="'info'">
+     'Percent Complete: 10%'
+   </tcstatus>
+
+4) Support Info as a valid testcase status (in addition to
+   supporting "Pass" and "Fail") in the STATUS value for a
+   STAX UPDATE TESTCASE request.
+
+   The new definition of the STATUS option for a STAX UPDATE TESTCASE
+   request is:
+
+   STATUS specifies the status for the current testcase.  It must be
+   Pass, Fail, or Info (not case-sensitive).  If a Pass status is
+   specified, the pass status for the testcase will be incremented.
+   If a Fail status is specified, the fail status for the testcase
+   will be incremented.  If a Info status is specified, then you
+   should also specify a MESSAGE option with testcase status
+   information. 
+
+   For example:
+
+   STAF local STAX UPDATE JOB 1 TESTCASE "TestA" STATUS Info
+                   MESSAGE "Percent Complete: 10%"
+
+5) Currently, when a <tcstatus> element specifies a message (e.g.
+   additional testcase status information) or when a UPDATE TESTCASE
+   request is successfully executed with a Pass or Fail status,
+   the message is logged to the STAX Job log using the status
+   value (e.g. pass or fail) for the logging level.  The format of
+   the message text that is logged (on a single line) is:
+
+   Testcase: <Name>, Pass: <NumPasses>, Fail: <NumFails>,
+   Last Status: <LastStatus>, Message: <Message>
+
+   We decided to not log "info" testcase status messages in the 
+   STAX Job Log by default because some jobs may log a lot of
+   "info" testcase status messages which could make the STAX Job
+   Log much larger.
+   
+   However, we opend another feature #1723039 "Provide ability to
+   enable logging "info" testcase status msg" that we may
+   implement in the future to provide the ability to configure all
+   STAX jobs, or selected STAX jobs, to enable logging a testcase
+   "info" message in the STAX Job log (with the same message text
+   format as shown above).  I've included the design for that
+   feature here as well:
+
+   a) A new LOGTCINFOSTATUS option is being added as a parameter for
+   the STAX service when it is registered.
+   LOGTCINFOSTATUS specifies whether to log an "Info" record in the
+   STAX Job log each time a testcase "info" status is encountered.
+   Valid values are "Enabled" and "Disabled", not case-sensitive.
+   If you specify "Enabled", the "Info" testcase status information
+   will be logged.  If you specify "Disabled", the "Info" testcase
+   status information will not be logged.  The default is "Disabled".
+   This option will resolve STAF variables.  For example:
+
+   service STAX library JSTAF \
+                execute {STAF/Config/STAFRoot}/services/stax/STAX.jar \
+                PARMS "LOGTCINFOSTATUS Enabled LOGTCSTARTSTOP Enabled"
+
+   The LOGTCINFOSTATUS parameter may be changed using by submitting
+   a SET request to the STAX service.
+ 
+   b) Added a new  LOGTCINFOSTATUS option to the SET request for
+      the STAX service.  For example:
+
+      SET LOGTCINFOSTATUS Enabled
+
+   c) Changed the LIST SETTINGS result for the STAX service to
+   provide a "logTCInfoStatus" field in it's map class.
+
+   Key Name        Display Name       Type     Format/Value
+   --------------- ------------------ -------- ----------------------
+   logTCInfoStatus Log TC Info Status <String> 'Enabled' | 'Disabled'
+
+   For example:
+
+   STAF local STAX LIST SETTINGS
+   Response
+   -------- 
+   {
+     Event Machine      : local
+     Event Service Name : Event
+     Number of Threads  : 5
+     Process Timeout    : 60000
+     Clear Logs         : Disabled
+     Log TC Elapsed Time: Enabled
+     Log TC Num Starts  : Enabled
+     Log TC Start/Stop  : Disabled
+     Log TC Info Status : Disabled
+     Extensions         : []
+     Extension File     : C:/STAF/services/stax/extensions.xml
+   }
+
+   d) A new optional LOGTCINFOSTATUS option is being added to the
+   EXECUTE request for the STAX service.
+   LOGTCINFOSTATUS is used to specify whether to log an "Info" level
+   record in the STAX Job log each time a testcase "info" status is
+   encountered.  Valid values are "Enabled" and "Disabled", not
+   case-sensitive.  This option overrides the service setting for
+   "Log TC Info Status".  This option will resolve STAF variables.
+
+   For example:
+
+   STAF local STAX EXECUTE FILE C:/tests/Scenario1.xml 
+                   JOBNAME "Scenario 01"
+                   LOGTCSTARTSTOP "Enabled" LOGTCINFOSTATUS "Enabled"
+
+   e) Changed the QUERY JOB <JobID> request for the STAX service to
+   provide a "logTCInfoStatus" field in it's map class.
+
+   Key Name        Display Name       Type     Format/Value
+   --------------- ------------------ -------- ----------------------
+   logTCInfoStatus Log TC Info Status <String> 'Enabled' | 'Disabled'
+
+   For example:
+
+   STAF local STAX QUERY JOB 5
+   Response
+   -------- 
+   {
+     Job ID             : 5
+     Job Name           : Sample Job
+     XML File Name      : C:/stax/xml/sample1.xml
+     ...
+     Clear Logs         : Disabled
+     Log TC Elapsed Time: Enabled
+     Log TC Num Startas : Enabled
+     Log TC Start/Stop  : Disabled
+     Log TC Info Status : Disabled
+     ...
+   }
+
+   f) A new logtcinfostatus attribute is being added to the job element
+   to specify whether to log an "Info" level record in the STAX Job
+   log each time a testcase "info" status is encountered.  This
+   attribute is equivalent to the LOGTCINFOSTATUS option for a STAX
+   EXECUTE command.  The value must evaluate via Python to one of
+   the following (not case-sensitive):
+   o 'parent'  - specifies to use the same value that was specified
+                 for the parent job.  This is the default.
+   o 'default' - specifies to use the default STAX service setting
+                 for "Log TC Info Status".
+   o 'enabled' - specifies to log the 'info' status record for
+                 testcases
+   o 'disabled' - specifies to not log the 'info' status record for
+                  testcases
+   o Otherwise, if it evaluates to a true value, 'info' status
+     records for testcases are logged; if it evaluates to a false
+     value, 'info' status records for testcases are not logged.
+
+   Here's what this new attribute for the job element will look like
+   in the STAX DTD:
+
+   <!ATTLIST job
+             ...
+             logtcinfostatus   CDATA   "'parent'"
+   >
+
+   For example:
+   
+   <job name="'Scenario 1'"
+        logtcstartstop="'Enabled'" logtcinfostatus="'Enabled'">
+     <job-file>'/tests/Scenario1.xml'</job-file>
+   </job>
+
+   g) Added a new STAX Python variable named STAXLogTCInfoStatus.
+      This variable indicates if "Log TC Info Status" is enabled or
+      disabled for the STAX job.  1 means enabled; 0 means disabled.
+      It is assigned once at the beginning of the execution of a
+      STAX job.  It's type is numeric (0 or 1).
+
+   h) Added a new "Log TC Info Status" field to the "Log Options"
+      tab on the STAX Monitor.
+      Log TC Info Status - Select "Enabled", "Disabled", or "Default"
+      to indicate whether to log an "Info" level record in the STAX
+      Job log each time a testcase "info" status is encountered.
+      Selecting "Enabled" specifies to log the testcase "Info" status
+      record.  Selecting "Disabled" specifies to not log the testcase
+      "Info" status record.  Selecting "Default" specifies to use the
+      STAX service setting for "Log TC Info Status".
+
+6) Update the STAX Monitor so that when it submits a STAX LIST
+   TESTCASES request to get information about testcases that are
+   currently running in a STAX job (which is done when you begin
+   monitoring a STAX job that is already running), it can now get the
+   status information message (which wasn't available previously).
+
+
+Design Considerations
+---------------------
+
+1) If an testcase status with result "info" and no message is specified
+   in a <tcstatus> element or a STAX UPDATE TESTCASE request, should we
+   generate a new signal indicating this (like we do for an invalid
+   result value)?  We decided not to.
+
+2) We decided to not log "info" testcase status messages in the STAX Job
+   log by default because some jobs may log a lot of "info" testcase
+   status messages which could make the STAX Job log much larger.  But,
+   in case someone does want to enable this, we opened another feature
+   which would allow you to configure by STAX job or the entire STAX 
+   service whether you want to enable logging "info" testcase status
+   messages in the STAX Job log.
+
+3) We wanted to implement this in such a manner so as not to prevent
+   additional testcase status values in the future.
+
+
+Backward Compatibility Issues
+-----------------------------
+
+None
+
+
+Here's a sample STAX job that tests using the new "info" status to
+record percent complete information for testcases:
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="Main"/>
+  
+  <script>
+    machineList = ['client1', 'client2']
+    testList = ['TestA', 'TestB', 'TestC']
+
+    onePassOrFail = 1  # Set to 1 or 0
+  </script>
+
+  <function name="Main">
+ 
+    <try>
+      <sequence>
+
+        <paralleliterate var="machine" in="machineList">
+          <block name="machine">
+            <iterate var="test" in="testList">
+              <block name="test">
+                <testcase name="'%s: %s' % (machine, test)">
+                  <sequence>
+
+                    <log message="1">'Starting test %s on machine %s' % (test, machine)</log>
+
+                    <loop var="i" from="1" to="10">
+                      <sequence>
+
+                        <stafcmd name="'Delay 1 seconds'">
+                          <location>'local'</location>
+                          <service>'DELAY'</service>
+                          <request>'DELAY 1000'</request>
+                        </stafcmd>
+
+                        <if expr="test == 'TestB' and machine == 'client1' and i == 4">
+                          <sequence>
+                            <tcstatus result="'fail'">
+                              'ERROR: Percent Complete: %s%%' % (i*10)
+                            </tcstatus>
+                            <break/>
+                          </sequence>
+                          <elseif expr="test == 'TestC' and machine == 'client1' and i == 7">
+                            <sequence>
+                              <tcstatus result="'fail'">
+                                'ERROR: Percent Complete: %s%%, Machine: %s, Test: %s' % ((i*10), machine, test)
+                              </tcstatus>
+                              <break/>
+                            </sequence>
+                          </elseif>
+                          <elseif expr="not onePassOrFail">
+                            <tcstatus result="'pass'">'Percent Complete: %s%%' % (i*10)</tcstatus>
+                          </elseif>
+                          <else>
+                            <tcstatus result="'info'">'Percent Complete: %s%%' % (i*10)</tcstatus>
+                          </else>
+                        </if>
+
+                      </sequence>
+                    </loop>
+
+                    <if expr="onePassOrFail and i == 11">
+                      <tcstatus result="'pass'">'Percent Complete: 100%'</tcstatus>
+                    </if>
+                    
+                    <log message="1">'Ending test %s on machine %s' % (test, machine)</log>
+
+                  </sequence>
+                </testcase>
+              </block>
+            </iterate>
+          </block>
+        </paralleliterate>
+
+      </sequence>
+
+      <finally>
+        <block name="'Clean-up'">
+          <sequence>
+            <return>'Success'</return>
+          </sequence>
+        </block>
+      </finally>
+
+    </try>
+  </function>
+
+</stax>
+

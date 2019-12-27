@@ -1,0 +1,46 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+# Setup system variables
+
+FS := /
+PS := :
+OS_TYPE = unix
+OS_LIBS = socket thread gen crypt
+OS_LIBDIRS = /usr/ccs/lib
+
+# Setup tool names
+
+STRIP := strip
+
+# Setup compiler variables
+
+ifeq ($(CC_NAME),)
+    CC_NAME := scocc
+endif
+
+# Setup commands
+
+ifndef CREATE_PATH
+    CREATE_PATH = @$(shell test ! -d $(@D) && $(MAKE_PATH) $(@D))
+endif
+
+OS_COMMONFLAGS := -DSTAF_OS_NAME_UNIXWARE -DSTAF_NO_IOS_BINARY
+
+# Provide the default location for library files on this system
+
+ifndef JAVA_ROOT
+    JAVA_ROOT = /opt/jdk-1.1.7.peta
+endif
+
+ifndef JAVA_LIBDIRS
+    JAVA_LIBDIRS = $(JAVA_ROOT)/lib/x86at/green_threads
+endif
+
+ifndef PERL_ROOT
+    PERL_ROOT = /usr/local/lib/perl5/5.00503/i386-svr4/CORE
+endif

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="Main"/>
+
+  <script>numLoops = 10</script>
+
+  <function name="Main">
+
+    <sequence>
+     
+      <process>
+        <location>'local'</location>
+        <command>'java'</command>
+        <parms>'STAFTestcase %s' % numLoops</parms>
+        <env>'CLASSPATH={STAF/Env/Classpath};C:/STAF/testcases'</env>
+      </process>
+
+      <if expr="RC == 0">
+        <sequence>
+          <message>'Completed %s loops' % numLoops</message>
+          <log>'Completed %s loops' % numLoops</log>
+        </sequence>
+        <else>
+          <sequence>
+            <message>'Failed with RC=%s' % RC</message>
+            <log>'Completed %s loops' % numLoops</log>
+          </sequence>
+        </else>
+      </if>
+
+    </sequence>  
+
+  </function>
+
+</stax>

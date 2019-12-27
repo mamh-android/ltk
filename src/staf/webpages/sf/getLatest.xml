@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="GetLatestSTAFReleases"/>
+
+  <function name="GetLatestSTAFReleases">
+
+    <function-description>
+      <![CDATA[
+      <p>
+      This function demonstrates how to programmatically determine the latest
+      STAF releases that are available on http://staf.sourceforge.net.
+      </p>
+      <p>
+      It will read the http://staf.sourceforge.net/current/latest.xml file,
+      parse the contents, and write the release data to the STAX Monitor and
+      the STAX Job User log.  It will also demonstrate how to use this data
+      to download the latest win32 STAF installer executable.
+      </p>
+      <p>
+      This function requires the HTTP service to be configured on the STAX
+      service machine.
+      </p>
+      ]]>
+    </function-description>
+
+    <sequence>
+
+      <script>
+        win32File = ''
+      </script>
+
+      <stafcmd name="'Getting local STAF temp dir'">
+        <location>'local'</location>
+        <service>'VAR'</service>
+        <request>'RESOLVE STRING {STAF/DataDir}'</request>
+      </stafcmd>
+
+      <message log="1">'VAR RESOLVE STRING {STAF/DataDir} RC=%s, Result=%s' %(RC, STAFResult)</message>
+
+      <script>tempDir = STAFResult</script>
+
+      <if expr="RC != 0">
+        <return/>
+      </if>
+
+      <script>latestFile = '%s/tmp/latest.xml' % (tempDir)</script>
+
+      <stafcmd name="'Deleting %s' % (latestFile)">
+        <location>'local'</location>
+        <service>'FS'</service>
+        <request>'DELETE ENTRY %s CONFIRM' % (latestFile)</request>
+      </stafcmd>
+
+      <message log="1">'FS DELETE ENTRY %s RC=%s, Result=%s' %(latestFile, RC, STAFResult)</message>
+
+      <if expr="RC != 0 and RC != 48">
+        <return/>
+      </if>
+
+      <stafcmd name="'Submitting HTTP DOGET request'">
+        <location>'local'</location>
+        <service>'HTTP'</service>
+        <request>'DOGET URL http://staf.sourceforge.net/current/latest.xml FILE %s' % (latestFile)</request>
+      </stafcmd>
+
+      <message log="1">'HTTP DOGET URL http://staf.sourceforge.net/current/latest.xml FILE %s RC=%s, Result=%s' % (latestFile, RC, STAFResult)</message>
+
+      <if expr="RC != 0">
+        <return/>
+      </if>
+
+      <call function="'parseXML'">latestFile</call>
+
+      <script>
+        document = STAXResult
+        root = document.getDocumentElement()
+        children = root.getChildNodes()
+
+        currentRelease = ''
+        releaseData = []
+
+        for i in range(children.getLength()):
+          thisChild = children.item(i);
+
+          if (thisChild.getNodeType() == Node.ELEMENT_NODE and
+              thisChild.getNodeName() == 'current'):
+
+            currentRelease = thisChild.getAttribute('version')
+
+          if (thisChild.getNodeType() == Node.ELEMENT_NODE and
+              thisChild.getNodeName() == 'latest'):
+
+            product = thisChild.getAttribute('product')
+            platform = thisChild.getAttribute('platform')
+            platformVersion = thisChild.getAttribute('version')
+
+            files = []
+
+            platformChildren = thisChild.getChildNodes()
+
+            for k in range(platformChildren.getLength()):
+
+              platformChild = platformChildren.item(k)
+
+              if (platformChild.getNodeType() == Node.ELEMENT_NODE and
+                  platformChild.getNodeName() == 'file'):
+                fileName = platformChild.getAttribute('name')
+                installer = platformChild.getAttribute('installer')
+                files.append({ 'file': fileName, 'installer': installer});
+
+            releaseDataElement = {
+                                   'product'           : product,
+                                   'platform'          : platform,
+                                   'platformVersion'   : platformVersion,
+                                   'files' : files
+                                 }
+
+            releaseData.append(releaseDataElement)
+
+      </script>
+
+      <message log="1">'Current STAF Release = %s' % (currentRelease)</message>
+
+      <iterate var="item" in="releaseData">
+
+        <sequence>
+
+          <script>
+            releaseOutput = 'Product=%s Platform=%s current version is %s' % (item['product'], item['platform'], item['platformVersion'])
+          </script>
+
+          <iterate var="file" in="item['files']">
+
+            <sequence>
+
+              <script>
+                releaseOutput = '%s\n        Installer=%s  http://prdownloads.sourceforge.net/staf/%s' % (releaseOutput, file['installer'], file['file'])
+              </script>
+
+              <if expr="item['product'] == 'staf' and item['platform'] == 'win32' and ( file['installer'] == 'ISMP' or file['installer'] == 'IA' )">
+                <script>
+                  win32File = file['file']
+                </script>
+              </if>
+
+            </sequence>
+
+          </iterate>
+
+          <message log="1">releaseOutput</message>
+
+        </sequence>
+
+      </iterate>
+
+      <if expr="win32File != ''">
+
+        <sequence>
+
+          <message log="1">'Downloading file %s' % (win32File)</message>
+
+          <script>
+            httpRequest = 'DOGET URL http://prdownloads.sourceforge.net/staf/%s FILE %s/%s FOLLOWREDIRECT' % (win32File, tempDir, win32File)
+          </script>
+
+          <message log="1">'HTTP %s' % (httpRequest)</message>
+
+          <stafcmd name="'Downloading %s' % (win32File)">
+            <location>'local'</location>
+            <service>'HTTP'</service>
+            <request>httpRequest</request>
+          </stafcmd>
+
+          <message log="1">'RC=%s, Result=%s' % (RC, STAFResult)</message>
+
+        </sequence>
+
+      </if>
+
+    </sequence>
+
+  </function>
+
+  <function name="parseXML" scope="local">
+
+    <function-list-args>
+      <function-required-arg name="xmlFileName">
+        Name of file containing XML to be parsed
+      </function-required-arg>
+    </function-list-args>
+
+    <sequence>
+
+      <!-- Parse the XML -->
+      <script>
+        factory = DocumentBuilderFactory.newInstance();
+        factory.setValidating(0)
+        factory.setIgnoringElementContentWhitespace(0)
+
+        try:
+          parseError    = 0
+          builder  = factory.newDocumentBuilder()
+          resolver = ParserResolver()
+          builder.setEntityResolver(resolver)
+          builder.setErrorHandler(resolver)
+          document = builder.parse(xmlFileName)
+        except SAXParseException, spe:
+          parseError = 1
+      </script>
+
+      <!-- Quit if there is any parsing error -->
+      <if expr="parseError">
+        <sequence>
+          <script>
+            errmsg = 'Error occurred parsing file %s\n  line: %s\n  msg: %s' % (
+              xmlFileName, spe.getLineNumber(), spe.getMessage())
+          </script>
+          <message log="1">errmsg</message>
+          <terminate/>
+        </sequence>
+      </if>
+
+      <return>document</return>
+
+    </sequence>
+  </function>
+
+  <script>
+
+    # These imports only need to be done once per job, no matter
+    # how many xml documents are parsed
+
+    from java.io import File
+    from java.io import StringReader
+    from org.xml.sax import InputSource
+    from org.xml.sax import SAXParseException
+    from org.xml.sax.helpers import DefaultHandler
+    from javax.xml.parsers import DocumentBuilderFactory
+    from javax.xml.parsers import DocumentBuilder
+    from org.w3c.dom import Document
+    from org.w3c.dom import Element
+    from org.w3c.dom import Node
+    from org.w3c.dom import NodeList
+
+    dtdFileName = ''
+
+    # ************************************************************************ #
+    # Following are the private Python classes                                 #
+    # ************************************************************************ #
+
+    # This class handles XML Parsing exceptions
+    class ParserException(Exception):
+        pass
+
+    # This class handles the exception raised by XML parser
+    class ParserResolver(DefaultHandler):
+        def resolveEntity (self, publicId, systemId):
+            return InputSource(dtdFileName)
+        def error (self, e):
+            raise 'error', e
+        def warning (self, e):
+            raise 'warning', e
+        def fatalError (self, e):
+            raise 'fatal', e
+  </script>
+
+</stax>

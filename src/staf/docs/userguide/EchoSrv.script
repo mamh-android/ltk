@@ -1,0 +1,49 @@
+.***************************************************************************
+.* Software Testing Automation Framework (STAF)
+.* (C) Copyright IBM Corp. 2001
+.*
+.* This software is licensed under the Eclipse Public License (EPL) V1.0.
+.****************************************************************************
+
+.*************************-START-OF-PROLOG-****************************
+.*
+.*  File Name          : EchoSrv SCRIPT
+.*  Descriptive Name   : Software Test Automation Framework Echo Service
+.*  Detail:
+.*
+.*     This file describes the STAF Echo Service
+.*
+.**************************-END-OF-PROLOG-*****************************
+:i1.echo service
+:ih1.services
+:i2.echo service
+:h2 id=echosrv.Echo Service
+:h3.Description
+:p.The ECHO service is an internal STAF service. ECHO provides a
+similar service as PING.  The difference is that ECHO allows you
+to specify the return string that STAFProc will return.
+ECHO can also be used to determine if STAFProc is up and running
+and accessible.
+.*
+:ih1.service commands
+:ih2.ECHO
+:i3.echo service
+:h3.ECHO
+:h4.Syntax
+:xmp.
+ECHO <Message>
+:exmp.
+:note.ECHO does not follow the request parsing rules described earlier.
+Any text after the ECHO command will be returned verbatim.
+:h4.Security
+:p.&seclvl. 2.
+:h4.Return Codes
+:p.All return codes from ECHO are documented in :hdref refid=retcode..
+:h4.Results
+:p.The result buffer will contain :xph.<Message>:exph. on a successful
+return from an ECHO command.
+:h4.Examples
+:p.Goal&colon. Have STAFProc return the string Hello World to you.
+:xmp.
+ECHO Hello World
+:exmp.

@@ -1,0 +1,669 @@
+<!--
+***************************************************************************
+* Software Testing Automation Framework (STAF)
+* (C) Copyright IBM Corp. 2002, 2005
+*
+* This software is licensed under the Eclipse Public License (EPL) V1.0.
+****************************************************************************
+-->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML><HEAD>
+<META name="GENERATOR" content="IBM WebSphere Homepage Builder V5.0.1 for Windows">
+<TITLE>FSEXT Service</TITLE>
+
+</HEAD><BODY bgcolor=#ffffff>
+
+<A NAME=Top_Of_Page></A>
+
+<H1>FSEXT (File System EXTension) Service User's Guide</H1>
+<b>Version 3.0.2</b></p>
+<p><b>Last updated: December 1, 2009</b>
+
+<HR><H2><A NAME=ToC>Table of Contents</A></H2>
+
+<MENU>
+<LI><A name=ToC_2 href="#Header_2" >Overview</A>
+<LI><A name=ToC_3 href="#Header_3" >Installation and Configuration</A>
+<LI><A name=ToC_7 href="#Header_7" >Variables</A>
+<li><a name="ToC_RequestSyntax" href="#Header_RequestSyntax">Request Syntax</a>
+  <menu>
+  <LI><A name=ToC_8 href="#Header_8" >PROCESSFILE</A>
+  <LI><A name=ToC_13 href="#Header_13" >COMPAREDIR</A>
+  <LI><A name=ToC_21 href="#Header_21">FILECONTAINS</A>
+  <LI><A name=ToC_22 href="#Header_22">LINECONTAINS</A>
+  <LI><A name=ToC_24 href="#Header_24">SUBSTITUTE</A>
+  <LI><A name=ToC_23 href="#Header_23">WAITFORFILE</A>
+  </menu>
+<LI><A name=ToC_30 href="#Header_30" >FSExt Error Code Reference</A></LI>
+</MENU>
+<p>
+<HR>
+<H1><A name=Header_2 href="#ToC_2">Overview</A></H1>
+<p>
+The FSExt service is an external STAF service that provides the following File
+System EXTension services:
+<p>
+<UL COMPACT>
+<LI>PROCESSFILE - Either captures the data from one file to another or compares two files 
+<LI>COMPAREDIR - Compares the contents of a directory against a list of filenames
+<LI>FILECONTAINS - Verifies that a list of strings are either present or not present
+    within a given file
+<LI>LINECONTAINS - Verifies that a list of strings appear within a single line of
+    a given file
+<LI>SUBSTITUE - Copies a file, substituting any STAF variables in the file
+    with it's respective value
+<LI>WAITFORFILE - Blocks until a file exists or the timeout value is reached
+<LI>VERSION - Causes the FSEXT service to output the version level
+<LI>HELP - Causes the FSEXT service to output help text</LI>         
+</UL>
+<p>
+The purpose of the FSExt service is to provide some tools to perform extended
+file system requests which may be useful in automation environments.
+<p>
+<hr>
+<H1><A name=Header_3 href="#ToC_3">Installation and Configuration</A></H1>
+<p>
+This service requires:
+<ul>
+<li>STAF Version 3.0.0 or later
+<li>Java 1.2 or later
+</ul>
+<p>
+Install the FSExt service by downloading the FSExtV302.zip/tar file from
+<a href="http://staf.sourceforge.net/getservices.php">Get STAF Services</a>
+and extracting its contents to a local directory (e.g. C:\STAF\services or
+/usr/local/staf/services).
+The STAFFSExt.jar file is the service jar file needed when
+registering the FSExt service.
+<p>
+The FSExt service is written in Java and since it is an external service,
+it must be registered with the SERVICE configuration statement in the
+STAF configuration file.  The syntax is:
+<PRE>
+SERVICE &lt;Service Name> LIBRARY JSTAF EXECUTE &lt;Service Jar File Name>
+                       [OPTION &lt;Name[=Value]>]...
+</PRE>
+where:
+<ul>
+<li><tt>SERVICE</tt> specifies is the name by which the FSExt service will be known
+on this machine.</li>
+<p>
+<li><tt>EXECUTE</tt> specifies the fully qualified name of the STAFFSExt.jar file.
+On Windows systems, this might be C:\STAF\services\fsext\STAFFSExt.jar.
+On Unix systems, this might be /usr/local/staf/services/fsext/STAFFSExt.jar</li>
+<p>
+<li><tt>OPTION</tt> specifes a configuration option that will be passed on to the
+JSTAF Java service proxy library.
+This is typically used by service proxy libraries to further control the interface 
+to the actual service implementation. You may specify 
+multiple <tt>OPTIONs</tt> for a given service.
+See the STAF User's Guide for more information on options for the JSTAF Java
+service proxy library.
+</ul>
+
+<H4><A NAME="Header_5">Examples</A></H4>
+
+<PRE>
+SERVICE FSExt LIBRARY JSTAF EXECUTE {STAF/Config/STAFRoot}/services/fsext/STAFFSExt.jar
+
+SERVICE FSExt LIBRARY JSTAF EXECUTE C:/STAF/services/fsext/STAFFSExt.jar 
+
+SERVICE FSExt LIBARRY JSTAF EXECUTE /usr/local/staf/services/fsext/STAFFSExt.jar
+</pre>
+Or, you can dynamically add the FSEXT service using the SERVICE service's ADD SERVICE
+request.
+<p>
+<hr>
+<H1><A name=Header_7 href="#ToC_7">Variables</A></H1>
+<p>
+The FSEXT service uses no STAF variables.
+<p>
+<hr>
+<h1><b><a name="Header_RequestSyntax" href="#ToC_RequestSyntax">Request Syntax</a></b></h1>
+<p>
+The FSExt service provides the following requests:
+<ul>
+<LI>PROCESSFILE - Either captures the data from one file to another or compares two files 
+<LI>COMPAREDIR - Compares the contents of a directory against a list of filenames
+<LI>FILECONTAINS - Verifies that a list of strings are either present or not present
+    within a given file
+<LI>LINECONTAINS - Verifies that a list of strings appear within a single line of
+    a given file
+<LI>SUBSTITUE - Copies a file, substituting any STAF variables in the file
+    with it's respective value
+<LI>WAITFORFILE - Blocks until a file exists or the timeout value is reached
+<li>VERSION - Returns the version of the FSExt service</li>
+<li>HELP - Displays a list of requests for the FSExt service and how
+to use them.</li>
+</ul>
+
+<H2><A name=Header_8 href="#ToC_8">PROCESSFILE</A></H2>
+<p>
+Either captures the data from one file to another or compares two files.
+
+<H4><A NAME="Syntax">Syntax</A></H4>
+
+<PRE>
+PROCESSFILE [MODE &lt;capture | compare&gt;] FILE1 &lt;File1&gt; FILE2 &lt;File2&gt; [SORT] [SAVEONFAILURE]
+</PRE>
+<P>
+<TT>FILE1</TT> specifies the file to be used as the source for compares or captures.
+<P>
+<TT>FILE2</TT> specifies the file to be used as the destination for compares or captures.
+<P>
+<tt>MODE</tt> is used to determine whether to compare two files or whether to capture
+data from one file to another.
+If <i>capture</i> is specified, data is copied from File1 to File2.
+If <i>compare</i> is specified, File1 and File2 are compared.
+The default is to perform a compare operation.
+<P>
+<tt>SORT</tt> may be specified to indicate that a line-by-line lexicographic sort
+should be performed on the files before the comparison takes place. This
+option only has an affect when the <I>compare</I> mode has been specified.
+<P>
+<tt>SAVEONFAILURE</tt> may be specified to indicate that, if the compare fails,
+file1 should be saved for later analysis. The file will be saved in the same
+directory as file2 with the name of file1 appended with an extension of &quot;.fail&quot;.
+<p>
+<H4><A name="Header_17">Security</A></H4>
+<P>
+This request requires at least trust level of 3.</P>
+<p>
+<H4><A name="Header_18">Return Codes</A></H4>
+<P>
+All return codes from <tt>PROCESSFILE</tt> are standard STAF return codes documented
+in the STAF User's Guide or documented in
+<A name="ToC_30" href="#Header_30">&quot;FSEXT Error Code Reference&quot;</A>.</P>
+<p>
+<H4><A NAME="Header_19">Results</A></H4>
+<P>
+The result buffer will be empty on return from PROCESSFILE. 
+<P>
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Compare file C:/tests/testA/gold.out with file C:/results/testA.out.
+<p><tt>PROCESSFILE FILE1 C:/tests/testA/gold.out FILE2 C:/results/testA.out</tt>
+<p>
+<li><b>Goal:</b> Compare file /tests/testA/gold.out with file /results/testA.out after
+    performing a line-by-line lexicographic sort on the files.  If the compare fails,
+    save file /tests/testA/gold.out for later analysis.
+<p><tt>PROCESSFILE FILE1 C:/tests/testA/gold.out FILE2 C:/results/testA.out SORT SAVEONFAILTURE</tt>
+<p>
+<li><b>Goal:</b> Capture (e.g. copy) data from file C:/tests/testA/results.txt to
+     file C:/results/testA.txt.
+<p><tt>PROCESSFILE MODE capture FILE1 C:/tests/testA/results.txt FILE2 C:/results/testA.txt</tt>
+</ul>
+
+<H2><A name=Header_13 href="#ToC_13">COMPAREDIR</A></H2>
+<P>
+Compares the contents of a directory against a list of filenames.
+This command only checks if the specified files exist.  It does not do
+any comparison as to the contents of the files.
+
+<H4><A name=Header>Syntax</A></H4>
+
+<PRE>COMPAREDIR DIR &lt;Dir&gt; FILE &lt;File&gt; [FILE &lt;File>]... [EXISTS] [ATTEMPTS &lt;Num Attempts&gt; [INTERVAL &lt;Polling Interval]]</PRE>
+<P>
+<TT>DIR</TT> specifies the directory to be used in the comparison.
+This must be a fully qualified directory name.
+<P>    
+<TT>FILE</TT> specifies a file that should be checked. These files must be
+specified relative to the specified directory.
+The <tt>FILE</tt> parameter may be specified one or more times.
+<P>
+<tt>EXISTS</tt> may be specified to indicate that the request should only check
+that the specified files exist and should ignore any extraneous files.
+If this parameter is not specified, the compare will fail if any files exist
+in the specified directory which were not specified via the <tt>FILE</tt> parameter(s).
+<p>
+<tt>ATTEMPTS</tt> may be specified to indicate the number of times that
+the comparison should be made. This value will default to 1.
+<p>
+<tt>INTERVAL</tt> may be specified with the <tt>ATTEMPTS</tt> option to
+indicate how long, in milliseconds, the service should wait between
+attempts to compare the directory.  This option defaults to 15000 (15 seconds).
+
+<H4><A name="Header_17">Security</A></H4>
+<P>
+This request requires at least trust level of 3.</P>
+
+<H4><A name="Header_18">Return Codes</A></H4>
+<P>
+All return codes from <tt>COMPAREDIR</tt> are standard STAF return codes documented
+in the STAF User's Guide or documented in
+<A name="ToC_30" href="#Header_30">&quot;FSEXT Error Code Reference&quot;</A>.</P>
+<p>
+<H4><A name=Header_19>Results</A></H4>
+<p>
+<ul>
+<li>Upon successful return (all comparisons were successful), the result buffer will be
+    empty.
+<p>
+<li>If unsuccessful (a non-zero RC is returned) and the option EXISTS is not specified,
+the result buffer will contain the name of the first file which failed the compare check.
+<p>
+<li>If unsuccessful (a non-zero RC will be returned) and the option EXISTS is specified,
+and the result buffer will contain a marshalled <tt>&lt;List> of &lt;String></tt>
+representing a list of the names of all the extraneous files.
+</ul>
+<P>
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Check if directory C:/tests/testA contains only files testA.exe,
+    help.txt and results/testA.out.
+<p><tt>COMPAREDIR DIR C:/tests/testA FILE testA.exe FILE help.txt FILE results/testA.out</tt>
+<p>
+<li><b>Goal:</b> Check if directory C:/tests/testA/results contains file testA.out
+<p><tt>COMPAREDIR DIR C:/tests/testA/results FILE testA.out EXISTS</tt>
+<p>
+<li><b>Goal:</b> Check if directory C:/tests/testA/results contains file testA.out and
+    to check if the file exists up to 3 times, waiting 1 minute between attempts to
+    check if the file exists.
+<p><tt>COMPAREDIR DIR C:/tests/testA/results FILE testA.out EXISTS ATTEMPTS 3 INTERVAL 60000</tt>
+</ul>
+
+<H2><A name="Header_21" href="#ToC_21">FILECONTAINS</A></H2>
+<P>
+Verifies that a list of strings are either present or not present within a given file.
+This command will essentially grep the file for each of the given strings.
+NOTE: This is a case sensitive search by default.</P>
+
+<H4><A name="Header">Syntax</A></H4>
+
+<PRE>FILECONTAINS FILE &lt;File&gt; STRING &lt;String&gt; [STRING &lt;String>]... [NOT] [IGNORECASE] [SAVEONFAILURE]</PRE>
+<P>
+<TT>FILE</TT> specifies the file in which to search.
+This filename must be fully qualified.</P>
+<P>
+<TT>STRING</TT> specifies a string that should be used as part of the search criteria.
+The STRING option may be specified one or more times.</P>
+<P>
+<tt>NOT</tt> may be specified to indicate that the request should check
+that <B>none</B> of the strings appear in the file. The default is to check that
+<B>all</B> of the strings appear in the file.</P>
+<P>
+<tt>IGNORECASE</tt> may be specified to indicate that a case insensitive search should
+be performed.</P>
+<P>
+<tt>SAVEONFAILURE</tt> may be specified to indicate that if the specified search fails
+a copy of the file should be made, in the same directory, with an extension of ".fail".</P>
+
+<H4><A name="Header_17">Security</A></H4>
+<P>
+This request requires at least trust level of 3.</P>
+
+<H4><A name="Header_18">Return Codes</A></H4>
+<P>
+All return codes from <tt>FILECONTAINS</tt> are standard STAF return codes documented
+in the STAF User's Guide or documented in
+<A name="ToC_30" href="#Header_30">&quot;FSEXT Error Code Reference&quot;</A>.</P>
+
+<H4><A name="Header_19">Results</A></H4>
+<p>
+<ul>
+<li>Upon successful return (the search was successful), the result buffer will be
+    empty.
+<p>
+<li>If unsuccessful (a non-zero RC is returned) and the option NOT is not specified,
+the result buffer will contain the string which could not be found.
+<p>
+<li>If unsuccessful (a non-zero RC will be returned) and the option NOT is specified,
+and the result buffer will contain a marshalled
+<tt>&lt;Map:STAF/Service/FSExt/FileContainsNotError></tt> representing additional
+information about the string which was found that caused the failure.
+The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/FSExt/FileContainsNotError</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents information 
+about the string that caused the failure.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>offset
+<td>Byte Offset
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>string
+<td>Found String
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+<tr>
+<td colspan="4">
+<b>Notes:</b>
+<ol compact>
+<li>The "Byte Offset" value is set to the byte offset in the file for the
+    first string that was found that caused the failure.
+<li>The "Found String" value is set to the first string that was found that
+    caused the failure.
+</ol>
+</tr>
+</tfoot>
+</table>
+</ul>
+<P>
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Check if file C:/results/testA.out contains string "Success".
+<p><tt>FILECONTAINS FILE C:/results/testA.out STRING Success</tt>
+<p>
+<li><b>Goal:</b> Check if file C:/results/testB.out contains string "PASSES: 50" and
+    string "FAILS: 0" and save the file if a failure occurs.
+<p><tt>FILECONTAINS FILE C:/results/testB.out STRING "PASSES: 50" STRING "FAILS: 0" SAVEONFAILURE</tt>
+<p>
+<li><b>Goal:</b> Check if file C:/results/testC.out does not contain strings "Error",
+    "Failure", or "Warning: ", performing a case-insensitive search for these strings.
+<p><tt>FILECONTAINS FILE C:/results/testC.out NOT STRING Error STRING Failure STRING "Warning: " IGNORECASE</tt>
+</ul>
+<p>
+
+<H2><A name="Header_22" href="#ToC_22">LINECONTAINS</A></H2>
+<P>
+Verifies that a list of strings appear within a single line of a given file.
+This directive will grep the file and return a successful result only if all
+of the strings appear in one of the lines of the file.
+NOTE: This is a case sensitive search by default.</P>
+<p>
+<H4><A name="Header">Syntax</A></H4>
+
+<PRE>LINECONTAINS FILE &lt;File&gt; STRING &lt;String> [STRING &lt;String>]... [IGNORECASE] [SAVEONFAILURE] [LINENUMBER &lt;Line #>]</PRE>
+<P>
+<TT>FILE</TT> specifies the file in which to search.
+This filename should be fully qualified.</P>
+<P>
+<TT>STRING</TT> specifies a string that should be used as part of the
+search criteria. The <tt>STRING</tt> option may be specified one or more times.</P>
+<P>
+<tt>IGNORECASE</tt> may be specified to indicate that a case insensitive 
+search should be performed.</P>
+<P>
+<tt>SAVEONFAILURE</tt> may be specified to indicate that if the specified
+search fails a copy of the file should be made, in the same directory,
+with an extension of ".fail".</P>
+<P>
+<tt>LINENUMBER</tt> may be specified to indicate that the strings
+must exist on this specific line number in the file.
+NOTE: Negative line numbers may be used to indicate an offset from the
+end of the file. For example, -1 would indicate the last line of the file,
+-2 would be the second to last line, and so on.</P>
+
+<H4><A name="Header_17">Security</A></H4>
+<P>
+This request requires at least trust level of 3.</P>
+
+<H4><A name="Header_18">Return Codes</A></H4>
+<P>
+All return codes from <tt>LINECONTAINS</tt> are standard STAF return codes documented
+in the STAF User's Guide or documented in
+<A name="ToC_30" href="#Header_30">&quot;FSEXT Error Code Reference&quot;</A>.</P>
+
+<H4><A name="Header_19">Results</A></H4>
+<p>
+<ul>
+<li>Upon successful return (the search was successful), the result buffer will contain
+    a marshalled <tt>&lt;STAF/Service/FSExt/LineContainsResult></tt> representing
+    additional information such as the line number and the contents of the line
+    where the string(s) were found.  The map is defined as follows:
+<p>
+<table border>
+<thead>
+<tr>
+<th COLSPAN="4">Definition of map class STAF/Service/FSExt/FileContainsNotError</th>
+</tr>
+<tr>
+<td colspan="4"><b>Description: </b>This map class represents information 
+about the string that caused the failure.</td>
+</tr>
+<tr>
+<th width=20%>Key Name
+<th width=20%>Display Name
+<th width=30%>Type
+<th width=30%>Format / Value
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lineNumber
+<td>Line Number
+<td><tt>&lt;String></tt>
+<td>
+<tr>
+<td>line
+<td>Line
+<td><tt>&lt;String></tt>
+<td>
+</tbody>
+<tfoot>
+</table>
+<p>
+<li>If unsuccessful (a non-zero RC is returned) and the option <tt>LINENUMBER</tt>
+is not specified, the result buffer will be empty.
+<p>
+<li>If unsuccessful (a non-zero RC is returned) and the option <tt>LINENUMBER</tt>
+is specified, the result buffer will contain a marshalled
+<tt>&lt;STAF/Service/FSExst/LineContainsResult></tt> representing
+additional information about the specified line where the strings were not found.
+The map is defined above.
+</ul>
+<P>
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Check if file C:/results/testA.out contains a line containing
+    string "Pass: 15" and string "Fail: 0".
+<p><tt>LINECONTAINS FILE C:/results/testA.out STRING "Pass: 15" STRING "Fail: 0"</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and the
+strings were found in line 12 of the file, the result, in default format,
+could look like:
+<pre>
+Line Number: 12
+Line       : Testcase Totals: Tests: 3, Pass: 15, Fail: 0
+</pre>
+<p>
+<li><b>Goal:</b> Check if file C:/results/testB.out contains string "Success!!!"
+    in the last line of the file (via a case-insensitive search).
+<p><tt>FILECONTAINS FILE C:/results/testB.out STRING "Success!!!" IGNORECASE LINENUMBER -1</tt>
+<p><b>Output:</b>  If the request is submitted from the command line and the string
+was found in the last line of the file (which contained 54 lines), the result,
+in default format, could look like:
+<pre>
+Line Number: 54
+Line       : success!!!
+</pre>
+</ul>
+<p>
+
+<H2><A name="Header_24" href="#ToC_24">SUBSTITUTE</A></H2>
+<P>
+Copies a file, substituting any STAF variables in the file with their respective
+values. Variables are signified by the syntax
+<TT>%{staf_variable}%</TT> (ex: <TT>%{STAF/Config/BootDrive}%</TT> ).
+This service reads the file, replaces any variables and then calls the FS service to 
+perform the copy.</P>
+
+<H4><A name="Header">Syntax</A></H4>
+
+<PRE>SUBSTITUTE FILE &lt;File&gt; [TOFILE &lt;To File&gt;] [TOMACHINE &lt;To Machine&gt;] [FAILIFNEW | FAILIFEXISTS]</PRE>
+<P>
+<TT>FILE</TT> specifies the file to use as the source. This
+filename must be fully qualified.</P>
+<P>
+<TT>TOFILE</TT> specifies the destination for the copy. If this is the same
+as the source (and <tt>TOMACHINE</tt> is not specified) then
+the source file will be overwritten with the modified file.
+This filename must be fully qualified. 
+The default value is the same as the value for <tt>FILE</tt>.
+NOTE: If neither <tt>TOFILE</tt> nor <tt>TOMACHINE</tt> are specified,
+the source file will be overwritten with the modified file.</P>
+<P>
+<TT>TOMACHINE</TT> specifies the destination machine for the copy.
+The default is the local machine.
+NOTE: If neither <tt>TOMACHINE</tt> nor <tt>TOFILE</tt> are specified,
+the source file will be overwritten with the modified file on the local machine.
+<P>
+<TT>FAILIFNEW</TT> indicates that the copy should fail if the destination 
+file does not exist.</P>
+<P>
+<TT>FAILIFEXISTS</TT> indicates that the copy should fail if the destination
+file exists.</P>
+
+<H4><A name="Header_17">Security</A></H4>
+<P>
+This request requires at least trust level of 4.</P>
+
+<H4><A name="Header_18">Return Codes</A></H4>
+<P>
+All return codes from <tt>SUBSTITUTE</tt> are standard STAF return codes documented
+in the STAF User's Guide or documented in
+<A name="ToC_30" href="#Header_30">&quot;FSEXT Error Code Reference&quot;</A>.</P>
+
+<H4><A name="Header_19">Results</A></H4>
+<P>
+The result buffer will be empty upon successful completion of this command and may
+contain additional information if the command fails.</P>
+<P>
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Substitute any STAF variables in file C:/tests/testA.txt with
+    their respective values, overwriting this file.
+<p><tt>SUBSTITUTE FILE C:/tests/testA.txt</tt>
+<p>
+<li><b>Goal:</b> Substitute any STAF variables in file C:/tests/testA.txt with
+their respective values, copying this modified file to file D:/testA/testA.bat on
+machine client1, failing if file D:/testA/testA.bat already exists on machine client1.
+<p><tt>SUBSTITUTE FILE C:/tests/testA.txt TOFILE D:/testA/testA.bat TOMACHINE client1 FAILIFEXISTS</tt>
+</ul>
+
+<H2><A name="Header_23" href="#ToC_23">WAITFORFILE</A></H2>
+<P>
+Blocks until a file exists or the timeout value is reached. This command will check
+to see if a file exists. If it does not, it will wait for a specified interval
+and try again.
+This will repeat until the file exists or until the timeout value is reached.
+NOTE: Use of the <tt>NOT</tt> option also allows to check that a file does
+not exist.</P>
+
+<H4><A name="Header">Syntax</A></H4>
+
+<PRE>WAITFORFILE FILE &lt;File&gt; [TIMEOUT &lt;Timeout&gt;] [INTERVAL &lt;Interval&gt;] [NOT]</PRE>
+<P>
+<TT>FILE</TT> specifies the file to check. This
+filename must be fully qualified.</P>
+<P>
+<TT>TIMEOUT</TT> specifies how long FSEXT should check for
+the file before failing. This time is expressed
+in milliseconds. The default value is to
+wait indefinitely.</P>
+<P>
+<TT>INTERVAL</TT> specifies how long, in milliseconds, the service
+should wait before performing the next check for the file.
+The default is 15000 (15 seconds).
+<P>
+<TT>NOT</TT> indicates that the request should wait for a file NOT to exist.
+This may be useful in checking that a file was successfully.
+deleted.</P>
+
+<H4><A name="Header_17">Security</A></H4>
+<P>
+This request requires at least trust level of 3.</P>
+
+<H4><A name="Header_18">Return Codes</A></H4>
+<P>
+All return codes from <tt>WAITFORFILE</tt> are standard STAF return codes documented
+in the STAF User's Guide or documented in
+<A name="ToC_30" href="#Header_30">&quot;FSEXT Error Code Reference&quot;</A>.</P>
+
+<H4><A name="Header_19">Results</A></H4>
+<P>
+The result buffer will be empty upon successful completion of this command.
+If the check failed, the result buffer will contain the name of the file.</P>
+<P>
+<h4>Examples</h4>
+<p>
+<ul>
+<li><b>Goal:</b> Wait indefinitely for file C:/results/testA.out to exist.
+<p><tt>WAITFORFILE FILE C:/results/testA.out</tt>
+<p>
+<li><b>Goal:</b> Wait for up to 5 minutes for file C:/results/testB.out to exist,
+    checking every minute to see if the file exists.
+<p><tt>WAITFORFILE FILE C:/results/testB.out TIMEOUT 300000 INTERVAL 60000</tt>
+<p>
+<li><b>Goal:</b> Wait for up to 1 minute for file C:/tests/testA.tmp to not exist,
+    checking every 15 seconds (the default) to see if the file doesn't exists.
+<p><tt>WAITFORFILE NOT FILE C:/tests/testA.tmp TIMEOUT 60000</tt>
+</ul>
+<p>
+<hr>
+<H1><A name=Header_30 href="#ToC_30">FSEXT Error Code Reference</A></H1>
+<P>
+In addition to the common STAF return codes, the following FSEXT return codes are defined:
+<P>
+<B><A NAME="TBLTIMERR">Table 1. FSEXT Service Return Codes</A></B><BR>
+<TABLE BORDER=1 height="254">
+<TR>
+<TH ALIGN=middle VALIGN=top WIDTH="14%" height="19">Error Code
+</TH><TH ALIGN=left VALIGN=top WIDTH="29%" height="19">Meaning
+</TH><TH ALIGN=left VALIGN=top WIDTH="57%" height="19">Comment
+</TH></TR><TR>
+<TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>4001</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="19">File Comparison Failed
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="19">The file comparison failed.
+</TD></TR><TR>
+<TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>4002</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="19">Not A Directory
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="19">The value specified for the DIR parameter is not a directory.
+</TD></TR><TR>
+<TD ALIGN=middle VALIGN=top WIDTH="14%" height="19"><B>4003</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="19">File Not Found
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="19">The specified file was not found on the file system.
+</TD></TR><TR>
+<TD ALIGN=middle VALIGN=top WIDTH="14%" height="38"><B>4004</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="38">File Exists
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="38">The specified file exists. (The NOT parameter was specified.)
+</TD></TR><TR>
+<TD ALIGN=middle VALIGN=top WIDTH="14%" height="38"><B>4005</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="38">Extraneous Files Found
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="38">Extraneous files were found in the specified directory.
+</TD></TR>
+<TR><TD ALIGN=middle VALIGN=top WIDTH="14%" height="38"><B>4006</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="38">String(s) Not Found
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="38">The specified String(s) were not found.
+</TD></TR>
+<TR><TD ALIGN=middle VALIGN=top WIDTH="14%" height="16"><B>4007</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="16">String(s) Found
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="16">The specified String(s) were found. (The NOT parameter was specified.)
+</TD></TR>
+<TR><TD ALIGN=middle VALIGN=top WIDTH="14%" height="16"><B>4008</B>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="16">Line Number Does Not Exist
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="16">The line number specified by the LINENUMBER parameter does not exist in the file.
+</TD></TR>
+<TR><TD ALIGN=middle VALIGN=top WIDTH="14%" height="16"><b>4100</b>
+</TD><TD ALIGN=left VALIGN=top WIDTH="29%" height="16">Java IOError
+</TD><TD ALIGN=left VALIGN=top WIDTH="57%" height="16">A Java IOError occurred during command execution. Check the result buffer for more information.
+</TD></TR>
+</TABLE>
+
+<A NAME=Bot_Of_Page></A>
+
+</BODY></HTML>
+

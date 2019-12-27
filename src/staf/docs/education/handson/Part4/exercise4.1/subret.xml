@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="test">'hello'</defaultcall>
+  
+  <function name="test">
+    <function-map-args>
+      <function-optional-arg name="delay" default="'1000'"/>
+      <function-optional-arg name="returnvalue" default="'0'"/>
+    </function-map-args>
+
+    <sequence>
+      <message>'Starting subret.xml.  delay=%s, returnvalue=%s' % (delay, returnvalue)</message>
+      <log>'Starting subret.xml.  delay=%s, returnvalue=%s' % (delay, returnvalue)</log>
+      <stafcmd>
+        <location>'local'</location>
+        <service>'delay'</service>
+        <request>'delay %s' % delay</request>
+      </stafcmd>
+      <message>'Finished subret.xml.  delay=%s, returnvalue=%s' % (delay, returnvalue)</message>
+      <log>'Finished subret.xml.  delay=%s, returnvalue=%s' % (delay, returnvalue)</log>
+      <return>returnvalue</return>
+    </sequence>
+
+  </function>
+
+</stax>

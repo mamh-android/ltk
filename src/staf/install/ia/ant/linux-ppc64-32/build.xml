@@ -1,0 +1,29 @@
+<project name="STAF-InstallAnywhere-linux-ppc64-32">
+
+    <description>
+        Build file to build STAF InstallAnywhere for linux-ppc64-32
+    </description>
+
+    <taskdef name="buildinstaller"
+      classname="com.zerog.ia.integration.ant.InstallAnywhereAntTask"
+      classpath="C:\IA2010\resource\build\iaant.jar"
+    />
+
+    <buildinstaller
+      IALocation="C:\IA2010"
+      IAProjectFile="C:\IA2010\projects\STAF\STAF.iap_xml"
+      BuildLinuxWithVM="true"
+      LinuxVMPackLocation="C:\IA2010\resource\installer_vms\IA_ibm_linux_ppc64_32_60sr7.vm"
+      BuildLinuxWithoutVM="true"
+      BuildWindowsWithVM="false"
+      BuildWindowsWithoutVM="false"
+      BuildAIXWithVM="false"
+      BuildAIXWithoutVM="false"
+      BuildSolarisWithVM="false"
+      BuildSolarisWithoutVM="false"
+      BuildHPUXWithVM="false"
+      BuildHPUXWithoutVM="false"
+      BuildMacOSX="false"
+    />
+
+</project>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<!--
+  sample1.xml   -   Sample of a job definition file for STAX
+
+  Job Description:
+
+    This job executes various STAF commands and processes and
+    sends messages to the STAX Job Monitor.
+-->
+
+<stax>
+
+  <defaultcall function="LongRun"/>
+  
+  <!--
+    Add more machines to the list of machines as desired.
+    For example, MachList = ['local','machA','machB']
+  -->
+  <script>MachList = ['dave2268','local']</script>
+
+  <script>className = 'com.ibm.staf.service.stax.TestProcess'</script>
+  
+  <!--
+    For each machine in list MachList, function 'RunProcesses' is
+    called and run in parallel. 
+  -->
+  <function name="LongRun"> 
+
+    <paralleliterate var="machName" in="MachList" indexvar="i">
+
+      <block name="machName">              
+
+        <testcase name="machName">
+
+           <call function="'RunProcesses'"/>    
+
+        </testcase>
+
+      </block>
+
+    </paralleliterate>   
+    
+  </function>
+
+  <!--
+    This function runs several processes which run a Java program 
+    called TestProcess (which is included in the STAX.jar file)
+    and passing it different parameters which effect how long
+    it runs until it completes and whether it is successful or not.
+
+    Parameters for TestProcess are:
+      - Number of loops
+      - Seconds to wait between loops
+      - RC to return at the end of the process
+  -->
+  <function name="RunProcesses">
+
+    <sequence>        
+
+      <message>
+        'Starting the LongRun test \non machine %s' % machName
+      </message>
+      
+      <parallel>
+        <stafcmd>
+          <location>machName</location>
+          <service>'delay'</service>
+          <request>'delay 300000'</request>
+        </stafcmd>        
+        <process>
+          <location>machName</location>
+          <command>'java'</command>                    
+          <parms>'%s 20 10 0' % className</parms>            
+          <console use="'same'"/>
+        </process>   
+        <stafcmd>
+          <location>machName</location>
+          <service>'delay'</service>
+          <request>'delay 300000'</request>
+        </stafcmd>        
+        <process>
+          <location>machName</location>
+          <command>'java'</command>                    
+          <parms>'%s 30 10 0' % className</parms>            
+          <console use="'same'"/>
+        </process>      
+      </parallel>    
+                
+      <message>
+        'Finished the LongRun Test on machine ' + machName
+      </message>
+             
+    </sequence>
+
+  </function> 
+
+</stax>

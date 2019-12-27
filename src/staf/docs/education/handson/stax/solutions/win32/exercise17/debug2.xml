@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+
+<stax>
+
+  <defaultcall function="StartHere"/>
+
+  <!-- The second test in the list was missing a quote after 'SimpleTestcase 3 -->
+  <script>
+    machine  = 'local'
+    classpath = 'CLASSPATH=c:/staf/testcases;{STAF/Env/CLASSPATH}' 
+    testList = [ [ 'Test1', 'STAFTestcase 5' ],
+                 [ 'Test2', 'SimpleTestcase 3' ],
+                 [ 'Test3', 'STAFTestcase 6' ] ]
+  </script>
+
+  <function name="StartHere">
+
+    <iterate var="test" in="testList">
+
+      <testcase name="test[0]">
+ 
+        <sequence>
+
+          <process name="test[0]">
+            <location>machine</location>
+            <!-- Needed to add quotes around java because it's a literal not a variable -->
+            <command>'java'</command>
+            <parms>test[1]</parms>
+            <env>classpath</env>
+          </process>
+
+          <if expr="RC == 0">
+ 
+            <sequence>
+              <message>
+                'Success!!! - %s passed with RC=0' % \
+                test[0]
+              </message>
+              <tcstatus result="'pass'"/>
+            </sequence>
+
+            <else>
+              <sequence>
+                <message>
+                  '%s failed with RC=%s, STAFResult=%s' % \
+                  (test[0], RC, STAFResult)
+                </message>
+                <tcstatus result="'fail'">
+                  '%s failed with RC=%s, STAFResult=%s' % \
+                  (test[0], RC, STAFResult)
+                </tcstatus> 
+              </sequence>
+            </else>
+
+          </if>
+
+        </sequence>
+ 
+      </testcase>
+ 
+    </iterate>
+
+  </function>
+
+</stax>

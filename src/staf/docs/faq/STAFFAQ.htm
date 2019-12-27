@@ -1,0 +1,2455 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="David Bender">
+   <meta name="GENERATOR" content="Mozilla/4.79 [en] (Windows NT 5.0; U) [Netscape]">
+   <title>STAF Frequently Asked Questions</title>
+</head>
+<body>
+<font face="Arial,Helvetica"><font color="#000099"><font size=+3>STAF
+FAQ</font></font></font>
+<p><font face="Arial,Helvetica">October 7, 2003</font>
+<p>
+<hr WIDTH="100%">
+<p><font face="Arial,Helvetica"><font color="#000099"><font size=+2>CONTENTS</font></font></font>
+<p><font face="Arial,Helvetica"><font color="#000099"><a href="#INTRODUCTION">1.
+INTRODUCTION</a></font></font>
+<br><font face="Arial,Helvetica"><font color="#000099"><a href="#SETUP">2.
+SETUP</a></font></font>
+<br><font face="Arial,Helvetica"><font color="#000099"><a href="#DEBUGGING">3.
+DEBUGGING</a></font></font>
+<br><font face="Arial,Helvetica"><font color="#000099"><a href="#GLOBALIZATION">4.
+GLOBALIZATION</a></font></font>
+<p>
+<hr WIDTH="100%">
+<p><font face="Arial,Helvetica"><font color="#000099">1. INTRODUCTION</font></font>
+<p><font color="#000099"><a href="#What is">1.1 What is STAF?</a></font>
+<br><font color="#000099"><a href="#What operating systems are supported by">1.2
+What operating systems are supported by STAF?</a></font>
+<br><font color="#000099"><a href="#Where can I get">1.3 Where can I get
+STAF?</a></font>
+<br><font color="#000099"><a href="#Is STAF Open">1.4 Is STAF Open Source?</a></font>
+<br><font color="#000099"><a href="#What documentation exists for">1.5
+What documentation exists for STAF?</a></font>
+<br><font color="#000099"><a href="#How can I get on/off STAF mailing">1.6
+How can I get on/off STAF mailing lists?</a></font>
+<br><font color="#000099"><a href="#How can I get">1.7 How can I get help?</a></font>
+<br><font color="#000099"><a href="#How can I request a feature for">1.8
+How can I request a feature for STAF?</a></font>
+<br><font color="#000099"><a href="#Topic 36:  Why doesn't STAF have a Java">1.9
+Why isn't STAF written in Java?</a></font>
+<br><font color="#000099"><a href="#Topic 27:  What is the performance overhead of">1.10
+What is the performance overhead of running STAF?</a></font>
+<p><font face="Arial,Helvetica"><font color="#000099">2. SETUP</font></font>
+<p><font color="#000099"><a href="#How do I install">2.1 How do I install
+STAF?</a></font>
+<br><font color="#000099"><a href="#Topic 36:  How do I install STAF in silent">2.2
+How do I install STAF in silent mode?</a></font>
+<br><font color="#000099"><a href="#How do I configure">2.3 How do I configure
+STAF?</a></font>
+<br><font color="#000099"><a href="#How do I interact with">2.4 How do
+I interact with STAF?</a></font>
+<br><font color="#000099"><a href="#How can I redirect output from a process started">2.5
+How can I redirect output from a process started by STAF?</a></font>
+<br><font color="#000099"><a href="#How can I run a complex command that I can type at">2.6
+How can I run a complex command that I can type at a shell (command) prompt
+via STAF?</a></font>
+<br><font color="#000099"><a href="#How do you make each application have its own STAF">2.7
+How do you make each application have its own STAF log file?</a></font>
+<br><font color="#000099"><a href="#Topic 8:  AIX STAF environment variables (PATH,">2.8
+AIX STAF environment variables (PATH, LIBPATH, etc.) are not set when opening
+a terminal</a></font>
+<br><font color="#000099"><a href="#Topic 9:  How to have STAF start automatically">2.9
+How to have STAF start automatically during reboot on Unix platforms</a></font>
+<br><font color="#000099"><a href="#2.10 The InstallShield installer fails, or does">2.10
+The InstallShield installer fails, or does not complete the installation,
+on certain versions of Linux</a></font>
+<br><font color="#000099"><a href="#2.11 27:Error starting JVM using JVMName:">2.11
+27:Error starting JVM using JVMName: STAFJVM1, JVM: java, JVMOptions:&nbsp;
+, RC: 10,&nbsp; OSRC: 2</a></font>
+<br><font color="#000099"><a href="#2.12 Starting STAF as a Windows">2.12
+Starting STAF as a Windows service</a></font>
+<br><font color="#000099"><a href="#2.13 STAF fails to init with Windows Terminal">2.13
+STAF fails to init with Windows Terminal Server</a></font>
+<br><font color="#000099"><a href="#2.14 STAF ISMP install fails - how do I get debug">2.14
+STAF ISMP install fails - how do I get debug information?</a></font>
+<p><font face="Arial,Helvetica"><font color="#000099">3. DEBUGGING</font></font>
+<p><a href="#What to do if you are having a problem with STAF">3.1 What
+to do if you are having a problem with STAF or one of its services</a>
+<br><font color="#000000"><a href="#Information to inculde when asking questions or">3.2
+Information to include when asking questions or reporting bugs</a></font>
+<br><a href="#Topic 1:  When attempting to run a process, I">3.3 When attempting
+to run a process, it fails with a RC 10</a>
+<br><font color="#000099"><a href="#Topic 2:  When attempting to send a STAF request">3.4
+When attempting to send a STAF request to a remote machine, it fails with
+a RC 16</a></font>
+<br><font color="#000099"><a href="#Topic 3:  When attempting to start STAF, it">3.5
+When attempting to start STAF, it fails with "Error binding server socket,
+rc = 67"</a></font>
+<br><font color="#000099"><a href="#Topic 4:  When attempting to start STAF, it fails">3.6
+When attempting to start STAF, it fails with "Error binding server socket,
+rc = 10048"</a></font>
+<br><font color="#000099"><a href="#Topic 5:  When attempting to start a process on">3.7
+When attempting to start a process on&nbsp; a remote machine, it fails
+with a RC 25</a></font>
+<br><font color="#000099"><a href="#Topic 6:  When the STAF InstallShield">3.8
+When the STAF InstallShield MultiPlatform installer is executed, it generates
+a series of dots, but the installer never completes</a></font>
+<br><font color="#000099"><a href="#Topic 7:  Problems interacting with queues for">3.9
+Interacting with queues for processes started via the command line</a></font>
+<br><font color="#000099"><a href="#Topic 10:  STAF machines can't communicate due">3.10
+STAF machines can't communicate</a></font>
+<br><font color="#000099"><a href="#Topic 11:  STAX Job still shows a process as">3.11
+STAX still shows a process as running, even though it has completed</a></font>
+<br><font color="#000099"><a href="#Topic 12:  RC 2 when starting the STAX Job">3.12
+RC 2 when starting the STAX Job Monitor</a></font>
+<br><font color="#000099"><a href="#Topic 13:  RC 16 when starting the STAX Job">3.13
+RC 16 when starting the STAX Job Monitor</a></font>
+<br><font color="#000099"><a href="#Topic 14:  RC 2 when submitting new jobs through">3.14
+RC 2 when submitting new jobs through the STAX Job Monitor</a></font>
+<br><font color="#000099"><a href="#Topic 15:  RC 16 when submitting new jobs">3.15
+RC 16 when submitting new jobs through the STAX Job Monitor</a></font>
+<br><font color="#000099"><a href="#Topic 16:  Process started successfully by STAF,">3.16
+Process started successfully by STAF, but the process can't log its output
+to an AFS directory</a></font>
+<br><font color="#000099"><a href="#Topic 17:  STAF startup fails with 38:Illegal">3.17
+STAF startup fails with 38:Illegal access to class: com.ibm.staf.service....</a></font>
+<br><font color="#000099"><a href="#Topic 18:  Text files not converted correctly">3.18
+Text files not converted correctly between Windows and Unix</a></font>
+<br><font color="#000099"><a href="#Topic 19:  How to have multiple programs use a">3.19
+How to have multiple programs use a static handle to access variables and
+log data</a></font>
+<br><font color="#000099"><a href="#Topic 19:  How to have multiple programs use a">3.20
+</a><a href="#Topic 20:  If I edit a STAF log, it appears to">If
+I edit a STAF log, it appears to be in some weird format</a></font>
+<br><font color="#000099"><a href="#Topic 21:  How do I turn off STAF's user">3.21
+STAF's user registration fails each time STAF is started</a></font>
+<br><font color="#000099"><a href="#Topic 22:  When running STAFInst on Solaris, it">3.22
+When running STAFInst on Solaris, it fails with "test: unknown operator
+-ef"</a></font>
+<br><font color="#000099"><a href="#Topic 23:  Running java -jar STAXMon.jar results">3.23
+Running "java -jar STAXMon.jar" results in java.util.zip.ZipException</a></font>
+<br><font color="#000099"><a href="#Topic 24:  FS service COPY FILE fails when no">3.24
+FS service COPY FILE fails when no TOMACHINE is specified</a></font>
+<br><font color="#000099"><a href="#Topic 25:  Can't get Help on errors when STAF is">3.25
+Can't get Help on errors when STAF is not running</a></font>
+<br><font color="#000099"><a href="#Topic 26:  STAX Job Monitor window doesn't have a">3.26
+STAX Job Monitor window doesn't have a close confirmation</a></font>
+<br><font color="#000099"><a href="#Topic 28:  Why there are more STAF processes on">3.27
+Why are there are more STAF processes on Linux?</a></font>
+<br><font color="#000099"><a href="#Topic 29:  The Echo, Ping, and Delay services do">3.28
+The Echo, Ping, and Delay services do not provide help</a></font>
+<br><font color="#000099"><a href="#Topic 30:  HP-UX SIGABRT after a STAF process has">3.29
+HP-UX SIGABRT after a STAF process has completed</a></font>
+<br><font color="#000099"><a href="#Topic 31:  Error initializing service, RESPOOL,">3.30
+Error initializing service, RESPOOL, RC: 4008</a></font>
+<br><font color="#000099"><a href="#Topic 32:  Unix error message:">3.31
+Unix error message: "STAFProcessManager::processMonitorThread: Parent could
+not set child's pgid: 13"</a></font>
+<br><font color="#000099"><a href="#Topic 33:  Email service SEND request RC 7 when">3.32
+Email service SEND request results in RC 7 when quotes or double quotes
+are in the message</a></font>
+<br><font color="#000099"><a href="#Topic 34:  Children processes are not killed on">3.33
+Child processes are not killed on Windows</a></font>
+<br><font color="#000099"><a href="#Topic 35:  JAR Archive failed security check">3.34
+"JAR Archive failed security check corrupt JAR file" message after downloading
+a STAF jar file</a></font>
+<br><font color="#000099"><a href="#3.35 RC=10 and STAFResult=8 when starting a STAX">3.35
+RC=10 and STAFResult=8 when starting a Java process in a STAX job</a></font>
+<br><font color="#000099"><a href="#3.36 Changes to imported Python module not picked up in STAX job">3.36
+Changes to imported Python module not picked up in STAX job</a></font>
+<br><font color="#000099"><a href="#3.37 Does the HTTP Service retain session">3.37
+Does the HTTP Service retain session information across multiple requests?</a></font>
+<br><font color="#000099"><a href="#3.38 Unix error message: STAFProcessManager::processMonitorThread: Could not start process (execve): 8">3.38
+Unix error message: STAFProcessManager::processMonitorThread: Could not
+start process (execve): 8</a></font>
+<br><font color="#000099"><a href="#3.39 Problems accessing a Java service, such as RC=6">3.39
+Problems accessing a Java service, such as RC=6</a></font>
+<br><font color="#000099"><a href="#3.40 On some Unix platforms (such as Solaris),">3.40
+On some Unix platforms (such as Solaris), exiting the STAFProc terminal
+causes STAF to terminate</a></font>
+<br><font color="#000099"><a href="#3.41 How do you access system date and time in">3.41
+How do you access system date and time in STAX?</a></font>
+<br><font color="#000099"><a href="#3.42 Are there any conflict or efficiency concerns">3.42
+Are there any conflict or efficiency concerns with using STAX &lt;import>
+when doing nested file imports?</a></font>
+<br><font color="#000099"><a href="#3.43 Can you use the <stopusing> element in a STAX">3.43
+Can you use the &lt;stopusing> element in a STAX job that runs on both
+Windows and Unix?</a></font>
+<br><font color="#000099"><a href="#3.44 How do I find out more information about">3.44
+How do I find out more information about Python?</a></font>
+<br><font color="#000099"><a href="#3.45 In recent versions of STAF, I no longer see">3.45
+In recent versions of STAF, I no longer see any Java service output in
+the STAFProc console</a></font>
+<br><font color="#000099"><a href="#3.46 When importing a STAX function from another">3.46
+When importing a STAX function from another XML file, are the global &lt;script>s
+in the XML file executed?</a></font>
+<br><font color="#000099"><a href="#3.47 Are STAF system variable values available in">3.47
+Are STAF system variable values available in STAX?</a></font>
+<br><font color="#000099"><a href="#3.48 How do you search for multiple strings in">3.48
+How do you search for multiple strings in testcase output files in STAX?</a></font>
+<br><font color="#000099"><a href="#3.49 Can you use STAF and STAX with VMWare">3.49
+Can you use STAF and STAX with VMWare images?</a></font>
+<br><font color="#000099"><a href="#3.50 Does a STAX process element use the workdir element as the path to the command?">
+3.50 Does a STAX process element use the workdir element as the path to the command?"></a></font>
+<br><font color="#000099"><a href="#3.51 java.lang.NullPointerException">
+3.51 Why am I getting a java.lang.NullPointerException at org.python.core.ThreadState.entrRepr in my JVMLog.1 file?</a></font>
+<p>
+<hr WIDTH="100%">
+<p><font face="Arial,Helvetica"><font color="#000099">3. GLOBALIZATION</font></font>
+<p><font color="#000099"><a href="#4.1 How do I use STAF/STAX in environments where machines running STAF have different locales?">
+4.1 How do I use STAF/STAX in environments where machines running STAF have different locales?</a></font>
+<br><font color="#000099"><a href="#4.2 How do I specify non-ASCII characters in a STAF request or STAX job?">
+4.2 How do I specify non-ASCII characters in a STAF request or STAX job?</a></font>
+<br><font color="#000099"><a href="#4.3 How do I know what codepage STAF is using on my machine?">
+4.3 How do I know what codepage STAF is using on my machine?</a></font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="INTRODUCTION"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.
+INTRODUCTION</font></font></font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="What is"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.1
+What is STAF?</font></font></font>
+<p>STAF stands for "Software Testing Automation Framework. As its name
+indicates, STAF is an automation framework. It is intended to make it easier
+to create and manage automated testcases and test environments.
+<p>STAF externalizes its capabilities through services. A service provides
+a focused set of functionality, such as, Logging, Process Invocation, etc.
+STAFProc is the process that runs on a machine, called a STAF Client, which
+accepts requests and routes them to the appropriate service. These requests
+may come from the local machine or from another STAF Client. Thus, STAF
+works in a peer environment, where machines may make requests of services
+on other machines.
+<p>STAF was designed with the following points in mind.
+<ul>
+<li>
+Minimum machine requirements - This is both a hardware and a software statement.</li>
+
+<li>
+Easily useable from a variety of languages, such as Java, C/C++, Rexx,
+Perl, and Tcl, or from a shell (command) prompt.</li>
+
+<li>
+Easily extendable - This means that it should be easy to create other services
+to plug into STAF.</li>
+</ul>
+
+<hr WIDTH="100%">
+<p><a NAME="What operating systems are supported by"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.2
+What operating systems are supported by STAF?</font></font></font>
+<p>STAF 2.4 is supported on the following operating systems:
+<ul>
+<li>
+Windows 95</li>
+
+<li>
+Windows 98 (and 98 SE)</li>
+
+<li>
+Windows Millenium Edition</li>
+
+<li>
+Windows NT Version 4.0</li>
+
+<li>
+Windows 2000</li>
+
+<li>
+Windows 2003</li>
+
+<li>
+Windows XP</li>
+
+<li>
+Linux (Intel32/64)</li>
+
+<li>
+Linux (PPC32/64)</li>
+
+<li>
+Linux (390)</li>
+
+<li>
+AS/400</li>
+
+<li>
+AIX Version 4.2.1.0 or higher</li>
+
+<li>
+Solaris (Sparc) 2.6 and higher</li>
+
+<li>
+HP-UX 11.00 and higher</li>
+
+<li>
+Irix 6.3+</li>
+
+<li>
+z/OS</li>
+</ul>
+If you need support for another operating system, open a feature request
+on the <a href="http://staf.sourceforge.net/index.php">STAF SourceForge</a>
+web site.
+<p>If you can't wait, port STAF to your favorite operating system yourself
+since STAF is open sourced.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Where can I get"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.3
+Where can I get STAF?</font></font></font>
+<p>STAF software, information, documentation, etc. can be found at the
+<a href="http://staf.sourceforge.net">STAF
+SourceForge</a> web site.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Is STAF Open"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.4
+Is STAF Open Source?</font></font></font>
+<p>Yes! STAF is released under the <a href="http://www.gnu.org/copyleft/lesser.html">GNU
+LGPL</a>.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="What documentation exists for"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.5
+What documentation exists for STAF?</font></font></font>
+<p>The following documents can be found at the <a href="http://staf.sourceforge.net">STAF
+SourceForge</a> web site.
+<ul>
+<li>
+<a href="http://staf.sourceforge.net/current/STAFGS.pdf">Getting Started
+with STAF</a></li>
+
+<li>
+<a href="http://staf.sourceforge.net/current/STAFUG.htm">STAF User's Guide</a></li>
+
+<li>
+<a href="http://staf.sourceforge.net/current/STAFCMDS.htm">STAF Service
+Command Reference</a></li>
+
+<li>
+<a href="http://staf.sourceforge.net/current/STAFRC.htm">STAF API Return
+Codes</a></li>
+</ul>
+
+<hr WIDTH="100%">
+<p><a NAME="How can I get on/off STAF mailing"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.6
+How can I get on/off STAF mailing lists?</font></font></font>
+<p>Go to the <a href="http://sourceforge.net/mail/?group_id=33142">STAF
+Mailing Lists</a> web page and click on Subscribe or Unsubscribe for the
+STAF mailing list that you want to be added to or removed from.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How can I get"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.7
+How can I get help?</font></font></font>
+<p>You can submit questions using the <a href="http://sourceforge.net/mail/?group_id=33142">STAF
+Mailing Lists</a> and the <a href="http://sourceforge.net/forum/?group_id=33142">STAF
+Discussion Forums</a> on SourceForge.
+<p>If you are an IBMer, you may use IBM Internal Newsgroups to submit questions
+for STAF. The following news groups (on-line discussons) exist for STAF:
+<ul>
+<li>
+<a href="news://portal.austin.ibm.com/tools.staf">STAF General Discussion</a></li>
+
+<li>
+<a href="news://portal.austin.ibm.com/tools.staf.dev">STAF Development
+Discussions</a></li>
+
+<li>
+<a href="news://portal.austin.ibm.com/tools.staf.stax">STAX Discussion</a></li>
+</ul>
+You can also get help about a STAF service's request syntax by using the
+following command:
+<p>&nbsp;&nbsp;&nbsp; <tt>staf local &lt;service> help</tt>
+<p>This will return the available options for the &lt;service>.
+<p>You can find out more information about STAF error codes by using the
+following command:
+<p>&nbsp;&nbsp;&nbsp;<tt> staf local help error 7</tt>
+<p>This will return detailed information about error code 7.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How can I request a feature for"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.8
+How can I request a feature for STAF?</font></font></font>
+<p>To request a feature (or browse a list of requested features), click
+<a href="http://sourceforge.net/tracker/?atid=407384&group_id=33142&func=browse">here</a>.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 36:  Why doesn't STAF have a Java"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.9
+Why isn't STAF written in Java?</font></font></font>
+<p>1) STAF was designed to put as few dependencies on the underlying system
+as possible.&nbsp; To that end we designed STAF to consume as little memory,
+disk, and CPU as possible.&nbsp; Some of these items (particularly disk
+space) aren't nearly as important as they were several years ago.&nbsp;
+However, almost every new group that picks up STAF asks this very same
+question, "How much &lt;room> does STAF require?".&nbsp; Along these same
+lines, we didn't want to require any additional software on the system
+in order to run STAF.&nbsp; Writing STAF in Java would obviously require
+a JVM.&nbsp; Of the three resources previously listed, this has the largest
+impact on memory, and then CPU.&nbsp; Again, this isn't as large an issue
+as it once was, as many/most systems today have a JVM.&nbsp; Nevertheless,
+we have many groups who are reluctant to put a JVM on their system, particularly
+those doing base OS testing (like the AIX and Linux Technology Center)
+teams, and they definitely don't like being dependent on a JVM.&nbsp; For
+example, we have a group using STAF on Linux/PPC-64.&nbsp; This platform
+still doesn't have a stable JVM.&nbsp; And, the Linux JVMs, in general,
+have struggled for stability of the years (particularly on SMP systems).&nbsp;
+For what it's worth, we've had people tell us that STAF should have been
+built using MQ Series, or Java, or Perl, or &lt;insert favorite technology>.&nbsp;
+Obviously, we can't appease all these groups, as they are mutually exclusive
+requests.&nbsp; In the end, STAF only depends on a base operating system,
+and a working compiler (for use in porting it).
+<p>The following items all deal with the inability to write a 100% pure-Java
+implementation.&nbsp; If you can't go 100% (or darn close to it), a lot
+of Java's appeal dies away.
+<p>2) STAF is designed to be extensible from a variety of languages.&nbsp;
+In order to invoke these other languages, you need the ability to call
+native code.&nbsp; Obviously, from Java, this puts you into JNI land and
+out of 100% pure-Java land.&nbsp; At the moment, STAF supports service
+written in C/C++, Java, and Rexx.&nbsp; Perl support is being actively
+developed in Hursley.&nbsp; Other languages are feasible, given a way to
+communicate with the language from C/C++.&nbsp; For example, we have prototyped
+Tcl and Python service support, but have not done full-blown implementations
+due to lack of user demand, although both languages are picking up steam
+(from their user communities).&nbsp; For what its worth, C/C++ and Java
+are the most common implementation languages for STAF services.&nbsp; Rexx
+was important early in STAF's life, but has effectively died off (from
+a service point of view), although there are a few groups that still use
+it do to Rexx having a long heritage (and deep roots) at IBM.
+<p>3) Performance.&nbsp; Several of STAF's services (due to their nature)
+require as much performance as they can squeeze out (Log and Monitor are
+the primary examples here).&nbsp; This, effectively, means writing them
+in C/C++.&nbsp; In addition, the (local) IPC&nbsp; performance is important
+for the performance of STAF.&nbsp; To get the best performance here, you
+need to use native IPC communications instead of IP Sockets (when talking
+locally).&nbsp; Some OSes (notably AIX, at least when we tested on the
+4.3 release a couple of years ago), have horrible performance for local
+IP Sockets when compared with their native IPC mechanisms (e.g., Unix sockets,
+named/anonymous pipes, shared memory).&nbsp; Again, from a Java perspective,
+these things put you&nbsp; in JNI land.&nbsp; And, then, of course, there
+is your basic run-of-the-mill performance problems with Java.&nbsp; The
+JIT helps, but rarely comes anywhere near natively compiled code.
+<p>4) Access to base OS features.&nbsp; The most important example here
+is starting processes (e.g., STAF's Process service).&nbsp; We allow you
+to specify alternate shells to use when starting processes, to start processes
+under different user IDs, to specify additional environment variables for
+the process, amongst other abilities.&nbsp; Java makes some of these things
+more difficult to implement (e.g., additional environment variables) and
+some nigh-impossible (e.g. different user IDs) without resorting to native
+code.&nbsp; And, yes, all these items are used by multiple STAF users/teams.&nbsp;
+Other items in this category are interacting with security systems and
+dealing with additional file system attributes (e.g., permission bits on
+unix systems, attributes on Win32 systems, ACLs on any system), both of
+which are planned for future versions of STAF.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 27:  What is the performance overhead of"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>1.10
+What is the performance overhead of running STAF?</font></font></font>
+<p>As a general rule, STAF takes up very little system resources.&nbsp;
+A typical STAF installation is about 10-30 MB (depending on whether you
+use the installer with the integrated JVM).&nbsp; STAF's in-memory size
+(without any additional external services) is about 2.5-5 MB (depending
+on the platform).&nbsp; On an idle STAF system (i.e., one in which there
+are no requests currently being handled by STAF) STAF consumes 0% CPU on
+a Windows system and a VERY limited amount on unix systems.&nbsp; On unix,
+we have a thread which wakes up once a second to see if any STAF processes
+have completed.&nbsp; STAF was designed to consume as little system resources
+as possible, as we know that people want their test systems as close to
+clean-room conditions as possible.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="SETUP"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.
+SETUP</font></font></font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How do I install"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.1
+How do I install STAF?</font></font></font>
+<p>STAF provides its own installation program which uses InstallShield
+Multi-Platform for supported platforms. On Unix platforms, we also provide
+a shell script-based installation mechanism.&nbsp; See the Installation
+section in the STAF User's Guide for detailed instructions on how to install
+STAF.&nbsp; You can find which platforms are supported on InstallShield
+Multi-Platform at:&nbsp; <a href="http://www.installshield.com/imp/info/specifications.asp">http://www.installshield.com/imp/info/specifications.asp</a>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 36:  How do I install STAF in silent"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.2
+How do I install STAF in silent mode?</font></font></font>
+<p>Here are the commands to install STAF in silent mode (these examples
+are for Win32):
+<p>If using the InstallShield MultiPlatform executable:
+<p><tt>&nbsp;&nbsp;&nbsp; STAF250-setup-win32 -silent</tt>
+<p>If using the InstallShield MultiPlatform Jar file:
+<p><tt>&nbsp;&nbsp;&nbsp; java -jar STAF250-setup-win32.jar -silent</tt>
+<p>To override the default location where STAF is installed during a silent
+installation, you can specify the following option (note that this option
+is only supported on STAF 2.5.0 or higher):
+<p><tt>&nbsp;&nbsp;&nbsp; STAF250-setup-win32 -silent -W stafinstalldirectory.defaultInstallLocation="C:\tools\staf"</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How do I configure"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.3
+How do I configure STAF?</font></font></font>
+<p>STAF is configured through a text file called the STAF Configuration
+File. This file may have any name you desire, but the default is STAF.cfg.
+The STAF configuration File is read and processed line by line. The various
+configuration options are described in the Configuration section in the
+STAF User's Guide.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How do I interact with"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.3
+How do I interact with STAF?</font></font></font>
+<p>You can interact with STAF from many languages (Java, C, C++, Rexx,
+Perl, Tcl) and from the command line/shell prompt. See the "API Reference"
+and "Commands" sections in the STAF User's Guide for more information.
+<p>If you need support for another language, open a <a href="http://sourceforge.net/tracker/?atid=407384&group_id=33142&func=browse">feature
+request</a> on the STAF SourceForge web site.
+<p>If you can't wait, provide support for your favorite language yourself
+since STAF is open sourced.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How can I redirect output from a process started"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.5
+How can I redirect output from a process started by STAF?</font></font></font>
+<p>You can't use the command line redirection symbols, such as '>', with
+STAF. They won't work. However, STAF's PROCESS service provides several
+redirection options, namely STDIN, STDOUT, STDOUTAPPEND, STDERR, and STDERRAPPEND,
+depending on what (and how) you want to redirect.
+<p>For example, to start shell script tc3.sh and redirect its standard
+output to /tmp/tc3.out:
+<p><tt>STAF local PRCOESS START COMMAND tc3.sh STDOUT /tmp/tc3.out</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="How can I run a complex command that I can type at"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.6
+How can I run a complex command that I can type at a shell (command) prompt
+via STAF?</font></font></font>
+<p>The PROCESS service has a SHELL parameter which specifies that COMMAND
+should be executed as though you were at a shell prompt. This allows complex
+commands involving pipelines to be readily executed. Note, if COMMAND and
+PARMS are both specified they will be concatenated with a space between
+them, and the resulting string is what will be executed.
+<ul>
+<li>
+&nbsp;&nbsp;&nbsp; Unix Command Line Example:</li>
+</ul>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STAF
+local PROCESS START SHELL COMMAND "ps | grep test | wc >testcount.txt"
+<ul>
+<li>
+&nbsp;&nbsp;&nbsp; Windows Command Line Example:</li>
+</ul>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STAF
+local PROCESS START SHELL COMMAND "dir *.*"
+<br>
+<hr WIDTH="100%">
+<p><a NAME="How do you make each application have its own STAF"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.7
+How do you make each application have its own STAF log file?</font></font></font>
+<p>Use HANDLE logs instead of GLOBAL logs. With HANDLE logs each application
+will get a physically separate log file. HANDLE logs keep separate logs
+for each process even if the processes are using the same log names. The
+downside to HANDLE logs is you need to remember the handles you were using,
+so that you can query them. For example if you log data to a handle log,
+like so
+<p><tt>STAF local log LOG HANDLE LOGNAME testit LEVEL info MESSAGE hello</tt>
+<p>then you can query it like so
+<p><tt>STAF local log QUERY MACHINE &lt;x> HANDLE &lt;y> LOGNAME testit</tt>
+<p>In this request you need to know &lt;x> (which should be your machines
+name) and &lt;y> which you won't know until your program is executed.
+<p>To facilitate HANDLE based logs, it is probably a good idea for programs
+using them to write their name and handle to a GLOBAL log so that you can
+determine which HANDLE logs you need to query.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 8:  AIX STAF environment variables (PATH,"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.8
+AIX STAF environment variables (PATH, LIBPATH, etc.) are not set when opening
+a terminal</font></font></font>
+<p>Edit the file ~/.Xdefaults (create it in your home directory if it does
+not exist) and add the following line:
+<p><tt>*loginShell:true</tt>
+<p>Save the changes and logout/login.&nbsp; Any terminals that you open
+will have /etc/profile executed automatically (so that STAF's InstallShield
+environment variable updates will be read).
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 9:  How to have STAF start automatically"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.9
+How to have STAF start automatically during reboot on Unix platforms</font></font></font>
+<p>Each Unix platform has a different method to start executables automatically
+during reboot.
+<p>On Linux platforms, add the following lines to the /etc/rc.d/rc.local
+(or, if on SuSe, /etc/init.d/boot.local) file (substituting your specific
+locations where STAF and Java are installed):
+<p><tt>PATH=/usr/local/staf/bin:/jdk1.3.1/bin:$PATH; export PATH</tt>
+<br><tt>CLASSPATH=/usr/local/staf/lib/JSTAF.jar:$CLASSPATH; export CLASSPATH</tt>
+<br><tt>STAFCONVDIR=/usr/local/staf/codepage; export STAFCONVDIR</tt>
+<br><tt>LD_LIBRARY_PATH=/usr/local/staf/lib:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH</tt>
+<br><tt>/usr/local/staf/bin/STAFProc &amp;</tt>
+<p>You may get the following error message:
+<p><tt>STAFProcess::processMonitorThread: error opening /dev/tty, errno:
+6</tt>
+<p>But STAFProc does start despite this message, and accepts requests.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="2.10 The InstallShield installer fails, or does"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.10
+The InstallShield installer fails, or does not complete the installation,
+on certain versions of Linux</font></font></font>
+<p>InstallShield Multiplatform only supports a subset of Linux versions.&nbsp;
+You can view which Linux versions are supported at:&nbsp; <a href="http://www.installshield.com/imp/info/specifications.asp">http://www.installshield.com/imp/info/specifications.asp</a>&nbsp;&nbsp;
+You may be able to install STAF via InstallShield on non-supported Linux
+platforms, but errors may be reported during the installation, and you
+will likely need to set the required environment variables manually:
+<p><tt>export PATH=/usr/local/staf/bin:$PATH</tt>
+<br><tt>export LD_LIBRARY_PATH=/usr/local/staf/lib:$LD_LIBRARY_PATH</tt>
+<br><tt>export CLASSPATH=/usr/local/staf/lib/JSTAF.jar:$CLASSPATH</tt>
+<p>If the Linux InstallShield Multiplatform STAF installation fails on
+Linux, you can use the STAF tar.gz installation file as an alternative.&nbsp;
+Please refer to the STAF User's Guide for more information on using the
+tar.gz installation file.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="2.11 27:Error starting JVM using JVMName:"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.11
+27:Error starting JVM using JVMName: STAFJVM1, JVM: java, JVMOptions:&nbsp;
+, RC: 10,&nbsp; OSRC: 2</font></font></font>
+<p>This error can occur when starting STAFProc if Java STAF services (such
+as STAX, Event, EventManager, Cron, Email, etc.) are configured in the
+STAF.cfg file.&nbsp; In order to run Java STAF services, you must have
+a version of Java (1.3.0 or later) installed on the machine.&nbsp; This
+error message will be displayed if STAFProc can't find the "java" binary
+executable.&nbsp; The error message indicates a STAF return code of 10
+(which indicates a base OS error), and the OS error code is 2 (which means
+that the file that the OS attempted to execute could not be found).&nbsp;
+In this case, the JVM: indicates that "java" was the file that could not
+be found.&nbsp; The "java" binary executable must either be in the PATH
+environment variable (so that if you type "java -version" from a shell
+prompt, the executable is found and returns the version number), or you
+can optionally specify the java executable in the STAF.cfg file, such as:
+<p><tt>SERVICE STAX LIBRARY JSTAF EXECUTE C:/STAF/service/STAX.jar OPTION
+JVM=/opt/sunjdk1.4.0/jre/bin/java</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="2.12 Starting STAF as a Windows"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.12
+Starting STAF as a Windows service</font></font></font>
+<p>Problem:
+<br>All supported Windows platforms, when the machine fails and/or is rebooted
+the STAF process is unavailable for remote commands until a user logs in
+and starts it.
+<p>Solution:
+<br>Configure the STAF process as a Windows service that will run automatically
+when the machine boots.
+<p>Environment:
+<br>Newly installed Windows 2000 with SP 3, terminal services and latest
+Microsoft patches. STAF 2.4.4.
+<br>Copies of INSTSRV.EXE and SVRANY.EXE (Windows Resource Kit) copied
+into C:\WINNT\SYSTEM32.
+<br>Users connecting through Remote Desktop Client.
+<p>Create a base STAF service which by default is started automatically
+when the system boots.
+<br>instsrv STAF c:\winnt\system32\srvany.exe
+<p>Use regedit (WARNING: Using Registry Editor incorrectly can cause serious
+problems that may require you to reinstall your operating system. You cannot
+guarantee that problems resulting from the incorrect use of Registry Editor
+can be solved. Use Registry Editor at your own risk.) and find:
+<br>My Computer\HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\STAF
+<p>Create a new string value with the name Description. Set the value to
+Automatically start STAF service.
+<br>Create a new Key with name Parameters. Inside the new key, create a
+new string value with the name Application. Set the value to c:\staf\bin\stafproc.exe.
+<p>Windows 2000 Terminal Server:
+<br>Start > Programs > Administrative Tools > Management Console (Windows
+2000 Terminal Server)
+<br>Services and Applications > Services
+<p>or Windows XP Professional
+<br>Start > Settings > Control Panel > Administrative Tools
+<br>Services
+<p>Locate STAF, right click, properties.
+<br>From the 'Log On' tab and click 'Allow service to interact with desktop'.
+<br>Apply. OK.
+<p>Finally
+<br>net start staf
+<p>Check it is all working from a command prompt.
+<br>staf local service list
+<p>New problem:
+<br>If a user logs on before the STAF process (STAFproc) has initialized,
+it is possible that they still receive the error 'Error registering with
+STAF, RC: 21' even after the service has started.
+<p>Solution:
+<br>Stop and restart the service with due care as others might already
+be using it.
+<br>net stop staf
+<br>net start staf
+<p>New problem:
+<br>STAF should not be started or shutdown with the commands on the start
+menu when STAF is configured as a service.
+<p>Solution:
+<br>The service can be restarted by suitably authorized user from the command
+line with
+<br>net stop staf
+<br>net start staf
+<br>The service can be restarted from the services panel of the management
+console by right clicking and selecting stop and then right clicking and
+selecting start.
+<p>New problem:
+<br>STAF is still started (and fails) when the user who installed it logs
+in.
+<br>Delete STAF from Start > Programs > Startup folder
+<p>
+<hr WIDTH="100%">
+<p><a NAME="2.13 STAF fails to init with Windows Terminal"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.13
+STAF fails to init with Windows Terminal Server</font></font></font>
+<p>Problem:
+<br>When using Windows 2000 Terminal Server and Windows XP remote desktop
+feature with multiple users on a machine, only the user starting the STAF
+process (STAFproc) can execute STAF commands from the command line. Others
+users on the machine receive 'Error registering with STAF, RC: 21' when
+issuing STAF commands.
+<p>Solution:
+<br>See FAQ topic 2.12 "Starting STAF as a Windows Service".
+<p>
+<hr WIDTH="100%">
+<p><a NAME="2.14 STAF ISMP install fails - how do I get debug"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>2.14
+STAF ISMP install fails - how do I get debug information?</font></font></font>
+<p>To generate the STAF ISMP log file, run the ISMP installer with the
+-is:log option:
+<p>STAF-250-setup-linux -is:log /tmp/log.txt
+<p>The /tmp/log.txt file (you can name this anything you want) will have
+details on the installation.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="DEBUGGING"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.
+DEBUGGING</font></font></font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="What to do if you are having a problem with STAF"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.1
+What to do if you are having a problem with STAF or one of its services</font></font></font>
+<p><font color="#000000">If you are having a problem with STAF or one of
+its services, follow these steps to resolve the problem:</font>
+<ol>
+<li>
+<font color="#000000">View the topics listed below to determine if any
+of the topics can help you to resolve the problem</font></li>
+
+<li>
+<font color="#000000">View the <a href="http://sourceforge.net/tracker/?group_id=33142&atid=407381">open
+Bugs</a> to see if the problem has already been reported</font></li>
+
+<li>
+<font color="#000000">If you are not sure if the problem is a STAF bug,
+then post a question to the <a href="http://sourceforge.net/forum/forum.php?forum_id=104046">Help
+forum</a>.</font></li>
+
+<br><font color="#000000">If you are fairly certain that this is a bug
+with STAF or one of its services, then <a href="http://sourceforge.net/tracker/?func=add&group_id=33142&atid=407381">open
+a new Bug</a>.</font></ol>
+
+<hr WIDTH="100%">
+<p><a NAME="Information to inculde when asking questions or"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.2
+Information to include when asking questions or reporting bugs</font></font></font>
+<p><font color="#000000">When you are posting to the Help forum or opening
+a new Bug, the STAF development team will be better able to quickly resolve
+your problem if you supply the following information:</font>
+<ul>
+<li>
+<font color="#000000">The OS platform and version number</font></li>
+
+<li>
+<font color="#000000">The version of STAF that you are running.&nbsp; The
+version is displayed when you start STAFProc ("STAFProc version 2.4.2 initialized").</font></li>
+
+<li>
+<font color="#000000">If you are having a problem with a STAF service,
+include
+the service's version number (this can be obtained by typing "staf local
+&lt;service name> version")</font></li>
+
+<li>
+<font color="#000000">If you can't start STAFProc due to an error in the
+STAF configuration file, include the entire contents of the STAF.cfg file.</font></li>
+
+<li>
+<font color="#000000">If you are having a problem with a Java STAF service,
+include the Java version (this can be obtained by typing "java -version")</font></li>
+
+<li>
+<font color="#000000">If you are having a problem installing STAF, include
+the type of installation where the problem occurs (InstallShield MultiPlatform
+executable, InstallShield MultiPlatform Jar file, GNU zipped tar)</font></li>
+</ul>
+
+<hr WIDTH="100%">
+<p><a NAME="Topic 1:  When attempting to run a process, I"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.3
+When attempting to run a process, it fails with a RC 10</font></font></font>
+<p>Return code 10 means "Base OS Error", and the additional info provided
+in STAFResult is the actual error returned by the operating system. One
+of the most common reasons for getting a Base OS Error is "File Not Found".
+On Windows systems, OS error code 2 means "The system cannot find the file
+specified". On Unix systems, OS error code 2 means "No such file or directory".
+<p>If you receive an OS error code 2, make sure the the executable or script
+file is in the PATH of the machine where it will be executed., or fully
+qualify the COMMAND option on the process request (i.e. /opt/tests/mytest).
+<p>For Windows systems, you can find more information for OS error codes
+by typing "net helpmsg &lt;error code>" (or by typing net help &lt;error
+code>" on Windows 95/98/ME). So, to find more information for OS error
+code 2 on a Windows 2000 system, type
+<p>net helpmsg 2
+<p>For Unix systems, you can find more information for OS error codes from
+include files named errno.h found in directory /usr/include and its subdirectories.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 2:  When attempting to send a STAF request"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.4
+When attempting to send a STAF request to a remote machine, it fails with
+a RC 16</font></font></font>
+<p>Return code of 16 means "No Path To Machine". This means that STAF could
+not talk to the target system, with likely causes being:
+<ul>
+<li>
+An invalid or unreachable machine name was specified</li>
+
+<li>
+STAF is not running on the target system</li>
+
+<li>
+No network interfaces are configured. Make sure that in your STAF.cfg you
+have a "interface tcpip" statement, which enables network communication.
+Specifying a "machine &lt;machine-name>" line only allows local requests.</li>
+
+<li>
+The DNS on one of the machines is not set up correctly.&nbsp; Refer <font color="#000000">to
+"Topic 10:&nbsp; STAF machines can't communicate due to DNS issues".</font></li>
+</ul>
+
+<hr WIDTH="100%">
+<p><a NAME="Topic 3:  When attempting to start STAF, it"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.5
+When attempting to start STAF, it fails with "Error binding server socket,
+rc = 67"</font></font></font>
+<p><font color="#000000">This error can occur on Unix if STAFProc has not
+been shutdown correctly.&nbsp; The error will be displayed when you attempt
+to restart STAFProc.</font>
+<p><font color="#000000">To resolve the problem:</font>
+<ol>
+<li>
+<font color="#000000">Go to the /tmp directory, and delete STAFIPC_STAFProc
+and STAFProc.tmp</font></li>
+
+<li>
+<font color="#000000">Type "ps" or "ps -ea" and determine if there are
+any processes that STAF started which are still running.&nbsp; If there
+are any, type "kill xxx" where xxx is the PID for the process.</font></li>
+
+<li>
+<font color="#000000">Restart STAFProc</font></li>
+</ol>
+<font color="#000000">As a last resort, reboot the machine.</font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 4:  When attempting to start STAF, it fails"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.6
+When attempting to start STAF, it fails with "Error binding server socket,
+rc = 10048"</font></font></font>
+<p><font color="#000000">This indicates that the socket address is already
+in use.&nbsp; This error occurs if STAF attempts to bind a socket to an
+IP address/port that has already been used for an existing socket, or a
+socket that wasn't closed properly, or one that is still in the process
+of closing.</font>
+<p><font color="#000000">You should wait approximately 2-3 minutes for
+TCP/IP to complete the socket close and retry starting STAF.&nbsp; You
+can also try typing "ps" or "ps -ea" and determine if there are any processes
+that STAF started which are still running.&nbsp; If there are any, type
+"kill xxx" where xxx is the PID for the process.</font>
+<p><font color="#000000">Note:&nbsp; Some Solaris systems require a system
+reboot to fix this condition.</font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 5:  When attempting to start a process on"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.7
+When attempting to start a process on&nbsp; a remote machine, it fails
+with a RC 25</font></font></font>
+<p>This error indicates that you have submitted a request from a machine
+which is not authorized to perform the request.&nbsp; To start a process
+on a remote machine, a TRUST level of 5 is required.
+<p>To resolve the problem:
+<ul>
+<li>
+On the remote machine, add a TRUST statement to its STAF.cfg file, giving
+the requesting machine a trust level of 5</li>
+
+<li>
+Shutdown and restart STAF on the remote machine</li>
+</ul>
+
+<hr WIDTH="100%">
+<p><a NAME="Topic 6:  When the STAF InstallShield"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.8
+When the STAF InstallShield MultiPlatform installer is executed, it generates
+a series of dots, but the installer never completes</font></font></font>
+<p>This error can occur on Unix machines when you are telnet'ing into the
+machine remotely.&nbsp; The STAF InstallShield MultiPlatform installer
+is a GUI application, therefore, you must export your DISPLAY from the
+Unix machine to the machine from which you are telnet'ing.
+<p>Most applications will give you an error message if the DISPLAY is not
+correctly exported, but, there is a bug in InstallShield MultiPlatform
+where it does not give you an error message and will just sit there.
+<p>The solution is to Export your DISPLAY, for example:
+<p><tt>export DISPLAY=myHostname.austin.ibm.com:0.0</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 7:  Problems interacting with queues for"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.9
+Interacting with process queues for processes started via the command line</font></font></font>
+<p>When you submit a request to STAF from the command line, a unique handle
+is generated for that request.&nbsp; After the request completes, that
+handle is no longer active in STAFProc.&nbsp; If you were to submit a subsequent
+STAF request from the command line which referenced that handle or was
+dependent upon the continued existence of that handle, your request would
+fail.
+<p>Messages are sent to queues associated with specific handles.&nbsp;
+So, if you register with STAF, and then someone queues you a message, you
+can retrieve it off your handle's queue.&nbsp; The STAF command line utility
+works just like any other STAF application.&nbsp; It registers with STAF,
+performs a request (which is the service request you specify), and then
+unregisters.&nbsp; That last step causes the handle to be deleted.&nbsp;
+Every time your run the STAF command line utility it gets a different handle.&nbsp;
+When the process you started finishes, it tried to send the message to
+the queue of a handle that no longer existed.&nbsp; If you were to do a
+queue list, you would be listing the queue of a completely different handle
+than the one that submitted the "process start" request.
+<p>If you were doing all of this inside a program, then it would have worked
+like you anticipated.&nbsp; From the command line, you can simulate it
+by
+<ol>
+<li>
+Open another window and have it use the delay command to wait for a while,
+for example</li>
+
+<br><tt>&nbsp;&nbsp;&nbsp; STAF local delay delay 300000</tt>
+<li>
+See what handle the other window is using, for example</li>
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <tt>STAF local handle query
+all</tt>
+<br>It should be the lowest numbered handle called "STAF/Client".
+<li>
+Start the process and specify the specific handle to queue the message
+to, for example</li>
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <tt>STAF local process start
+command clock notify onend handle &lt;handle_from_step_2></tt>
+<li>
+Stop the process, as you did previously</li>
+
+<li>
+Check the other window's queue, for example</li>
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <tt>STAF local queue list
+handle &lt;handle_from_step_2></tt></ol>
+Note, when the delay request finishes (after 5 minutes in this case), the
+handle and it's queue will disappear.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 10:  STAF machines can't communicate due"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.10
+STAF machines can't communicate</font></font></font>
+<p>If you are having problems getting two STAF machines to communicate,
+try the following steps on each machine:
+<p>On each machine, run "ping &lt;other-machine hostname>" to determine
+if the machines can communicate.
+<p>On &lt;machine1>, get the output from:
+<p><tt>&nbsp;&nbsp;&nbsp; staf local var resolve string {STAF/Config/Machine}</tt>
+<p>Then, on &lt;machine2>, run:
+<p>&nbsp;&nbsp;&nbsp; <tt>staf &lt;machine1-var> ping ping</tt>
+<p>where &lt;machine1-var> is the output from the "var resolve"
+<p>If the ping does not work (in either direction), then you need to update
+the DNS settings so that the machines can communicate.
+<p>On Windows 2000, to correctly set the DNS:
+<ol>
+<li>
+From the "Start" menu, select "Network and Dialup Connections" and then
+select "Local Area Connection"</li>
+
+<li>
+Then click on "Properties" and select "Internet Protocol (TCP/IP)" and
+click on "Properties"</li>
+
+<li>
+Next, click on "Advanced" and make sure that the field for "DNS suffix
+for this connection:" shows the correct domain name (such as "austin.ibm.com")</li>
+
+<li>
+Another thing to verify is the Network Identification.&nbsp; From the "Start"
+menu, select "Settings" and then "Control Panel"</li>
+
+<li>
+Next, select "System" and then select the "Network Identification" tab</li>
+
+<li>
+Then click on "Properties" and make sure that the "Computer name:" is correct</li>
+
+<li>
+Then click on "More" and make sure that the "Primary DNS suffix of this
+computer shows the correct domain name (such as "austin.ibm.com")</li>
+</ol>
+On Windows XP, to correctly set the DNS:
+<ol>
+<li>
+From the "Start" menu, select "Network Connections" and then select your
+Local Area Connection</li>
+
+<li>
+Then click on "Properties" and select "Internet Protocol (TCP/IP)" and
+click on "Properties"</li>
+
+<li>
+Next, click on "Advanced" and then the "DNS" tab.&nbsp; Make sure that
+the field for "DNS suffix for this connection:" shows the correct domain
+name (such as "austin.ibm.com")</li>
+
+<li>
+The second place to verify is the Computer Name.&nbsp; From the "Start"
+menu, select "Control Panel"</li>
+
+<li>
+Next, select "System" and then select the "Computer Name" tab</li>
+
+<li>
+Then click on "Change" and make sure that the "Computer name:" is correct</li>
+
+<li>
+Then click on "More" and make sure that the "Primary DNS suffix of this
+computer" shows the correct domain name (such as "austin.ibm.com")</li>
+</ol>
+The following paragraph only applies to IBM users of STAF/STAX.&nbsp; If
+you are running a Windows e-business client, and other machines can't ping
+the e-business client, it is likely that the e-business client is running
+"Net Firewall", which disables the ability of other machines to ping the
+e-business client (which also means that STAFProc on other machines will
+not be able to communicate with the e-business client).&nbsp; To detemine
+if the machine is running Net Firewall, open the Network Connection the
+machine is using, and click on "Properties".&nbsp; If "Net Firewall" is
+listed as a component, and it is checked, then the e-business client will
+experience this problem.&nbsp; If you uncheck "Net Firewall" and click
+on OK, other machines will be able to ping the e-business client, and STAFProc
+on other machines will be able to communicate with the e-business client.&nbsp;
+NOTE:&nbsp; DO NOT UNINSTALL NET FIREWALL!&nbsp; The AT&amp;T Net Client
+will not run without Net Firewall, and if Net Firewall is uninstalled,
+you must completely reinstall the AT&amp;T Net Client.
+<p>On Linux, to correctly set the DNS:
+<ol>
+<li>
+Edit the /etc/sysconfig/network file and change the HOSTNAME line to:</li>
+
+<br>&nbsp;&nbsp;&nbsp; <tt>HOSTNAME="pdxsg115.portland.ibm.com"</tt>
+<li>
+and add the line:</li>
+
+<br>&nbsp;&nbsp;&nbsp; <tt>DOMAINNAME="portland.ibm.com"</tt>
+<li>
+reboot the machine</li>
+</ol>
+On HP-UX, to correctly set the DNS:
+<ol>
+<li>
+Edit the /etc/rc.config.d/netconf file and change the HOSTNAME line to:</li>
+
+<br>&nbsp;&nbsp;&nbsp; <tt>HOSTNAME="ex3b.austin.ibm.com"</tt>
+<li>
+and add the line:</li>
+
+<br>&nbsp;&nbsp;&nbsp; <tt>DOMAINNAME="austin.ibm.com"</tt>
+<li>
+reboot the machine</li>
+</ol>
+Certain versions of Linux set up a high level of security access for incoming
+requests on specific ports (including STAF requests, which, by default,
+come in through port 6500).&nbsp; From a Linux machine, if you are able
+to successfully send a "staf ping" to another machine, but the other machine
+cannot do a "staf ping" to the Linux machine (and you have verified that
+the DNS information is set up correctly on both machines), try the following
+(note that this example is for a RedHat 8.0 setup):
+<ol>
+<li>
+Edit the /etc/sysconfig/iptables file and add the following line:</li>
+
+<br>&nbsp;&nbsp; <tt>-A RH-Lokkit-0-50-INPUT -p tcp -m tcp --dport 6500
+--syn -j ACCEPT</tt>
+<li>
+Then execute:</li>
+
+<br>&nbsp;&nbsp;&nbsp; <tt>/etc/rc.d/init.d/iptables restart</tt></ol>
+
+<hr WIDTH="100%">
+<p><a NAME="Topic 11:  STAX Job still shows a process as"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.11
+STAX still shows a process as running, even though it has completed</font></font></font>
+<p>If you are running a STAX Job, and it shows that a process is still
+running, even though the process has actually completed, this is likely
+a DNS problem with either the STAX service machine or the machine where
+the process was executed (where the machine that executed the process is
+unable to find the STAX service machine in order to deliver the process
+completion message).
+<p>Refer <font color="#000000">to "Topic 10:&nbsp; STAF machines can't
+communicate due to DNS issues" to resolve this problem.</font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 12:  RC 2 when starting the STAX Job"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.12
+RC 2 when starting the STAX Job Monitor</font></font></font>
+<p>When starting the STAX Job Monitor, if you get an error message "Error
+registering Job Monitor.&nbsp; Could not register for Job Events&nbsp;
+RC = 2", this means that Event service name specified in the STAX Job Monitor
+Properties was not found on the specified Event machine.&nbsp; In the main
+STAX Job Monitor window, click on File in the Menu bar, and then select
+Properties.&nbsp; Make sure that the Event Service Name is the correct
+Event service name for the specified Event machine.&nbsp; Also make sure
+that the Event service has been installed and configured on the Event service
+machine.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 13:  RC 16 when starting the STAX Job"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.13
+RC 16 when starting the STAX Job Monitor</font></font></font>
+<p>When starting the STAX Job Monitor, if you get an error message "Error
+registering Job Monitor.&nbsp; Could not register for Job Events&nbsp;
+RC = 16", this means that Event service machine specified in the STAX Job
+Monitor Properties was not found.&nbsp; In the main STAX Job Monitor window,
+click on File in the Menu bar, and then select Properties.&nbsp; Make sure
+that the Event Service Machine is the correct Event service machine.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 14:  RC 2 when submitting new jobs through"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.14
+RC 2 when submitting new jobs through the STAX Job Monitor</font></font></font>
+<p>When starting a new job through the STAX Job Monitor, if you get an
+error message "STAX Error.&nbsp; RC:2&nbsp; Error starting Job Monitor
+&lt;STAX service name>", this means that STAX service name specified in
+the STAX Job Monitor Properties was not found on the specified STAX service
+machine.&nbsp; The "&lt;STAX service name>" in the error message is the
+STAX service name which would not be found.&nbsp; In the main STAX Job
+Monitor window, click on File in the Menu bar, and then select Properties.&nbsp;
+Make sure that the STAX Service Name is the correct STAX service name for
+the specified STAX service machine.&nbsp; Also make sure that the STAX
+service has been installed and configured on the STAX service machine.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 15:  RC 16 when submitting new jobs"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.15
+RC 16 when submitting new jobs through the STAX Job Monitor</font></font></font>
+<p>When starting a new job through the STAX Job Monitor, if you get an
+error message "STAX Error.&nbsp; RC:16&nbsp; Error starting Job Monitor",
+this means that STAX service machine specified in the STAX Job Monitor
+Properties was not found.&nbsp; In the main STAX Job Monitor window, click
+on File in the Menu bar, and then select Properties.&nbsp; Make sure that
+the STAX Service Machine is the correct STAX service machine.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 16:  Process started successfully by STAF,"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.16
+Process started successfully by STAF, but the process can't log its output
+to an AFS directory</font></font></font>
+<p>When attempting to start a Process on a remote machine so that the output
+can be logged to an AFS directory, STAFProc needs to be started in an authenticated
+"session" in order to be able to store the log files in AFS-space.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 17:  STAF startup fails with 38:Illegal"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.17
+STAF startup fails with 38:Illegal access to class: com.ibm.staf.service....</font></font></font>
+<p>This error occurs if you attempt to register a Java service that has
+not been declared public in its class definition.&nbsp; Every STAF Java
+service's class definition should look like:
+<p><tt>&nbsp;&nbsp;&nbsp; public class CronService implements STAFServiceInterfaceLevel3</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 18:  Text files not converted correctly"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.18
+Text files not converted correctly between Windows and Unix</font></font></font>
+<p>Good news!&nbsp; This has been resolved in STAF 2.5.0.&nbsp; See the
+"File System (FS) Service" section of the STAF User's Guide for more information.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 19:  How to have multiple programs use a"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.19
+How to have multiple programs use a static handle to access variables and
+log data</font></font></font>
+<p>If you have a program (PROG-A) that creates a static handle, and you
+want to start another program&nbsp; (PROG-B) using the STAF start command,
+such that PROG-B can create variables and a log using that same handle.
+The problem is that each program has to know the number of the static handle
+in order to use it.&nbsp; You can do this via an environment variable.&nbsp;
+So, from PROG-A, you could do something like
+<p><tt>&nbsp;&nbsp;&nbsp; request = 'start command cmd.exe parms "/c PROG-B"
+env</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; STAFHANDLE='staticHandle</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; call STAFSubmit 'local', 'process', request</tt>
+<p>Then, PROG-B can pull the static handle from the environment.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 20:  If I edit a STAF log, it appears to"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.20
+If I edit a STAF log, it appears to be in some weird format</font></font></font>
+<p>This is the expected format for STAF logs (they are binary files, not
+text files).&nbsp; As a general rule you should use the Log service itself
+to look at the logs.&nbsp; For example:
+<p><tt>&nbsp;&nbsp;&nbsp; STAF local log query global logname stresstst</tt>
+<p>You can redirect that to another file, which will be in text format,
+if you want.&nbsp; You can also use the FmtLog utility (shipped with STAF)
+which will read a log file and format and write the data to an output file
+in a readable format.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 21:  How do I turn off STAF's user"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.21
+STAF's user registration fails every time STAF is started</font></font></font>
+<p>During the STAF installation, if you selected to register STAF, everytime
+STAF starts it will attempt to register the user information with a machine
+that is internal to IBM.&nbsp; Once this registration is successful, STAF
+will&nbsp; no longer try to register.&nbsp; The registration will fail
+for all non-IBM users, and will attempt to register (and fail) each time
+STAF is started.&nbsp; You can either choose to let it fail forever, or
+delete the STAFReg.inf file (in the root STAF directory) and STAF will
+stop trying to register.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 22:  When running STAFInst on Solaris, it"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.22
+When running STAFInst on Solaris, it fails with "test: unknown operator
+-ef"</font></font></font>
+<p>If you receive this error message when running the command "./STAFInst"
+on Solaris, this indicates that the current Solaris shell does not support
+certain
+<br>"test" commands.&nbsp; The solution for this problem is to enter "bash"
+at your shell prompt prior to entering "./STAFInst".
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 23:  Running java -jar STAXMon.jar results"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.23
+Running "java -jar STAXMon.jar" results in java.util.zip.ZipException</font></font></font>
+<p>To run the command "java -jar STAXMon.jar", the STAXMon.jar file must
+be in the current directory (otherwise you will get the ZipException).&nbsp;
+If it is not in the current directory, then you need to fully qualify the
+jar file name: "java -jar c:/staf/services/STAXMon.jar".
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 24:  FS service COPY FILE fails when no"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.24
+FS service COPY FILE fails when no TOMACHINE is specified</font></font></font>
+<p>From machine m1 this command fails:
+<p><tt>&nbsp;&nbsp;&nbsp; c:\>staf m2 FS copy file c:/staf/data/log/global/temp.log
+tofile c:/staf/data/log/global/archivetemp.log</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; Error submitting request, RC: 17</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; Additional info: c:/staf/data/log/global/archivetemp.log</tt>
+<p>From machine m1 this command works:
+<p><tt>&nbsp;&nbsp;&nbsp; c:\>staf m2 FS copy file c:/staf/data/log/global/temp.log
+tofile c:/staf/data/log/global/archivetemp.log tomachine m2</tt>
+<p>This is working as expected/designed.&nbsp; The default for the TOMACHINE
+option is the system that originated the request.&nbsp; So, if 'm1' does
+not actually have a c:/staf/data/log/global directory, then STAF will not
+be able to create the archivetemp.log directory.&nbsp; Once you add TOMACHINE
+m2, it is obvious you were trying to copy a file "locally" on the remote
+system, which does require the use of the TOMACHINE option.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 25:  Can't get Help on errors when STAF is"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.25
+Can't get Help on errors when STAF is not running</font></font></font>
+<p>staf local help error &lt;error number> doesn't work if STAF is not
+running on your workstation.&nbsp; Users can access help messages offline
+(when STAF isn't running) by viewing the STAF documentation.&nbsp; STAF
+documentation is installed on the local system (if a typical install was
+done).&nbsp; The "STAF API Return Code Reference" contains a quick reference
+to the STAF return codes and is available at staf/docs/STAFRC.htm or you
+can view it on the STAF SourceForge website at http://staf.sourceforge.net/v2.4.2/STAFRC.htm.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 26:  STAX Job Monitor window doesn't have a"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.26
+STAX Job Monitor window doesn't have a close confirmation</font></font></font>
+<p>Closing the STAX Job Monitor window should never terminate your job.&nbsp;
+Doing that just closes that view of the job; the STAX job should still
+be running.&nbsp; In the main STAX Monitor window (which shows the table
+of currently running STAX jobs), your job still should be there, and you
+should be able to right click on it and select "Start Monitoring", and
+you should see a new STAX Job Monitor window for your STAX job.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 28:  Why there are more STAF processes on"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.27
+Why are there are more STAF processes on Linux?</font></font></font>
+<p>If you issue the following command
+<p><tt>&nbsp;&nbsp;&nbsp; ps -ef | grep -i staf</tt>
+<p>You will see more STAFProc processes (typically 10 or more) on Linux
+than other platforms (which there's only one).
+<p>This is because the Linux base operating system doesn't really have
+threads.&nbsp; Threads are simulated on Linux using processes, so each
+thread shows up as a process.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 29:  The Echo, Ping, and Delay services do"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.28
+The Echo, Ping, and Delay services do not provide help</font></font></font>
+<p>The simple STAF services (Echo, Ping, Delay) all have just one option
+(the same name as the service) and have
+<br>never provided a HELP option.&nbsp; The syntax for these services is
+documented in the STAF User's Guide and the
+<br>Service Command Reference at http://staf.sourceforge.net/current/STAFCMDS.htm.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 30:  HP-UX SIGABRT after a STAF process has"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.29
+HP-UX SIGABRT after a STAF process has completed</font></font></font>
+<p>If you see the following error on an HP-UX machine after a STAF process
+has completed:
+<p>Received signal 6 (SIGABRT)
+<br>/usr/lib/dld.sl: Call to __sigenable() failed
+<br>/usr/lib/dld.sl: Not owner
+<br>Received signal 6 (SIGABRT)
+<br>/usr/lib/dld.sl: Unresolved symbol: __h_errno__Fv (code)&nbsp; from
+<br>/usr/local/staf/l
+<br>ib/libSTAF.sl
+<br>Received signal 6 (SIGABRT)
+<br>/usr/lib/dld.sl: Call to __sigenable() failed
+<br>/usr/lib/dld.sl: Not owner
+<br>Received signal 6 (SIGABRT)
+<br>/usr/lib/dld.sl: Unresolved symbol: __h_errno__Fv (code)&nbsp; from
+<br>/usr/local/staf/l
+<p>This is likely due to an incorrect hostname.&nbsp; Verify that the DNS
+is setup correctly an all machines (Refer <font color="#000000">to "Topic
+10:&nbsp; STAF machines can't communicate due to DNS issues"</font>).
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 31:  Error initializing service, RESPOOL,"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.30
+Error initializing service, RESPOOL, RC: 4008</font></font></font>
+<p>The ResPool RC 4008 means "The directory specified by the DIRECTORY
+parameter when registering the service or the default directory could not
+be created."
+<p>It is likely that STAF was installed as another userid, and you are
+now trying to use the ResPool as a different userid that doesn't have write
+access to the STAF directory.
+<p>
+<hr WIDTH="100%">
+<br><a NAME="Topic 32:  Unix error message:"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.31
+Unix error message: "STAFProcessManager::processMonitorThread: Parent could
+not set child's pgid: 13"</font></font></font>
+<p>Periodically on Unix systems you may see this error message.&nbsp; You
+can ignore these messages (you should not encounter any problems because
+of the messages).
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 33:  Email service SEND request RC 7 when"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.32
+Email service SEND request results in RC 7 when quotes or double quotes
+are in the message</font></font></font>
+<p>If the message request had embedded quotes or double quotes, it may
+cause the STAF command parsing to fail (resulting in the RC 7).&nbsp; Here
+is a portion of a STAX job that shows how to get this working:
+<p><tt>&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; from com.ibm.staf import STAFUtil</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; emailmessage = STAFUtil.wrapData(emailmessage)</tt>
+<br><tt>&nbsp; &lt;/script></tt>
+<p><tt>&nbsp; &lt;stafcmd></tt>
+<br><tt>&nbsp;&nbsp; &lt;location> 'local' &lt;/location></tt>
+<br><tt>&nbsp;&nbsp; &lt;service> 'email' &lt;/service></tt>
+<br><tt>&nbsp;&nbsp; &lt;request> 'send to user@us.ibm.com message %s"'
+%(emailmessage)&lt;/request></tt>
+<br><tt>&nbsp; &lt;/stafcmd></tt>
+<p><tt>&nbsp; &lt;if expr="RC !=0"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;message>"RC: %s result: %s" % (RC, STAFResult)&lt;/message></tt>
+<br><tt>&nbsp; &lt;/if></tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 34:  Children processes are not killed on"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.33
+Child processes are not killed on Windows</font></font></font>
+<p>If you terminate a STAX job (or send a Process Stop request to a running
+STAF process) on Windows, any child processes that the process has created
+will not be terminated.&nbsp; This is a limitation on Windows platforms.&nbsp;
+To resolve this problem you can specify the option: "STOPUSING WM_CLOSE"
+on the PROCESS START request, or specify the &lt;stopusing>'WM_CLOSE'&lt;/stopusing>
+element for a STAX &lt;process> element.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="Topic 35:  JAR Archive failed security check"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.34
+"JAR Archive failed security check corrupt JAR file" message after downloading
+a STAF jar file</font></font></font>
+<p>Certain browsers may report this problem when downloading jar files.&nbsp;
+To resolve the problem, "shift-click" on the link to download the jar file.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.35 RC=10 and STAFResult=8 when starting a STAX"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.35
+RC=10 and STAFResult=8 when starting a Java process in a STAX job</font></font></font>
+<p>Certain Unix Java versions will contain a /bin/java file that is actually
+a soft link to a wrapper shell script file, rather than a binary executable
+file.&nbsp; If you try to start a Java process in a STAX job:
+<p>&nbsp;&nbsp;&nbsp;&nbsp; <font face="Courier New,Courier">&lt;command>'java'&lt;/command></font>
+<p>the result will be RC=10 and STAFResult=8.&nbsp; The Operating System
+return code 8 indicates "Exec format error".&nbsp; To resolve this problem,
+specify the 'shell' attribute:
+<p>&nbsp;&nbsp;&nbsp; <font face="Courier New,Courier">&lt;command mode="'shell'">'java
+-version'&lt;/command></font>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.36 Changes to imported Python module not picked up in STAX job"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.36
+Changes to imported Python module not picked up in STAX job</font></font></font>
+<p>Use the built-in Python "reload" function if you want to pick up changes
+made to imported Python modules without having to unregister and register
+the STAX service (either by stopping STAF and restarting it or by using
+the SERVICE service to dynamically delete and add the STAX service). Note
+that there is a "gotcha" in that reload may not impact "from" imports.
+Reloading allows you to test Python module changes immediately after reloads,
+without having to unregister the STAX service. Here's more detailed information
+about using the built-in Python "reload" function.
+<p>One of the most common questions Python beginners seem to ask when using
+modules is: why won't my imports keep working? The first import works fine,
+but later imports in STAX jobs seem to have no effect. They're not suppposed
+to, and here's why:
+<ul>
+<li>
+Modules are loaded and run on the first <b>import</b> or <b>from</b></li>
+
+<li>
+Running a module's code creates its top-level names.</li>
+
+<li>
+Later <b>import</b> and <b>from</b> operations fetch an already loaded
+module.</li>
+</ul>
+Python loads, compiles, and runs code in a module file only on the <i>first</i>
+import, on purpose; since this is an expensive operation. So, even across
+STAX jobs, a Python module's code is run only once per STAX service by
+default. But, sometimes you really want a module's code to be rerun.
+<p>To force a module's code to be reloaded and rerun, you need to ask Python
+explicitly to do so, by calling the <b>reload</b> built-in function. Using
+<b>reload</b>
+can make your STAX jobs more dynamic. In a nutshell:
+<ul>
+<li>
+Imports load and run a module's code only the first time.</li>
+
+<li>
+Later imports use the alrady loaded module object without rerunning code.</li>
+
+<li>
+The reload function forces an already loaded module's code to be reloaded
+and rerun.</li>
+</ul>
+Unlike <b>import</b> and <b>from</b>:
+<ul>
+<li>
+<b>reload</b> is a built-in function in Python, not a statement.</li>
+
+<li>
+<b>reload</b> is passed an existing module object, not a name.</li>
+</ul>
+Because <b>reload</b> expects an object, a module must have been previously
+imported successfully before you can reload it. Reloading looks like this:
+<pre>&nbsp; <b>import module</b>&nbsp;&nbsp;&nbsp;&nbsp; # initial import
+&nbsp; #&nbsp; Use module.attributes
+&nbsp; ...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # now, go change the module file
+&nbsp; ...
+&nbsp; <b>reload(module)</b>&nbsp;&nbsp;&nbsp; # get updated exports
+&nbsp; # Use module.attributes</pre>
+You typically import a module, then change its source code in a text editor
+and reload. When you call <b>reload</b>, Python rereads the module file's
+source code and reruns its top-level statements and changes a module object
+<i>in-place</i>,
+so every referenece to a module object is automatically effected by a <b>reload</b>.
+<p>Note that there is an important "gotcha" in that reload may not impact
+<b>from</b>
+imports. In fact, the <b>from</b> statement is the source of all sorts
+of gotchas in Python. Because <b>from</b> copies (assigns) names when run,
+there's no link back to the module where the names came from. Names imported
+with <b>from</b> simply become references to objects, which happen to have
+been referenced by the same names in the importee when the
+<b>from</b>
+ran. Because of this behavior, reloading the importee has no effect on
+clients that use <b>from</b>; the client's names still reference the objects
+fetched with <b>from</b>, even though names in the original module have
+been reset. For example:
+<pre>&nbsp; from module import X&nbsp;&nbsp;&nbsp;&nbsp; # X may not reflect any module reloads!
+&nbsp; ...
+&nbsp; reload(module)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # changes module, not my names
+&nbsp; X&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # still references old object</pre>
+The solution to this is: Don't do it that way. To make reloads more effective,
+use import and name qualification, instead of <b>from</b>. Because qualifications
+always
+go back to the module, they will find the new bindings of module names
+after calling <b>reload</b>:
+<pre>&nbsp; import module&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # get module, not names
+&nbsp; ...
+&nbsp; reload(module)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # changes module in-place
+&nbsp; module.X&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # get current X; reflects module reloads</pre>
+So, let's say you have a Python file, changer.py, in directory /usr/mypyfuns
+that contains a function called getValue. For example, say changer.py looks
+like:
+<pre>value = 'First value'
+
+def getValue():
+&nbsp;&nbsp;&nbsp; return value</pre>
+Here's an example of a STAX job that tests reloading function getValue
+from module changer in /usr/mypyfuns. If you run this job, even after editing
+changer.py so that value is assigned some other value, you'll get the updated
+value.
+<pre>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?>&nbsp;
+&lt;!DOCTYPE stax SYSTEM "stax.dtd">&nbsp;
+
+&lt;!--&nbsp; Test reloading Python modules-->
+
+&lt;stax>
+
+&nbsp; &lt;defaultcall function="TestReload"/>&nbsp;
+
+&nbsp; &lt;script>
+&nbsp;&nbsp;&nbsp; myPythonDir = '/usr/mypyfuns'
+
+&nbsp;&nbsp;&nbsp; import sys
+&nbsp;&nbsp;&nbsp; pythonpath = sys.path
+
+&nbsp;&nbsp;&nbsp; # Append myPythonDir to sys.path if not already present
+&nbsp;&nbsp;&nbsp; if myPythonDir not in pythonpath:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sys.path.append(myPythonDir)
+
+&nbsp;&nbsp;&nbsp; # Import
+&nbsp;&nbsp;&nbsp; import changer
+
+&nbsp;&nbsp;&nbsp; # Force new code to load/run
+&nbsp;&nbsp;&nbsp; reload(changer)
+&nbsp; &lt;/script>
+
+&nbsp; &lt;function name="TestReload">
+&nbsp;&nbsp;&nbsp; &lt;message>'changer.getValue()=%s' % changer.getValue()&lt;/message>
+&nbsp; &lt;/function>&nbsp;
+
+&lt;/stax></pre>
+See Python documentation for more information about module reloads.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.37 Does the HTTP Service retain session"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.37
+Does the HTTP Service retain session information across multiple requests?</font></font></font>
+<p>The HTTP service is simply a wrapper around some very simple Java code
+which creates an&nbsp; HttpURLConnection to the specified URL.&nbsp; For
+the HTTP methods GET, HEAD, OPTIONS, DELETE, and TRACE it simply makes
+the appropriate connection and returns responseCode and responseMessage,
+and creates an inputStream from the connection and reads from it.&nbsp;
+All of this information is then used to create the STAF RC and Result Buffer.&nbsp;
+For POST and PUT methods, the connection is made and an OutputStream is
+created for the connection.&nbsp; The value of the CONTENT parameter is
+then written to the output stream.&nbsp; The rest of the processing occurs
+as for the "retrieval" HTTP methods above.&nbsp; So, no state information
+is kept between requests.&nbsp; Each request creates a new HttpURLConnection.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.38 Unix error message: STAFProcessManager::processMonitorThread: Could not start process (execve): 8"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.38
+Unix error message: STAFProcessManager::processMonitorThread: Could not
+start process (execve): 8</font></font></font>
+<p>If you get this error message when trying to start a process on a Unix
+system, the 8 in the error message is the errno that is being set by the
+operating system. For example, an errno of 8 on a Solaris 5.7 system, according
+to the /usr/include/sys/errno.h file, means "Exec format error". This indicates
+that there is a problem with the executable you specified in the process
+start command. If you specified a shell script, check to see if it is missing
+#! on the first line. Check if you can execute the same command (and parameters,
+if specified) without involving STAF.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.39 Problems accessing a Java service, such as RC=6"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.39
+Problems accessing a Java service, such as RC=6</font></font></font>
+<p>If you are having a problem accessing a Java service, such as getting
+an RC 6 for any request you make to a Java service, the Java service's
+JVM may have encountered an error or may have been killed. Check the Java
+service's JVM log to see if any errors were logged. The JVM logs are stored
+in the {STAF/Config/STAFRoot}/data/JSTAF/&lt;JVMName> directory on the
+system where the Java service is registered. The current JVM log is named
+JVMLog.1.
+<p>If the JVM log contains an OutOfMemory error, any Java services using
+this JVM will have to be removed and added (registered) in order to start
+accepting requests. You may want to look at increasing the JVM's maximum
+heap size as the Java service(s) using this JVM may require more memory
+than can be allocated. Refer to the STAF User's Guide, section "4.4.3 JSTAF
+service proxy library", for more information on how to do this.
+<p>If the JVM was killed, there won't be errors regarding this in the JVM
+log, but the following error is written to the STAFProc window when a request
+is made to a Java service whose java executable has died:
+<pre>In JSTAF.STAFServiceAcceptRequest:&nbsp;
+Caught STAFException&nbsp;
+Name : STAFConnectionConnectException&nbsp;
+Location : d:\dev\sf\src\staf\stafif\win32\STAFLocalConnection.cpp(162)&nbsp;
+Text : OpenProcess2&nbsp;
+Error code: 87</pre>
+If the JVM was killed, any Java services using this JVM will have to be
+removed and added (registered) in order to start accepting requests.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.40 On some Unix platforms (such as Solaris),"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.40
+On some Unix platforms (such as Solaris), exiting the STAFProc terminal
+causes STAF to terminate</font></font></font>
+<p>For example, if you have a script such as:
+<p><tt>&nbsp;&nbsp; PATH=/usr/local/staf/bin:/usr/local/java/bin:$PATH</tt>
+<br><tt>&nbsp;&nbsp; export PATH</tt>
+<br><tt>&nbsp;&nbsp; CLASSPATH=/usr/local/staf/lib:/usr/local/staf/lib/JSTAF.jar:$CLASSPATH</tt>
+<br><tt>&nbsp;&nbsp; export CLASSPATH</tt>
+<br><tt>&nbsp;&nbsp; STAFCONVDIR=/usr/local/staf/codepage</tt>
+<br><tt>&nbsp;&nbsp; export STAFCONVDIR</tt>
+<br><tt>&nbsp;&nbsp; LD_LIBRARY_PATH=/usr/local/staf/lib:$LD_LIBRARY_PATH</tt>
+<br><tt>&nbsp;&nbsp; export LD_LIBRARY_PATH</tt>
+<p><tt>&nbsp;&nbsp; /usr/local/staf/bin/STAFProc &amp;</tt>
+<p>STAF will start fine if you log in and exec this script, but when you
+log out, STAF terminates.
+<p>To resolve this you should change the last line in the script to:
+<p><tt>&nbsp;&nbsp; nohup /usr/local/staf/bin/STAFProc &amp;</tt>
+<p># man nohup
+<p>NAME
+<br>&nbsp;&nbsp;&nbsp;&nbsp; nohup - run a command immune to hangups
+<p>SYNOPSIS
+<br>&nbsp;&nbsp;&nbsp;&nbsp; /usr/bin/nohup command [ argument ...]
+<br>&nbsp;&nbsp;&nbsp;&nbsp; /usr/xpg4/bin/nohup command [ argument ...]
+<p>DESCRIPTION
+<br>&nbsp;&nbsp;&nbsp;&nbsp; The nohup utility invokes the named command
+with&nbsp; the&nbsp; argu-
+<br>&nbsp;&nbsp;&nbsp;&nbsp; ments supplied.&nbsp; When the command is
+invoked, nohup arranges
+<br>&nbsp;&nbsp;&nbsp;&nbsp; for the SIGHUP signal to be ignored by the
+process.
+<p>&nbsp;&nbsp;&nbsp;&nbsp; The nohup utility can be used when it is known
+that&nbsp; command
+<br>&nbsp;&nbsp;&nbsp;&nbsp; will take a long time to run and the user
+wants to logout of
+<br>&nbsp;&nbsp;&nbsp;&nbsp; the terminal; when a shell exits, the system
+sends its chil-
+<br>&nbsp;&nbsp;&nbsp;&nbsp; dren&nbsp; SIGHUP&nbsp; signals,&nbsp; which&nbsp;
+by&nbsp; default&nbsp; cause them to be
+<br>&nbsp;&nbsp;&nbsp;&nbsp; killed.&nbsp; All stopped,&nbsp; running,&nbsp;
+and&nbsp; background&nbsp; jobs&nbsp; will
+<br>&nbsp;&nbsp;&nbsp;&nbsp; ignore&nbsp; SIGHUP&nbsp; and continue running,
+if their invocation is
+<br>&nbsp;&nbsp;&nbsp;&nbsp; preceded by the nohup command or if the process
+programmati-
+<br>&nbsp;&nbsp;&nbsp;&nbsp; cally has chosen to ignore SIGHUP.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.41 How do you access system date and time in"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.41
+How do you access system date and time in STAX?</font></font></font>
+<p>You can either use the python libraries or the java libraries.&nbsp;
+Here is a STAX job which shows both approaches:
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt>
+<p><tt>&lt;stax></tt>
+<p><tt>&nbsp; &lt;defaultcall function="test"/></tt>
+<p><tt>&nbsp; &lt;function name="test"></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;!-- get the python date --></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from time import localtime,
+strftime</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; currenttime = strftime("%a,
+%d %b %Y %H:%M:%S", localtime())</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/script></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Python time: %s' % currenttime&lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;!-- get the java date --></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from java.util import
+Calendar, Date</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from java.text import
+SimpleDateFormat</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; formatter = SimpleDateFormat("yyyy.MM.dd
+G 'at' hh:mm:ss a zzz")</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; currentTimestamp = Date()</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dateString = formatter.format(currentTimestamp)</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/script></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Java time: %s' % dateString&lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<p><tt>&nbsp; &lt;/function></tt>
+<p><tt>&lt;/stax></tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.42 Are there any conflict or efficiency concerns"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.42
+Are there any conflict or efficiency concerns with using STAX &lt;import>
+when doing nested file imports?</font></font></font>
+<p>Question: If I have a situation where file A imports files B and C,
+and files B and C both import file D is that going to cause any sort of
+conflict when a call is made to a function in file D?
+<p>Answer: No.
+<p>Second: If file A imports file B and file B imports file C, does file
+C get re-imported every time the function in file B is called?&nbsp; If
+so is there any potential conflict there, and how much will this impact
+overall efficiency?
+<p>Answer: No, functions in file C do not get re-imported every time the
+function in file B is called.&nbsp; However, we should point out that file
+C will, in fact, be reimported every time.&nbsp; Now, none of the functions
+in it will get imported, but the file will be retrieved and parsed each
+time you try to import something from it.&nbsp; Depending on how big this
+file is, and how often you are calling the function which imports it, you
+might either set a STAF variable (with the job number somewhere in it)
+that you can retrieve across function calls, or have the importing function
+use "global" scope and set a STAX variable that indicates the import has
+already been done.
+<p>You can see this for yourself if you'd like by looinkg at STAXResult
+after each &lt;import> element.&nbsp; In the STAX User's Guide, in the
+section that describes the &lt;import> element, it says:
+<p>"After executing an import element, STAXResult will be set to a list
+containing:
+<p>- STAXResult[0]: Either None or a list containing a STAXImportError
+object and a text string with details about the error.
+<br>- STAXResult[1]: A list of the successfully imported functions that
+were requested to be imported.
+<br>- STAXResult[2]: A list of the successfully imported functions that
+were required by other functions.
+<br>- STAXResult[3]: A list of the functions that were requested to be
+imported but already existed (so they were not imported).
+<br>- STAXResult[4]: A list of the functions that were required by other
+functions but already existed (so they were not imported).
+<br>- STAXResult[5]: A list of the functions that were not requested to
+be imported and were not required by other functions.
+<br>- STAXResult[6]: A list of functions requested to be imported that
+were not found."
+<p>Here are some STAX jobs that demonstrate this:
+<p>Here is the contents of D:/dev/src/stax/A.xml:
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt>
+<p><tt>&lt;stax></tt>
+<br><tt>&nbsp; &lt;defaultcall function="FunctionA"/></tt>
+<p><tt>&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; machName = 'lucas'</tt>
+<br><tt>&nbsp; &lt;/script></tt>
+<p><tt>&nbsp; &lt;function name="FunctionA"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Running FunctionA'&lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import machine="machName" file="'D:/dev/src/stax/B.xml'"
+mode="'error'"/></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'After import B.xml:\n%s\n%s\n%s\n%s\n%s\n%s\n%s'
+% \</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (STAXResult[0], STAXResult[1],
+STAXResult[2], STAXResult[3], STAXResult[4],</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STAXResult[5],
+STAXResult[6])</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;call function="'FunctionB'"/></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;call function="'FunctionB'"/></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;call function="'FunctionB'"/></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp; &lt;/function></tt>
+<p><tt>&lt;/stax></tt>
+<p>Here is the contents of D:/dev/src/stax/B.xml:
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt>
+<p><tt>&lt;stax></tt>
+<p><tt>&nbsp; &lt;function name="FunctionB"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Running FunctionB'&lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import machine="machName" file="'D:/dev/src/stax/C.xml'"
+mode="'error'"/></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'After import C.xml:\n%s\n%s\n%s\n%s\n%s\n%s\n%s'
+% \</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (STAXResult[0], STAXResult[1],
+STAXResult[2], STAXResult[3], STAXResult[4],</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STAXResult[5],
+STAXResult[6])</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp; &lt;/function></tt>
+<p><tt>&lt;/stax></tt>
+<p>Here is the contents of D:/dev/src/stax/C.xml:
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt>
+<p><tt>&lt;stax></tt>
+<p><tt>&nbsp; &lt;function name="FunctionC"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Running FunctionC'&lt;/message></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp; &lt;/function></tt>
+<p><tt>&lt;/stax></tt>
+<p>Here are the results that were logged.&nbsp; As you can see, the second
+and third time that FunctionB was called, the STAXResult after
+<br>importing C.xml in FunctionB shows 'FunctionC' showing up in STAXResult[3]
+instead of STAXResult[1].
+<p>STAXResult[1] is a list of the successfully imported functions that
+were requested to be imported.
+<br>STAXResult[3]: A list of the functions that were requested to be imported
+but already existed (so they were not imported).
+<p><tt>D:\>staf local log query machine lucas logname STAX_Job_11_User</tt>
+<br><tt>Response</tt>
+<br><tt>--------</tt>
+<br><tt>20030319-18:52:10|lucas|189|STAX/Job/11|Info|Running FunctionA</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|After import B.xml:</tt>
+<br><tt>None</tt>
+<br><tt>['FunctionB']</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|Running FunctionB</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|After import C.xml:</tt>
+<br><tt>None</tt>
+<br><tt>['FunctionC']</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|Running FunctionB</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|After import C.xml:</tt>
+<br><tt>None</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>['FunctionC']</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|Running FunctionB</tt>
+<br><tt>20030319-18:52:11|lucas|189|STAX/Job/11|Info|After import C.xml:</tt>
+<br><tt>None</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>['FunctionC']</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<br><tt>[]</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.43 Can you use the <stopusing> element in a STAX"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.43
+Can you use the &lt;stopusing> element in a STAX job that runs on both
+Windows and Unix?</font></font></font>
+<p>Yes.&nbsp; You can first determine whether the machine is Windows or
+non-Windows, set a variable to the STOPUSING option that you want to use
+on that operating system, and then use that variable in the &lt;stopusing>
+element.&nbsp; Here is a sample STAX job:
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt>
+<p><tt>&lt;stax></tt>
+<p><tt>&nbsp; &lt;defaultcall function="test"/></tt>
+<p><tt>&nbsp; &lt;function name="test"></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stafcmd></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;location>'local'&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;service>'var'&lt;/service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;request>'resolve string
+{STAF/Config/OS/Name}'&lt;/request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/stafcmd></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; import re</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; osname = STAFResult</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/script></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;if expr='re.search("^win", osname.lower())
+!= None'></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script>stopusing
+= 'WM_CLOSE'&lt;/script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;else></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script>stopusing
+= 'SIGKILLALL'&lt;/script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/else></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/if></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;process></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;location>'local'&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;command>'java'&lt;/command></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stopusing>stopusing&lt;/stopusing></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/process></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<p><tt>&nbsp; &lt;/function></tt>
+<p><tt>&lt;/stax></tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.44 How do I find out more information about"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.44
+How do I find out more information about Python?</font></font></font>
+<p>Main Python doc page:
+<br>http://www.python.org/doc/
+<p>Library reference:
+<br>http://www.python.org/doc/current/lib/lib.html
+<p>Language reference:
+<br>http://www.python.org/doc/current/ref/ref.html
+<p>Info on re:
+<br>http://www.python.org/doc/current/lib/module-re.html
+<p>Info on import:
+<br>http://www.python.org/doc/current/ref/import.html
+<p>Python book reviews:
+<br>http://www.awaretek.com/book.html
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.45 In recent versions of STAF, I no longer see"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.45
+In recent versions of STAF, I no longer see any Java service output in
+the STAFProc console</font></font></font>
+<p>The console output was redirected because in STAF 2.4.4 we changed the
+way JVMs for STAF Java services (such as STAX) output all of their stdout/stderr
+data (including the output of &lt;script>print...&lt;/script> since that
+is being written to the JVM's stdout). All of the output that was formerly
+in the console output should now be in the JVMLog file. The file is located
+at:
+<p>&nbsp;&nbsp;<tt>&nbsp; {STAFRoot}/data/JSTAF/&lt;JVM Name, default:
+STAFJVM1>/JVMLog.x</tt>
+<p>where x is a number.
+<p>If you look at your c:/staf/data/JSTAF/STAFJVM1/JVMLog.1 file, you should
+see something like:
+<p><tt>&nbsp;&nbsp;&nbsp; ******************************************************************************</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; *** 20030418-14:40:33 - Start of Log for JVMName:
+STAFJVM1</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; *** JVM Executable: java</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; *** JVM Options : none</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; ******************************************************************************</tt>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.46 When importing a STAX function from another"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.46
+When importing a STAX function from another XML file, are the global &lt;script>s
+in the XML file executed?</font></font></font>
+<p>Global &lt;script> elements defined in an XML file containing only functions
+intended to be imported by the &lt;import> element, are not recognized
+in the body of the functions.
+<br>In the imported xml file, only the &lt;script> elements contained within
+the imported &lt;function> will be executed.
+<p>Just to give a little history, in the early stages of STAX's life, &lt;function>s
+were not allowed to take arguments (and the &lt;import> element didn't
+exist either). Any data that you wanted to "pass into" a function had to
+be previously set in existing variables. To that end, it was necessary
+to allow &lt;script> elements at the root of the document so that default
+values could be fed into the functions.&nbsp; However, once we added argument
+passing to &lt;function>s, we began encouraging that over global &lt;script>s.&nbsp;&nbsp;
+Nevertheless, we couldn't remove support for global &lt;script>s, as many
+groups were already using them.
+<p>When we implemented the &lt;import> element, we felt it would be cleaner
+to just import the &lt;function>s in the job, as there was less interaction
+with the pieces of the importing job. For example, what you already had
+a variable that was overwritten by a &lt;script> in another file, just
+because you imported a single utility &lt;function> from it. Even if you
+were expecting a certain variable to be set from the job, you would have
+to be very careful to import the functions in the job first, and then set
+the variables, otherwise your values would overwritten. This same line
+of argument also applies to importing &lt;signalhandler>s.
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.47 Are STAF system variable values available in"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.47
+Are STAF system variable values available in STAX?</font></font></font>
+<p>Yes, but not directly. The STAF variables have to be resolved using
+either the VAR service through a &lt;stafcmd> or using the STAXUtilImportSTAFVars
+function from the STAXUtil.xml file (provided with the STAX download in
+the library subdirectory of the STAX installroot).
+<p>Examples:
+<p>Using stafcmd to call the var service
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;stafcmd></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;location>'local'&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;service>'var'&lt;/service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;request>'resolve string {STAF/Config/STAFRoot}'&lt;/request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/stafcmd></tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;script>stafRoot=STAFResult&lt;/script></tt>
+<p>Using STAXUtilImportSTAFVars
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;call function="'STAXUtilImportSTAFVars'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {'STAF/Env/STAFDir':
+'mySTAFDir', 'STAF/Version': 'mySTAFVersion'},</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'machA'</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/call></tt>
+<p>and the resulting STAX variables could be:
+<br>mySTAFDir = 'C:\STAF'
+<br>mySTAFVersion = '2.5.0'
+<p>See STAXUtil.html for full details.
+<br>&nbsp;
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.48 How do you search for multiple strings in"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.48
+How do you search for multiple strings in testcase output files in STAX?</font></font></font>
+<p>You can use the Python re library to search for multiple strings in
+testcase output files.&nbsp; For example, if you have a testcase output
+file c:/temp/test.txt:
+<p><tt>********************************* Top of Data **********************************</tt>
+<br><tt>---------+---------+---------+---------+---------+---------+---------+---------+</tt>
+<br><tt>&nbsp;&nbsp; SET CURRENT SQLID='DBTIFAHC';</tt>
+<br><tt>---------+---------+---------+---------+---------+---------+---------+---------+</tt>
+<br><tt>DSNE616I STATEMENT EXECUTION WAS SUCCESSFUL, SQLCODE IS 0</tt>
+<br><tt>---------+---------+---------+---------+---------+---------+---------+---------+</tt>
+<br><tt>&nbsp;&nbsp; SELECT * FROM SPA_FI_REGISTRY;</tt>
+<br><tt>---------+---------+---------+---------+---------+---------+---------+---------+</tt>
+<br><tt>FI_ID&nbsp;&nbsp;&nbsp;&nbsp; AVLBLTY_STATUS&nbsp; UPDATE_USER_ID&nbsp;
+UPDATE_TMSTP</tt>
+<br><tt>---------+---------+---------+---------+---------+---------+---------+---------+</tt>
+<br><tt>IBANKA&nbsp;&nbsp;&nbsp; S&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+STCCICS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2003-07-11-08.38.37.638163</tt>
+<br><tt>DSNE610I NUMBER OF ROWS DISPLAYED IS 1</tt>
+<br><tt>DSNE616I STATEMENT EXECUTION WAS SUCCESSFUL, SQLCODE IS 100</tt>
+<br><tt>---------+---------+---------+---------+---------+---------+---------+---------+</tt>
+<br><tt>-- INSERT INTO IFS_SESSN_ACTIVE</tt>
+<br><tt>--&nbsp;&nbsp; (USR_ID, FI_ID,SERV_ID,SESSN_NBR,IP_ADDR,SESSN_STRT_TMSTP,</tt>
+<br><tt>--&nbsp;&nbsp;&nbsp; SESSN_END_TMSTP,SESSN_ST_CODE, SESSN_MQ_QUALIFIER,CHK_DUPL_TXN,</tt>
+<br><tt>--&nbsp;&nbsp;&nbsp; SERV_INST_NBR)</tt>
+<br><tt>&nbsp; F1=Help&nbsp;&nbsp;&nbsp; F2=Split&nbsp;&nbsp; F3=Exit&nbsp;&nbsp;&nbsp;
+F5=Rfind&nbsp;&nbsp; F7=Up&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; F8=Down&nbsp;&nbsp;&nbsp;
+F9=Swap</tt>
+<br><tt>&nbsp;F10=Left&nbsp;&nbsp; F11=Right&nbsp; F12=Cancel</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SPUFI&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SSID: DB71</tt>
+<br><tt>&nbsp;===></tt>
+<p><tt>&nbsp;Enter the input data set name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(Can be sequential or partitioned)</tt>
+<br><tt>&nbsp; 1&nbsp; DATA SET NAME ... ===> 'MONICA1.IFSSCCAH.SPUFI.CNTL(SELECT)'</tt>
+<br><tt>&nbsp; 2&nbsp; VOLUME SERIAL ... ===>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(Enter if not cataloged)</tt>
+<br><tt>&nbsp; 3&nbsp; DATA SET PASSWORD ===>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(Enter if password protected)</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&sup3; DSNE361I SPUFI PROCESSING COMPLETE &sup3;</tt>
+<br><tt>&nbsp;</tt>
+<br>Here's a sample STAX job that searches for 3 sets of strings in the
+test.txt file.
+<p>Notice that when you specify the string text, you need to escape, with
+a backslash, any non-alphanumeric characters (such as spaces, dots, comma,
+equals, greater/less than, paraenthesis...).&nbsp; You can find a Howto
+on Regular Expressions at http://www.amk.ca/python/howto/regex/
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt>
+<p><tt>&lt;stax></tt>
+<p><tt>&nbsp; &lt;defaultcall function="test"/></tt>
+<p><tt>&nbsp; &lt;function name="test"></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stafcmd></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;location>'local'&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;service>'fs'&lt;/service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;request>'get file
+c:/temp/test.txt'&lt;/request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/stafcmd></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; import re</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; result = STAFResult</tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; searchre = r"""(?mx)</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*?IBANKA.*?</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*?1\ \ DATA\ SET\ NAME\ \.\.\.\ \=\=\=\>\ \'MONICA1\.IFSSCCAH\.SPUFI\.CNTL\(SELECT\)\'.*?</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*?DSNE361I\ SPUFI\ PROCESSING\ COMPLETE.*?</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+^.*"""</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/script></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;if expr='re.match(searchre, result)
+!= None'></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Pass'&lt;/message></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;else></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;message>'Fail'&lt;/message></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/else></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/if></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<p><tt>&nbsp; &lt;/function></tt>
+<p><tt>&lt;/stax></tt>
+<p>
+<hr WIDTH="100%">
+<br><a NAME="3.49 Can you use STAF and STAX with VMWare"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.49
+Can you use STAF and STAX with VMWare images?</font></font></font>
+<p>Yes, you can use STAF/STAX to boot VMWare images and then execute tests
+on the VMWare images.&nbsp; Below is a example that demonstrates how to
+do this.&nbsp; The "startvmware" function boots a VMWare image.&nbsp; Note
+that it's &lt;function-prolog> has important information on how to configure
+your VMWare image to work correctly with STAF/STAX.&nbsp; The "stopvmware"
+function shuts down and powers off a VMWare image.&nbsp; The "main" function
+shows how you call the vmware functions.&nbsp; In your main function, after
+the VMWare image has booted (you would need to wait for an appropriate
+amount of time and do a STAF PING to the machine to determine that it's
+up and running), you would begin running your tests on the VMWare image.
+<p><tt>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?></tt>
+<br><tt>&lt;!DOCTYPE stax SYSTEM "stax.dtd"></tt><tt></tt>
+<p><tt>&lt;stax></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp; &lt;defaultcall function="main"/></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp; &lt;function name="main" scope="local"></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;parallel></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;block name="'Boot up VMWare image'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;call function="'startvmware'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { 'image'
+: 'c:/vmware/winxp/Windows-XP-Professional.vmx',</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+'timeout' : '5m',</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+'imagehostname' : 'abcdef',</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+'imagename' : 'Windows XP Professional'</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/call></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/block></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;block name="'Release this block
+to shutdown the VMWare image'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;hold/></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;call
+function="'stopvmware'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+{ 'imagehostname' : 'abcdef',</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+'shutdown' : 'shutdown -s -f -t 0'</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/call></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/block></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/parallel></tt><tt></tt>
+<p><tt>&nbsp; &lt;/function></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp; &lt;function name="startvmware" scope="local"></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;function-prolog></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Starts a VMWare image, and attempts
+to do a STAF PING to the VMWare image.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Your VMWare image needs to be configured
+so that there are no popups</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; displayed when the VMWare image
+starts (for example, messages about Disk</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Drive warnings, etc), and that the
+image is set up to automatically log</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in.&nbsp; Also, the machine must
+be configured to start STAF automatically.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Also, you must have the following
+2 lines in your VMWare image's .vmx file:</tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; gui.exitOnCLIHLT = "TRUE"</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; gui.exitAtPowerOff = "TRUE"</tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Note that you should avoid terminating
+any blocks that are running a VMWare</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; image, as that will kill the VMWare
+image without it being shutdown.&nbsp; Instead,</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; you should manually shutdown and
+power off the VMWare image, or call the</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "terminatevmware" [not yet implemented]
+function.</tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You should use Bridged network connections
+for VMWare images to work</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; correctly with this function.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/function-prolog></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;function-map-args></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-optional-arg name="machine"
+default="'local'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The machine on which
+the VMWare image is to be started.&nbsp; The default is 'local'.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-optional-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-optional-arg name="vmwarebin"
+default="'c:/Program Files/Vmware/VMware Workstation/vmware.exe'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The VMWare executable
+file.&nbsp; If the VMWare executable is not in the VMWare system's PATH,
+then the file</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; must be fully qualified.&nbsp;
+The default is 'c:/Program Files/Vmware/VMware Workstation/vmware.exe'.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-optional-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-required-arg name="image"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The fully qualified
+VMWare .vmx file for the VMWare image.&nbsp; Note that the VMWare executable</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; does not permit spaces
+in the file name of the .vmx file.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-required-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-required-arg name="imagehostname"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The hostname for the
+VMWare image.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-required-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-optional-arg name="timeout"
+default="'10m'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The timeout value for
+when the function should stop attempting to STAF PING the VMWare image.&nbsp;
+The</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; default is 10 minutes.&nbsp;
+The STAF PING to the VMWare image will be attempted every 30 seconds, up
+to</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; the timeout value.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-optional-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-optional-arg name="imagename"
+default='image'></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The name of the VMWare
+image.&nbsp; The default is the argument specified for image.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-optional-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/function-map-args></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;parallel></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;process name="'VMWare Image
+%s ' % imagename"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;location>machine&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;command>vmwarebin&lt;/command></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;parms>'-x -q %s'
+% image&lt;/parms>&nbsp; &lt;!-- -x powers on automatically, -q exits at
+power off --></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stdout>'out.txt'&lt;/stdout></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stderr mode="'stdout'"/></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;returnstdout/></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/process></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;sequence></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script>contacted
+= 0&lt;/script></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;timer duration='timeout'></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;loop
+while="contacted == 0"></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;sequence></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;stafcmd name="'Delaying for 30 seconds'"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;location>'local'&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;service>'delay'&lt;/service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;request>'delay 30000'&lt;/request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;/stafcmd></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;stafcmd name = "'Attempt to ping %s' % imagehostname"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;location>imagehostname&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;service>'ping'&lt;/service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;request>'ping'&lt;/request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;/stafcmd></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;if expr="RC == 0"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;sequence></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;script>contacted = 1&lt;/script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;message>'Machine %s is up and running with VMWare image %s' % (imagehostname,
+imagename)&lt;/message></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;log>'Machine %s is up and running with VMWare image %s' % (imagehostname,
+imagename)&lt;/log></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;/sequence></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;/if></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;/sequence></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/loop></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/timer></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;if expr="RC != 0"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;message>'Machine %s with VMWare image %s was not successfully started
+RC: %s' % (imagehostname, imagename, RC)&lt;/message></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;log>'Machine %s with VMWare image %s was not successfully started RC:
+%s' % (imagehostname, imagename, RC)&lt;/log></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/if></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/parallel></tt><tt></tt>
+<p><tt>&nbsp; &lt;/function></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp; &lt;function name="stopvmware" scope="local"></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;function-prolog></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Stops a VMWare image</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/function-prolog></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;function-map-args></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-required-arg name="imagehostname"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The hostname for the
+VMWare image.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-required-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;function-required-arg name="shutdown"></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The command used to
+shut down the OS.</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/function-required-arg></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp; &lt;/function-map-args></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;sequence></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;script></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from com.ibm.staf
+import STAFUtil</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/script></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stafcmd></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;location>imagehostname&lt;/location></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;service>'process'&lt;/service></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;request>'start async
+shell command %s' % STAFUtil.wrapData(shutdown)&lt;/request></tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/stafcmd></tt><tt></tt>
+<p><tt>&nbsp;&nbsp;&nbsp; &lt;/sequence></tt>
+<br><tt>&nbsp;</tt>
+<br><tt>&nbsp; &lt;/function></tt><tt></tt>
+<p><tt>&lt;/stax></tt>
+<p>
+<hr WIDTH="100%">
+<br><a NAME="3.50 Does a STAX process element use the workdir element as the path to the command?"></a>
+<font face="Arial,Helvetica"><font color="#000099"><font size=+1>3.50
+Does a STAX process element use the workdir element as the path to the command?</font></font></font>
+<p>
+No.  The STAF User's Guide, section 8.10.2 (PROCESS START)
+says:
+<p>
+COMMAND specifies the actual command that you want to
+start. If the path to the command is not specified, the
+system PATH will be searched for the command.
+<p>
+So, if the path to the command is not specified in the
+&lt;command> element, the system PATH is searched.  Just specifying
+the &lt;workdir> will not make it use the workdir as the path and
+you'll get RC 10 (Base operating system error) because it couldn't
+find the command executable.
+<p>
+The following &lt;process> element specifies the path (assigned to variable
+testdir) to the test1.exe executable since it's not in the system PATH:
+<pre>
+  &lt;script>
+    clientname = 'machineA.austin.ibm.com'
+    testdir = 'C:/test'
+  &lt;/script>
+
+  &lt;process>
+    &lt;location>clientname&lt;/location>
+    &lt;command>'%s/test1.exe' % (testdir)&lt;/command>
+    &lt;workdir>testdir&lt;/workdir>
+  &lt;/process>
+</pre>
+<p>
+<p>
+<hr WIDTH="100%">
+<p><a NAME="3.51 java.lang.NullPointerException"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>
+3.51 Why am I getting a java.lang.NullPointerException at org.python.core.ThreadState.entrRepr in my JVMLog.1 file?</font></font></font>
+<p>
+The following NullPointerException at org.python.core.ThreadState.enterRepr(ThreadState.java)
+is a known problem in IBM Java's JIT:
+<pre>
+******************************************************************************
+*** 20030911-12:50:41 - Start of Log for JVMName: STAFJVM1
+*** JVM Executable: java
+*** JVM Options   : -Xms128m -Xmx512m
+******************************************************************************
+java.lang.NullPointerException
+	at org.python.core.ThreadState.enterRepr(ThreadState.java(Compiled Code))
+	at org.python.core.PyList.toString(PyList.java(Compiled Code))
+	at org.python.core.PyObject.__repr__(PyObject.java(Compiled Code))
+	at org.python.core.PyObject.__str__(PyObject.java(Compiled Code))
+	at com.ibm.staf.service.stax.STAXThread.pyStringEval(STAXThread.java(Compiled Code))
+	at com.ibm.staf.service.stax.STAXMessageAction.execute(STAXMessageAction.java(Compiled Code))
+	at com.ibm.staf.service.stax.STAXThread.execute(STAXThread.java(Compiled Code))
+	at com.ibm.staf.service.stax.STAXThreadQueue$QueueThread.run(STAXThreadQueue.java:66)
+</pre>
+If you see this NullPointerException in your JVMLog.1 file when debugging a problem
+running a STAX job, verify that the JVM that STAX is using is IBM's java by doing:
+<pre>  java -version</pre>
+This problem is in the JIT in IBM Java versions 1.3.x, 1.4.0, and 1.4.1 and has
+been seen on both Windows and Unix systems.
+This problem has been reported to IBM Java support and is under investigation.
+When this NullPointerException occurs in the JVM, any services using this JVM can
+no longer function until the services using this JVM are removed and re-added via
+the SERVICE service or STAFProc is shutdown and restarted.
+<p>
+There are two workarounds:
+<ol>
+<li>Disable the JIT (which will degrade performance).
+    <p>
+    To turn the JIT off for the JVM that the STAX service is using, configure the
+    STAX service using a J2 OPTION to set the java.compiler property to NONE.  For example:
+    <pre>
+    SERVICE STAX LIBRARY JSTAF EXECUTE C:\STAF\services\STAX.jar \
+                 OPTION JVMName=STAX OPTION J2=-Xmx256m \
+                 OPTION J2=-Djava.compiler=NONE</pre>
+
+    <p>
+    <li>Use another version of Java (e.g. Sun Java) instead.
+    <p>
+    To specify another version of Java for the STAX service to use, configure
+    the STAX service using the JVM OPTION to set the Java executable.  For example, if
+    you install Sun Java 1.4.1 in C:\sunjdk1.4.1, then configure STAX as follows to
+    specify to use the java executable in the C:\sunjdk1.4.1\bin directory:
+    <pre>
+    SERVICE STAX LIBRARY JSTAF EXECUTE C:\STAF\services\STAX.jar \
+                 OPTION JVM=C:\sunjdk1.4.1\bin\java \
+                 OPTION JVMName=STAX OPTION J2=-Xmx512m</pre>
+</ol>
+
+<p>
+<hr WIDTH="100%">
+<p><a NAME="GLOBALIZATION"></a><font face="Arial,Helvetica"><font color="#000099"><font size=+1>4.
+GLOBALIZATION</font></font></font>
+<p>
+<hr WIDTH="100%">
+<br><a NAME="4.1 How do I use STAF/STAX in environments where machines running STAF have different locales?"></a>
+<font face="Arial,Helvetica"><font color="#000099"><font size=+1>
+4.1 How do I use STAF/STAX in environments where machines running STAF have different locales?</font></font></font>
+<p>
+In general, you don't have to do anything special.
+<p>
+The requests submitted to STAF and the results received from STAF are all
+strings. These strings may contain any arbitrary set of characters, including
+the NULL (i.e., 0) character. When working in an environment with a
+heterogeneous set of codepages, STAF will translate the request and result
+strings from and to the necessary codepages. This ensures that the request
+and result strings are not misinterpreted by the receiver.
+<p>
+In general, when using STAF services, there shouldn't be any round trip
+problems. "Round trip" in this context means when all requests are originating
+from the same system, even if the requests are sent to, and the data is stored
+on, a system with a different codepage. However, if you send, for example, a
+request to log data containing Japanese codepage specific characters to any
+system and then query the log from a system using a US English codepage, you
+won't get the "correct" data, as that is not a valid "round trip".
+<p>
+Note: All STAF generated strings are composed of only ASCII-7 characters and
+will safely survive the translation from/to different codepages.
+<p>
+<b>Caution:</b>
+<p>
+If you use a STAF service that is written in REXX, it can have round trip
+codepage translation problems. All of STAF services currently provided are
+written in C++/Java so they do not have this problem.
+
+<p>
+<hr WIDTH="100%">
+<br><a NAME="4.2 How do I specify non-ASCII characters in a STAF request or STAX job?"></a>
+<font face="Arial,Helvetica"><font color="#000099"><font size=+1>
+4.2 How do I specify non-ASCII characters in a STAF request or STAX job?</font></font></font>
+<p>
+If you're specifying a STAF request from the command line, then you can
+just specify the appropriate characters.  For example, here's a STAF request submitted
+via the command line specifying a French character in the PARMS value:
+<pre>STAF frenchMach PROCESS START COMMAND c:/test/TestA PARMS "-server français"</pre>
+<p>
+If you want to specify non-ASCII characters in a STAX job, then you need to
+specify them in Unicode.  For example, here's a process element which specifies
+a French character in Unicode in the &lt;parms> element:
+<pre>
+  &lt;process>
+    &lt;location>'frenchMach'&lt;/location>
+    &lt;command>'c:/test/TestA'&lt;/command>
+    &lt;parms>'-server fran' + u'\u00E7' + 'ais'&lt;/parms>
+  &lt;/process>
+</pre>
+Here's an example of a stafcmd element which specifies Chinese characters in Unicode
+for the directory name in a STAX job:
+<pre>
+  &lt;script>dirName = '/tmp/Sun2_' + u'\u4F3A\u670D\u5668'&lt;/script>
+
+  &lt;stafcmd>
+    &lt;location>'chineseMach'&lt;/location>
+    &lt;service>'FS'&lt;/service>
+    &lt;request>'CREATE DIRECTORY %s' % (dirName)&lt;/request>
+  &lt;/stafcmd>
+</pre>
+<p>
+If you want to specify non-ASCII characters in a STAF request submitted
+via a Java program, then you need to specify them in Unicode.
+Here's an example of specifying Chinese characters in Unicode in a
+PROCESS START request submitted via a Java program:
+<pre>
+  String machine    = "chineseMach";
+  String service    = "PROCESS";
+  String serverName = "\u4F3A\u670D\u5668_HP";
+  String request    = "START COMMAND " + STAFUtil.wrapData("/test/startServer.sh") +
+                      " PARMS " + STAFUtil.wrapData(serverName) + " WAIT";
+  STAFResult submitResult = handle.submit2(machine, service, request);
+</pre>
+<p>
+If you need to specify non-ASCII characters in a request, then you need to be
+aware of some anomalies if your target system is a Windows system that isn't
+using an English codepage and whose ANSI codepage (ACP) identifier is different
+from the OEM codepage (OEMCP) identifier.  The system locale determines which
+codepages are defaults for the Windows system. However, some European locales
+such as French and German set different values for the ACP and OEMCP.
+See section "2.7.1 Windows Codepage Translation Anomalies" in
+the STAF User's Guide for more information on these Windows codepage
+translation anomalies.
+
+<p>
+<hr WIDTH="100%">
+<br><a NAME="4.3 How do I know what codepage STAF is using on my machine?"></a>
+<font face="Arial,Helvetica"><font color="#000099"><font size=+1>
+4.3 How do I know what codepage STAF is using on my machine?</font></font></font>
+<p>
+To see the codepage that STAF is using, check the value of STAF
+variable STAF/Config/CodePage. For example:
+<pre>STAF testmach1 VAR RESOLVE STRING {STAF/Config/CodePage}</pre>
+
+<hr WIDTH="100%">
+<br>&nbsp;
+<br>&nbsp;
+</body>
+</html>

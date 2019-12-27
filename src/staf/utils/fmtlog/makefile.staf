@@ -1,0 +1,44 @@
+#############################################################################
+# Software Testing Automation Framework (STAF)                              #
+# (C) Copyright IBM Corp. 2001                                              #
+#                                                                           #
+# This software is licensed under the Eclipse Public License (EPL) V1.0.    #
+#############################################################################
+
+fmtlog_cpp_targets += $(REL)/bin/FmtLog$(OS_EE)
+Targets += $(fmtlog_cpp_targets)
+CleanupTargets += cleanup_fmtlog_cpp
+
+$(fmtlog_cpp_targets): SUBSYS_REL := utils/fmtlog
+SUBSYS_REL := utils/fmtlog
+
+#=====================================================================
+#   C/C++ Info Flags
+#=====================================================================
+
+$(fmtlog_cpp_targets): OBJS = $(fmtlog_cpp_objs)
+$(fmtlog_cpp_targets): LIBS = STAF
+
+fmtlog_cpp_objs :=\
+  FmtLog
+
+fmtlog_cpp_objs        := $(foreach obj,$(fmtlog_cpp_objs),$(O)/$(SUBSYS_REL)/$(obj)$(OS_OE))
+fmtlog_cpp_dependents  := $(fmtlog_cpp_objs:$(OS_OE)=.d)
+$(fmtlog_cpp_dependents): SUBSYS_REL := utils/fmtlog
+
+# Include dependencies
+ifneq ($(InCleanup), "1")
+    include $(fmtlog_cpp_dependents)
+endif
+
+# Include inference rules
+include $(InferenceRules)
+
+# Fmtlog targets
+
+$(REL)/bin/FmtLog$(OS_EE): $(fmtlog_cpp_objs) $(LIB_STAF_FP) $(MAKEFILE_NAME)
+	$(LINK_IT)
+
+cleanup_fmtlog_cpp:
+	-@$(DEL) $(O)/$(SUBSYS_REL)/* $(OUT_ERR_TO_DEV_NULL)
+	-@$(DEL) $(REL)/bin/FmtLog$(OS_EE) $(OUT_ERR_TO_DEV_NULL)

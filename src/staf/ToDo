@@ -1,0 +1,35 @@
+- Update docs for info on STAFCODEPAGEOVERRIDE and updating alias.txt
+- Make SIGTERM and SIGINT do a SHUTDOWN SHUTDOWN
+- Add option to VAR LIST to list ONLY variables in the handle pool
+- Add info on which interfaces are enabled
+- Add an ICONTAINS (case-insensitive contains) option to the QUEUE (and maybe
+  LOG) service(s)
+- Enhance command parser to allow you to specify more contraints on
+  option values (enumerated types, numeric, etc.).  Also allow it to
+  resolve variables by letting you pass in a STAFHandle_t.  You should also
+  be allow to state whether certain options have string resolved or not.
+- Fix "inline" stuff on win32.  Moving all methods which return STAFRefPtr's
+  may fix the heap-management issues
+- Return stack trace when a Java exception is thrown
+- Add a MACHINE option to var resolve so that services don't have to check
+  where requests came from
+- Think about stripping whitespace from around service/machine names to
+  avoid silly user errors like "queue "
+- Fix reference to FmtLog.cmd in User's Guide
+- Fix problem with non-existent remote system requests when using MACHINE
+  statement in STAF.cfg
+- Investigate using realpath() on unix systems instead of requiring STAFProc
+  be in the PATH
+- Update Unix install docs to talk about how to autostart STAF on boot
+- Fix ResPool bug where timed-out request still shows as pending
+- Fix problem where not having staf/lib in your LD_LIBRARY_PATH causes an
+  exception instead of reporting that the library can't be found
+- Fix bug with 'staf local process start command notepad parms "1 "' (this
+  may require some fixes in other STAF services)
+- Fix bug where getpid() and getpidSTAF() return different things for
+  STAFProc.  Should probably move getpidSTAF() to STAFUtilCommon.cpp and make
+  STAFProc call it instead of getpid().
+- Fix STAFHandle.java to include a constructor that accepts the handle.  This
+  will allow static handles to be used in Java programs.
+- Fix bug where file which is used in PROCESS START STDOUT can't be accessed
+  until STAFProc is stopped (may be windows only)
